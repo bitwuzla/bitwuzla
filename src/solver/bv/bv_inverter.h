@@ -27,6 +27,9 @@ class BvInverter
   BvInverter(Env& env);
   ~BvInverter();
 
+  std::pair<Node, std::vector<std::pair<Node, Node>>> invert(const Node& node,
+                                                             const Node& x);
+
   Node ic(const Node& node, const Node& t, size_t idx);
 
   Node ic(Kind predicate,
@@ -41,6 +44,17 @@ class BvInverter
   std::unordered_map<Node, size_t> compute_path(const Node& node,
                                                 const Node& x) const;
 
+  Node inverse(const Node& node, size_t idx, const Node& t);
+
+  std::pair<Node, Node> ic(const Node& node,
+                           size_t idx,
+                           const std::unordered_map<Node, size_t>& path,
+                           bool negate);
+  std::pair<Node, Node> ic(Kind predicate,
+                           const Node& node,
+                           size_t idx,
+                           const Node& t,
+                           const std::unordered_map<Node, size_t>& path);
   /**
    * Get invertibility condition (IC) for a predicate w.r.t. an AND node.
    *

@@ -23,6 +23,94 @@ BvInverter::BvInverter(Env& env) : d_env(env), d_nm(env.nm()) {}
 
 BvInverter::~BvInverter() {}
 
+/* -------------------------------------------------------------------------- */
+
+std::pair<Node, std::vector<std::pair<Node, Node>>>
+BvInverter::invert(const Node& node, const Node& x)
+{
+  Node res;
+  std::vector<std::pair<Node, Node>> conds;
+  std::unordered_map<Node, Node> subst_cache;
+
+  // compute path to x
+  auto path = compute_path(node, x);
+  assert(path.size() > 0);
+
+  /////
+  //  {
+  //   std::cout << "## path:" << std::endl;
+  //   Node cur = node;
+  //   while (cur != x)
+  //   {
+  //     std::cout << cur << ": " << path[cur] << std::endl;
+  //     cur = cur[path[cur]];
+  //   }
+  // }
+  /////
+
+  // compute inverse for top-level predicate
+  Node cur       = node;
+  Kind predicate = cur.kind();
+  bool negate    = predicate == Kind::NOT;
+  if (negate)
+  {
+    predicate = cur.kind();
+  }
+  size_t idx = path.at(cur);
+
+  Node t, next;
+  if (predicate == Kind::EQUAL && !negate)
+  {
+    size_t idx_x = idx;
+    auto it      = path.find(cur[idx]);
+    next         = cur[idx];
+    if (it != path.end())
+    {
+      idx_x = it->second;
+      next  = cur[idx][idx_x];
+    }
+    t = inverse(cur[idx], idx_x, cur[1 - idx]);
+  }
+  if (t.is_null())
+  {
+    Node icond;
+    std::tie(icond, next) = ic(cur, idx, path, negate);
+    Node _xx              = d_nm.mk_const(next.type());
+    Node pred = utils::substitute(d_nm, cur, {{next, _xx}}, subst_cache);
+    if (negate)
+    {
+      pred = d_nm.mk_node(Kind::NOT, {pred});
+    }
+    conds.push_back({icond, pred});
+    t = _xx;
+  }
+  cur = next;
+  while (cur != x)
+  {
+    idx      = path.at(cur);
+    Node inv = inverse(cur, idx, t);
+    if (inv.is_null())
+    {
+      Node icond = ic(cur, t, idx);
+      Node _xx   = d_nm.mk_const(next.type());
+      Node pred  = d_nm.mk_node(
+          Kind::EQUAL,
+          {idx == 0 ? _xx : cur[1 - idx], idx == 0 ? cur[1 - idx] : _xx});
+      conds.push_back({icond, pred});
+      t = _xx;
+    }
+    else
+    {
+      t = inv;
+    }
+    cur = cur[idx];
+  }
+
+  return {t, conds};
+}
+
+/* -------------------------------------------------------------------------- */
+
 Node
 BvInverter::ic(const Node& node, const Node& t, size_t idx)
 {
@@ -30,6 +118,19 @@ BvInverter::ic(const Node& node, const Node& t, size_t idx)
   size_t bw = t.type().bv_size();
   switch (kind)
   {
+    case Kind::AND:
+    case Kind::OR:
+    case Kind::BV_AND:
+    case Kind::BV_OR:
+    case Kind::BV_ASHR:
+    case Kind::BV_CONCAT:
+    case Kind::BV_MUL:
+    case Kind::BV_SHR:
+    case Kind::BV_SHL:
+    case Kind::BV_SIGN_EXTEND:
+    case Kind::BV_UREM:
+    case Kind::BV_UDIV: return ic(Kind::EQUAL, node, t, 0, idx);
+
     case Kind::BV_SLT:
     case Kind::BV_SGT:
       if ((kind == Kind::BV_SLT && idx == 0)
@@ -75,6 +176,61 @@ BvInverter::ic(const Node& node, const Node& t, size_t idx)
       // x = t
       // IC: true
       return d_nm.mk_value(true);
+  }
+}
+
+Node
+BvInverter::ic(
+    Kind predicate, const Node& node, const Node& t, size_t idx, size_t idx_x)
+{
+  if (idx)
+  {
+    switch (predicate)
+    {
+      case Kind::BV_ULT:  // t <u node -> node >u t
+        predicate = Kind::BV_UGT;
+        break;
+      case Kind::BV_ULE:  // t <=u node -> node >=u t
+        predicate = Kind::BV_UGE;
+        break;
+      case Kind::BV_UGT:  // t >u node -> node <u t
+        predicate = Kind::BV_ULT;
+        break;
+      case Kind::BV_UGE:  // t >=u node -> node <=u t
+        predicate = Kind::BV_ULE;
+        break;
+      case Kind::BV_SLT:  // t <s node -> node >s t
+        predicate = Kind::BV_SGT;
+        break;
+      case Kind::BV_SLE:  // t <=s node -> node >=s t
+        predicate = Kind::BV_SGE;
+        break;
+      case Kind::BV_SGT:  // t >s node -> node <s t
+        predicate = Kind::BV_SLT;
+        break;
+      case Kind::BV_SGE:  // t >=s node -> node <=s t
+        predicate = Kind::BV_SLE;
+        break;
+      default: assert(predicate == Kind::EQUAL || predicate == Kind::DISTINCT);
+    }
+  }
+  Kind kind = node.kind();
+  switch (kind)
+  {
+    case Kind::AND: return ic_and(predicate, node, t, idx_x);
+    case Kind::OR: return ic_or(predicate, node, t, idx_x);
+    case Kind::BV_AND: return ic_bv_and(predicate, node, t, idx_x);
+    case Kind::BV_OR: return ic_bv_or(predicate, node, t, idx_x);
+    case Kind::BV_ASHR: return ic_bv_ashr(predicate, node, t, idx_x);
+    case Kind::BV_CONCAT: return ic_bv_concat(predicate, node, t, idx_x);
+    case Kind::BV_MUL: return ic_bv_mul(predicate, node, t, idx_x);
+    case Kind::BV_SHR: return ic_bv_shr(predicate, node, t, idx_x);
+    case Kind::BV_SHL: return ic_bv_shl(predicate, node, t, idx_x);
+    case Kind::BV_SIGN_EXTEND: return ic_bv_sext(predicate, node, t, idx_x);
+    case Kind::BV_UREM: return ic_bv_urem(predicate, node, t, idx_x);
+    default:
+      assert(kind == Kind::BV_UDIV);
+      return ic_bv_udiv(predicate, node, t, idx_x);
   }
 }
 
@@ -196,22 +352,6 @@ BvInverter::compute_path(const Node& node, const Node& x) const
     }
   }
 
-  std::cout << "cache: " << cache.size() << std::endl;
-  for (const auto& c : cache)
-  {
-    std::cout << c.first << " (" << c.second << ")" << std::endl;
-  }
-  std::cout << "path: " << path.size() << std::endl;
-  size_t i = 0;
-  for (const auto& p : path)
-  {
-    std::cout << "path[" << i++ << "]: " << p.first << " (" << p.second << ") ["
-              << (cache.find(p.first) == cache.end()
-                      ? "0"
-                      : (cache.find(p.first)->second ? "y" : "x"))
-              << "]" << std::endl;
-  }
-
   std::unordered_map<Node, size_t> res;
   for (size_t i = 1, n = path.size(); i < n; ++i)
   {
@@ -223,59 +363,165 @@ BvInverter::compute_path(const Node& node, const Node& x) const
 /* -------------------------------------------------------------------------- */
 
 Node
-BvInverter::ic(
-    Kind predicate, const Node& node, const Node& t, size_t idx, size_t idx_x)
+BvInverter::inverse(const Node& node, size_t idx, const Node& t)
 {
-  if (idx)
+  Kind kind = node.kind();
+
+  if (kind == Kind::NOT || kind == Kind::BV_NOT)
   {
-    switch (predicate)
+    return d_nm.mk_node(kind, {t});
+  }
+  const Node& s = node[1 - idx];
+  if (kind == Kind::BV_ADD)
+  {
+    return d_nm.mk_node(Kind::BV_SUB, {t, s});
+  }
+  if (kind == Kind::BV_XOR)
+  {
+    return d_nm.mk_node(kind, {t, s});
+  }
+  if (kind == Kind::BV_MUL && s.is_value())
+  {
+    const BitVector& s_val = s.value<BitVector>();
+    if (s_val.lsb())
     {
-      case Kind::BV_ULT:  // t <u node -> node >u t
-        predicate = Kind::BV_UGT;
-        break;
-      case Kind::BV_ULE:  // t <=u node -> node >=u t
-        predicate = Kind::BV_UGE;
-        break;
-      case Kind::BV_UGT:  // t >u node -> node <u t
-        predicate = Kind::BV_ULT;
-        break;
-      case Kind::BV_UGE:  // t >=u node -> node <=u t
-        predicate = Kind::BV_ULE;
-        break;
-      case Kind::BV_SLT:  // t <s node -> node >s t
-        predicate = Kind::BV_SGT;
-        break;
-      case Kind::BV_SLE:  // t <=s node -> node >=s t
-        predicate = Kind::BV_SGE;
-        break;
-      case Kind::BV_SGT:  // t >s node -> node <s t
-        predicate = Kind::BV_SLT;
-        break;
-      case Kind::BV_SGE:  // t >=s node -> node <=s t
-        predicate = Kind::BV_SLE;
-        break;
-      default: assert(predicate == Kind::EQUAL || predicate == Kind::DISTINCT);
+      return d_nm.mk_node(kind, {d_nm.mk_value(s_val.bvmodinv()), t});
     }
   }
-  Kind kind = node.kind();
-  switch (kind)
+  if (kind == Kind::BV_CONCAT)
   {
-    case Kind::AND: return ic_and(predicate, node, t, idx_x);
-    case Kind::OR: return ic_or(predicate, node, t, idx_x);
-    case Kind::BV_AND: return ic_bv_and(predicate, node, t, idx_x);
-    case Kind::BV_OR: return ic_bv_or(predicate, node, t, idx_x);
-    case Kind::BV_ASHR: return ic_bv_ashr(predicate, node, t, idx_x);
-    case Kind::BV_CONCAT: return ic_bv_concat(predicate, node, t, idx_x);
-    case Kind::BV_MUL: return ic_bv_mul(predicate, node, t, idx_x);
-    case Kind::BV_SHR: return ic_bv_shr(predicate, node, t, idx_x);
-    case Kind::BV_SHL: return ic_bv_shl(predicate, node, t, idx_x);
-    case Kind::BV_SIGN_EXTEND: return ic_bv_sext(predicate, node, t, idx_x);
-    case Kind::BV_UREM: return ic_bv_urem(predicate, node, t, idx_x);
-    default:
-      assert(kind == Kind::BV_UDIV);
-      return ic_bv_udiv(predicate, node, t, idx_x);
+    // Compute inverse while disregarding that invertibility depend on s,
+    // i.e., instead of computing the invertibility condition for this
+    // case.
+    // TODO evaluate if this improves performance
+    uint64_t bw_x = node[idx].type().bv_size();
+    uint64_t bw_t = t.type().bv_size();
+    if (idx == 0)
+    {
+      // t_x = t[bw(t) - 1: bw(t) - bw(x)]
+      return d_nm.mk_node(Kind::BV_EXTRACT, {t}, {bw_t - 1, bw_t - bw_x});
+    }
+    // t_x = t[bw(x) - 1: 0]
+    return d_nm.mk_node(Kind::BV_EXTRACT, {t}, {bw_x - 1, 0});
   }
+  return Node();
 }
+
+/* -------------------------------------------------------------------------- */
+
+std::pair<Node, Node>
+BvInverter::ic(const Node& node,
+               size_t idx,
+               const std::unordered_map<Node, size_t>& path,
+               bool negate)
+{
+  Kind kind = node.kind();
+  if (negate)
+  {
+    switch (kind)
+    {
+      case Kind::BV_ULT: kind = Kind::BV_UGE; break;
+      case Kind::BV_UGT: kind = Kind::BV_ULE; break;
+      case Kind::BV_UGE: kind = Kind::BV_ULT; break;
+      case Kind::BV_ULE: kind = Kind::BV_UGE; break;
+      case Kind::BV_SLT: kind = Kind::BV_SGE; break;
+      case Kind::BV_SGT: kind = Kind::BV_SLE; break;
+      case Kind::BV_SGE: kind = Kind::BV_SLT; break;
+      case Kind::BV_SLE: kind = Kind::BV_SGT; break;
+      case Kind::DISTINCT: kind = Kind::EQUAL; break;
+      default:
+        assert(kind == Kind::EQUAL);
+        kind = Kind::DISTINCT;
+        break;
+    }
+  }
+
+  const Node& x = node[idx];
+  const Node& s = node[1 - idx];
+  size_t bw     = s.type().bv_size();
+
+  std::pair<Node, Node> res;
+  switch (x.kind())
+  {
+    case Kind::BV_AND:
+    case Kind::BV_OR:
+    case Kind::BV_ASHR:
+    case Kind::BV_CONCAT:
+    case Kind::BV_MUL:
+    case Kind::BV_SHR:
+    case Kind::BV_SHL:
+    case Kind::BV_SIGN_EXTEND:
+    case Kind::BV_UREM:
+    case Kind::BV_UDIV: res = ic(kind, x, idx, s, path); break;
+
+    default:
+      if ((kind == Kind::BV_ULT && idx == 0)
+          || (kind == Kind::BV_UGT && idx == 1))
+      {
+        // x <_u s
+        // s >_u x
+        // IC: (distinct s (_ bv0 w))
+        res.first = d_nm.mk_node(Kind::DISTINCT,
+                                 {s, d_nm.mk_value(BitVector::mk_zero(bw))});
+      }
+      else if ((kind == Kind::BV_ULT && idx == 1)
+               || (kind == Kind::BV_UGT && idx == 0))
+      {
+        // x >_u s
+        // s <_u x
+        // IC: (distinct s (bvnot (_ bv0 w)))
+        res.first = d_nm.mk_node(Kind::DISTINCT,
+                                 {s, d_nm.mk_value(BitVector::mk_ones(bw))});
+      }
+      else if ((kind == Kind::BV_SLT && idx == 0)
+               || (kind == Kind::BV_SGT && idx == 1))
+      {
+        // x <_s s
+        // s >_s x
+        // IC: (distinct s min_signed_[w])
+        res.first = d_nm.mk_node(
+            Kind::DISTINCT, {s, d_nm.mk_value(BitVector::mk_min_signed(bw))});
+      }
+      else if ((kind == Kind::BV_SLT && idx == 1)
+               || (kind == Kind::BV_SGT && idx == 0))
+      {
+        // x >_s s
+        // s <_s x
+        // IC: (distinct s max_signed_[w])
+        res.first = d_nm.mk_node(
+            Kind::DISTINCT, {s, d_nm.mk_value(BitVector::mk_max_signed(bw))});
+      }
+      else
+      {
+        assert(kind == Kind::BV_UGE || kind == Kind::BV_ULE
+               || kind == Kind::BV_SGE || kind == Kind::BV_SLE
+               || kind == Kind::DISTINCT || kind == Kind::EQUAL);
+        // x >=_u s
+        // x <=_u s
+        // x >=_s s
+        // x <=_s s
+        // x != s
+        // x = s
+        // IC: true
+        res.first = d_nm.mk_value(true);
+      }
+      res.second = x;
+  }
+  return res;
+}
+
+std::pair<Node, Node>
+BvInverter::ic(Kind predicate,
+               const Node& node,
+               size_t idx,
+               const Node& t,
+               const std::unordered_map<Node, size_t>& path)
+{
+  size_t idx_x = path.at(node);
+  return {ic(predicate, node, t, idx, idx_x), node[idx_x]};
+}
+
+/* -------------------------------------------------------------------------- */
 
 Node
 BvInverter::ic_and(Kind predicate,

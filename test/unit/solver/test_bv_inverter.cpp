@@ -9,6 +9,7 @@
  */
 
 #include "node/node_manager.h"
+#include "node/node_utils.h"
 #include "solver/bv/bv_inverter.h"
 #include "solving_context.h"
 #include "test/unit/test.h"
@@ -17,6 +18,8 @@ namespace bzla::test {
 
 using namespace node;
 using namespace bv;
+
+/* -------------------------------------------------------------------------- */
 
 class TestBvInverter : public TestCommon
 {
@@ -36,17 +39,13 @@ class TestBvInverter : public TestCommon
                size_t idx,
                size_t idx_x);
 
-  void test_ic(
-      Kind predicate, Kind kind, uint64_t bw, size_t idx, size_t idx_x);
-
-  void test_ic_concat(
-      Kind predicate, uint64_t bw0, uint64_t bw1, size_t idx, size_t idx_x);
-
   void test_ic_sext(Kind predicate, uint64_t bw_x, uint64_t bw_t, size_t idx);
 
   void test_ic_bool(Kind predicate, Kind kind, size_t idx, size_t idx_x);
 
   void test_ic_ineq(Kind predicate, uint64_t bw, size_t idx);
+
+  void test_invert(const Node& node, const Node& x);
 
   NodeManager d_nm;
   option::Options d_options;
@@ -73,7 +72,11 @@ class TestBvInverter : public TestCommon
                Type typet,
                size_t idx,
                size_t idx_x);
+  void test_ic(
+      Kind predicate, Kind kind, uint64_t bw, size_t idx, size_t idx_x);
 };
+
+/* -------------------------------------------------------------------------- */
 
 void
 TestBvInverter::test_ic(Kind predicate,
@@ -133,13 +136,6 @@ TestBvInverter::test_ic(
     Kind predicate, Kind kind, uint64_t bw, size_t idx, size_t idx_x)
 {
   test_ic(predicate, kind, bw, bw, bw, idx, idx_x);
-}
-
-void
-TestBvInverter::test_ic_concat(
-    Kind predicate, uint64_t bw0, uint64_t bw1, size_t idx, size_t idx_x)
-{
-  test_ic(predicate, Kind::BV_CONCAT, bw0, bw1, bw0 + bw1, idx, idx_x);
 }
 
 void
@@ -221,6 +217,64 @@ TestBvInverter::test_ic_bool(Kind predicate,
           d_nm.mk_bool_type(),
           idx,
           idx_x);
+}
+
+/* -------------------------------------------------------------------------- */
+
+void
+TestBvInverter::test_invert(const Node& node, const Node& x)
+{
+  auto [invert, conds] = d_inverter.invert(node, x);
+  std::cout << "node: " << node << std::endl;
+  std::cout << "invert: " << invert << std::endl;
+  std::cout << "conditions:" << std::endl;
+  for (const auto& c : conds)
+  {
+    std::cout << "- " << c.first << " => " << c.second << std::endl;
+  }
+  // SolvingContext ctx(d_nm, d_options);
+  // TODO add assertions to check
+  // Result res = ctx.solve();
+  //
+  // if (res != Result::UNSAT)
+  // {
+  //   std::cout << "node: " << node << std::endl;
+  //   std::cout << "invert: " << invert << std::endl;
+  //   std::cout << "conditions:" << std::endl;
+  //   for (const auto& c : conds)
+  //   {
+  //     std::cout << "  " << c.first << " => " << c.second << std::endl;
+  //   }
+  //   std::cout << "assertions:" << std::endl;
+  //   auto assertions = ctx.assertions();
+  //   std::vector<Node> visit;
+  //   for (size_t i = 0, n = assertions.size(); i < n; ++i)
+  //   {
+  //     std::cout << "  " << assertions[i] << std::endl;
+  //     visit.push_back(assertions[i]);
+  //   }
+  //   std::cout << "model:" << std::endl;
+  //   std::unordered_set<Node> cache;
+  //   do
+  //   {
+  //     Node cur = visit.back();
+  //     visit.pop_back();
+  //     auto [it, inserted] = cache.insert(cur);
+  //     if (inserted)
+  //     {
+  //       if (cur.is_const())
+  //       {
+  //         std::cout << "  " << cur << ": " << ctx.get_value(cur) <<
+  //         std::endl;
+  //       }
+  //       else
+  //       {
+  //         visit.insert(visit.end(), cur.begin(), cur.end());
+  //       }
+  //     }
+  //   } while (!visit.empty());
+  // }
+  // ASSERT_EQ(res, Result::UNSAT);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -377,9 +431,9 @@ TEST_F(TestBvInverter, bv_concat)
     {
       for (Kind predicate : d_predicates)
       {
-        test_ic_concat(predicate, 1, 1, idx, idx_x);
-        test_ic_concat(predicate, 2, 1, idx, idx_x);
-        test_ic_concat(predicate, 2, 4, idx, idx_x);
+        test_ic(predicate, Kind::BV_CONCAT, 1, 1, 2, idx, idx_x);
+        test_ic(predicate, Kind::BV_CONCAT, 2, 1, 3, idx, idx_x);
+        test_ic(predicate, Kind::BV_CONCAT, 2, 4, 6, idx, idx_x);
       }
     }
   }
@@ -411,4 +465,87 @@ TEST_F(TestBvInverter, ineq)
   }
 }
 
+TEST_F(TestBvInverter, invert0)
+{
+  Type b = d_nm.mk_bv_type(4);
+  Node x = d_nm.mk_const(b, "x");
+  Node t = d_nm.mk_const(b, "t");
+
+  Node node = d_nm.mk_node(Kind::BV_UGT, {x, t});
+
+  test_invert(node, x);
+}
+
+TEST_F(TestBvInverter, invert1)
+{
+  Type b  = d_nm.mk_bv_type(4);
+  Node x  = d_nm.mk_const(b, "x");
+  Node t  = d_nm.mk_const(b, "t");
+  Node s2 = d_nm.mk_const(b, "s2");
+
+  Node add  = d_nm.mk_node(Kind::BV_ADD, {s2, x});
+  Node node = d_nm.mk_node(Kind::BV_UGT, {add, t});
+
+  test_invert(node, x);
+}
+
+TEST_F(TestBvInverter, invert2)
+{
+  Type b  = d_nm.mk_bv_type(4);
+  Node x  = d_nm.mk_const(b, "x");
+  Node t  = d_nm.mk_const(b, "t");
+  Node s1 = d_nm.mk_const(b, "s1");
+
+  Node add  = d_nm.mk_node(Kind::BV_ADD, {s1, x});
+  Node node = d_nm.mk_node(Kind::EQUAL, {add, t});
+
+  test_invert(node, x);
+}
+
+TEST_F(TestBvInverter, invert3)
+{
+  Type b  = d_nm.mk_bv_type(4);
+  Node x  = d_nm.mk_const(b, "x");
+  Node t  = d_nm.mk_const(b, "t");
+  Node s1 = d_nm.mk_const(b, "s1");
+  Node s2 = d_nm.mk_const(b, "s2");
+
+  Node add1 = d_nm.mk_node(Kind::BV_ADD, {s1, x});
+  Node add2 = d_nm.mk_node(Kind::BV_ADD, {add1, s2});
+  Node node = d_nm.mk_node(Kind::EQUAL, {add2, t});
+
+  test_invert(node, x);
+}
+
+TEST_F(TestBvInverter, invert4)
+{
+  Type b  = d_nm.mk_bv_type(4);
+  Node x  = d_nm.mk_const(b, "x");
+  Node t  = d_nm.mk_const(b, "t");
+  Node s1 = d_nm.mk_const(b, "s1");
+  Node s2 = d_nm.mk_const(b, "s2");
+
+  Node add  = d_nm.mk_node(Kind::BV_ADD, {s2, x});
+  Node mul  = d_nm.mk_node(Kind::BV_MUL, {add, s1});
+  Node node = d_nm.mk_node(Kind::BV_UGT, {mul, t});
+
+  test_invert(node, x);
+}
+
+TEST_F(TestBvInverter, invert5)
+{
+  Type b  = d_nm.mk_bv_type(4);
+  Node x  = d_nm.mk_const(b, "x");
+  Node t  = d_nm.mk_const(b, "t");
+  Node s1 = d_nm.mk_const(b, "s1");
+  Node s2 = d_nm.mk_const(b, "s2");
+  Node s3 = d_nm.mk_const(b, "s3");
+
+  Node add  = d_nm.mk_node(Kind::BV_ADD, {s2, x});
+  Node mul  = d_nm.mk_node(Kind::BV_MUL, {add, s1});
+  Node shl  = d_nm.mk_node(Kind::BV_SHL, {mul, s1});
+  Node node = d_nm.mk_node(Kind::BV_UGT, {shl, t});
+
+  test_invert(node, x);
+}
 }  // namespace bzla::test
