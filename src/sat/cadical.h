@@ -56,6 +56,7 @@ class Cadical : public SatSolver
   Cadical();
   ~Cadical();
 
+  int32_t new_var() override;
   void add(int32_t lit, int64_t cgroup_id = 0) override;
   void assume(int32_t lit) override;
   int32_t value(int32_t lit) override;
@@ -69,6 +70,7 @@ class Cadical : public SatSolver
   CaDiCaL::Solver* solver() { return d_solver.get(); }
 
  protected:
+  int32_t d_max_var                           = 1;
   std::unique_ptr<CaDiCaL::Solver> d_solver   = nullptr;
   std::unique_ptr<CaDiCaL::Terminator> d_term = nullptr;
 };

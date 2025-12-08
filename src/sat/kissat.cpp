@@ -39,9 +39,16 @@ Kissat::Kissat() { init(); }
 
 Kissat::~Kissat() { kissat_release(d_solver); }
 
+int32_t
+Kissat::new_var()
+{
+  return d_max_var++;
+}
+
 void
 Kissat::add(int32_t lit, int64_t cgroup_id)
 {
+  assert(std::abs(lit) < d_max_var);
   (void) cgroup_id;
   d_literals.push_back(lit);
 }

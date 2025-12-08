@@ -17,6 +17,15 @@
 
 namespace bzla::bitblast {
 
+AigCnfEncoder::AigCnfEncoder(SatInterface& sat_solver)
+    : d_sat_solver(sat_solver)
+{
+  // Get variable for true/false, but do not set as encoded yet.
+  d_aig_encoded.push_back(0);
+  d_true_var = d_sat_solver.new_var();
+  ++d_statistics.num_vars;
+}
+
 void
 AigCnfEncoder::encode(const AigNode& node, bool top_level)
 {
@@ -52,9 +61,8 @@ AigCnfEncoder::encode(const AigNode& node, bool top_level)
 
     for (const AigNode& child : children)
     {
-      auto id = child.get_id();
       // leafs of top-level AIGs are associated with the top-most AIG
-      d_sat_solver.add_clause({id}, node.get_id());
+      d_sat_solver.add_clause({cnf_lit(child)}, node.get_id());
       ++d_statistics.num_clauses;
     }
   }
@@ -79,10 +87,30 @@ AigCnfEncoder::value(const AigNode& aig)
   int32_t val = -1;
   if (is_encoded(aig))
   {
-    val = d_sat_solver.value(std::abs(aig.get_id())) ? 1 : -1;
+    val = d_sat_solver.value(cnf_var(aig)) ? 1 : -1;
   }
 
   return aig.is_negated() ? -val : val;
+}
+
+int32_t
+AigCnfEncoder::cnf_var(const AigNode& aig) const
+{
+  assert(is_encoded(aig));
+  int64_t id = aig.get_id();
+  size_t pos = static_cast<size_t>(std::abs(id) - 1);
+  assert(pos < d_aig_encoded.size());
+  return d_aig_encoded[pos];
+}
+
+int32_t
+AigCnfEncoder::cnf_lit(const AigNode& aig) const
+{
+  assert(is_encoded(aig));
+  int64_t id = aig.get_id();
+  size_t pos = static_cast<size_t>(std::abs(id) - 1);
+  assert(pos < d_aig_encoded.size());
+  return id < 0 ? -d_aig_encoded[pos] : d_aig_encoded[pos];
 }
 
 const AigCnfEncoder::Statistics&
@@ -197,17 +225,19 @@ AigCnfEncoder::_encode(const AigNode& aig)
       continue;
     }
 
-    if (cur->is_true() || cur->is_false() || cur->is_const())
+    if (cur->is_true() || cur->is_false())
+    {
+      visit.pop_back();
+      // Set that we encoded true/false.
+      d_aig_encoded[0] = d_true_var;
+      d_sat_solver.add_clause({d_true_var}, std::abs(cur->get_id()));
+      ++d_statistics.num_clauses;
+      ++d_statistics.num_literals;
+    }
+    else if (cur->is_const())
     {
       visit.pop_back();
       set_encoded(*cur);
-      if (cur->is_true() || cur->is_false())
-      {
-        auto id = std::abs(cur->get_id());
-        d_sat_solver.add_clause({id}, id);
-        ++d_statistics.num_clauses;
-        ++d_statistics.num_literals;
-      }
     }
     else
     {
@@ -241,15 +271,16 @@ AigCnfEncoder::_encode(const AigNode& aig)
         if (ite)
         {
           // Encode x <-> ite(c,a,b)
-          auto x = std::abs(cur->get_id());
-          auto c = children[0]->get_id();   // cond
-          auto a = -children[1]->get_id();  // then
-          auto b = -children[2]->get_id();  // else
+          auto id = std::abs(cur->get_id());
+          auto x  = cnf_var(*cur);
+          auto c  = cnf_lit(*children[0]);   // cond
+          auto a  = -cnf_lit(*children[1]);  // then
+          auto b  = -cnf_lit(*children[2]);  // else
 
-          d_sat_solver.add_clause({-x, -c, a}, x);
-          d_sat_solver.add_clause({-x, c, b}, x);
-          d_sat_solver.add_clause({x, -c, -a}, x);
-          d_sat_solver.add_clause({x, c, -b}, x);
+          d_sat_solver.add_clause({-x, -c, a}, id);
+          d_sat_solver.add_clause({-x, c, b}, id);
+          d_sat_solver.add_clause({x, -c, -a}, id);
+          d_sat_solver.add_clause({x, c, -b}, id);
           d_statistics.num_clauses += 4;
           d_statistics.num_literals += 12;
         }
@@ -259,13 +290,14 @@ AigCnfEncoder::_encode(const AigNode& aig)
           //
           // x <-> a /\ b --> (~x \/ a) /\ (~x \/ b) /\ (x \/ ~a \/ ~b)
 
-          auto x = std::abs(cur->get_id());
-          auto a = (*cur)[0].get_id();
-          auto b = (*cur)[1].get_id();
+          auto id = std::abs(cur->get_id());
+          auto x  = cnf_var(*cur);
+          auto a  = cnf_lit((*cur)[0]);
+          auto b  = cnf_lit((*cur)[1]);
 
-          d_sat_solver.add_clause({-x, a}, x);
-          d_sat_solver.add_clause({-x, b}, x);
-          d_sat_solver.add_clause({x, -a, -b}, x);
+          d_sat_solver.add_clause({-x, a}, id);
+          d_sat_solver.add_clause({-x, b}, id);
+          d_sat_solver.add_clause({x, -a, -b}, id);
           d_statistics.num_clauses += 3;
           d_statistics.num_literals += 7;
         }
@@ -291,7 +323,7 @@ AigCnfEncoder::is_encoded(const AigNode& aig) const
   size_t pos = static_cast<size_t>(std::abs(aig.get_id()) - 1);
   if (pos < d_aig_encoded.size())
   {
-    return d_aig_encoded[pos];
+    return d_aig_encoded[pos] > 0;
   }
   return false;
 }
@@ -301,7 +333,9 @@ AigCnfEncoder::set_encoded(const AigNode& aig)
 {
   size_t pos = static_cast<size_t>(std::abs(aig.get_id()) - 1);
   assert(pos < d_aig_encoded.size());
-  d_aig_encoded[pos] = true;
+  assert(d_aig_encoded[pos] == 0);
+  d_aig_encoded[pos] = d_sat_solver.new_var();
   ++d_statistics.num_vars;
 }
+
 }  // namespace bzla::bitblast

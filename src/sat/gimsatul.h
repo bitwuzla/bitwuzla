@@ -33,6 +33,7 @@ class Gimsatul : public SatSolver
   Gimsatul(uint32_t threads);
   ~Gimsatul();
 
+  int32_t new_var() override;
   void add(int32_t lit, int64_t cgroup_id = 0) override;
   void assume(int32_t lit) override;
   int32_t value(int32_t lit) override;
@@ -45,7 +46,7 @@ class Gimsatul : public SatSolver
 
  private:
   uint32_t d_nthreads;
-  int32_t d_max_var     = 0;
+  int32_t d_max_var     = 1;
   int32_t d_num_clauses = 0;
   std::vector<int32_t> d_literals;
   std::vector<int32_t> d_assumptions;

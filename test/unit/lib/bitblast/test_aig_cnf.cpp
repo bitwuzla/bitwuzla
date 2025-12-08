@@ -24,13 +24,11 @@ using ClauseList = std::vector<std::vector<int64_t>>;
 class DummySatSolver : public bitblast::SatInterface
 {
  public:
+  int32_t new_var() override { return d_max_var++; }
+
   void add(int64_t lit, int64_t aig_id = 0) override
   {
     (void) aig_id;
-    if (std::abs(lit) > d_max_var)
-    {
-      d_max_var = std::abs(lit);
-    }
     // std::cout << lit << ((lit == 0) ? "\n" : " ");
     if (lit == 0)
     {
@@ -80,7 +78,7 @@ class DummySatSolver : public bitblast::SatInterface
   std::vector<std::vector<int64_t>>& get_clauses() { return d_clauses; }
 
  private:
-  int64_t d_max_var = 0;
+  int64_t d_max_var = 1;
   std::vector<int64_t> d_clause;
   ClauseList d_clauses;
 };
@@ -255,10 +253,11 @@ TEST_F(TestAigCnf, enc_and)
   bitblast::AigNode b       = aigmgr.mk_bit();
   bitblast::AigNode and_aig = aigmgr.mk_and(a, b);
   enc.encode(and_aig);
-  ASSERT_EQ(solver.get_clauses(),
-            ClauseList({{-and_aig.get_id(), a.get_id()},
-                        {-and_aig.get_id(), b.get_id()},
-                        {and_aig.get_id(), -a.get_id(), -b.get_id()}}));
+  ASSERT_EQ(
+      solver.get_clauses(),
+      ClauseList({{-enc.cnf_lit(and_aig), enc.cnf_lit(a)},
+                  {-enc.cnf_lit(and_aig), enc.cnf_lit(b)},
+                  {enc.cnf_lit(and_aig), -enc.cnf_lit(a), -enc.cnf_lit(b)}}));
 }
 
 TEST_F(TestAigCnf, enc_and_top)
@@ -302,12 +301,12 @@ TEST_F(TestAigCnf, enc_or)
   bitblast::AigNode a      = aigmgr.mk_bit();
   bitblast::AigNode b      = aigmgr.mk_bit();
   bitblast::AigNode or_aig = aigmgr.mk_or(a, b);
-  auto or_id         = std::abs(or_aig.get_id());
   enc.encode(or_aig, false);
+  auto or_id = enc.cnf_var(or_aig);
   ASSERT_EQ(solver.get_clauses(),
-            ClauseList({{-or_id, -a.get_id()},
-                        {-or_id, -b.get_id()},
-                        {or_id, a.get_id(), b.get_id()}}));
+            ClauseList({{-or_id, -enc.cnf_lit(a)},
+                        {-or_id, -enc.cnf_lit(b)},
+                        {or_id, enc.cnf_lit(a), enc.cnf_lit(b)}}));
 }
 
 #if 0

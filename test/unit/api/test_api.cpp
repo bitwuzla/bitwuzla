@@ -4526,6 +4526,7 @@ TEST_F(TestApi, sat_factory)
   {
    public:
     TestSatSolver(SatSolver* sat_solver) : d_sat_solver(sat_solver) {}
+    int32_t new_var() override { return d_sat_solver->new_var(); }
     void add(int32_t lit, int64_t cgroup_id = 0) override
     {
       (void) cgroup_id;

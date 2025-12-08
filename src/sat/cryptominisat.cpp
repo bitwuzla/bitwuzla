@@ -27,9 +27,16 @@ CryptoMiniSat::CryptoMiniSat(uint32_t nthreads)
   d_solver->set_num_threads(nthreads);
 }
 
+int32_t
+CryptoMiniSat::new_var()
+{
+  return d_max_var++;
+}
+
 void
 CryptoMiniSat::add(int32_t lit, int64_t cgroup_id)
 {
+  assert(std::abs(lit) < d_max_var);
   (void) cgroup_id;
   if (lit)
   {

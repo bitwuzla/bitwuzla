@@ -31,6 +31,11 @@ class SatSolver
   virtual ~SatSolver() {};
 
   /**
+   * Allocate new variable in SAT solver.
+   * @return Fresh variable.
+   */
+  virtual int32_t new_var() = 0;
+  /**
    * Add valid literal to current clause.
    * @param lit       The literal to add, 0 to terminate clause..
    * @param cgroup_id The "clause group" id, associates a clause with a

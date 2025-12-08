@@ -33,6 +33,8 @@ class BvBitblastSolver::BitblastSatSolver : public bitblast::SatInterface
  public:
   BitblastSatSolver(sat::SatSolver& solver) : d_solver(solver) {}
 
+  int32_t new_var() override { return d_solver.new_var(); }
+
   void add(int64_t lit, int64_t aig_id) override
   {
     (void) aig_id;
@@ -69,6 +71,8 @@ class BvBitblastSolver::InterpolationSatSolver : public bitblast::SatInterface
       : d_logger(env.logger()), d_solver(solver)
   {
   }
+
+  int32_t new_var() override { return d_solver.new_var(); }
 
   void add(int64_t lit, int64_t aig_id) override
   {
@@ -176,7 +180,7 @@ BvBitblastSolver::solve()
     assert(!bits.empty());
     util::Timer timer(d_stats.time_encode);
     d_cnf_encoder->encode(bits[0], false);
-    d_sat_solver->assume(bits[0].get_id());
+    d_sat_solver->assume(d_cnf_encoder->cnf_lit(bits[0]));
   }
 
   // Update CNF statistics
@@ -275,7 +279,7 @@ BvBitblastSolver::unsat_core(std::vector<Node>& core) const
   {
     const auto& bits = d_bitblaster.bits(assumption);
     assert(bits.size() == 1);
-    if (d_sat_solver->failed(bits[0].get_id()))
+    if (d_sat_solver->failed(d_cnf_encoder->cnf_lit(bits[0])))
     {
       core.push_back(assumption);
     }

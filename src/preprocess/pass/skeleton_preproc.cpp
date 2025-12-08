@@ -43,6 +43,8 @@ class CnfSatInterface : public bitblast::SatInterface
  public:
   CnfSatInterface(sat::Cadical& solver) : d_solver(solver) {}
 
+  int32_t new_var() override { return d_solver.new_var(); }
+
   void add(int64_t lit, int64_t aig_id = 0) override
   {
     (void) aig_id;
@@ -167,7 +169,11 @@ PassSkeletonPreproc::apply(AssertionVector& assertions)
   {
     assert(bits.size() == 1);
     const auto& aig = bits[0];
-    node_map.emplace(aig.get_id(), n);
+    if (aig.is_true() || aig.is_false() || !cnf_encoder.is_encoded(aig))
+    {
+      continue;
+    }
+    node_map.emplace(cnf_encoder.cnf_lit(aig), n);
   }
 
   NodeManager& nm = d_env.nm();

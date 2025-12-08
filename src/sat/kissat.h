@@ -34,6 +34,7 @@ class Kissat : public SatSolver
   Kissat();
   ~Kissat();
 
+  int32_t new_var() override;
   void add(int32_t lit, int64_t cgroup_id = 0) override;
   void assume(int32_t lit) override;
   int32_t value(int32_t lit) override;
@@ -47,8 +48,9 @@ class Kissat : public SatSolver
  private:
   void init();
 
-  bool d_init      = false;
-  kissat *d_solver = nullptr;
+  int32_t d_max_var = 1;
+  bool d_init       = false;
+  kissat* d_solver  = nullptr;
   std::vector<int32_t> d_literals;
   std::vector<int32_t> d_assumptions;
 };

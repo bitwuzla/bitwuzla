@@ -44,6 +44,12 @@ Cadical::Cadical()
 
 Cadical::~Cadical() {}
 
+int32_t
+Cadical::new_var()
+{
+  return d_max_var++;
+}
+
 void
 Cadical::add(int32_t lit, int64_t cgroup_id)
 {

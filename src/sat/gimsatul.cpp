@@ -38,15 +38,17 @@ Gimsatul::~Gimsatul()
   }
 }
 
+int32_t
+Gimsatul::new_var()
+{
+  return d_max_var++;
+}
+
 void
 Gimsatul::add(int32_t lit, int64_t cgroup_id)
 {
+  assert(std::abs(lit) < d_max_var);
   (void) cgroup_id;
-  int32_t var = std::abs(lit);
-  if (var > d_max_var)
-  {
-    d_max_var = var;
-  }
   d_literals.push_back(lit);
   if (lit == 0)
   {
@@ -57,6 +59,7 @@ Gimsatul::add(int32_t lit, int64_t cgroup_id)
 void
 Gimsatul::assume(int32_t lit)
 {
+  assert(std::abs(lit) < d_max_var);
   d_assumptions.push_back(lit);
 }
 
@@ -94,15 +97,10 @@ Gimsatul::solve()
   }
   size_t size_before_assumptions = d_literals.size();
 
-  int32_t max_var     = d_max_var;
+  int32_t max_var     = d_max_var - 1;
   int32_t num_clauses = d_num_clauses;
   for (const auto a : d_assumptions)
   {
-    int32_t abs_a = std::abs(a);
-    if (abs_a > max_var)
-    {
-      max_var = abs_a;
-    }
     d_literals.push_back(a);
     d_literals.push_back(0);
     ++num_clauses;

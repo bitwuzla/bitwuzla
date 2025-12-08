@@ -146,14 +146,11 @@ class CnfPrinter : public bitblast::SatInterface
  public:
   CnfPrinter() = default;
 
+  int32_t new_var() override { return d_max_var++; }
+
   void add(int64_t lit, int64_t aig_id = 0) override
   {
     (void) aig_id;
-    int64_t abs_lit = std::abs(lit);
-    if (abs_lit > d_max_var)
-    {
-      d_max_var = abs_lit;
-    }
     d_literals.push_back(lit);
   }
 
@@ -204,7 +201,7 @@ class CnfPrinter : public bitblast::SatInterface
   }
 
  private:
-  int64_t d_max_var = 0;
+  int64_t d_max_var = 1;
   std::vector<int64_t> d_literals;
 };
 

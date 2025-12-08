@@ -30,6 +30,7 @@ class CryptoMiniSat : public SatSolver
  public:
   CryptoMiniSat(uint32_t nthreads);
 
+  int32_t new_var() override;
   void add(int32_t lit, int64_t cgroup_id = 0) override;
   void assume(int32_t lit) override;
   int32_t value(int32_t lit) override;
@@ -79,6 +80,7 @@ class CryptoMiniSat : public SatSolver
   std::vector<int8_t> d_assigned_map;
   /** A cache for the current number of variables in the solver. */
   uint32_t d_nvars = 0;
+  int32_t d_max_var = 1;
 };
 
 }  // namespace bzla::sat
