@@ -25,18 +25,18 @@ BvInverter::~BvInverter() {}
 
 /* -------------------------------------------------------------------------- */
 
-std::pair<Node, std::vector<std::pair<Node, Node>>>
+std::pair<Node, std::vector<Node>>
 BvInverter::invert(const Node& node, const Node& x)
 {
   Node res;
-  std::vector<std::pair<Node, Node>> conds;
+  std::vector<Node> conds;
   std::unordered_map<Node, Node> subst_cache;
 
   // compute path to x
   auto path = compute_path(node, x);
   assert(path.size() > 0);
 
-  /////
+  // ///
   //  {
   //   std::cout << "## path:" << std::endl;
   //   Node cur = node;
@@ -46,7 +46,7 @@ BvInverter::invert(const Node& node, const Node& x)
   //     cur = cur[path[cur]];
   //   }
   // }
-  /////
+  ///
 
   // compute inverse for top-level predicate
   Node cur       = node;
@@ -81,13 +81,14 @@ BvInverter::invert(const Node& node, const Node& x)
     {
       pred = d_nm.mk_node(Kind::NOT, {pred});
     }
-    conds.push_back({icond, pred});
+    conds.push_back(d_nm.mk_node(Kind::IMPLIES, {icond, pred}));
     t = _xx;
   }
   cur = next;
   while (cur != x)
   {
     idx      = path.at(cur);
+    next     = cur[idx];
     Node inv = inverse(cur, idx, t);
     if (inv.is_null())
     {
@@ -96,16 +97,21 @@ BvInverter::invert(const Node& node, const Node& x)
       Node pred  = d_nm.mk_node(
           Kind::EQUAL,
           {idx == 0 ? _xx : cur[1 - idx], idx == 0 ? cur[1 - idx] : _xx});
-      conds.push_back({icond, pred});
+      conds.push_back(d_nm.mk_node(Kind::IMPLIES, {icond, pred}));
       t = _xx;
     }
     else
     {
       t = inv;
     }
-    cur = cur[idx];
+    cur = next;
   }
 
+  subst_cache.clear();
+  for (auto& c : conds)
+  {
+    c = utils::substitute(d_nm, c, {{x, t}}, subst_cache);
+  }
   return {t, conds};
 }
 
@@ -367,6 +373,10 @@ BvInverter::inverse(const Node& node, size_t idx, const Node& t)
 {
   Kind kind = node.kind();
 
+  if (kind == Kind::VARIABLE || kind == Kind::CONSTANT)
+  {
+    return t;
+  }
   if (kind == Kind::NOT || kind == Kind::BV_NOT)
   {
     return d_nm.mk_node(kind, {t});
@@ -391,8 +401,7 @@ BvInverter::inverse(const Node& node, size_t idx, const Node& t)
   if (kind == Kind::BV_CONCAT)
   {
     // Compute inverse while disregarding that invertibility depend on s,
-    // i.e., instead of computing the invertibility condition for this
-    // case.
+    // i.e., instead of computing the invertibility condition for this case.
     // TODO evaluate if this improves performance
     uint64_t bw_x = node[idx].type().bv_size();
     uint64_t bw_t = t.type().bv_size();

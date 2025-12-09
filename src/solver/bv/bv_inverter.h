@@ -27,8 +27,7 @@ class BvInverter
   BvInverter(Env& env);
   ~BvInverter();
 
-  std::pair<Node, std::vector<std::pair<Node, Node>>> invert(const Node& node,
-                                                             const Node& x);
+  std::pair<Node, std::vector<Node>> invert(const Node& node, const Node& x);
 
   Node ic(const Node& node, const Node& t, size_t idx);
 

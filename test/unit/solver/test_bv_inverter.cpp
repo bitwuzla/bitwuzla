@@ -45,7 +45,9 @@ class TestBvInverter : public TestCommon
 
   void test_ic_ineq(Kind predicate, uint64_t bw, size_t idx);
 
-  void test_invert(const Node& node, const Node& x);
+  void check_conds(const std::vector<Node>& conds, const Node& x);
+
+  void test_invert(const Node& node, const Node& x, bool expect_conds);
 
   NodeManager d_nm;
   option::Options d_options;
@@ -222,16 +224,20 @@ TestBvInverter::test_ic_bool(Kind predicate,
 /* -------------------------------------------------------------------------- */
 
 void
-TestBvInverter::test_invert(const Node& node, const Node& x)
+TestBvInverter::test_invert(const Node& node, const Node& x, bool expect_conds)
 {
   auto [invert, conds] = d_inverter.invert(node, x);
+  ASSERT_FALSE(invert.is_null());
+  ASSERT_EQ(!conds.empty(), expect_conds);
   std::cout << "node: " << node << std::endl;
   std::cout << "invert: " << invert << std::endl;
   std::cout << "conditions:" << std::endl;
   for (const auto& c : conds)
   {
-    std::cout << "- " << c.first << " => " << c.second << std::endl;
+    std::cout << "- " << c << std::endl;
   }
+  check_conds(conds, x);
+
   // SolvingContext ctx(d_nm, d_options);
   // TODO add assertions to check
   // Result res = ctx.solve();
@@ -243,7 +249,7 @@ TestBvInverter::test_invert(const Node& node, const Node& x)
   //   std::cout << "conditions:" << std::endl;
   //   for (const auto& c : conds)
   //   {
-  //     std::cout << "  " << c.first << " => " << c.second << std::endl;
+  //     std::cout << "- " << c << std::endl;
   //   }
   //   std::cout << "assertions:" << std::endl;
   //   auto assertions = ctx.assertions();
@@ -275,6 +281,33 @@ TestBvInverter::test_invert(const Node& node, const Node& x)
   //   } while (!visit.empty());
   // }
   // ASSERT_EQ(res, Result::UNSAT);
+}
+
+void
+TestBvInverter::check_conds(const std::vector<Node>& conds, const Node& x)
+{
+  for (const auto& c : conds)
+  {
+    bool found_x = false;
+    std::vector<Node> visit{c};
+    std::unordered_set<Node> cache;
+    do
+    {
+      Node cur = visit.back();
+      visit.pop_back();
+      auto [it, inserted] = cache.insert(cur);
+      if (inserted)
+      {
+        if (cur == x)
+        {
+          found_x = true;
+          break;
+        }
+        visit.insert(visit.end(), cur.begin(), cur.end());
+      }
+    } while (!visit.empty());
+    ASSERT_FALSE(found_x);
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -465,28 +498,44 @@ TEST_F(TestBvInverter, ineq)
   }
 }
 
-TEST_F(TestBvInverter, invert0)
+TEST_F(TestBvInverter, invert00)
 {
   Type b = d_nm.mk_bv_type(4);
   Node x = d_nm.mk_const(b, "x");
   Node t = d_nm.mk_const(b, "t");
-
-  Node node = d_nm.mk_node(Kind::BV_UGT, {x, t});
-
-  test_invert(node, x);
+  Node node = d_nm.mk_node(Kind::EQUAL, {x, t});
+  test_invert(node, x, false);
 }
 
-TEST_F(TestBvInverter, invert1)
+TEST_F(TestBvInverter, invert01)
+{
+  Type b    = d_nm.mk_bv_type(4);
+  Node x    = d_nm.mk_const(b, "x");
+  Node t    = d_nm.mk_const(b, "t");
+  Node node = d_nm.mk_node(Kind::BV_UGT, {x, t});
+  test_invert(node, x, true);
+}
+
+TEST_F(TestBvInverter, invert10)
 {
   Type b  = d_nm.mk_bv_type(4);
   Node x  = d_nm.mk_const(b, "x");
   Node t  = d_nm.mk_const(b, "t");
-  Node s2 = d_nm.mk_const(b, "s2");
+  Node s1   = d_nm.mk_const(b, "s1");
+  Node add  = d_nm.mk_node(Kind::BV_ADD, {s1, x});
+  Node node = d_nm.mk_node(Kind::EQUAL, {add, t});
+  test_invert(node, x, false);
+}
 
-  Node add  = d_nm.mk_node(Kind::BV_ADD, {s2, x});
+TEST_F(TestBvInverter, invert11)
+{
+  Type b    = d_nm.mk_bv_type(4);
+  Node x    = d_nm.mk_const(b, "x");
+  Node t    = d_nm.mk_const(b, "t");
+  Node s1   = d_nm.mk_const(b, "s1");
+  Node add  = d_nm.mk_node(Kind::BV_ADD, {s1, x});
   Node node = d_nm.mk_node(Kind::BV_UGT, {add, t});
-
-  test_invert(node, x);
+  test_invert(node, x, true);
 }
 
 TEST_F(TestBvInverter, invert2)
@@ -499,7 +548,7 @@ TEST_F(TestBvInverter, invert2)
   Node add  = d_nm.mk_node(Kind::BV_ADD, {s1, x});
   Node node = d_nm.mk_node(Kind::EQUAL, {add, t});
 
-  test_invert(node, x);
+  test_invert(node, x, false);
 }
 
 TEST_F(TestBvInverter, invert3)
@@ -514,7 +563,7 @@ TEST_F(TestBvInverter, invert3)
   Node add2 = d_nm.mk_node(Kind::BV_ADD, {add1, s2});
   Node node = d_nm.mk_node(Kind::EQUAL, {add2, t});
 
-  test_invert(node, x);
+  test_invert(node, x, false);
 }
 
 TEST_F(TestBvInverter, invert4)
@@ -529,7 +578,7 @@ TEST_F(TestBvInverter, invert4)
   Node mul  = d_nm.mk_node(Kind::BV_MUL, {add, s1});
   Node node = d_nm.mk_node(Kind::BV_UGT, {mul, t});
 
-  test_invert(node, x);
+  test_invert(node, x, true);
 }
 
 TEST_F(TestBvInverter, invert5)
@@ -546,6 +595,57 @@ TEST_F(TestBvInverter, invert5)
   Node shl  = d_nm.mk_node(Kind::BV_SHL, {mul, s1});
   Node node = d_nm.mk_node(Kind::BV_UGT, {shl, t});
 
-  test_invert(node, x);
+  test_invert(node, x, true);
+}
+
+TEST_F(TestBvInverter, invert6)
+{
+  Type b  = d_nm.mk_bv_type(4);
+  Node x  = d_nm.mk_const(b, "x");
+  Node t  = d_nm.mk_const(b, "t");
+  Node s1 = d_nm.mk_const(b, "s1");
+  Node s2 = d_nm.mk_const(b, "s2");
+  Node s3 = d_nm.mk_const(b, "s3");
+
+  Node add1 = d_nm.mk_node(Kind::BV_ADD, {s2, x});
+  Node add2 = d_nm.mk_node(Kind::BV_ADD, {add1, s1});
+  Node shl  = d_nm.mk_node(Kind::BV_MUL, {add2, s1});
+  Node node = d_nm.mk_node(Kind::EQUAL, {shl, t});
+
+  test_invert(node, x, true);
+}
+
+TEST_F(TestBvInverter, invert7)
+{
+  Type b  = d_nm.mk_bv_type(4);
+  Node x  = d_nm.mk_const(b, "x");
+  Node t  = d_nm.mk_const(b, "t");
+  Node s1 = d_nm.mk_const(b, "s1");
+  Node s2 = d_nm.mk_const(b, "s2");
+  Node s3 = d_nm.mk_const(b, "s3");
+
+  Node add  = d_nm.mk_node(Kind::BV_ADD, {s2, x});
+  Node mul  = d_nm.mk_node(Kind::BV_MUL, {add, s1});
+  Node shl  = d_nm.mk_node(Kind::BV_MUL, {mul, s1});
+  Node node = d_nm.mk_node(Kind::EQUAL, {shl, t});
+
+  test_invert(node, x, true);
+}
+
+TEST_F(TestBvInverter, invert8)
+{
+  Type b  = d_nm.mk_bv_type(4);
+  Node x  = d_nm.mk_const(b, "x");
+  Node t  = d_nm.mk_const(b, "t");
+  Node s1 = d_nm.mk_const(b, "s1");
+  Node s2 = d_nm.mk_const(b, "s2");
+  Node s3 = d_nm.mk_const(b, "s3");
+
+  Node add  = d_nm.mk_node(Kind::BV_ADD, {s2, x});
+  Node mul  = d_nm.mk_node(Kind::BV_MUL, {add, x});
+  Node shl  = d_nm.mk_node(Kind::BV_MUL, {mul, s1});
+  Node node = d_nm.mk_node(Kind::EQUAL, {shl, t});
+
+  test_invert(node, x, true);
 }
 }  // namespace bzla::test
