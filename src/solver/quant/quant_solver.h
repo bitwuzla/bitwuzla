@@ -13,9 +13,10 @@
 
 #include <memory>
 
-#include "backtrack/unordered_set.h"
 #include "backtrack/unordered_map.h"
+#include "backtrack/unordered_set.h"
 #include "backtrack/vector.h"
+#include "solver/bv/bv_inverter.h"
 #include "solver/solver.h"
 #include "util/statistics.h"
 
@@ -79,6 +80,8 @@ class QuantSolver : public Solver
       const Node& term,
       const std::unordered_map<Node, std::vector<Node>>& ground_terms);
 
+  bv::BvInverter d_bv_inverter;
+
   backtrack::vector<Node> d_quantifiers;
   backtrack::vector<Node> d_assertions;
   backtrack::unordered_set<Node> d_process_cache;
@@ -96,6 +99,8 @@ class QuantSolver : public Solver
   std::unique_ptr<SolvingContext> d_mbqi_solver;
   std::unordered_map<Node, Node> d_mbqi_inst;
   backtrack::unordered_set<Node> d_lemma_cache;
+
+  backtrack::unordered_set<Node> d_inv_cache;
 
   bool d_added_lemma;
 

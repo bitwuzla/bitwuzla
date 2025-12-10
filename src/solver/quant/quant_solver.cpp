@@ -43,6 +43,7 @@ QuantSolver::is_theory_leaf(const Node& term)
 
 QuantSolver::QuantSolver(Env& env, SolverState& state)
     : Solver(env, state),
+      d_bv_inverter(env),
       d_quantifiers(state.backtrack_mgr()),
       d_assertions(state.backtrack_mgr()),
       d_process_cache(state.backtrack_mgr()),
@@ -50,6 +51,7 @@ QuantSolver::QuantSolver(Env& env, SolverState& state)
       d_ground_terms(state.backtrack_mgr()),
       d_skolemization_lemmas(state.backtrack_mgr()),
       d_lemma_cache(state.backtrack_mgr()),
+      d_inv_cache(state.backtrack_mgr()),
       d_stats(env.statistics(), "solver::quant::")
 {
 }
@@ -520,18 +522,44 @@ QuantSolver::mbqi_lemma(
 {
   assert(q.kind() == Kind::FORALL);
 
+  NodeManager& nm = d_env.nm();
   std::unordered_map<Node, Node> map;
+  Node body = q;
+  while (body.kind() == Kind::FORALL)
+  {
+    body = body[1];
+  }
+  body = body.kind() == Kind::NOT ? body[0] : nm.mk_node(Kind::NOT, {body});
+  std::vector<Node> conditions;
   Node cur = q;
   while (cur.kind() == Kind::FORALL)
   {
     const Node& ic = inst_const(cur);
     Node value     = symbolic_term(model_values.at(ic), ground_terms);
+    if (value.is_value() && value.type().is_bv() && !body.is_value())
+    {
+      if (d_inv_cache.insert(cur[0]).second)
+      {
+        auto [invert, conds] = d_bv_inverter.invert(body, cur[0]);
+        if (!invert.is_null())
+        {
+          Node a = nm.mk_const(cur[0].type());
+          conditions.insert(conditions.end(), conds.begin(), conds.end());
+          conditions.push_back(nm.mk_node(Kind::EQUAL, {a, invert}));
+          value = a;
+        }
+      }
+    }
     map.emplace(cur[0], value);
     assert(!ic.is_null());
     cur = cur[1];
   }
 
-  NodeManager& nm = d_env.nm();
+  if (!conditions.empty())
+  {
+    conditions.push_back(cur);
+    cur = utils::mk_nary(nm, Kind::AND, conditions);
+  }
   Node inst       = substitute(cur, map);
   return nm.mk_node(Kind::IMPLIES, {q, inst});
 }
