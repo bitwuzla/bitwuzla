@@ -498,7 +498,7 @@ TEST_F(TestBvInverter, ineq)
   }
 }
 
-TEST_F(TestBvInverter, invert00)
+TEST_F(TestBvInverter, invert0_0)
 {
   Type b = d_nm.mk_bv_type(4);
   Node x = d_nm.mk_const(b, "x");
@@ -507,7 +507,7 @@ TEST_F(TestBvInverter, invert00)
   test_invert(node, x, false);
 }
 
-TEST_F(TestBvInverter, invert01)
+TEST_F(TestBvInverter, invert0_1)
 {
   Type b    = d_nm.mk_bv_type(4);
   Node x    = d_nm.mk_const(b, "x");
@@ -516,7 +516,7 @@ TEST_F(TestBvInverter, invert01)
   test_invert(node, x, true);
 }
 
-TEST_F(TestBvInverter, invert10)
+TEST_F(TestBvInverter, invert1_0)
 {
   Type b  = d_nm.mk_bv_type(4);
   Node x  = d_nm.mk_const(b, "x");
@@ -527,7 +527,7 @@ TEST_F(TestBvInverter, invert10)
   test_invert(node, x, false);
 }
 
-TEST_F(TestBvInverter, invert11)
+TEST_F(TestBvInverter, invert1_1)
 {
   Type b    = d_nm.mk_bv_type(4);
   Node x    = d_nm.mk_const(b, "x");
@@ -648,4 +648,53 @@ TEST_F(TestBvInverter, invert8)
 
   test_invert(node, x, true);
 }
+
+TEST_F(TestBvInverter, invert9)
+{
+  // (and
+  //   (= #b00000000000000000000000000000000
+  //     (concat #b000000000000000000000000000000 m))
+  //   (and x (not (bvslt #b00000000000000000000000000000000 t))))
+  Node zero = d_nm.mk_value(BitVector::mk_zero(4));
+  Type b    = d_nm.mk_bv_type(4);
+  Node m    = d_nm.mk_const(b, "m");
+  Node x    = d_nm.mk_const(d_nm.mk_bool_type(), "x");
+  Node t    = d_nm.mk_const(b, "t");
+
+  Node slt    = d_nm.mk_node(Kind::BV_SLT, {zero, t});
+  Node ad     = d_nm.mk_node(Kind::AND, {x, d_nm.mk_node(Kind::NOT, {slt})});
+  Node concat = d_nm.mk_node(Kind::BV_CONCAT, {zero, m});
+  Node eq =
+      d_nm.mk_node(Kind::EQUAL, {d_nm.mk_value(BitVector::mk_zero(8)), concat});
+  Node node = d_nm.mk_node(Kind::AND, {eq, ad});
+
+  // test_invert(node, x, true);
+  test_invert(node, t, true);
+}
+
+TEST_F(TestBvInverter, invert10)
+{
+  // (and
+  //   (= #b00000000000000000000000000000000
+  //     (concat #b000000000000000000000000000000 m))
+  //   (not (and x (not (bvslt #b00000000000000000000000000000000 t))))
+  Node zero = d_nm.mk_value(BitVector::mk_zero(4));
+  Type b    = d_nm.mk_bv_type(4);
+  Node m    = d_nm.mk_const(b, "m");
+  Node x    = d_nm.mk_const(d_nm.mk_bool_type(), "x");
+  Node t    = d_nm.mk_const(b, "t");
+
+  Node slt = d_nm.mk_node(Kind::BV_SLT, {zero, t});
+  Node ad  = d_nm.mk_node(
+      Kind::NOT,
+      {d_nm.mk_node(Kind::AND, {x, d_nm.mk_node(Kind::NOT, {slt})})});
+  Node concat = d_nm.mk_node(Kind::BV_CONCAT, {zero, m});
+  Node eq =
+      d_nm.mk_node(Kind::EQUAL, {d_nm.mk_value(BitVector::mk_zero(8)), concat});
+  Node node = d_nm.mk_node(Kind::AND, {eq, ad});
+
+  // test_invert(node, x, true);
+  test_invert(node, t, true);
+}
+
 }  // namespace bzla::test

@@ -31,12 +31,6 @@ class BvInverter
 
   Node ic(const Node& node, const Node& t, size_t idx);
 
-  Node ic(Kind predicate,
-          const Node& node,
-          const Node& t,
-          size_t idx,
-          size_t idx_x);
-
  private:
   bool is_invertible(const Node& node) const;
 
@@ -54,6 +48,12 @@ class BvInverter
                            size_t idx,
                            const Node& t,
                            const std::unordered_map<Node, size_t>& path);
+  Node ic(Kind predicate,
+          const Node& node,
+          const Node& t,
+          size_t idx,
+          size_t idx_x);
+
   /**
    * Get invertibility condition (IC) for a predicate w.r.t. an AND node.
    *
