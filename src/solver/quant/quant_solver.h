@@ -105,6 +105,9 @@ class QuantSolver : public Solver
 
   bool d_added_lemma;
 
+  /** Cache configuration of option QUANT_IC. */
+  bool d_quant_ic;
+
   struct Statistics
   {
     Statistics(util::Statistics& stats, const std::string& prefix);

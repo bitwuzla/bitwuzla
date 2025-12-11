@@ -76,6 +76,9 @@ enum class Option
   INTERPOLANTS_STATS,        // bool
   INTERPOLANTS_PRINT_STATS,  // bool
 
+  // Quantifiers
+  QUANT_IC,  // bool
+
   // Preprocessing options for enabling/disabling passes
   PREPROCESS,           // bool
   PP_ELIM_BV_UDIV,      // bool
@@ -615,6 +618,9 @@ class Options
   OptionBool interpolants_simp;
   OptionBool interpolants_stats;
   OptionBool interpolants_print_stats;
+
+  // Quantifiers
+  OptionBool quant_ic;
 
   // Preprocessing
   OptionBool preprocess;

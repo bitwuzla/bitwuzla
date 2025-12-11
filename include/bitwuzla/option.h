@@ -776,6 +776,18 @@ enum ENUM(Option)
    * @warning This is an expert option to configure interpolant generation.
    */
   EVALUE(INTERPOLANTS_PRINT_STATS),
+
+  /*!
+   * **Quantifiers: Use invertibility-condition-based MBQI strategy.**
+   *
+   * *Values:*
+   *  - **true**: enable
+   *  - **false**: disable [**default**]
+   *
+   * @warning This is an expert option to configure the quantifier engine.
+   */
+  EVALUE(QUANT_IC),
+
   /*!
    * **Preprocessing.**
    *

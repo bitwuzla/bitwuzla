@@ -53,6 +53,7 @@ QuantSolver::QuantSolver(Env& env, SolverState& state)
       d_skolemization_lemmas(state.backtrack_mgr()),
       d_lemma_cache(state.backtrack_mgr()),
       d_inv_cache(state.backtrack_mgr()),
+      d_quant_ic(env.options().quant_ic()),
       d_stats(env.statistics(), "solver::quant::")
 {
 }
@@ -529,12 +530,18 @@ QuantSolver::mbqi_lemma(
 
   Node body = q;
   uint64_t nquants = 1;
-  while (body.kind() == Kind::FORALL)
+  if (d_quant_ic)
   {
-    body = body[1];
-    nquants += 1;
+    // Determine body of quantified formula for BvInverter queries.
+    while (body.kind() == Kind::FORALL)
+    {
+      body = body[1];
+      nquants += 1;
+    }
+    // We are looking for instantions that falsifies the quantifier, thus
+    // the literal for the inverter query must be negated.
+    body = body.kind() == Kind::NOT ? body[0] : nm.mk_node(Kind::NOT, {body});
   }
-  body = body.kind() == Kind::NOT ? body[0] : nm.mk_node(Kind::NOT, {body});
 
   Node cur = q;
   std::vector<Node> conditions;
@@ -542,25 +549,31 @@ QuantSolver::mbqi_lemma(
   {
     const Node& ic = inst_const(cur);
     Node value     = symbolic_term(model_values.at(ic), ground_terms);
-    if (value.is_value() && value.type().is_bv() && !body.is_value())
+    if (d_quant_ic)
     {
-      if (d_inv_cache.insert(cur[0]).second)
+      // Only try to compute IC-based lemma for bit-vector variables, and only
+      // if default strategy does not find a symbolic instantiation. Also, only
+      // generate one per quantified variable.
+      if (value.is_value() && value.type().is_bv() && !body.is_value())
       {
-        auto [invert, conds] = d_bv_inverter.invert(body, cur[0]);
-        if (!invert.is_null())
+        if (d_inv_cache.insert(cur[0]).second)
         {
-          conditions.insert(conditions.end(), conds.begin(), conds.end());
-          if (nquants == 1 || invert.is_const())
+          auto [invert, conds] = d_bv_inverter.invert(body, cur[0]);
+          if (!invert.is_null())
           {
-            value = invert;
+            conditions.insert(conditions.end(), conds.begin(), conds.end());
+            if (nquants == 1 || invert.is_const())
+            {
+              value = invert;
+            }
+            else
+            {
+              Node a = nm.mk_const(cur[0].type());
+              conditions.push_back(nm.mk_node(Kind::EQUAL, {a, invert}));
+              value = a;
+            }
+            lemma_kind = QuantSolver::LemmaKind::MBQI_INST_INV;
           }
-          else
-          {
-            Node a = nm.mk_const(cur[0].type());
-            conditions.push_back(nm.mk_node(Kind::EQUAL, {a, invert}));
-            value = a;
-          }
-          lemma_kind = QuantSolver::LemmaKind::MBQI_INST_INV;
         }
       }
     }

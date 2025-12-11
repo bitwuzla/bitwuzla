@@ -360,6 +360,7 @@ Options::Options()
                 "concats that represent sign_extend nodes for "
                 "propagation-based local search engine",
                 "prop-sext"),
+      // Abstraction module
       abstraction(this,
                   Option::ABSTRACTION,
                   true,
@@ -473,6 +474,12 @@ Options::Options()
                                false,
                                "print interpolant statistics to stdout",
                                "interpolants-print-stats"),
+      // Quantifiers
+      quant_ic(this,
+               Option::QUANT_IC,
+               false,
+               "use invertibility-condition-based MBQI strategy",
+               "quant-ic"),
       // Preprocessing
       preprocess(
           this, Option::PREPROCESS, true, "enable preprocessing", "preprocess"),
@@ -994,6 +1001,8 @@ Options::data(Option opt)
     case Option::INTERPOLANTS_SIMP: return &interpolants_simp;
     case Option::INTERPOLANTS_STATS: return &interpolants_stats;
     case Option::INTERPOLANTS_PRINT_STATS: return &interpolants_print_stats;
+
+    case Option::QUANT_IC: return &quant_ic;
 
     case Option::PREPROCESS: return &preprocess;
     case Option::PP_ELIM_BV_UDIV: return &pp_elim_bv_udiv;
