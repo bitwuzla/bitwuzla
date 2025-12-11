@@ -26,6 +26,7 @@ operator<<(std::ostream& os, QuantSolver::LemmaKind kind)
   switch (kind)
   {
     case QuantSolver::LemmaKind::MBQI_INST: os << "MBQI_INST"; break;
+    case QuantSolver::LemmaKind::MBQI_INST_INV: os << "MBQI_INST_INV"; break;
     case QuantSolver::LemmaKind::SKOLEMIZATION: os << "SKOLEMIZATION"; break;
   }
   return os;
@@ -468,7 +469,7 @@ QuantSolver::mbqi_check(const std::vector<Node>& to_check)
     d_selected_terms.clear();
     for (const auto& q : ce_q)
     {
-      lemma(mbqi_lemma(q, ic_values, ground_terms), LemmaKind::MBQI_INST);
+      mbqi_lemma(q, ic_values, ground_terms);
     }
 
     // If we didn't make any progress with new lemmas, increment term counters
@@ -514,7 +515,7 @@ QuantSolver::mbqi_inst(const Node& q)
   return iit->second;
 }
 
-Node
+void
 QuantSolver::mbqi_lemma(
     const Node& q,
     const std::unordered_map<Node, Node>& model_values,
@@ -524,14 +525,19 @@ QuantSolver::mbqi_lemma(
 
   NodeManager& nm = d_env.nm();
   std::unordered_map<Node, Node> map;
+  QuantSolver::LemmaKind lemma_kind = QuantSolver::LemmaKind::MBQI_INST;
+
   Node body = q;
+  uint64_t nquants = 1;
   while (body.kind() == Kind::FORALL)
   {
     body = body[1];
+    nquants += 1;
   }
   body = body.kind() == Kind::NOT ? body[0] : nm.mk_node(Kind::NOT, {body});
-  std::vector<Node> conditions;
+
   Node cur = q;
+  std::vector<Node> conditions;
   while (cur.kind() == Kind::FORALL)
   {
     const Node& ic = inst_const(cur);
@@ -543,10 +549,18 @@ QuantSolver::mbqi_lemma(
         auto [invert, conds] = d_bv_inverter.invert(body, cur[0]);
         if (!invert.is_null())
         {
-          Node a = nm.mk_const(cur[0].type());
           conditions.insert(conditions.end(), conds.begin(), conds.end());
-          conditions.push_back(nm.mk_node(Kind::EQUAL, {a, invert}));
-          value = a;
+          if (nquants == 1 || invert.is_const())
+          {
+            value = invert;
+          }
+          else
+          {
+            Node a = nm.mk_const(cur[0].type());
+            conditions.push_back(nm.mk_node(Kind::EQUAL, {a, invert}));
+            value = a;
+          }
+          lemma_kind = QuantSolver::LemmaKind::MBQI_INST_INV;
         }
       }
     }
@@ -555,13 +569,16 @@ QuantSolver::mbqi_lemma(
     cur = cur[1];
   }
 
+  Node cond = nm.mk_value(true);
   if (!conditions.empty())
   {
-    conditions.push_back(cur);
-    cur = utils::mk_nary(nm, Kind::AND, conditions);
+    cond = utils::mk_nary(nm, Kind::AND, conditions);
+    cond = substitute(cond, map);
   }
   Node inst       = substitute(cur, map);
-  return nm.mk_node(Kind::IMPLIES, {q, inst});
+  Node lem =
+      nm.mk_node(Kind::AND, {cond, nm.mk_node(Kind::IMPLIES, {q, inst})});
+  lemma(lem, lemma_kind);
 }
 
 Node

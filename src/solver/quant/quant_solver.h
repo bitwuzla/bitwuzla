@@ -32,6 +32,7 @@ class QuantSolver : public Solver
   enum class LemmaKind
   {
     MBQI_INST,
+    MBQI_INST_INV,
     SKOLEMIZATION,
   };
 
@@ -72,7 +73,7 @@ class QuantSolver : public Solver
 
   bool mbqi_check(const std::vector<Node>& to_check);
   const Node& mbqi_inst(const Node& q);
-  Node mbqi_lemma(
+  void mbqi_lemma(
       const Node& q,
       const std::unordered_map<Node, Node>& model_values,
       const std::unordered_map<Node, std::vector<Node>>& ground_terms);
