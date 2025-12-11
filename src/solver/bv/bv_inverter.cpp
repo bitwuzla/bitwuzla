@@ -102,9 +102,11 @@ BvInverter::invert(const Node& node, const Node& x)
     {
       Node icond = ic(Kind::EQUAL, cur, t, 0, idx);
       Node _xx   = d_nm.mk_const(next.type());
-      Node pred  = d_nm.mk_node(
-          Kind::EQUAL,
-          {idx == 0 ? _xx : cur[1 - idx], idx == 0 ? cur[1 - idx] : _xx});
+      Node pred  = d_nm.mk_node(Kind::EQUAL,
+                                {d_nm.mk_node(cur.kind(),
+                                              {idx == 0 ? _xx : cur[1 - idx],
+                                              idx == 0 ? cur[1 - idx] : _xx}),
+                                 t});
       conds.push_back(d_nm.mk_node(Kind::IMPLIES, {icond, pred}));
       t = _xx;
     }
@@ -352,21 +354,21 @@ BvInverter::inverse(const Node& node, size_t idx, const Node& t)
       return d_nm.mk_node(kind, {d_nm.mk_value(s_val.bvmodinv()), t});
     }
   }
-  if (kind == Kind::BV_CONCAT)
-  {
-    // Compute inverse while disregarding that invertibility depend on s,
-    // i.e., instead of computing the invertibility condition for this case.
-    // TODO evaluate if this improves performance
-    uint64_t bw_x = node[idx].type().bv_size();
-    uint64_t bw_t = t.type().bv_size();
-    if (idx == 0)
-    {
-      // t_x = t[bw(t) - 1: bw(t) - bw(x)]
-      return d_nm.mk_node(Kind::BV_EXTRACT, {t}, {bw_t - 1, bw_t - bw_x});
-    }
-    // t_x = t[bw(x) - 1: 0]
-    return d_nm.mk_node(Kind::BV_EXTRACT, {t}, {bw_x - 1, 0});
-  }
+  // if (kind == Kind::BV_CONCAT)
+  // {
+  //   // Compute inverse while disregarding that invertibility depend on s,
+  //   // i.e., instead of computing the invertibility condition for this case.
+  //   // TODO evaluate if this improves performance
+  //   uint64_t bw_x = node[idx].type().bv_size();
+  //   uint64_t bw_t = t.type().bv_size();
+  //   if (idx == 0)
+  //   {
+  //     // t_x = t[bw(t) - 1: bw(t) - bw(x)]
+  //     return d_nm.mk_node(Kind::BV_EXTRACT, {t}, {bw_t - 1, bw_t - bw_x});
+  //   }
+  //   // t_x = t[bw(x) - 1: 0]
+  //   return d_nm.mk_node(Kind::BV_EXTRACT, {t}, {bw_x - 1, 0});
+  // }
   return Node();
 }
 
