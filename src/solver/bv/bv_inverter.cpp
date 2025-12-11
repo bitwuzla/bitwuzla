@@ -75,7 +75,7 @@ BvInverter::invert(const Node& node, const Node& x)
       size_t idx_x = idx;
       auto it      = path.find(cur[idx]);
       next         = cur[idx];
-      if (it != path.end())
+      if (next != x && it != path.end())
       {
         idx_x = it->second;
         next  = cur[idx][idx_x];
