@@ -1568,6 +1568,8 @@ tests_smt2 = [
   ['solver/quant/quant_regr7.smt2'],
   ['solver/quant/quant_regr8.smt2'],
   ['solver/quant/quant_regr9.smt2'],
+  ['solver/quant/red-370_oggenc.smt2', ['--quant-ic']],
+  ['solver/quant/red-ARI118-1.smt2', ['--quant-ic']],
   ['solver/quant/regrnormquant.smt2'],
   ['solver/quant/regsmtparselet.smt2'],
   #['solver/murxla-fb7c754b7b2abd73.min.smt2'], # TODO: disabled because of equality over constant arrays
