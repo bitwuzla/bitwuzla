@@ -262,7 +262,7 @@ Smt2Printer::print_formula(std::ostream& os,
   for (const Node& node : defs)
   {
     std::string symbol = "@def" + std::to_string(ndefs);
-    os << "(define-fun " << symbol << " () " << node.type() << " ";
+    os << "(define-const " << symbol << " " << node.type() << " ";
     node::unordered_node_ref_map<std::string> let_map;
     letify(os, node, def_map, let_map, 0, no_lets);
     os << ")" << std::endl;
