@@ -276,6 +276,7 @@ Parser::parse_command(bool parse_only)
     case Token::DECLARE_CONST: res = parse_command_declare_fun(true); break;
     case Token::DECLARE_SORT: res = parse_command_declare_sort(); break;
     case Token::DECLARE_FUN: res = parse_command_declare_fun(); break;
+    case Token::DEFINE_CONST: res = parse_command_define_const(); break;
     case Token::DEFINE_FUN: res = parse_command_define_fun(); break;
     case Token::DEFINE_SORT: res = parse_command_define_sort(); break;
     case Token::ECHO: res = parse_command_echo(); break;
@@ -511,6 +512,57 @@ Parser::parse_command_declare_sort()
     return false;
   }
   d_decl_sorts.push_back(symbol);
+  print_success();
+  return true;
+}
+
+bool
+Parser::parse_command_define_const()
+{
+  init_logic();
+  if (!parse_symbol("after 'define-const'"))
+  {
+    return false;
+  }
+  assert(nargs() == 1);
+  if (peek_node_arg()->d_coo.line)
+  {
+    return error_arg("symbol '" + peek_node_arg()->d_symbol
+                     + "' already defined at line "
+                     + std::to_string(peek_node_arg()->d_coo.line) + " column "
+                     + std::to_string(peek_node_arg()->d_coo.col));
+  }
+  SymbolTable::Node* symbol = pop_node_arg(true);
+
+  bitwuzla::Sort sort;
+  if (!parse_sort(sort))
+  {
+    return false;
+  }
+
+  if (!parse_term())
+  {
+    return false;
+  }
+
+  bitwuzla::Term body = pop_term_arg();
+  if (body.sort() != sort)
+  {
+    return error_arg("expected term of sort '" + sort.str() + "' but got '"
+                     + body.sort().str());
+  }
+
+  symbol->d_term = body;
+
+  for (size_t i = 0, n = nargs(); i < n; ++i)
+  {
+    d_table.remove(pop_node_arg());
+  }
+
+  if (!parse_rpar())
+  {
+    return false;
+  }
   print_success();
   return true;
 }

@@ -2,6 +2,8 @@
 
 This file collects a summary of important and/or user-visible changes.
 
+- SMT2 parser: Add support for SMT-LIB 2.7 command `define-const`.
+
 - MPFR >= 4.2.1 is now a required dependency. As with GMP, it is required that
   shared/static MPFR libraries are installed on the system.
 

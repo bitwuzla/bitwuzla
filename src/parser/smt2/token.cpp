@@ -80,6 +80,7 @@ to_string(bzla::parser::smt2::Token token)
     case Token::DECLARE_CONST: return "declare-const";
     case Token::DECLARE_FUN: return "declare-fun";
     case Token::DECLARE_SORT: return "declare-sort";
+    case Token::DEFINE_CONST: return "define-const";
     case Token::DEFINE_FUN: return "define-fun";
     case Token::DEFINE_SORT: return "define-sort";
     case Token::ECHO: return "echo";

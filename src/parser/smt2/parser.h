@@ -177,6 +177,11 @@ class Parser : public bzla::parser::Parser
    */
   bool parse_command_declare_fun(bool is_const = false);
   /**
+   * Parse define-const command.
+   * @return True if command was parsed without an error.
+   */
+  bool parse_command_define_const();
+  /**
    * Parse define-fun command.
    * @return True if command was parsed without an error.
    */

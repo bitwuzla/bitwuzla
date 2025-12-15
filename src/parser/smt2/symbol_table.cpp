@@ -221,6 +221,7 @@ SymbolTable::init_commands()
   insert(Token::DECLARE_CONST);
   insert(Token::DECLARE_FUN);
   insert(Token::DECLARE_SORT);
+  insert(Token::DEFINE_CONST);
   insert(Token::DEFINE_FUN);
   insert(Token::DEFINE_SORT);
   insert(Token::ECHO);
