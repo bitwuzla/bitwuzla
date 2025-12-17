@@ -184,7 +184,10 @@ BvBitblastSolver::solve()
       assert(!bits.empty());
       d_cnf_encoder->encode(bits[0], true);
     }
-    // d_assertions.clear();
+    if (!d_produce_interpolants)
+    {
+      d_assertions.clear();
+    }
   }
 
   for (const Node& assumption : d_assumptions)
