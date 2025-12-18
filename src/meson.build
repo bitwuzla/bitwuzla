@@ -42,12 +42,21 @@ endif
 
 gimsatul_dep = dependency('gimsatul', required: get_option('gimsatul'))
 
+# AE_Kissat does not provide pkg-config to find dependency
+ae_kissat_dep = cpp_compiler.find_library('ae_kissat2025_mab',
+                                           has_headers: 'kissat.h',
+                                           static: build_static,
+                                           required: false)
+if not ae_kissat_dep.found()
+  ae_kissat_dep = dependency('ae_kissat2025_mab', required: get_option('ae_kissat'))
+endif
+
 # Using system include type suppresses compile warnings originating from the
 # symfpu headers
 symfpu_dep = dependency('symfpu', include_type: 'system', required: true)
 
 dependencies = [
-  gmp_dep, mpfr_dep, symfpu_dep, cadical_dep, cms_dep, kissat_dep, gimsatul_dep]
+  gmp_dep, mpfr_dep, symfpu_dep, cadical_dep, cms_dep, kissat_dep, gimsatul_dep, ae_kissat_dep]
 
 cpp_args = []
 if cms_dep.found()
@@ -58,6 +67,9 @@ if kissat_dep.found()
 endif
 if gimsatul_dep.found()
   cpp_args += ['-DBZLA_USE_GIMSATUL']
+endif
+if ae_kissat_dep.found()
+  cpp_args += ['-DBZLA_USE_AE_KISSAT']
 endif
 if mpfr_dep.found()
   cpp_args += ['-DMPFR_USE_C99_FEATURE=1']
@@ -97,6 +109,9 @@ if cms_dep.found()
 endif
 if kissat_dep.found()
   license_text += '\n\n  Kissat\n  https://github.com/arminbiere/kissat'
+endif
+if ae_kissat_dep.found()
+  license_text += '\n\n  AE_Kissat2025_MAB\n  https://github.com/arminbiere/kissat'
 endif
 license_text += '\n\n  SymFPU\n  https://github.com/martin-cs/symfpu'
 license_text = license_text.replace('\n', '\\n').replace('"', '\\"')
@@ -231,6 +246,7 @@ sources = files([
   'sat/cryptominisat.cpp',
   'sat/gimsatul.cpp',
   'sat/kissat.cpp',
+  'sat/ae_kissat.cpp',
   'sat/sat_solver_factory.cpp',
   'solver/array/array_solver.cpp',
   'solver/abstract/abstraction_lemmas.cpp',
