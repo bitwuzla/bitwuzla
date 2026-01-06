@@ -4,10 +4,13 @@ cpp = 'x86_64-w64-mingw32-g++'
 ar = 'x86_64-w64-mingw32-ar'
 strip = 'x86_64-w64-mingw32-strip'
 exe_wrapper = 'wine'
-pkg-config = 'x86_64-w64-mingw32-pkg-config'
+pkg-config = 'pkg-config'
 
 [host_machine]
 system = 'windows'
 cpu_family = 'x86_64'
 cpu = 'x86_64'
 endian = 'little'
+
+[properties]
+pkg_config_libdir = '/usr/x86_64-w64-mingw32/lib/pkgconfig:/usr/x86_64-w64-mingw32/share/pkgconfig'

@@ -4,9 +4,13 @@ cpp = 'aarch64-linux-gnu-g++'
 ar = 'aarch64-linux-gnu-ar'
 strip = 'aarch64-linux-gnu-strip'
 exe_wrapper = 'qemu-aarch64'
+pkg-config = 'pkg-config'
 
 [host_machine]
 system = 'linux'
 cpu_family = 'aarch64'
 cpu = 'aarch64'
 endian = 'little'
+
+[properties]
+pkg_config_libdir = '/usr/aarch64-linux-gnu-gcc/lib/pkgconfig:/usr/aarch64-linux-gnu-gcc/share/pkgconfig'
