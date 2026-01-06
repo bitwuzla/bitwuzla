@@ -80,8 +80,7 @@ class Interpolator
   std::unordered_set<Node> get_consts(const std::unordered_set<Node>& nodes);
   std::unordered_set<Node> shared_consts(const std::unordered_set<Node>& A,
                                          const std::unordered_set<Node>& B);
-  Node apply_substs(Env& env,
-                    const std::unordered_set<Node>& assertions,
+  Node apply_substs(const std::unordered_set<Node>& assertions,
                     const std::unordered_set<Node>& shared);
   std::vector<Node> apply_substs_local(const std::vector<Node>& nodes);
 

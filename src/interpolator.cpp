@@ -378,7 +378,7 @@ Interpolator::interpolant_by_substitution(
 
   // Check if all A-local symbols were eliminated and return A as
   // interpolant.
-  Node ipol = apply_substs(d_env, ppA, shared);
+  Node ipol = apply_substs(ppA, shared);
   if (!ipol.is_null())
   {
     ++d_stats.interpolant_substA;
@@ -390,7 +390,7 @@ Interpolator::interpolant_by_substitution(
   // interpolant.
   if (!d_is_sequence)
   {
-    ipol = apply_substs(d_env, ppB, shared);
+    ipol = apply_substs(ppB, shared);
     if (!ipol.is_null())
     {
       Log(1) << "substitution-based interpolant ~B";
@@ -448,8 +448,7 @@ Interpolator::shared_consts(const std::unordered_set<Node>& A,
 }
 
 Node
-Interpolator::apply_substs(Env& env,
-                           const std::unordered_set<Node>& assertions,
+Interpolator::apply_substs(const std::unordered_set<Node>& assertions,
                            const std::unordered_set<Node>& shared)
 {
   if (assertions.empty())
@@ -496,7 +495,8 @@ Interpolator::apply_substs(Env& env,
     {
       nodes.push_back(asserts[i]);
     }
-    return d_env.rewriter().rewrite(utils::mk_nary(env.nm(), Kind::AND, nodes));
+    return d_env.rewriter().rewrite(
+        utils::mk_nary(d_env.nm(), Kind::AND, nodes));
   }
   return Node();
 }
