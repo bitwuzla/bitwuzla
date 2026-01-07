@@ -312,7 +312,7 @@ Interpolator::get_interpolant(const std::unordered_set<Node>& A,
     if (ipol.is_null())
     {
       {
-        util::Timer timer(d_stats.time_post_process);
+        util::Timer timer(d_stats.time_bit_level);
         ipol = d_ctx.solver_engine().interpolant(ppA, ppB);
         ++d_stats.interpolant_bitlevel;
         if (d_compute_stats)
