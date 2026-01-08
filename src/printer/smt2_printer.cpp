@@ -176,7 +176,7 @@ Smt2Printer::print_formula(std::ostream& os,
     }
     if (inserted)
     {
-      if (cur.is_const() || cur.is_value())
+      if (cur.is_const() || cur.is_value() || cur.is_variable())
       {
         if (!has_arrays && cur.type().is_array())
         {
@@ -194,7 +194,7 @@ Smt2Printer::print_formula(std::ostream& os,
         {
           has_funs = true;
         }
-        if (!cur.is_value())
+        if (cur.is_const())
         {
           decls.emplace_back(cur);
         }
