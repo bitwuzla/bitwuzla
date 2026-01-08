@@ -1,0 +1,4 @@
+(set-logic BV)
+(assert (forall ((y (_ BitVec 2))) (let ((_let0 (concat ((_ extract 0 0) y) #b0))) (not (and (not (forall ((x (_ BitVec 3))) (let ((_let1 (concat ((_ extract 1 0) x) #b0))) (and (not (= y _let0)) (= x (bvmul _let1 _let1)))))) (not (= y (bvmul _let0 _let0))))))))
+(check-sat)
+(exit)

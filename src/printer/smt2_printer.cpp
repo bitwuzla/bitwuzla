@@ -747,6 +747,7 @@ Smt2Printer::letify(std::ostream& os,
     return a.id() < b.id();
   });
 
+  size_t nlets_map = let_map.size();
   size_t nlets = lets.size();
   if (nlets > 0)
   {
@@ -758,9 +759,10 @@ Smt2Printer::letify(std::ostream& os,
       }
       os << "(let (";
 
-      // Construct symbol of let
+      // Construct symbol of let, make sure avoid shadowing of let symbols in
+      // case of nested lets by adding the nlets_map offset.
       std::stringstream ss;
-      ss << "_let" << i;
+      ss << "_let" << i + nlets_map;
 
       os << "(" << ss.str() << " ";
       print(os, lets[i], def_map, let_map, max_depth, no_lets);
