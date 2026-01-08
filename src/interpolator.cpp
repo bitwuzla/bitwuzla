@@ -757,7 +757,10 @@ Interpolator::and_distrib(Rewriter& rw, const std::vector<Node>& args)
   std::unordered_map<Node, uint64_t> occs;
   for (const auto& n : args)
   {
-    if (n.is_inverted() && n[0].kind() == kind)
+    // Make sure that we do not destroy sharing
+    auto itp    = d_parents.find(n);
+    bool shared = itp != d_parents.end() && itp->second > 1;
+    if (n.is_inverted() && n[0].kind() == kind && !shared)
     {
       candidates.push_back(n);
       ++occs[n[0][0]];
