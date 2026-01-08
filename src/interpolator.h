@@ -98,7 +98,6 @@ class Interpolator
   std::vector<Node> extract_cmp(const std::vector<Node>& args);
 
   Node mk_bv_and(Rewriter& rw, const std::vector<Node>& nodes);
-  Node mk_and_eq(Rewriter& rw, const std::vector<Node>& nodes);
   Node mk_node(Rewriter& rw,
                node::Kind k,
                const std::vector<Node>& children,
