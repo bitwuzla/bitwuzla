@@ -1223,7 +1223,9 @@ Interpolator::extract_cmp(const std::vector<Node>& nodes)
   for (const auto& n : nodes)
   {
     assert(n == d_rewriter.rewrite(n));
-    if (n.is_inverted() && n[0].kind() == Kind::BV_XOR)
+    auto itp    = d_parents.find(n);
+    bool shared = itp != d_parents.end() && itp->second > 1;
+    if (!shared && n.is_inverted() && n[0].kind() == Kind::BV_XOR)
     {
       bool first = true;
       // If both are extracts, pick the one with the most occurrences to
@@ -1250,7 +1252,7 @@ Interpolator::extract_cmp(const std::vector<Node>& nodes)
         continue;
       }
     }
-    else if (n.kind() == Kind::BV_COMP)
+    else if (!shared && n.kind() == Kind::BV_COMP)
     {
       bool first = true;
       // If both are extracts, pick the one with the most occurrences to
