@@ -117,6 +117,7 @@ Smt2Printer::print_formula(std::ostream& os,
   for (size_t i = 0, n = assertions.size(); i < n; ++i)
   {
     visit.emplace_back(assertions[i]);
+    parents[assertions[i]] = 1;
   }
   while (!visit.empty())
   {
