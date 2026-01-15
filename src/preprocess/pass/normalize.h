@@ -179,6 +179,8 @@ class PassNormalize : public PreprocessingPass
   /** Indicates whether we compute a bit-blasting score. */
   bool d_enable_scoring = true;
 
+  uint64_t d_scoring_bv_size = 0;
+
   struct Statistics
   {
     Statistics(util::Statistics& stats, const std::string& prefix);

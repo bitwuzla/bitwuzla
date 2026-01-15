@@ -78,6 +78,8 @@ enum class Option
   PP_VARIABLE_SUBST,      // bool
   PP_OPT_END,
 
+  PP_NORMALIZE_SCORE_BV_SIZE,  // numeric
+
   // Preprocessing pass options for configuring passes
   PP_VARIABLE_SUBST_NORM_BV_INEQ,  // bool
   PP_VARIABLE_SUBST_NORM_EQ,       // bool
@@ -590,6 +592,7 @@ class Options
   OptionBool pp_embedded_constr;
   OptionBool pp_flatten_and;
   OptionBool pp_normalize;
+  OptionNumeric pp_normalize_score_bv_size;
   OptionBool pp_skeleton_preproc;
   OptionBool pp_variable_subst;
   OptionBool pp_variable_subst_norm_eq;

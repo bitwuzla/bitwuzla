@@ -594,6 +594,18 @@ enum ENUM(Option)
    */
   EVALUE(PP_NORMALIZE),
   /*!
+   * **Preprocessing: Normalization Score Bit-vector size.**
+   *
+   * Do not compute score if bit-vectors larger than the given size are
+   * encountered.
+   *
+   * *Values:*
+   *  - **min**: 0
+   *  - **max**: UINT64_MAX
+   *  - **default**: 64
+   */
+  EVALUE(PP_NORMALIZE_SCORE_BV_SIZE),
+  /*!
    * **Preprocessing: Boolean skeleton preprocessing.**
    *
    * *Values:*

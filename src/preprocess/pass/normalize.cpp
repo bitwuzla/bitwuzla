@@ -249,6 +249,7 @@ PassNormalize::PassNormalize(Env& env,
                              backtrack::BacktrackManager* backtrack_mgr)
     : PreprocessingPass(env, backtrack_mgr, "no", "normalize"),
       d_rewriter(env, Rewriter::LEVEL_ARITHMETIC, "normalize"),
+      d_scoring_bv_size(env.options().pp_normalize_score_bv_size()),
       d_stats(env.statistics(), "preprocess::" + name() + "::")
 {
 }
@@ -1395,8 +1396,9 @@ PassNormalize::process(const Node& node)
     auto [it, inserted] = d_cache.emplace(cur, Node());
     if (inserted)
     {
-      // Do not use scoring for bit-vectors larger than 64.
-      if (d_enable_scoring && cur.type().is_bv() && cur.type().bv_size() > 64)
+      // Do not use scoring for bit-vectors larger than giving bv size limit.
+      if (d_enable_scoring && cur.type().is_bv() && d_scoring_bv_size > 0
+          && cur.type().bv_size() > d_scoring_bv_size)
       {
         d_enable_scoring = false;
         Log(1) << "Disable AIG scoring, found bit-vector of size "
