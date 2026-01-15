@@ -155,54 +155,35 @@ Smt2Printer::print_formula(std::ostream& os,
   {
     const Node& cur = visit.back();
     visit.pop_back();
-    Kind kind           = cur.kind();
     auto [it, inserted] = cache.insert(cur);
-    if (!has_quants && (kind == Kind::EXISTS || kind == Kind::FORALL))
-    {
-      has_quants = true;
-    }
-    else if (!has_bv
-             && (kind == Kind::FP_TO_SBV || kind == Kind::FP_TO_FP_FROM_UBV))
-    {
-      has_bv = true;
-    }
-    else if (!has_fp
-             && (kind == Kind::FP_TO_FP_FROM_BV
-                 || kind == Kind::FP_TO_FP_FROM_FP
-                 || kind == Kind::FP_TO_FP_FROM_SBV
-                 || kind == Kind::FP_TO_FP_FROM_UBV))
-    {
-      has_fp = true;
-    }
     if (inserted)
     {
-      if (cur.is_const() || cur.is_value() || cur.is_variable())
+      if (!has_arrays && cur.type().is_array())
       {
-        if (!has_arrays && cur.type().is_array())
-        {
-          has_arrays = true;
-        }
-        else if (!has_bv && cur.type().is_bv())
-        {
-          has_bv = true;
-        }
-        else if (!has_fp && (cur.type().is_fp() || cur.type().is_rm()))
-        {
-          has_fp = true;
-        }
-        else if (!has_funs && (cur.type().is_fun()))
-        {
-          has_funs = true;
-        }
-        if (cur.is_const())
-        {
-          decls.emplace_back(cur);
-        }
+        has_arrays = true;
       }
-      else
+      else if (!has_bv && cur.type().is_bv())
       {
-        visit.insert(visit.end(), cur.begin(), cur.end());
+        has_bv = true;
       }
+      else if (!has_fp && (cur.type().is_fp() || cur.type().is_rm()))
+      {
+        has_fp = true;
+      }
+      else if (!has_funs && cur.type().is_fun())
+      {
+        has_funs = true;
+      }
+      Kind kind = cur.kind();
+      if (!has_quants && (kind == Kind::EXISTS || kind == Kind::FORALL))
+      {
+        has_quants = true;
+      }
+      if (cur.is_const())
+      {
+        decls.emplace_back(cur);
+      }
+      visit.insert(visit.end(), cur.begin(), cur.end());
     }
   }
 

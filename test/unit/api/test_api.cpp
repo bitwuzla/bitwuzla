@@ -1786,7 +1786,7 @@ TEST_F(TestApi, print_formula)
   {
     std::stringstream expected_smt2;
     expected_smt2
-        << "(set-logic QF_BV)" << std::endl
+        << "(set-logic QF_UFBV)" << std::endl
         << "(declare-const b Bool)" << std::endl
         << "(declare-const bv8 (_ BitVec 8))" << std::endl
         << "(assert b)" << std::endl
@@ -1802,7 +1802,7 @@ TEST_F(TestApi, print_formula)
   {
     std::stringstream expected_smt2;
     expected_smt2
-        << "(set-logic QF_BV)" << std::endl
+        << "(set-logic QF_UFBV)" << std::endl
         << "(declare-const b Bool)" << std::endl
         << "(declare-const bv8 (_ BitVec 8))" << std::endl
         << "(assert b)" << std::endl
@@ -1819,7 +1819,7 @@ TEST_F(TestApi, print_formula)
   {
     std::stringstream expected_smt2;
     expected_smt2
-        << "(set-logic QF_BV)" << std::endl
+        << "(set-logic QF_UFBV)" << std::endl
         << "(declare-const b Bool)" << std::endl
         << "(declare-const bv8 (_ BitVec 8))" << std::endl
         << "(assert b)" << std::endl
@@ -1838,7 +1838,7 @@ TEST_F(TestApi, print_formula)
   {
     std::stringstream expected_smt2;
     expected_smt2
-        << "(set-logic BV)" << std::endl
+        << "(set-logic UFBV)" << std::endl
         << "(declare-const b Bool)" << std::endl
         << "(declare-const bv8 (_ BitVec 8))" << std::endl
         << "(assert b)" << std::endl
@@ -1856,7 +1856,7 @@ TEST_F(TestApi, print_formula)
   {
     std::stringstream expected_smt2;
     expected_smt2
-        << "(set-logic BV)" << std::endl
+        << "(set-logic UFBV)" << std::endl
         << "(declare-const b Bool)" << std::endl
         << "(declare-const bv8 (_ BitVec 8))" << std::endl
         << "(assert b)" << std::endl
@@ -1875,7 +1875,7 @@ TEST_F(TestApi, print_formula)
   {
     std::stringstream expected_smt2;
     expected_smt2
-        << "(set-logic BV)" << std::endl
+        << "(set-logic UFBV)" << std::endl
         << "(declare-const b Bool)" << std::endl
         << "(declare-const bv8 (_ BitVec 8))" << std::endl
         << "(assert b)" << std::endl
