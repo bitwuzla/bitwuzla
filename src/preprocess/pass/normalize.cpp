@@ -896,6 +896,21 @@ PassNormalize::normalize_mul(const Node& node, OccMap& occs, bool keep_value)
       cur        = nm.mk_node(Kind::BV_SHL, {bvone, cur[1]});
       work.emplace_back(n, d);
     }
+    else if (cur.kind() == Kind::BV_NOT)
+    {
+      // ~x * ~x == (-x - 1) * (-x - 1) == x*x + 2*x + 1
+      if (d == 2)
+      {
+        uint64_t size = node.type().bv_size();
+        Node bvone    = nm.mk_value(BitVector::mk_one(size));
+        Node bvtwo    = nm.mk_value(BitVector::from_ui(size, 2));
+        const Node& x = cur[0];
+        Node _x2 =
+            nm.mk_node(Kind::BV_MUL, {x, nm.mk_node(Kind::BV_ADD, {x, bvtwo})});
+        cur = nm.mk_node(Kind::BV_ADD, {_x2, bvone});
+        d = 1;
+      }
+    }
     occs[cur] += d;
   }
 
