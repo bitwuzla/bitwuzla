@@ -1278,21 +1278,41 @@ PassNormalize::apply(AssertionVector& assertions)
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
     const Node& assertion = assertions[i];
-    if (!processed(assertion) && !inconsistent)
+    if (!processed(assertion))
     {
       Node proc = process(assertion);
       assert(proc == process(assertion));
       const Node& processed = d_rewriter.rewrite(proc);
       assertions_pass1.push_back(processed);
       to_process = true;
-      if (processed.is_value() && !processed.value<bool>())
-      {
-        inconsistent = true;
-      }
     }
     else
     {
       assertions_pass1.push_back(assertion);
+    }
+  }
+
+  // Check for inconsistent assertions
+  if (to_process)
+  {
+    std::unordered_map<Node, bool> cache;
+    for (const auto& assertion : assertions_pass1)
+    {
+      if (assertion.is_value() && !assertion.value<bool>())
+      {
+        inconsistent = true;
+        break;
+      }
+      const Node& a       = assertion.is_inverted() ? assertion[0] : assertion;
+      auto [it, inserted] = cache.emplace(a, assertion.is_inverted());
+      if (!inserted)
+      {
+        if (it->second != assertion.is_inverted())
+        {
+          inconsistent = true;
+          break;
+        }
+      }
     }
   }
 
