@@ -745,7 +745,7 @@ def test_print_formula(tm):
         tm.mk_term(Kind.APPLY, [lambd, bvconst8]), tm.mk_bv_zero(bv8)]))
 
     expected_smt2 = \
-        '(set-logic QF_BV)\n' \
+        '(set-logic QF_UFBV)\n' \
         + '(declare-const b Bool)\n' \
         + '(declare-const bv8 (_ BitVec 8))\n' \
         + '(assert b)\n' \
@@ -756,7 +756,7 @@ def test_print_formula(tm):
     assert expected_smt2 == bitwuzla.print_formula()
 
     expected_smt2 = \
-        '(set-logic QF_BV)\n' \
+        '(set-logic QF_UFBV)\n' \
         + '(declare-const b Bool)\n' \
         + '(declare-const bv8 (_ BitVec 8))\n' \
         + '(assert b)\n' \
@@ -767,7 +767,7 @@ def test_print_formula(tm):
     assert expected_smt2 == bitwuzla.print_formula('smt2', 10)
 
     expected_smt2 = \
-        '(set-logic QF_BV)\n' \
+        '(set-logic QF_UFBV)\n' \
         + '(declare-const b Bool)\n' \
         + '(declare-const bv8 (_ BitVec 8))\n' \
         + '(assert b)\n' \
@@ -786,7 +786,7 @@ def test_print_formula(tm):
     bitwuzla.assert_formula(exists)
 
     expected_smt2 = \
-        '(set-logic BV)\n' \
+        '(set-logic UFBV)\n' \
         + '(declare-const b Bool)\n' \
         + '(declare-const bv8 (_ BitVec 8))\n' \
         + '(assert b)\n' \
@@ -798,7 +798,7 @@ def test_print_formula(tm):
     assert expected_smt2 == bitwuzla.print_formula()
 
     expected_smt2 = \
-        '(set-logic BV)\n' \
+        '(set-logic UFBV)\n' \
         + '(declare-const b Bool)\n' \
         + '(declare-const bv8 (_ BitVec 8))\n' \
         + '(assert b)\n' \
@@ -810,7 +810,7 @@ def test_print_formula(tm):
     assert expected_smt2 == bitwuzla.print_formula('smt2', 10)
 
     expected_smt2 = \
-        '(set-logic BV)\n' \
+        '(set-logic UFBV)\n' \
         + '(declare-const b Bool)\n' \
         + '(declare-const bv8 (_ BitVec 8))\n' \
         + '(assert b)\n' \
