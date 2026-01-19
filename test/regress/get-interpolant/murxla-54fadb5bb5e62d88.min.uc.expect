@@ -1,4 +1,4 @@
 unsat
 (
-(let ((_let0 (concat #b000 __))) (and (= (ite (= _let0 (bvshl #b00000000000000000000000000000000000000001 _let0)) #b1 #b0) #b1) (= #b1 #b1)))
+(let ((_let0 ((_ extract 0 0) __))) (let ((_let1 (= _let0 #b1))) (let ((_let2 (concat #b000 __))) (let ((_let3 (bvshl #b00000000000000000000000000000000000000001 _let2))) (let ((_let4 (= ((_ extract 0 0) _let3) #b1))) (let ((_let5 (= #b0 #b1))) (let ((_let6 (= #b1 #b1))) (let ((_let7 (and (not (and (not (and (not _let6) (not _let1))) (not (and _let6 _let1)))) (not (and (not (and (not _let5) (not _let4))) (not (and _let5 _let4))))))) (and (= (ite (= _let2 _let3) #b1 #b0) #b1) (not (and (and _let7 (not _let7)) (not (and _let4 (= _let0 #b0))))))))))))))
 )
