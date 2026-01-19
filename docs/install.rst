@@ -139,6 +139,8 @@ The documentation can be found in ``build/docs/``.
   * `Doxygen <https://www.doxygen.nl>`_
   * `Sphinx >= 1.2 <https://www.sphinx-doc.org>`_
   * `sphinxcontrib-bibtex <https://sphinxcontrib-bibtex.readthedocs.io>`_
+  * `sphinx-tabs <https://sphinx-tabs.readthedocs.io>`_
+  * `sphinx-rtd-theme <https://sphinx-rtd-theme.readthedocs.io>`_
   * `Breathe <https://breathe.readthedocs.io>`_
 
 
