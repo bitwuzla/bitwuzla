@@ -2996,7 +2996,7 @@ Parser::is_supported_logic(const std::string& logic)
 {
   size_t size = logic.size(), size_prefix = 0;
 
-  if (size < 2)
+  if (size < 1)
   {
     return false;
   }
