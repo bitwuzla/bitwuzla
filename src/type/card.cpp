@@ -35,7 +35,18 @@ compute_cardinality(const Type& type)
   }
   else if (type.is_fp())
   {
-    return Integer(5)
+    // +zero -zero: 2
+    // +inf  -inf : 2
+    // nan        : 1
+    // subnormals : 2 * (2^{sig_size-1)-1) = 2^{sig_size} - 2
+    // normalss   : 2 * (2^{exp_size} - 2) * 2^{sig_size-1} =
+    //              (2^{exp_size} - 2) * 2^{sig_size}
+    //
+    // card = 5 + 2^{sig_size} - 2 + (2^{exp_size} - 2) * 2^{sig_size}
+    //      = 3 + 2^{sig_size} * (1 + 2^{exp_size} - 2)
+    //      = 3 + 2^{sig_size} * (2^{exp_size} - 1)
+    //
+    return Integer(3)
            + Integer(2).ipow(type.fp_sig_size())
                  * (Integer(2).ipow(type.fp_exp_size()) - 1);
   }
