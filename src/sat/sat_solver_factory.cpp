@@ -20,6 +20,9 @@
 #ifdef BZLA_USE_GIMSATUL
 #include "sat/gimsatul.h"
 #endif
+#ifdef BZLA_USE_AE_KISSAT
+#include "sat/ae_kissat.h"
+#endif
 
 namespace bzla::sat {
 
@@ -31,6 +34,12 @@ new_sat_solver(const option::Options& options)
   if (options.sat_solver() == option::SatSolver::KISSAT)
   {
     return new Kissat();
+  }
+#endif
+#ifdef BZLA_USE_AE_KISSAT
+  if (options.sat_solver() == option::SatSolver::AE_KISSAT)
+  {
+    return new AEKissat();
   }
 #endif
 #ifdef BZLA_USE_CMS
@@ -54,6 +63,12 @@ has_sat_solver_terminator_support(const option::Options& options)
   (void) options;
 #ifdef BZLA_USE_KISSAT
   if (options.sat_solver() == option::SatSolver::KISSAT)
+  {
+    return false;
+  }
+#endif
+#ifdef BZLA_USE_AE_KISSAT
+  if (options.sat_solver() == option::SatSolver::AE_KISSAT)
   {
     return false;
   }

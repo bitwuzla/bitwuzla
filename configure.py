@@ -120,6 +120,7 @@ def main():
     ap.add_argument('--wipe', action='store_true',
                     help='delete build directory if it already exists')
     bool_opt(ap, 'kissat', 'Kissat support')
+    bool_opt(ap, 'ae_kissat', 'AE_Kissat support')
     bool_opt(ap, 'cryptominisat', 'CryptoMiniSat support')
     bool_opt(ap, 'gimsatul', 'Gimsatul support')
     bool_opt(ap,
@@ -171,6 +172,8 @@ def main():
         shutil.rmtree(args.build_dir)
     if args.kissat is not None:
         build_opts.append(f'-Dkissat={_bool(args.kissat)}')
+    if args.ae_kissat is not None:
+        build_opts.append(f'-Dae_kissat={_bool(args.ae_kissat)}')
     if args.cryptominisat is not None:
         build_opts.append(f'-Dcryptominisat={_bool(args.cryptominisat)}')
     if args.gimsatul is not None:
