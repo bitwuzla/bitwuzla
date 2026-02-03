@@ -72,7 +72,7 @@ bool
 Gimsatul::failed(int32_t lit)
 {
   (void) lit;
-  throw Error("Incremental solving not supported in Gimsatul");
+  throw Error("failed() not supported in Gimsatul");
   return false;
 }
 
