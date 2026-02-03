@@ -64,7 +64,7 @@ bool
 Kissat::failed(int32_t lit)
 {
   (void) lit;
-  throw Error("Incremental solving not supported in Kissat");
+  throw Error("failed() not supported in Kissat");
   return false;
 }
 
