@@ -3282,7 +3282,7 @@ TEST_F(TestCApi, statistics)
 
 TEST_F(TestCApi, parser_smt2)
 {
-  const char *filename = "parse.smt2";
+  const char* filename = "test_capi_parser_smt2.smt2";
   std::ofstream smt2(filename);
   smt2 << "(set-logic QF_BV)\n";
   smt2 << "(check-sat)\n";
@@ -3323,7 +3323,7 @@ TEST_F(TestCApi, parser_smt2)
 
 TEST_F(TestCApi, parser2_smt2)
 {
-  const char *filename = "parse.smt2";
+  const char* filename = "test_capi_parser2_smt2.smt2";
   std::ofstream smt2(filename);
   smt2 << "(assert x)" << std::flush;
   smt2.close();
@@ -3537,7 +3537,7 @@ TEST_F(TestCApi, parser_smt2_string_sort)
 
 TEST_F(TestCApi, parser_smt2_print_model_sat)
 {
-  const char *filename = "parse.smt2";
+  const char* filename = "test_capi_parser_smt2_print_model_sat.smt2";
   std::ofstream smt2(filename);
   smt2 << "(declare-fun a () (_ BitVec 1))\n";
   smt2 << "(declare-fun b () (_ BitVec 1))\n";
@@ -3590,7 +3590,7 @@ TEST_F(TestCApi, parser_smt2_print_model_sat)
 
 TEST_F(TestCApi, parser_smt2_print_model_unsat)
 {
-  const char *filename = "parse.smt2";
+  const char* filename = "test_capi_parser_smt2_print_model_unsat.smt2";
   std::ofstream smt2(filename);
   smt2 << "(set-info :status unsat)\n";
   smt2 << "(set-logic QF_AUFBV)\n";
@@ -3642,7 +3642,7 @@ TEST_F(TestCApi, parser_smt2_print_model_unsat)
 
 TEST_F(TestCApi, parser_btor2)
 {
-  const char *input = "parse.btor2";
+  const char* input = "test_capi_parser_btor2.btor2";
   std::ofstream btor2(input);
   btor2 << "1 sort bitvec 8" << std::endl;
   btor2 << "2 input 1 @inp2" << std::endl;
@@ -3949,7 +3949,7 @@ TEST_F(TestCApi, parser_btor2_string_sort)
 
 TEST_F(TestCApi, parser_btor2_print_model_sat)
 {
-  const char *filename = "parse.btor2";
+  const char* filename = "test_capi_parser_btor2_print_model_sat.btor2";
   std::ofstream btor2(filename);
   btor2 << "1 sort bitvec 32\n";
   btor2 << "2 input 1 x\n";

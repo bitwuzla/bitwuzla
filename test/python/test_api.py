@@ -2013,7 +2013,7 @@ def test_term_term_fp_val_to_real_str(tm):
 # ----------------------------------------------------------------------------
 
 def test_parser_smt2(tm):
-    filename = "parse.smt2"
+    filename = "test_parser_smt2.smt2"
     with open(filename, 'w') as smt2:
         smt2.write('(set-logic QF_BV)\n(check-sat)\n(exit)\n')
         smt2.close()
@@ -2134,7 +2134,7 @@ def test_parser_smt2_string_sort(tm):
     assert parser.get_declared_funs() == []
 
 def test_parser_smt2_print_model_sat(tm):
-    filename = "parse.smt2"
+    filename = "test_parser_smt2_print_model_sat.smt2"
     with open(filename, 'w') as smt2:
         smt2.write('(declare-fun a () (_ BitVec 1))\n')
         smt2.write('(declare-fun b () (_ BitVec 1))\n')
@@ -2160,7 +2160,7 @@ def test_parser_smt2_print_model_sat(tm):
     os.remove(filename)
 
 def test_parser_smt2_print_model_unsat(tm):
-    filename = "parse.smt2"
+    filename = "test_parser_smt2_print_model_unsat.smt2"
     with open(filename, 'w') as smt2:
         smt2.write('(declare-fun a () (_ BitVec 1))\n')
         smt2.write('(declare-fun b () (_ BitVec 1))\n')
@@ -2300,7 +2300,7 @@ def test_parser_btor2_string_sort(tm):
     assert parser.get_declared_funs() == []
 
 def test_parser_btor2_print_model_sat(tm):
-    filename = "parse.smt2"
+    filename = "test_parser_btor2_print_model_sat.smt2"
     with open(filename, 'w') as btor2:
         btor2.write('1 sort bitvec 32\n')
         btor2.write('2 input 1 x\n')

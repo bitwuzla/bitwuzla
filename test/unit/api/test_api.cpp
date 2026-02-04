@@ -3305,7 +3305,7 @@ TEST_F(TestApi, term_fp_val_to_real_str)
 
 TEST_F(TestApi, parser_smt2)
 {
-  const char* input = "parse.smt2";
+  const char* input = "test_api_parser_smt2.smt2";
   std::ofstream smt2(input);
   smt2 << "(set-logic QF_BV)" << std::endl;
   smt2 << "(check-sat)" << std::endl;
@@ -3522,7 +3522,7 @@ TEST_F(TestApi, parser_smt2_string_sort)
 
 TEST_F(TestApi, parser_smt2_print_model_sat)
 {
-  const char* input = "parse.smt2";
+  const char* input = "test_api_parser_smt2_print_model_sat.smt2";
   std::ofstream smt2(input);
   smt2 << "(declare-fun a () (_ BitVec 1))" << std::endl;
   smt2 << "(declare-fun b () (_ BitVec 1))" << std::endl;
@@ -3559,7 +3559,7 @@ TEST_F(TestApi, parser_smt2_print_model_sat)
 
 TEST_F(TestApi, parser_smt2_print_model_unsat)
 {
-  const char* input = "parse.smt2";
+  const char* input = "test_api_parser_smt2_print_model_unsat.smt2";
   std::ofstream smt2(input);
   smt2 << "(set-info :status unsat)" << std::endl;
   smt2 << "(set-logic QF_AUFBV)" << std::endl;
@@ -3597,7 +3597,7 @@ TEST_F(TestApi, parser_smt2_print_model_unsat)
 
 TEST_F(TestApi, parser_btor2)
 {
-  const char* input = "parse.btor2";
+  const char* input = "test_api_parser_btor2.btor2";
   std::ofstream btor2(input);
   btor2 << "1 sort bitvec 8" << std::endl;
   btor2 << "2 input 1 @inp2" << std::endl;
@@ -3815,7 +3815,7 @@ TEST_F(TestApi, parser_btor2_string_sort)
 
 TEST_F(TestApi, parser_btor2_print_model_sat)
 {
-  const char* input = "parse.btor2";
+  const char* input = "test_api_parser_btor2_print_model_sat.btor2";
   std::ofstream btor2(input);
   btor2 << "1 sort bitvec 32" << std::endl;
   btor2 << "2 input 1 x" << std::endl;
@@ -3857,7 +3857,7 @@ TEST_F(TestApi, parser_btor2_print_model_sat)
 
 TEST_F(TestApi, sat_solvers)
 {
-  const char* input = "parse.smt2";
+  const char* input = "test_api_sat_solvers.smt2";
   std::ofstream smt2(input);
   smt2 << "(set-logic QF_BV)" << std::endl;
   smt2 << "(declare-fun u0 () (_ BitVec 4))" << std::endl;
@@ -4194,7 +4194,7 @@ TEST_F(TestApi, term_manager)
 
 TEST_F(TestApi, nthreads)
 {
-  const char* input = "parse.smt2";
+  const char* input = "test_api_nthreads.smt2";
   std::ofstream smt2(input);
   smt2 << "(set-info :status unsat)" << std::endl;
   smt2 << "(set-logic QF_AUFBV)" << std::endl;
