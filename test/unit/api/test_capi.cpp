@@ -3678,7 +3678,7 @@ TEST_F(TestCApi, parser_btor2)
     bitwuzla_parser_parse(parser, "parsex.btor2", true, true, &error_msg);
     ASSERT_NE(std::string(error_msg).find("failed to open 'parsex.btor2'"),
               std::string::npos);
-    bitwuzla_parser_parse(parser, "parse.btor2", true, true, &error_msg);
+    bitwuzla_parser_parse(parser, input, true, true, &error_msg);
     ASSERT_NE(
         std::string(error_msg).find("parser in unsafe state after parse error"),
         std::string::npos);

@@ -3327,7 +3327,7 @@ TEST_F(TestApi, parser_smt2)
     ASSERT_EXCEPTION(parser.parse("parsex.smt2"),
                      bitwuzla::Exception,
                      "failed to open 'parsex.smt2'");
-    ASSERT_EXCEPTION(parser.parse("parse.smt2"),
+    ASSERT_EXCEPTION(parser.parse(input),
                      bitwuzla::Exception,
                      "parser in unsafe state after parse error");
   }
