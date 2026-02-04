@@ -5559,29 +5559,12 @@ struct terminator_state
   struct timeval start;
   int32_t time_limit_ms;
 };
-
-static int32_t
-test_terminate2(void *state)
-{
-  struct terminator_state *tstate = (struct terminator_state *) state;
-  struct timeval now;
-  gettimeofday(&now, NULL);
-  if (((now.tv_sec - tstate->start.tv_sec) * 1000
-       + (now.tv_usec - tstate->start.tv_usec) / 1000)
-      >= tstate->time_limit_ms)
-  {
-    return 1;
-  }
-  return 0;
-}
 }  // namespace
 
 TEST_F(TestCApi, terminate)
 {
   BitwuzlaSort bv_sort4 = bitwuzla_mk_bv_sort(d_tm, 4);
   BitwuzlaTerm x        = bitwuzla_mk_const(d_tm, bv_sort4, nullptr);
-  BitwuzlaTerm s        = bitwuzla_mk_const(d_tm, bv_sort4, nullptr);
-  BitwuzlaTerm t        = bitwuzla_mk_const(d_tm, bv_sort4, nullptr);
   BitwuzlaTerm a        = bitwuzla_mk_term2(
       d_tm,
       BITWUZLA_KIND_AND,
@@ -5593,17 +5576,6 @@ TEST_F(TestCApi, terminate)
           d_tm,
           BITWUZLA_KIND_NOT,
           bitwuzla_mk_term2(d_tm, BITWUZLA_KIND_BV_UADD_OVERFLOW, x, x)));
-  BitwuzlaTerm b = bitwuzla_mk_term2(
-      d_tm,
-      BITWUZLA_KIND_DISTINCT,
-      bitwuzla_mk_term2(d_tm,
-                        BITWUZLA_KIND_BV_MUL,
-                        s,
-                        bitwuzla_mk_term2(d_tm, BITWUZLA_KIND_BV_MUL, x, t)),
-      bitwuzla_mk_term2(d_tm,
-                        BITWUZLA_KIND_BV_MUL,
-                        bitwuzla_mk_term2(d_tm, BITWUZLA_KIND_BV_MUL, s, x),
-                        t));
   // solved by rewriting
   {
     BitwuzlaOptions *opts = bitwuzla_options_new();
@@ -5625,6 +5597,19 @@ TEST_F(TestCApi, terminate)
   }
   // not solved by rewriting, should be terminated in the PP when configured
 #ifdef BZLA_USE_CADICAL
+  BitwuzlaTerm s = bitwuzla_mk_const(d_tm, bv_sort4, nullptr);
+  BitwuzlaTerm t = bitwuzla_mk_const(d_tm, bv_sort4, nullptr);
+  BitwuzlaTerm b = bitwuzla_mk_term2(
+      d_tm,
+      BITWUZLA_KIND_DISTINCT,
+      bitwuzla_mk_term2(d_tm,
+                        BITWUZLA_KIND_BV_MUL,
+                        s,
+                        bitwuzla_mk_term2(d_tm, BITWUZLA_KIND_BV_MUL, x, t)),
+      bitwuzla_mk_term2(d_tm,
+                        BITWUZLA_KIND_BV_MUL,
+                        bitwuzla_mk_term2(d_tm, BITWUZLA_KIND_BV_MUL, s, x),
+                        t));
   {
     BitwuzlaOptions *opts = bitwuzla_options_new();
     bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "bitblast");
@@ -5697,6 +5682,24 @@ TEST_F(TestCApi, terminate)
     bitwuzla_delete(bitwuzla);
   }
 #endif
+#ifdef BZLA_USE_GIMSATUL
+  // No terminator support in Gimsatul, so configuring the terminator
+  // will already throw even though this would terminate in the PP (as the
+  // terminator immediately would terminate the execution on the first call to
+  // terminate).
+  {
+    BitwuzlaOptions* opts = bitwuzla_options_new();
+    bitwuzla_set_option(opts, BITWUZLA_OPT_REWRITE_LEVEL, 0);
+    bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "bitblast");
+    bitwuzla_set_option_mode(opts, BITWUZLA_OPT_SAT_SOLVER, "gimsatul");
+    Bitwuzla* bitwuzla = bitwuzla_new(d_tm, opts);
+    ASSERT_DEATH(
+        bitwuzla_set_termination_callback(bitwuzla, test_terminate1, nullptr),
+        "terminator not supported in configured SAT solver");
+    bitwuzla_options_delete(opts);
+    bitwuzla_delete(bitwuzla);
+  }
+#endif
 #ifdef BZLA_USE_KISSAT
   // No terminator support in Kissat, so configuring the terminator
   // will already throw even though this would terminate in the PP (as the
@@ -5717,9 +5720,25 @@ TEST_F(TestCApi, terminate)
 #endif
 }
 
+#ifdef BZLA_USE_CADICAL
+namespace {
+static int32_t
+test_terminate2(void* state)
+{
+  struct terminator_state* tstate = (struct terminator_state*) state;
+  struct timeval now;
+  gettimeofday(&now, NULL);
+  if (((now.tv_sec - tstate->start.tv_sec) * 1000
+       + (now.tv_usec - tstate->start.tv_usec) / 1000)
+      >= tstate->time_limit_ms)
+  {
+    return 1;
+  }
+  return 0;
+}
+}  // namespace
 TEST_F(TestCApi, terminate_sat)
 {
-#ifdef BZLA_USE_CADICAL
   BitwuzlaSort bv_sort32 = bitwuzla_mk_bv_sort(d_tm, 32);
   BitwuzlaTerm x         = bitwuzla_mk_const(d_tm, bv_sort32, nullptr);
   BitwuzlaTerm s         = bitwuzla_mk_const(d_tm, bv_sort32, nullptr);
@@ -5792,9 +5811,9 @@ TEST_F(TestCApi, terminate_sat)
     bitwuzla_parser_delete(parser);
     bitwuzla_options_delete(opts);
   }
-#endif
-  // Note: CryptoMiniSat and Kissat do not implement terminator support
+  // Note: Only CaDiCaL implements terminator support
 }
+#endif
 
 /* -------------------------------------------------------------------------- */
 /* Abort callback function                                                    */

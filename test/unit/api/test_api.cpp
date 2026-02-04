@@ -4011,6 +4011,21 @@ TEST_F(TestApi, terminate)
     ASSERT_THROW(bitwuzla.configure_terminator(&tt), bitwuzla::Exception);
   }
 #endif
+#ifdef BZLA_USE_GIMSATUL
+  // No terminator support in Gimsatul, so configuring the terminator
+  // will already throw even though this would terminate in the PP (as the
+  // terminator immediately would terminate the execution on the first call to
+  // terminate).
+  {
+    TestTerminator tt;
+    bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::REWRITE_LEVEL, static_cast<uint64_t>(0));
+    opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
+    opts.set(bitwuzla::Option::SAT_SOLVER, "gimsatul");
+    bitwuzla::Bitwuzla bitwuzla(d_tm, opts);
+    ASSERT_THROW(bitwuzla.configure_terminator(&tt), bitwuzla::Exception);
+  }
+#endif
 #ifdef BZLA_USE_KISSAT
   // No terminator support in Kissat, so configuring the terminator
   // will already throw even though this would terminate in the PP (as the
@@ -4099,13 +4114,24 @@ TEST_F(TestApi, terminate_sat)
     ASSERT_EQ(output, unknown.str());
   }
 #endif
-  // Note: CryptoMiniSat and Kissat do not implement terminator support.
-  //       Throws an exception.
+  // Note: Only CaDiCaL implements terminator support.
+  //       Throws an exception with other SAT solvers.
 #ifdef BZLA_USE_CMS
   {
     TestTerminator tt(1000);
     bitwuzla::Options opts;
     opts.set(bitwuzla::Option::SAT_SOLVER, "cms");
+    opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
+    opts.set(bitwuzla::Option::PREPROCESS, false);
+    bitwuzla::Bitwuzla bitwuzla(d_tm, opts);
+    ASSERT_THROW(bitwuzla.configure_terminator(&tt), bitwuzla::Exception);
+  }
+#endif
+#ifdef BZLA_USE_GIMSATUL
+  {
+    TestTerminator tt(1000);
+    bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::SAT_SOLVER, "gimsatul");
     opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
     opts.set(bitwuzla::Option::PREPROCESS, false);
     bitwuzla::Bitwuzla bitwuzla(d_tm, opts);
