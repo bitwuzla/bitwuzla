@@ -34,14 +34,6 @@ tests_smt2 = [
   ['get-model/smtor.smt2'],
   ['get-model/smtvar.smt2'],
   ['get-model/smtxor.smt2'],
-  ['get-unsat-assumptions/array-smtextarrayaxiom3.smt2'],
-  ['get-unsat-assumptions/bv-count03plus2inc.smt2'],
-  ['get-unsat-assumptions/fp_misc.smt2'],
-  ['get-unsat-assumptions/fp_misc2.smt2'],
-  ['get-unsat-assumptions/fp_misc3.smt2'],
-  ['get-unsat-core/array-smtextarrayaxiom3.smt2'],
-  ['get-unsat-core/bv-count03plus2inc.smt2'],
-  ['get-unsat-core/fp_misc.smt2'],
   ['get-value/array-issue32.smt2'],
   ['get-value/array-issue35.smt2'],
   ['get-value/array.smt2'],
@@ -59,7 +51,6 @@ tests_smt2 = [
   ['parser/issue59-4.smt2'],
   ['parser/issue66.smt2'],
   ['parser/issue169.smt2'],
-  ['parser/issue175.smt2'],
   ['parser/let.smt2'],
   ['parser/pr120.smt2'],
   ['parser/regmismatch.smt2'],
@@ -852,7 +843,6 @@ tests_smt2 = [
   ['solver/abstract/murxla-a2f5f3aa83d5a854.min.smt2'],
   ['solver/abstract/murxla-346218efd24c9aba.min.smt2'],
   ['solver/abstract/red-bench-8002.smt2'],
-  ['solver/abstract/unsatcore1.smt2'],
   ['solver/abstract/eagerrefine1.smt2'],
   ['solver/array/arraycond1.btor.smt2'],
   ['solver/array/arraycond10.btor.smt2'],
@@ -1502,6 +1492,24 @@ tests_smt2 = [
   ['solver/murxla-61282565da842d10.min.smt2'],
 ]
 
+# Tests that query unsat cores and failed assumptions require failed() support
+# in the SAT solver. Gimsatul and Kissat do not support this.
+tests_smt2_unsat_core_assumptions = [
+  ['get-unsat-assumptions/array-smtextarrayaxiom3.smt2'],
+  ['get-unsat-assumptions/bv-count03plus2inc.smt2'],
+  ['get-unsat-assumptions/fp_misc.smt2'],
+  ['get-unsat-assumptions/fp_misc2.smt2'],
+  ['get-unsat-assumptions/fp_misc3.smt2'],
+  ['get-unsat-core/array-smtextarrayaxiom3.smt2'],
+  ['get-unsat-core/bv-count03plus2inc.smt2'],
+  ['get-unsat-core/fp_misc.smt2'],
+  ['parser/issue175.smt2'],
+  ['solver/abstract/unsatcore1.smt2'],
+]
+if get_option('cadical') or get_option('cryptominisat')
+  tests_smt2 += tests_smt2_unsat_core_assumptions
+endif
+
 # Tests that set a time limit (which requires terminator support in the SAT
 # solver). Only CaDiCaL has terminator support.
 tests_smt2_time_limit = [
@@ -1510,7 +1518,6 @@ tests_smt2_time_limit = [
   ['solver/abstract/bv_udiv_pow2.smt2'],
   ['solver/abstract/bv_urem_pow2.smt2'],
 ]
-
 if get_option('cadical')
   tests_smt2 += tests_smt2_time_limit
 endif
@@ -2129,12 +2136,17 @@ tests_btor2_unsat = [
 
 regress_tests = [
   [tests_smt2],
-  [tests_smt2, [], ['--produce-unsat-cores', '--check-unsat-core']],
   [tests_btor2_parser],
   [tests_btor2_sat, '--check-sat'],
   [tests_btor2_unsat, '--check-unsat'],
-  [tests_btor2_unsat, '--check-unsat', ['--produce-unsat-cores', '--check-unsat-core']],
 ]
+
+if get_option('cadical') or get_option('cryptominisat')
+regress_tests += [
+  [tests_smt2, [], ['--produce-unsat-cores', '--check-unsat-core']],
+  [tests_btor2_unsat, '--check-unsat', ['--produce-unsat-cores', '--check-unsat-core']],
+  ]
+endif
 
 # Disable wine debug output if we run the cross-compiled binary
 env = []
