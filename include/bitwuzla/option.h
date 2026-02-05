@@ -214,8 +214,15 @@ enum ENUM(Option)
    * *Values:*
    *  - **true**: enable [**default**]
    *  - **false**: disable
-   *
-   * @see #BV_SOLVER
+   */
+#ifndef BITWUZLA_API_USE_C_ENUMS
+  /*! @see Option::BV_SOLVER
+   */
+#else
+  /*! @see BITWUZLA_OPT_BV_SOLVER
+   */
+#endif
+  /*!
    * @warning This is an expert option to configure the `prop` bit-vector
    *          solver engine.
    */
@@ -229,8 +236,15 @@ enum ENUM(Option)
    * *Values:*
    *  - **true**: enable
    *  - **false**: disable [**default**]
-   *
-   * @see #BV_SOLVER
+   */
+#ifndef BITWUZLA_API_USE_C_ENUMS
+  /*! @see Option::BV_SOLVER
+   */
+#else
+  /*! @see BITWUZLA_OPT_BV_SOLVER
+   */
+#endif
+  /*!
    * @warning This is an expert option to configure the `prop` bit-vector
    *          solver engine.
    */
@@ -243,8 +257,15 @@ enum ENUM(Option)
    *
    * *Values:*
    *  - An unsigned integer value. [**default**: 0]
-   *
-   * @see #BV_SOLVER
+   */
+#ifndef BITWUZLA_API_USE_C_ENUMS
+  /*! @see Option::BV_SOLVER
+   */
+#else
+  /*! @see BITWUZLA_OPT_BV_SOLVER
+   */
+#endif
+  /*!
    * @warning This is an expert option to configure the `prop` bit-vector
    *          solver engine.
    */
@@ -257,8 +278,15 @@ enum ENUM(Option)
    *
    * *Values:*
    *  - An unsigned integer value. [**default**: 0]
-   *
-   * @see #BV_SOLVER
+   */
+#ifndef BITWUZLA_API_USE_C_ENUMS
+  /*! @see Option::BV_SOLVER
+   */
+#else
+  /*! @see BITWUZLA_OPT_BV_SOLVER
+   */
+#endif
+  /*!
    * @warning This is an expert option to configure the `prop` bit-vector
    *          solver engine.
    */
@@ -273,8 +301,15 @@ enum ENUM(Option)
    * *Values:*
    *  - **true**: enable
    *  - **false**: disable [**default**]
-   *
-   * @see #BV_SOLVER
+   */
+#ifndef BITWUZLA_API_USE_C_ENUMS
+  /*! @see Option::BV_SOLVER
+   */
+#else
+  /*! @see BITWUZLA_OPT_BV_SOLVER
+   */
+#endif
+  /*!
    * @warning This is an expert option to configure the `prop` bit-vector
    *          solver engine.
    */
@@ -289,8 +324,15 @@ enum ENUM(Option)
    *    Select path based on essential inputs. [**default**]
    *  - **random**:
    *    Select path randomly.
-   *
-   * @see #BV_SOLVER
+   */
+#ifndef BITWUZLA_API_USE_C_ENUMS
+  /*! @see Option::BV_SOLVER
+   */
+#else
+  /*! @see BITWUZLA_OPT_BV_SOLVER
+   */
+#endif
+  /*!
    * @warning This is an expert option to configure the `prop` bit-vector
    *          solver engine.
    */
@@ -303,8 +345,15 @@ enum ENUM(Option)
    *
    * *Values:*
    *  - An unsigned integer value <= 1000 (= 100%). [**default**: 10 (= 1%)]
-   *
-   * @see #BV_SOLVER
+   */
+#ifndef BITWUZLA_API_USE_C_ENUMS
+  /*! @see Option::BV_SOLVER
+   */
+#else
+  /*! @see BITWUZLA_OPT_BV_SOLVER
+   */
+#endif
+  /*!
    * @warning This is an expert option to configure the `prop` bit-vector
    *          solver engine.
    */
@@ -317,8 +366,15 @@ enum ENUM(Option)
    *
    * *Values:*
    *  - An unsigned integer value <= 1000 (= 100%). [**default**: 990 (= 99%)]
-   *
-   * @see #BV_SOLVER
+   */
+#ifndef BITWUZLA_API_USE_C_ENUMS
+  /*! @see Option::BV_SOLVER
+   */
+#else
+  /*! @see BITWUZLA_OPT_BV_SOLVER
+   */
+#endif
+  /*!
    * @warning This is an expert option to configure the `prop` bit-vector
    *          solver engine.
    */
@@ -332,8 +388,15 @@ enum ENUM(Option)
    * *Values:*
    *  - **true**: enable
    *  - **false**: disable [**default**]
-   *
-   * @see #BV_SOLVER
+   */
+#ifndef BITWUZLA_API_USE_C_ENUMS
+  /*! @see Option::BV_SOLVER
+   */
+#else
+  /*! @see BITWUZLA_OPT_BV_SOLVER
+   */
+#endif
+  /*!
    * @warning This is an expert option to configure the `prop` bit-vector
    *          solver engine.
    */
@@ -363,8 +426,15 @@ enum ENUM(Option)
    *  - **min**: >=3
    *  - **max**: UINT64_MAX
    *  - **default**: 32
-   *
-   * @see #ABSTRACTION
+   */
+#ifndef BITWUZLA_API_USE_C_ENUMS
+  /*! @see Option::ABSTRACTION
+   */
+#else
+  /*! @see BITWUZLA_OPT_ABSTRACTION
+   */
+#endif
+  /*!
    * @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_BV_SIZE),
@@ -376,8 +446,15 @@ enum ENUM(Option)
    * *Values:*
    *  - **1**: enable
    *  - **0**: disable [**default**]
-   *
-   * @see #ABSTRACTION
+   */
+#ifndef BITWUZLA_API_USE_C_ENUMS
+  /*! @see Option::ABSTRACTION
+   */
+#else
+  /*! @see BITWUZLA_OPT_ABSTRACTION
+   */
+#endif
+  /*!
    * @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_EAGER_REFINE),
@@ -391,8 +468,15 @@ enum ENUM(Option)
    *
    * *Values:*
    *  - An unsigned 64-bit integer. [**default:** 8]
-   *
-   * @see #ABSTRACTION
+   */
+#ifndef BITWUZLA_API_USE_C_ENUMS
+  /*! @see Option::ABSTRACTION
+   */
+#else
+  /*! @see BITWUZLA_OPT_ABSTRACTION
+   */
+#endif
+  /*!
    * @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_VALUE_LIMIT),
@@ -404,8 +488,15 @@ enum ENUM(Option)
    * *Values:*
    *  - **true**: enable
    *  - **false**: disable [**default**]
-   *
-   * @see #ABSTRACTION
+   */
+#ifndef BITWUZLA_API_USE_C_ENUMS
+  /*! @see Option::ABSTRACTION
+   */
+#else
+  /*! @see BITWUZLA_OPT_ABSTRACTION
+   */
+#endif
+  /*!
    * @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_VALUE_ONLY),
@@ -417,8 +508,15 @@ enum ENUM(Option)
    * *Values:*
    *  - **true**: enable
    *  - **false**: disable [**default**]
-   *
-   * @see #ABSTRACTION
+   */
+#ifndef BITWUZLA_API_USE_C_ENUMS
+  /*! @see Option::ABSTRACTION
+   */
+#else
+  /*! @see BITWUZLA_OPT_ABSTRACTION
+   */
+#endif
+  /*!
    * @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_ASSERT),
@@ -429,8 +527,15 @@ enum ENUM(Option)
    *
    * *Values:*
    *  - An unsigned 64-bit integer value > 0. [**default:** 100]
-   *
-   * @see #ABSTRACTION
+   */
+#ifndef BITWUZLA_API_USE_C_ENUMS
+  /*! @see Option::ABSTRACTION
+   */
+#else
+  /*! @see BITWUZLA_OPT_ABSTRACTION
+   */
+#endif
+  /*!
    * @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_ASSERT_REFS),
@@ -442,8 +547,15 @@ enum ENUM(Option)
    * *Values:*
    *  - **true**: enable
    *  - **false**: disable [**default**]
-   *
-   * @see #ABSTRACTION
+   */
+#ifndef BITWUZLA_API_USE_C_ENUMS
+  /*! @see Option::ABSTRACTION
+   */
+#else
+  /*! @see BITWUZLA_OPT_ABSTRACTION
+   */
+#endif
+  /*!
    * @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_INITIAL_LEMMAS),
@@ -453,8 +565,15 @@ enum ENUM(Option)
    * *Values:*
    *  - **true**: enable
    *  - **false**: disable [**default**]
-   *
-   * @see #ABSTRACTION
+   */
+#ifndef BITWUZLA_API_USE_C_ENUMS
+  /*! @see Option::ABSTRACTION
+   */
+#else
+  /*! @see BITWUZLA_OPT_ABSTRACTION
+   */
+#endif
+  /*!
    * @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_INC_BITBLAST),
@@ -464,8 +583,15 @@ enum ENUM(Option)
    * *Values:*
    *  - **true**: enable
    *  - **false**: disable [**default**]
-   *
-   * @see #ABSTRACTION
+   */
+#ifndef BITWUZLA_API_USE_C_ENUMS
+  /*! @see Option::ABSTRACTION
+   */
+#else
+  /*! @see BITWUZLA_OPT_ABSTRACTION
+   */
+#endif
+  /*!
    * @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_BV_ADD),
@@ -475,8 +601,15 @@ enum ENUM(Option)
    * *Values:*
    *  - **true**: enable [**default**]
    *  - **false**: disable
-   *
-   * @see #ABSTRACTION
+   */
+#ifndef BITWUZLA_API_USE_C_ENUMS
+  /*! @see Option::ABSTRACTION
+   */
+#else
+  /*! @see BITWUZLA_OPT_ABSTRACTION
+   */
+#endif
+  /*!
    * @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_BV_MUL),
@@ -486,8 +619,15 @@ enum ENUM(Option)
    * *Values:*
    *  - **true**: enable [**default**]
    *  - **false**: disable
-   *
-   * @see #ABSTRACTION
+   */
+#ifndef BITWUZLA_API_USE_C_ENUMS
+  /*! @see Option::ABSTRACTION
+   */
+#else
+  /*! @see BITWUZLA_OPT_ABSTRACTION
+   */
+#endif
+  /*!
    * @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_BV_UDIV),
@@ -497,8 +637,15 @@ enum ENUM(Option)
    * *Values:*
    *  - **true**: enable [**default**]
    *  - **false**: disable
-   *
-   * @see #ABSTRACTION
+   */
+#ifndef BITWUZLA_API_USE_C_ENUMS
+  /*! @see Option::ABSTRACTION
+   */
+#else
+  /*! @see BITWUZLA_OPT_ABSTRACTION
+   */
+#endif
+  /*!
    * @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_BV_UREM),
@@ -508,8 +655,15 @@ enum ENUM(Option)
    * *Values:*
    *  - **true**: enable
    *  - **false**: disable [**default**]
-   *
-   * @see #ABSTRACTION
+   */
+#ifndef BITWUZLA_API_USE_C_ENUMS
+  /*! @see Option::ABSTRACTION
+   */
+#else
+  /*! @see BITWUZLA_OPT_ABSTRACTION
+   */
+#endif
+  /*!
    * @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_EQUAL),
@@ -519,8 +673,15 @@ enum ENUM(Option)
    * *Values:*
    *  - **true**: enable
    *  - **false**: disable [**default**]
-   *
-   * @see #ABSTRACTION
+   */
+#ifndef BITWUZLA_API_USE_C_ENUMS
+  /*! @see Option::ABSTRACTION
+   */
+#else
+  /*! @see BITWUZLA_OPT_ABSTRACTION
+   */
+#endif
+  /*!
    * @warning This is an expert option to configure the abstraction module.
    */
   EVALUE(ABSTRACTION_ITE),
@@ -537,8 +698,19 @@ enum ENUM(Option)
   EVALUE(PREPROCESS),
   /*!
    * **Preprocessing: Find contradicting bit-vector ands.**
-   *
-   * When enabled, substitutes contradicting nodes of kind #BV_AND with zero.
+   */
+#ifndef BITWUZLA_API_USE_C_ENUMS
+  /*!
+   * When enabled, substitutes contradicting nodes of kind Kind::BV_AND
+   * with zero.
+   */
+#else
+  /*!
+   * When enabled, substitutes contradicting nodes of kind #BITWUZLA_KIND_BV_AND
+   * with zero.
+   */
+#endif
+  /*!
    *
    * *Values:*
    *  - **true**: enable
