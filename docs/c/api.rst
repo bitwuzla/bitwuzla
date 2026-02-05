@@ -236,9 +236,9 @@ This will print:
 
 The value of :code:`f` (a function term) and :code:`a` (an array term), on the
 other hand, cannot be represented with a simple type. Thus, function values are
-given as :cpp:enum:`BITWUZLA_KIND_LAMBDA`, and array
+given as :cpp:enumerator:`BitwuzlaKind::BITWUZLA_KIND_LAMBDA`, and array
 values are given as
-:cpp:enum:`BITWUZLA_KIND_ARRAY_STORE`.
+:cpp:enumerator:`BitwuzlaKind::BITWUZLA_KIND_ARRAY_STORE`.
 We can retrieve an SMT-LIB2 string representation of the values via
 :cpp:func:`bitwuzla_term_to_string()`:
 
