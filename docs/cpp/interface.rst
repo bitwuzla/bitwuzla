@@ -21,6 +21,8 @@ For an introduction on how to use the C++ API, refer to the
      classes/parser
      enums/result
      enums/roundingmode
+     classes/satsolver
+     classes/satsolverfactory
      classes/sort
      classes/term
      classes/termmanager
@@ -36,6 +38,8 @@ Classes
 - class :doc:`classes/optioninfo`
 - class :doc:`classes/termmanager`
 - class :doc:`classes/bitwuzla`
+- class :doc:`classes/satsolver`
+- class :doc:`classes/satsolverfactory`
 - class :doc:`classes/sort`
 - class :doc:`classes/term`
 - class :doc:`classes/parser`

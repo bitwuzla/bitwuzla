@@ -18,7 +18,10 @@
 
 namespace bitwuzla {
 
-/** The SAT solver interface. */
+/**
+ * The SAT solver interface.
+ * @warning This interface is experimental and may change in future versions.
+ */
 class SatSolver
 {
  public:

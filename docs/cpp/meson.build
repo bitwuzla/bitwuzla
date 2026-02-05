@@ -4,6 +4,7 @@ include_path = join_paths(meson.project_source_root(), 'include', 'bitwuzla')
 header_files = [
   join_paths(include_path, 'cpp', 'bitwuzla.h'),
   join_paths(include_path, 'cpp', 'parser.h'),
+  join_paths(include_path, 'cpp', 'sat_solver.h'),
   join_paths(include_path, 'cpp', 'terminator.h'),
   join_paths(include_path, 'enums.h'),
   join_paths(include_path, 'option.h'),
@@ -29,6 +30,8 @@ depend_files = [
   'classes/options.rst',
   'classes/optioninfo.rst',
   'classes/parser.rst',
+  'classes/satsolver.rst',
+  'classes/satsolverfactory.rst',
   'classes/sort.rst',
   'classes/term.rst',
   'classes/terminator.rst',
