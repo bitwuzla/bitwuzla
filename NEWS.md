@@ -2,44 +2,49 @@
 
 This file collects a summary of important and/or user-visible changes.
 
+- **MPFR >= 4.2.1** is now a **required dependency**. As with GMP, it is
+  required that shared/static MPFR libraries are installed **on the system**.
+
+- Removed unreliable **GMP** fallback subproject. The build system now requires
+  shared/static GMP libraries to be installed **on the system**.
+
+- C++ API: Add support for injecting an **external SAT solver factory** via new
+  constructor: `Bitwuzla(TermManager&, SatSolverFactory&, const Options&)`
+
 - SMT2 parser: Add support for SMT-LIB 2.7 command `define-const`.
 
-- MPFR >= 4.2.1 is now a required dependency. As with GMP, it is required that
-  shared/static MPFR libraries are installed on the system.
-
-- Add support for configuring a terminator via the parser.
+- Add support for configuring a **terminator** via the **parser**.
   - C++ API: `void Parser::configure_terminator(Terminator *)`
   - C API:
     - `bitwuzla_parser_set_termination_callback(BitwuzlaParser*, int32_t (*)(void*), void*)`
     - `bitwuzla_parser_get_termination_callback_state(BitwuzlaParser*)`
   - Python API:  `void Parser.configure_terminator(callable)`
 
-- Add support for printing BTOR2 via `--output-lang` option. Printing to BTOR2
-  supports printing of QF_ABV and QF_BV formulas only.
+- Add support for printing **BTOR2** via `--output-lang` option. Printing to
+  BTOR2 supports printing of QF_ABV and QF_BV formulas only.
 
-- Enable incremental support for Kissat. Note: Since Kissat does not support
-  incremental solving natively, Bitwuzla creates a fresh Kissat instance for
-  each SAT query.
+- Enable **incremental** support for **Kissat**.  
+  *Note:* Since Kissat does not support incremental solving natively, Bitwuzla
+  creates a fresh Kissat instance for each SAT query.
 
-- Bumped Kissat to version 4.0.4.
+- Bumped **Kissat** to version 4.0.4.
 
-- Add support for Gimsatul as SAT backend. Number of threads can be specified
-  via `-j/--nthreads` option.
+- Add support for **Gimsatul** as SAT backend. Number of threads can be
+  specified via `-j/--nthreads` option.  
+  *Note:* Since Gimsatul does not support incremental solving natively, Bitwuzla
+  creates a fresh Gimsatul instance for each SAT query.
 
-- Windows compilation in MSYS2 environment is now supported.
+- **Windows** compilation in **MSYS2** environment is now supported.
 
-- Removed unreliable GMP fallback subproject. The build system now requires
-  shared/static GMP libraries to be installed on the system.
+- Add support for linking against **mimalloc** memory allocator.
 
-- Add support for linking against mimalloc memory allocator.
-
-- Diagnostic output is now printed to stderr by default and can be configured
-  via the options API:
+- **Diagnostic output** is now printed to **stderr** by default and can be
+  configured via the options API:
     - C++ API: `Options::set_diagnostic_output_stream(std::ostream&)`
     - C API: `bitwuzla_options_set_diagnostic_output_stream(BitwuzlaOptions*, const char* filename)`
     - Python API: not supported
 
- - Add support for retrieving parser statistics.
+ - Add support for retrieving **parser statistics**.
     - C++ API: `std::map<std::string, std::string> Parser::statistics()`
     - C API: `bitwuzla_parser_get_statistics(BitwuzlaParser*, const char***, const char***, size_t*)`
     - Python API: `Parser.statistics()`
