@@ -18,7 +18,7 @@ options with modes are configured via
 :cpp:func:`void bitwuzla::Options::set(Option option, const std::string& value)`.
 The option kind is defined via :cpp:enum:`bitwuzla::Option`.
 A **comprehensive list** of all configurable options is available
-:doc:`here <cpp/enums/option>`.
+:doc:`here <../enums/option>`.
 
 More information on and an example for how to configure and query configuration
 options is :doc:`here </cpp/options>`.
