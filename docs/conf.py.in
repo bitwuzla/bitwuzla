@@ -52,7 +52,7 @@ todo_include_todos = True
 # Make sure the target is unique
 autosectionlabel_prefix_document = True
 
-bibtex_bibfiles = ['references.bib']
+bibtex_bibfiles = ['@current_source_dir@/references.bib']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
