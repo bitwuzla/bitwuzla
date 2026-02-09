@@ -438,7 +438,10 @@ SolverEngine::_value(const Node& term)
       {
         assert(!d_in_solving_mode);
         Kind k = cur.kind();
-        if (k == Kind::FORALL || k == Kind::LAMBDA)
+        if (k == Kind::FORALL || k == Kind::LAMBDA || k == Kind::FP_SYMFPU_EXP
+            || k == Kind::FP_SYMFPU_INF || k == Kind::FP_SYMFPU_NAN
+            || k == Kind::FP_SYMFPU_SIG || k == Kind::FP_SYMFPU_SIGN
+            || k == Kind::FP_SYMFPU_ZERO)
         {
           continue;
         }
@@ -468,7 +471,6 @@ SolverEngine::_value(const Node& term)
         }
         break;
 
-        case Kind::AM_ABSTRACT:
         case Kind::APPLY:
         case Kind::SELECT:
         case Kind::FORALL:
@@ -509,6 +511,13 @@ SolverEngine::_value(const Node& term)
           }
           [[fallthrough]];
 
+        case Kind::AM_ABSTRACT:
+        case Kind::FP_SYMFPU_EXP:
+        case Kind::FP_SYMFPU_INF:
+        case Kind::FP_SYMFPU_NAN:
+        case Kind::FP_SYMFPU_SIG:
+        case Kind::FP_SYMFPU_SIGN:
+        case Kind::FP_SYMFPU_ZERO:
         case Kind::CONSTANT: {
           const Type& type = cur.type();
           if (type.is_bool() || type.is_bv())
@@ -591,12 +600,6 @@ SolverEngine::_value(const Node& term)
         case Kind::FP_EQUAL:
         case Kind::FP_LEQ:
         case Kind::FP_LT:
-        case Kind::FP_SYMFPU_EXP:
-        case Kind::FP_SYMFPU_SIG:
-        case Kind::FP_SYMFPU_INF:
-        case Kind::FP_SYMFPU_NAN:
-        case Kind::FP_SYMFPU_SIGN:
-        case Kind::FP_SYMFPU_ZERO:
           // During solving we use the current value in the bit-vector
           // abstraction.
           if (registered(cur))

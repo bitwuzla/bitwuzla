@@ -1,0 +1,7 @@
+(declare-const x9 (Array (_ BitVec 101) (_ BitVec 101)))
+(set-option :produce-models true)
+(declare-const x (Array (_ BitVec 101) (_ BitVec 101)))
+(declare-const x3 Float64)
+(check-sat-assuming ((fp.isSubnormal x3)))
+(check-sat)
+(get-value ((store x9 (_ bv0 101) (select (ite (fp.isSubnormal x3) x9 x) (_ bv0 101)))))
