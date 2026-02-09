@@ -61,6 +61,7 @@ PassElimExtract::apply(AssertionVector& assertions)
     }
   }
 
+  std::unordered_map<Node, Node> map;
   NodeManager& nm = d_env.nm();
   for (const auto& [c, extracts] : extract_map)
   {
@@ -92,17 +93,32 @@ PassElimExtract::apply(AssertionVector& assertions)
         });
 
     std::vector<Node> consts;
+    const auto& symbol = c.symbol();
     for (auto [upper, lower] : non_overlapping)
     {
       Type t = nm.mk_bv_type(upper - lower + 1);
-      consts.push_back(nm.mk_const(t));
+      if (symbol)
+      {
+        std::stringstream ss;
+        ss << symbol->get() << "__" << upper << "_" << lower;
+        consts.push_back(nm.mk_const(t, ss.str()));
+      }
+      else
+      {
+        consts.push_back(nm.mk_const(t));
+      }
       cache_assertion(consts.back());
     }
+    map.emplace(c, utils::mk_nary(nm, Kind::BV_CONCAT, consts));
+  }
 
-    Node concat = utils::mk_nary(nm, Kind::BV_CONCAT, consts);
-    Node null;
-    assertions.push_back(nm.mk_node(Kind::EQUAL, {c, concat}), null);
-    cache_assertion(c);
+  std::unordered_map<Node, Node> cache;
+  for (size_t i = 0, size = assertions.size(); i < size; ++i)
+  {
+    const Node& assertion = assertions[i];
+    Node processed        = utils::substitute(nm, assertion, map, cache);
+    assertions.replace(i, processed);
+    cache_assertion(processed);
   }
 
   d_cache.clear();
