@@ -489,6 +489,7 @@ Interpolation Example
 .. tabbed-examples::
    ../../examples/c/interpolants.c
    ../../examples/cpp/interpolants.cpp
+   ../../examples/smt2/interpolants.smt2
 
 Manual Reference Counting of Sort and Terms Example
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

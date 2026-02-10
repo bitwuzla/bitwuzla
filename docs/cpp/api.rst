@@ -465,3 +465,4 @@ Interpolation Example
 .. tabbed-examples::
    ../../examples/cpp/interpolants.cpp
    ../../examples/c/interpolants.c
+   ../../examples/smt2/interpolants.smt2
