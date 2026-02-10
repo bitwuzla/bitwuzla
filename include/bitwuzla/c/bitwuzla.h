@@ -1526,6 +1526,9 @@ BitwuzlaTerm bitwuzla_get_value(Bitwuzla *bitwuzla, BitwuzlaTerm term);
  * @return Interpolant I such that `(=> A I)` and `(=> I (not B))`.
  *
  * @see `check_sat()`
+ *
+ * @warning The signature of this function is experimental and may change in
+ *          future versions.
  */
 BitwuzlaTerm bitwuzla_get_interpolant(Bitwuzla* bitwuzla,
                                       uint32_t argc,
@@ -1579,6 +1582,9 @@ BitwuzlaTerm bitwuzla_get_interpolant(Bitwuzla* bitwuzla,
  * @return The interpolation sequence.
  *
  * @see `check_sat()`
+ *
+ * @warning The signature of this function is experimental and may change in
+ *          future versions.
  */
 BitwuzlaTerm* bitwuzla_get_interpolants(Bitwuzla* bitwuzla,
                                         uint32_t Asc,

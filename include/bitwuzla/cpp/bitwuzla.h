@@ -1770,6 +1770,9 @@ class Bitwuzla
    * @return Interpolant I such that `(=> A I)` and `(=> I (not B))`.
    *
    * @see `check_sat()`
+   *
+   * @warning The signature of this function is experimental and may change in
+   *          future versions.
    */
   Term get_interpolant(const std::vector<Term>& A);
   /**
@@ -1815,6 +1818,9 @@ class Bitwuzla
    * @return The interpolation sequence.
    *
    * @see `check_sat()`
+   *
+   * @warning The signature of this function is experimental and may change in
+   *          future versions.
    */
   std::vector<Term> get_interpolants(const std::vector<std::vector<Term>>& A);
 
