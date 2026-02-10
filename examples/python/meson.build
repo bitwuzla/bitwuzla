@@ -3,6 +3,7 @@ python = import('python').find_installation()
 if python_path != ''
   tests = [
     'checksatassuming',
+    'interpolants',
     'option_info',
     'options',
     'parse',

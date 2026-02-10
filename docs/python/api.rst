@@ -431,3 +431,16 @@ Termination Callback Example
    ../../examples/python/terminator.py
    ../../examples/cpp/terminator.cpp
    ../../examples/c/terminator.c
+
+Interpolation Example
+^^^^^^^^^^^^^^^^^^^^^
+
+| This example shows how to query interpolants.
+| The source code for this example can be found at `examples/python/interpolants.py <https://github.com/bitwuzla/bitwuzla/tree/main/examples/python/interpolants.py>`_.
+
+
+.. tabbed-examples::
+   ../../examples/python/interpolants.py
+   ../../examples/cpp/interpolants.cpp
+   ../../examples/c/interpolants.c
+   ../../examples/smt2/interpolants.smt2
