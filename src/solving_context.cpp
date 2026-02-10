@@ -196,7 +196,6 @@ SolvingContext::get_interpolants(
         util::Timer timer(d_stats.time_check_interpolant);
         check::CheckInterpolant ci(*this);
         auto res = ci.check(A, ipols[i]);
-        assert(res);
         if (!res)
         {
           throw Error("interpolant check failed");
@@ -207,7 +206,6 @@ SolvingContext::get_interpolants(
         util::Timer timer(d_stats.time_check_interpolant_inductive);
         check::CheckInterpolant ci(*this);
         auto res = ci.check_inductive(ipols[i - 1], partitions[i], ipols[i]);
-        assert(res);
         if (!res)
         {
           throw Error("inductive interpolant check failed");
@@ -278,16 +276,20 @@ SolvingContext::check()
     util::Timer timer(d_stats.time_check_model);
     check::CheckModel cm(*this);
     auto res = cm.check();
-    assert(res);
-    Warn(!res) << "model check failed";
+    if (!res)
+    {
+      throw Error("model check failed");
+    }
   }
   else if (d_sat_state == Result::UNSAT && options().dbg_check_unsat_core())
   {
     util::Timer timer(d_stats.time_check_unsat_core);
     check::CheckUnsatCore cuc(*this);
     auto res = cuc.check();
-    assert(res);
-    Warn(!res) << "unsat core check failed";
+    if (!res)
+    {
+      throw Error("unsat core failed");
+    }
   }
 }
 
