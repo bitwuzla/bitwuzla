@@ -1455,6 +1455,81 @@ cdef class Bitwuzla:
         """
         return _term(self.tm, self.c_bitwuzla.get().get_value(_cterm(term)))
 
+    def get_interpolant(self, A: list[Term]) -> Term:
+        """ Get a term representing the interpolant I given the current set of
+            assertions, partitioned into partitions A and B such that
+            `(and A B)` is unsat and `(=> A I)` and `(=> I (not B))`.
+
+            Partition A is the given set of assertions, partition B consists of
+            the remaining assertions that are not in A.
+
+            Requires that the last :func:`~bitwuzla.Bitwuzla.check_sat()` query
+            returned `~bitwuzla.Result.UNSAT`.
+
+            .. note:: Assertions in A and B must be currently asserted formulas.
+
+            :param A: The set of formulas representing partition A. This must be
+                      a strict subset of the set of current assertions.
+
+            :return: Interpolant I such that `(=> A I)` and `(=> I (not B))`.
+
+            .. warning:: The signature of this function is experimental and may
+                         change in future versions.
+        """
+        return _term(
+                self.tm, self.c_bitwuzla.get().get_interpolant(_term_vec(A)))
+
+    def get_interpolants(self, A: list[list[Term]]) -> list[Term]:
+        """ Get an inductive sequence of interpolants
+            :math:`\\langle I_1, \\ldots, I_n \\rangle`
+            given the current set of assertions :math:`F`
+            and a sequence of partitions.
+
+            The sequence of partitions is given as a list of set increments
+            :math:`\\{A_1, \\ldots, A_n\\}` of asserted formulas
+            :math:`F = \{F_1, F_2, \ldots, F_n\}`, which expands into sets of
+            partitions
+
+            .. math::
+
+                 \\{(A_1, B_1), (A_2, B_2), \\ldots, (A_n, B_n)\\}
+
+            such that
+
+            .. math::
+
+                 A_1 &= F_1 \\\\
+                 A_2 &= F_1\,\cup\,F_2 \\\\
+                 \ldots & \\\\
+                 A_n & = F_1\\,\\cup\,F_2\\,\\cup\\,\\ldots\\,\\cup\\,F_n \\\\
+
+            and
+
+            .. math::
+
+                 B_i = F \\setminus A_i \\text{ with } A_i \\wedge B_i \\models \\bot.
+
+            The resulting sequence of interpolants is inductive, i.e., it holds
+            that :math:`(I_i \\wedge F_{i+1}) \\rightarrow I_{i+1}`.
+
+            Requires that the last :func:`~bitwuzla.Bitwuzla.check_sat()` query
+            returned `~bitwuzla.Result.UNSAT`.
+
+            .. note:: Assertions in :math:`A_i` must be currently asserted
+                      formulas.
+
+            .. note:: Current SAT state must be unsat.
+
+            :param A: The set of A increments.
+
+            :return: The interpolation sequence.
+            .. warning:: The signature of this function is experimental and may
+                         change in future versions.
+        """
+        cdef vector[vector[bitwuzla_api.Term]] vec
+        for v in A: vec.push_back(_term_vec(v))
+        return _terms(self.tm, self.c_bitwuzla.get().get_interpolants(vec))
+
     def print_formula(self, fmt: str = 'smt2', uint8_t base = 2) -> str:
         """Get the current input formula as a string.
 

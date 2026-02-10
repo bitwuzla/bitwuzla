@@ -723,6 +723,87 @@ def test_get_rm_value(tm):
     assert str(tm.mk_rm_value(RoundingMode.RTZ).value()) == 'RTZ'
 
 
+def test_get_interpolant(tm):
+    bv4  = tm.mk_bv_sort(4)
+    x    = tm.mk_const(bv4, "x")
+    y    = tm.mk_const(bv4, "y")
+    z    = tm.mk_const(bv4, "z")
+    zero = tm.mk_bv_zero(bv4)
+    one  = tm.mk_bv_one(bv4)
+    # (= z (bvadd x y))
+    a0 = tm.mk_term(Kind.EQUAL, [z, tm.mk_term(Kind.BV_ADD, [x, y])])
+    # (distinct x y)
+    a1 = tm.mk_term(Kind.DISTINCT, [x, y])
+    # (and
+    #   (distinct x (_ bv0 1024))
+    #   (= (bvand x (bvsub x (_ bv1 1024))) (_ bv0 1024))))
+    a2 = tm.mk_term(Kind.DISTINCT, [x, zero])
+    a3 = tm.mk_term(
+            Kind.EQUAL,
+            [tm.mk_term(Kind.BV_AND, [x, tm.mk_term(Kind.BV_SUB, [x, one])]),
+            zero])
+    # (and
+    #   (distinct y (_ bv0 1024))
+    #   (= (bvand y (bvsub y (_ bv1 1024))) (_ bv0 1024)))
+    a4 = tm.mk_term(Kind.DISTINCT, [y, zero])
+    a5 = tm.mk_term(
+            Kind.EQUAL,
+            [tm.mk_term(Kind.BV_AND, [y, tm.mk_term(Kind.BV_SUB, [y, one])]),
+             zero])
+    # (and
+    #   (distinct z (_ bv0 1024))
+    #   (= (bvand z (bvsub z (_ bv1 1024))) (_ bv0 1024)))
+    b0 = tm.mk_term(Kind.DISTINCT, [z, zero])
+    b1 = tm.mk_term(
+        Kind.EQUAL,
+        [tm.mk_term(Kind.BV_AND, [z, tm.mk_term(Kind.BV_SUB, [z, one])]),
+         zero])
+
+    A = [a0, a1, a2, a3, a4, a5]
+
+    # produce-interpolants not enabled
+    options = Options()
+    options.set(Option.PRODUCE_INTERPOLANTS, False)
+    bitwuzla = Bitwuzla(tm, options)
+    for t in A: bitwuzla.assert_formula(t)
+    bitwuzla.assert_formula(b0)
+    bitwuzla.assert_formula(b1)
+    bitwuzla.check_sat()
+    with pytest.raises(BitwuzlaException):
+        bitwuzla.get_interpolant(A)
+
+    # given assertion is not currently asserted
+    options = Options()
+    options.set(Option.PRODUCE_INTERPOLANTS, True)
+    bitwuzla = Bitwuzla(tm, options)
+    for t in A: bitwuzla.assert_formula(t)
+    bitwuzla.assert_formula(b0)
+    bitwuzla.assert_formula(b1)
+    A += [tm.mk_term(Kind.NOT, [a0])]
+    assert bitwuzla.check_sat() == Result.UNSAT
+    with pytest.raises(BitwuzlaException):
+        bitwuzla.get_interpolant(A)
+
+    options = Options()
+    options.set(Option.PRODUCE_INTERPOLANTS, True)
+    bitwuzla = Bitwuzla(tm, options)
+    for t in A: bitwuzla.assert_formula(t)
+    bitwuzla.assert_formula(b0)
+    bitwuzla.assert_formula(b1)
+    assert bitwuzla.check_sat() == Result.UNSAT
+    assert not bitwuzla.get_interpolant(A).is_null()
+
+    options = Options()
+    options.set(Option.PRODUCE_INTERPOLANTS, True)
+    bitwuzla = Bitwuzla(tm, options)
+    for t in A: bitwuzla.assert_formula(t)
+    bitwuzla.assert_formula(b0)
+    bitwuzla.assert_formula(b1)
+    assert bitwuzla.check_sat() == Result.UNSAT
+    interpolants = bitwuzla.get_interpolants([[a0], [a1], [a2], [a3], [a4], [a5]])
+    assert len(interpolants) == 6
+
+
 # ----------------------------------------------------------------------------
 # Printing
 # ----------------------------------------------------------------------------
