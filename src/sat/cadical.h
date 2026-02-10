@@ -15,7 +15,7 @@
 #ifdef BZLA_USE_CADICAL
 /*----------------------------------------------------------------------------*/
 
-#include <cadical.hpp>
+#include <cadical/cadical.hpp>
 #include <memory>
 
 #include "sat/sat_solver.h"

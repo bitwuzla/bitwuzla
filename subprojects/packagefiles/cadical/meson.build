@@ -11,4 +11,6 @@ project('cadical',
   ]
 )
 
+header_targets = []
+subdir('include/cadical')
 subdir('src')

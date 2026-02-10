@@ -9,7 +9,6 @@ configure_file(input: 'build.hpp.in',
                output: 'build.hpp',
                configuration: conf_data)
 
-
 sources = [
   'analyze.cpp',
   'arena.cpp',
@@ -113,7 +112,7 @@ cadical_lib = static_library('cadical',
                       cpp_args: cpp_args,
                       pic: true)
 cadical_dep = declare_dependency(
-                  include_directories: include_directories('.'),
+                  include_directories: include_directories('../include'),
                   link_with: cadical_lib,
-                  dependencies: dependencies)
-
+                  dependencies: dependencies,
+                  sources: header_targets)

@@ -11,11 +11,12 @@
 #ifndef BZLA_SAT_INTERPOLANTS_TRACER_H_INCLUDED
 #define BZLA_SAT_INTERPOLANTS_TRACER_H_INCLUDED
 
+#include <cadical/tracer.hpp>
+
 #include "bitblast/aig/aig_manager.h"
 #include "env.h"
 #include "sat/interpolants/tracer_kinds.h"
 #include "solver/bv/aig_bitblaster.h"
-#include "tracer.hpp"
 #include "util/logger.h"
 
 namespace bzla {

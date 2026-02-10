@@ -10,11 +10,11 @@
 
 #include "preprocess/pass/skeleton_preproc.h"
 
+#include <cadical/cadical.hpp>
 #include <memory>
 
 #include "bitblast/aig/aig_cnf.h"
 #include "bitblast/aig_bitblaster.h"
-#include "cadical.hpp"
 #include "env.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
