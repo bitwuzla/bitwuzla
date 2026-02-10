@@ -283,7 +283,7 @@ Quickstart Example
 
 .. tabbed-examples::
   ../../examples/python/quickstart.py
-  ../../examples/python/quickstart.py
+  ../../examples/cpp/quickstart.cpp
   ../../examples/c/quickstart.c
   ../../examples/smt2/quickstart.smt2
 
@@ -296,7 +296,7 @@ Options Example
 
 .. tabbed-examples::
   ../../examples/python/options.py
-  ../../examples/python/options.py
+  ../../examples/cpp/options.cpp
   ../../examples/c/options.c
   ../../examples/smt2/options.smt2
 
@@ -320,7 +320,7 @@ Incremental Example with push and pop
 
 .. tabbed-examples::
   ../../examples/python/pushpop.py
-  ../../examples/python/pushpop.py
+  ../../examples/cpp/pushpop.cpp
   ../../examples/c/pushpop.c
   ../../examples/smt2/pushpop.smt2
 
@@ -333,7 +333,7 @@ Incremental Example with check-sat-assuming
 
 .. tabbed-examples::
   ../../examples/python/checksatassuming.py
-  ../../examples/python/checksatassuming.py
+  ../../examples/cpp/checksatassuming.cpp
   ../../examples/c/checksatassuming.c
   ../../examples/smt2/checksatassuming.smt2
 
@@ -350,7 +350,7 @@ create lambda terms (:code:`define-fun`).
 
 .. tabbed-examples::
   ../../examples/python/unsatcore.py
-  ../../examples/python/unsatcore.py
+  ../../examples/cpp/unsatcore.cpp
   ../../examples/c/unsatcore.c
   ../../examples/smt2/unsatcore.smt2
 
@@ -364,7 +364,7 @@ Unsat Assumptions Example
 
 .. tabbed-examples::
    ../../examples/python/unsatassumptions.py
-   ../../examples/python/unsatassumptions.py
+   ../../examples/cpp/unsatassumptions.cpp
    ../../examples/c/unsatassumptions.c
    ../../examples/smt2/unsatassumptions.smt2
 
@@ -378,7 +378,7 @@ Reset Example
 
 .. tabbed-examples::
    ../../examples/python/reset.py
-   ../../examples/python/reset.py
+   ../../examples/cpp/reset.cpp
    ../../examples/c/reset.c
    ../../examples/smt2/reset.smt2
 
@@ -392,7 +392,7 @@ Reset Assertions Example
 
 .. tabbed-examples::
    ../../examples/python/reset_assertions.py
-   ../../examples/python/reset_assertions.py
+   ../../examples/cpp/reset_assertions.cpp
    ../../examples/c/reset_assertions.c
    ../../examples/smt2/reset_assertions.smt2
 
@@ -405,7 +405,7 @@ Parsing Example
 
 .. tabbed-examples::
    ../../examples/python/parse.py
-   ../../examples/python/parse.py
+   ../../examples/cpp/parse.cpp
    ../../examples/c/parse.c
 
 Printing Example
@@ -417,7 +417,7 @@ Printing Example
 
 .. tabbed-examples::
    ../../examples/python/print.py
-   ../../examples/python/print.py
+   ../../examples/cpp/print.cpp
    ../../examples/c/print.c
 
 Termination Callback Example
@@ -429,5 +429,5 @@ Termination Callback Example
 
 .. tabbed-examples::
    ../../examples/python/terminator.py
-   ../../examples/python/terminator.py
+   ../../examples/cpp/terminator.cpp
    ../../examples/c/terminator.c
