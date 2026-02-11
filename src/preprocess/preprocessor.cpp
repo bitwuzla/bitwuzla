@@ -53,7 +53,6 @@ Preprocessor::Preprocessor(SolvingContext& context)
       d_pass_contr_ands(d_env, &d_backtrack_mgr),
       d_pass_elim_lambda(d_env, &d_backtrack_mgr),
       d_pass_elim_bvudiv(d_env, &d_backtrack_mgr),
-      d_pass_elim_uninterpreted(d_env, &d_backtrack_mgr),
       d_pass_embedded_constraints(d_env, &d_backtrack_mgr),
       d_pass_variable_substitution(d_env, &d_backtrack_mgr),
       d_pass_flatten_and(d_env, &d_backtrack_mgr),
@@ -130,7 +129,6 @@ Preprocessor::preprocess()
   d_pass_contr_ands.clear_cache();
   d_pass_elim_lambda.clear_cache();
   d_pass_elim_bvudiv.clear_cache();
-  d_pass_elim_uninterpreted.clear_cache();
   d_pass_embedded_constraints.clear_cache();
   d_pass_variable_substitution.clear_cache();
   d_pass_flatten_and.clear_cache();
@@ -260,8 +258,7 @@ Preprocessor::apply(AssertionVector& assertions)
   auto& options = d_env.options();
   // Only apply skeleton preprocessing once to the initial assertions to
   // limit the overhead.
-  bool skel_done          = !assertions.initial_assertions();
-  bool uninterpreted_done = !assertions.initial_assertions();
+  bool skel_done = !assertions.initial_assertions();
   // Only apply on first call for now (for incremental it may be too expensive).
   bool apply_normalization = d_num_preprocess == 1;
   // FIXME: Re-evaluate when new preprocessing infrastructure merged
@@ -370,17 +367,6 @@ Preprocessor::apply(AssertionVector& assertions)
       {
         break;
       }
-    }
-
-    // This pass is not supported if incremental is enabled.
-    if (false && !uninterpreted_done)
-    {
-      d_pass_elim_uninterpreted.apply(assertions);
-      if (d_logger.is_msg_enabled(1))
-      {
-        print_statistics(d_pass_elim_uninterpreted, assertions);
-      }
-      uninterpreted_done = true;
     }
 
     if (options.rewrite_level() >= 2 && options.pp_normalize())
