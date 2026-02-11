@@ -497,8 +497,7 @@ BitVector::hash() const
   {
     p0 = util::hash::s_hash_primes[j++];
     if (j == util::hash::s_n_primes) j = 0;
-    p1 = util::hash::s_hash_primes[j++];
-    if (j == util::hash::s_n_primes) j = 0;
+    p1  = util::hash::s_hash_primes[j++];
     x   = d_val_uint64 ^ res;
     x   = ((x >> 16) ^ x) * p0;
     x   = ((x >> 16) ^ x) * p1;

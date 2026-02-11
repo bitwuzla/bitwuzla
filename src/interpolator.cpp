@@ -272,7 +272,6 @@ Interpolator::get_interpolant(const std::unordered_set<Node>& A,
     {
       Log(1) << "ppA_part[" << i++ << "]: " << a;
     }
-    i = 0;
   }
 
   // Preprocessor determined unsat, so we can make a shortcut.

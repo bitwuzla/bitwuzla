@@ -499,17 +499,17 @@ Parser::parse_line(ParsedKind* pkind, int64_t* id)
       if (op == Token::CONST)
       {
         base  = 2;
-        token = d_lexer->next_token(Token::NUMBER_BIN);
+        d_lexer->next_token(Token::NUMBER_BIN);
       }
       else if (op == Token::CONSTD)
       {
         base  = 10;
-        token = d_lexer->next_token(Token::NUMBER_DEC);
+        d_lexer->next_token(Token::NUMBER_DEC);
       }
       else
       {
         base  = 16;
-        token = d_lexer->next_token(Token::NUMBER_HEX);
+        d_lexer->next_token(Token::NUMBER_HEX);
       }
       if (!check_token(op))
       {

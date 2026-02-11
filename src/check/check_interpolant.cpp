@@ -231,7 +231,6 @@ CheckInterpolant::check_inductive(const Node& I_prev,
       Log(1) << "A_i[" << i++ << "]: " << a;
     }
     Log(1) << "I_prev: " << I_prev;
-    i = 0;
   }
   Log(1) << "I: " << I;
   Log(1);
