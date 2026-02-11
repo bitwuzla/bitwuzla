@@ -1,3 +1,4 @@
+; ignore output
 (set-option :produce-interpolants true)
 (declare-const x (_ BitVec 54))
 (assert (! (= x (bvadd (_ bv18014398509481983 54) (bvudiv x (_ bv18014398509481983 54)) (bvudiv x (_ bv18014398509481983 54)))) :named a0))

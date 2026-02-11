@@ -1,3 +1,0 @@
-unsat
-unsat
-(and (not (= x x1)) (not (and (not x1) (not x))))

@@ -1,3 +1,4 @@
+; ignore output
 (set-logic QF_BV)
 (set-option :produce-interpolants true)
 (declare-const cfg@1 Bool)
@@ -13,6 +14,7 @@
 (assert (!(let ((_let0 (not initstate@0))) (and (and (= witness@1 (not (and _let0 (not (= out@0 (bvadd a@0 b@0)))))) (and (= cfg@1 (not (and _let0 (not cfg@0)))) (and (not initstate@1) (= out@0 (bvadd a@0 (ite cfg@0 b@0 (bvadd (bvnot b@0) #b00000001))))))) (and initstate@0 witness@0))) :named a1))
 (push 1)
 (assert (not witness@1))
+(set-info :status unsat)
 (check-sat)
 (get-interpolant (a1))
 (exit)

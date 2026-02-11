@@ -1,3 +1,4 @@
+; ignore output
 (set-logic QF_BV)
 (set-option :produce-interpolants true)
 (set-option :interpolants-algo "pudlak")
@@ -8,6 +9,7 @@
 (assert (! (and (= state5@1 (ite (= #b1 input3@0) #b1 state5@0)) (= #b1 state5@0)) :named a1))
 (push 1)
 (assert (not (= #b00000000000000000000000000000001 (concat #b0000000000000000000000000000000 state5@1))))
+(set-info :status unsat)
 (check-sat)
 (get-interpolant (a1))
 (exit)

@@ -1,3 +1,4 @@
+; ignore output
 (set-logic QF_BV)
 (set-option :produce-interpolants true)
 (declare-const state9@1 (_ BitVec 32))
@@ -25,6 +26,7 @@
 (assert (! (let ((_let0 ((_ extract 15 0) @def9))) (and (and (= state20@1 input7@0) (and (= state13@1 (concat (ite @def11 _let0 @def10) (ite @def11 @def10 _let0))) (= state9@1 (ite (= #b1 state20@0) state13@0 input6@0)))) (and (= state20@0 #b0) (and (= #b00000000000000000000000000000000 state13@0) (= #b00000000000000000000000000000000 state9@0))))) :named a1))
 (push 1)
 (assert false)
+(set-info :status unsat)
 (check-sat)
 (get-interpolant (a1))
 (exit)

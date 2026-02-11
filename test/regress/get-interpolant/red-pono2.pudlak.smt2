@@ -1,3 +1,4 @@
+; ignore output
 (declare-const x Bool)
 (set-option :produce-interpolants true)
 (set-option :interpolants-algo "pudlak")
@@ -6,9 +7,11 @@
 (push 1)
 (push 1)
 (assert (= (_ bv0 1) (bvand (bvnot p) (bvnot n))))
+(set-info :status sat)
 (check-sat)
 (pop 1)
 (assert (! (and (= p (_ bv1 1)) (and x (and (= (bvnot p) (_ bv1 1)) (= (bvnot n) (_ bv1 1))))) :named a5))
 (assert true)
+(set-info :status unsat)
 (check-sat)
 (get-interpolant (a5))

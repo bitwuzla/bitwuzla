@@ -1,7 +1,9 @@
+; ignore output
 (set-option :global-declarations true)
 (set-option :produce-interpolants 1)
 (set-option :interpolants-algo "pudlak")
 (declare-const _x0 (_ BitVec 92))
 (assert (! (let ((_let0 ((_ sign_extend 43) (bvredxor _x0))))(bvsmulo _let0 _let0)) :named a1))
+(set-info :status unsat)
 (check-sat)
 (get-interpolant (a1))

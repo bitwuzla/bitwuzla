@@ -1,3 +1,4 @@
+; ignore output
 (set-option :produce-interpolants true)
 (set-option :interpolants-subst true)
 (declare-const x (_ BitVec 1))
@@ -6,5 +7,6 @@
 (assert (distinct (_ bv1 2) (bvashr (_ bv1 2) ((_ zero_extend 1) x))))
 (assert (! (bvuaddo y (_ bv1 1)) :named a3))
 (assert (= (bvuaddo x (_ bv1 1)) (bvuaddo (_ bv0 1) (_ bv0 1))))
+(set-info :status unsat)
 (check-sat)
 (get-interpolants (a3) (a1))

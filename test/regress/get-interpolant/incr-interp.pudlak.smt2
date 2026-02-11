@@ -1,3 +1,4 @@
+; ignore output
 (set-logic QF_BV)
 (set-option :produce-interpolants true)
 (set-option :interpolants-algo "pudlak")
@@ -10,6 +11,7 @@
 (assert (! (and (= x@0 #b00000000) (= x@1 (ite (bvult x@0 #b00000111) (bvadd x@0 #b00000001) #b00000000))) :named a4))
 (push 1)
 (assert (and (not (and (not (bvult #b00000110 x@1)) (not (bvult #b00000110 x@2)))) (= x@2 (ite (bvult x@1 #b00000111) (bvadd x@1 #b00000001) #b00000000))))
+(set-info :status unsat)
 (check-sat)
 (get-interpolant (a4))
 (pop 2)
@@ -17,6 +19,7 @@
 (assert (! (and (= x@0 #b00000000) (= x@1 (ite (bvult x@0 #b00000111) (bvadd x@0 #b00000001) #b00000000))) :named a6))
 (push 1)
 (assert (and (not (and (and (not (bvult #b00000110 x@1)) (not (bvult #b00000110 x@2))) (not (bvult #b00000110 x@3)))) (and (= x@2 (ite (bvult x@1 #b00000111) (bvadd x@1 #b00000001) #b00000000)) (= x@3 (ite (bvult x@2 #b00000111) (bvadd #b00000001 x@2) #b00000000)))))
+(set-info :status unsat)
 (check-sat)
 (get-interpolant (a6))
 (exit)

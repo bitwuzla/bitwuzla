@@ -1,3 +1,4 @@
+; ignore output
 (set-option :produce-interpolants true)
 (set-option :interpolants-lift false)
 (declare-const x Bool)
@@ -7,7 +8,9 @@
 ;(check-sat-assuming ((not (ite x1 false x))))
 (push 1)
 (assert (not (ite x1 false x)))
+(set-info :status unsat)
 (check-sat)
 (pop 1)
+(set-info :status unsat)
 (check-sat)
 (get-interpolant (a1))

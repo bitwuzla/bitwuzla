@@ -1,2 +1,0 @@
-unsat
-(not (and (= a #b0) (= ta #b0)))

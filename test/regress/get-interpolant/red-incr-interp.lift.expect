@@ -1,4 +1,0 @@
-unsat
-(and (= ((_ extract 2 2) x@1) #b0) (= ((_ extract 3 3) x@1) #b0))
-unsat
-true

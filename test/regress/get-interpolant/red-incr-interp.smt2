@@ -1,3 +1,4 @@
+; ignore output
 (set-option :produce-interpolants true)
 (declare-const x@1 (_ BitVec 4))
 (declare-const x (_ BitVec 4))
@@ -7,10 +8,12 @@
 (assert (! (and (= x (_ bv0 4)) (= x@1 (bvadd x (_ bv1 4)))) :named a4))
 (push 1)
 (assert (and (bvult (_ bv6 4) @2) (= @2 (ite (bvult x@1 (_ bv3 4)) (bvadd x@1 (_ bv1 4)) (_ bv0 4)))))
+(set-info :status unsat)
 (check-sat)
 (get-interpolant (a4))
 (pop 1)
 (assert (! true :named a6))
 (assert (and (bvult (_ bv3 4) @2) (= @2 (ite (bvult x@1 (_ bv3 4)) (bvadd x@1 (_ bv1 4)) (_ bv0 4)))))
+(set-info :status unsat)
 (check-sat)
 (get-interpolant (a6))

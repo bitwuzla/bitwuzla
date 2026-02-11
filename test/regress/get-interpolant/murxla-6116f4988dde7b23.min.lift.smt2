@@ -1,3 +1,4 @@
+; ignore output
 (declare-const x (_ BitVec 22))
 (set-option :produce-interpolants true)
 (set-option :interpolants-lift false)

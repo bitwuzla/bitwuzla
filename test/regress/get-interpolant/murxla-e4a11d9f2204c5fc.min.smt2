@@ -1,8 +1,12 @@
+; ignore output
 (set-option :produce-interpolants true)
 (declare-const __ (_ BitVec 1))
 (assert (= (bvsmulo ((_ sign_extend 60) (bvashr (bvredxor ((_ zero_extend 80) __)) (bvredxor ((_ zero_extend 80) __)))) ((_ sign_extend 60) (bvashr (bvredxor ((_ zero_extend 80) __)) (bvredxor ((_ zero_extend 80) __))))) (bvsdivo (bvredxor ((_ zero_extend 80) __)) (bvredxor ((_ zero_extend 80) __)))))
+(set-info :status sat)
 (check-sat)
+(set-info :status sat)
 (check-sat-assuming ((= (bvsmulo ((_ sign_extend 60) (bvashr (bvredxor ((_ zero_extend 80) __)) (bvredxor ((_ zero_extend 80) __)))) ((_ sign_extend 60) (bvashr (bvredxor ((_ zero_extend 80) __)) (bvredxor ((_ zero_extend 80) __))))) (bvsdivo (bvredxor ((_ zero_extend 80) __)) (bvredxor ((_ zero_extend 80) __))))))
 (assert (! (bvsmulo (_ bv0 59) (_ bv0 59)) :named a1))
+(set-info :status unsat)
 (check-sat)
 (get-interpolants (a1))

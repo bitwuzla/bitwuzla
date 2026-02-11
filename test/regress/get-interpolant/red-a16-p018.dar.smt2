@@ -1,8 +1,10 @@
+; ignore output
 (set-option :produce-interpolants true)
 (declare-const t (_ BitVec 1))
 (declare-const a (_ BitVec 1))
 (declare-const ta (_ BitVec 1))
 (assert (! (and (= (_ bv0 4) (concat (bvnot t) (_ bv0 1) (_ bv0 1) (_ bv0 1))) (= t ((_ extract 1 1) (bvadd (concat a ta) ((_ zero_extend 1) (bvcomp (_ bv0 4) (bvand (_ bv1 4) (concat t (_ bv0 3))))))))) :named a1))
 (assert (and (= a (_ bv0 1)) (= ta (_ bv0 1))))
+(set-info :status unsat)
 (check-sat)
 (get-interpolant (a1))

@@ -1,3 +1,4 @@
+; ignore output
 (set-option :produce-interpolants true)
 (set-option :interpolants-algo "pudlak")
 (set-option :abstraction true)
@@ -32,5 +33,6 @@
 
 (assert (or (and true (= st (_ bv1 1)) (= i (_ bv0 1))) (and (= st (_ bv1 1)) (= x6 (_ bv1 1)) (= (_ bv1 1) (bvnot (bvcomp ((_ zero_extend 1) u) (bvlshr x1 ((_ zero_extend 24) __))))) (= (bvshl x1 x1) ((_ zero_extend 1) u)) x61 (= x1 (_ bv0 29)))))
 
+(set-info :status unsat)
 (check-sat)
 (get-interpolant (a1))

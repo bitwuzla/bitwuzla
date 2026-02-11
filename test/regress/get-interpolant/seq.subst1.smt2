@@ -1,3 +1,4 @@
+; ignore output
 (set-option :produce-interpolants true)
 (set-option :interpolants-subst true)
 (declare-const st (_ BitVec 2))
@@ -7,5 +8,6 @@
 (assert (! (and (not (= a (_ bv0 2))) (= (_ bv0 4) ((_ zero_extend 1) s))) :named a2))
 (assert (! (and (= (_ bv0 4) ((_ zero_extend 3) t)) (= (_ bv1 2) ((_ extract 1 0) s))) :named a3))
 (assert (and (= (_ bv1 4) ((_ zero_extend 3) t)) (not (= (_ bv0 5) ((_ zero_extend 3) st)))))
+(set-info :status unsat)
 (check-sat)
 (get-interpolants (a2) (a3))

@@ -1,2 +1,0 @@
-unsat
-(let ((_let0 (= a #b0))) (let ((_let1 (= ta #b0))) (let ((_let2 (and (not (and _let0 _let1)) (not (and (= a #b1) (= ta #b1)))))) (and _let2 (not (and _let0 (and _let1 _let2)))))))

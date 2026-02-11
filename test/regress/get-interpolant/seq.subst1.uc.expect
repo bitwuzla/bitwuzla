@@ -1,5 +1,0 @@
-unsat
-(
-(= #b0000 (concat #b0 s))
-false
-)

@@ -1,2 +1,0 @@
-unsat
-(= #b1 ((_ extract 1 1) s))

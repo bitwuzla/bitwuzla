@@ -1,3 +1,0 @@
-sat
-unsat
-(not (bvult #b001 y))

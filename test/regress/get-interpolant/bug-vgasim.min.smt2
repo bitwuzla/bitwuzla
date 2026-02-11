@@ -1,3 +1,4 @@
+; ignore output
 (declare-const _x (_ BitVec 1))
 (declare-const s (_ BitVec 1))
 (declare-const t (_ BitVec 1))

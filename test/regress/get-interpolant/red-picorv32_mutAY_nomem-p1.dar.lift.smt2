@@ -1,3 +1,4 @@
+; ignore output
 (declare-const x Bool)
 (set-option :produce-interpolants true)
 (set-option :interpolants-lift false)
@@ -6,5 +7,6 @@
 (declare-const a (_ BitVec 1))
 (assert (! (and (not (= (_ bv0 1) ((_ extract 1 1) s))) (= s (ite (= t (_ bv0 2)) (ite x (_ bv0 2) (_ bv1 2)) (ite (= a (_ bv1 1)) (_ bv2 2) (_ bv0 2))))) :named a1))
 (assert (and (= a (_ bv0 1)) (= (_ bv0 1) ((_ extract 1 1) t))))
+(set-info :status unsat)
 (check-sat)
 (get-interpolant (a1))

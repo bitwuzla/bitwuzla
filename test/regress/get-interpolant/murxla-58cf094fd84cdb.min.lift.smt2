@@ -1,3 +1,4 @@
+; ignore output
 (set-option :produce-interpolants true)
 (set-option :interpolants-lift false)
 (set-option :rewrite-level 0)
@@ -5,5 +6,6 @@
 (declare-const x Bool)
 (assert (! x :named a1))
 (assert (distinct x true))
+(set-info :status unsat)
 (check-sat)
 (get-interpolant (a1))

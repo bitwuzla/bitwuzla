@@ -1,3 +1,4 @@
+; ignore output
 (set-option :produce-interpolants true)
 (set-option :interpolants-subst true)
 (declare-const a (_ BitVec 2))

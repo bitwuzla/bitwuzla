@@ -1,3 +1,4 @@
+; ignore output
 (declare-const x (_ BitVec 22))
 (set-option :produce-interpolants 1)
 (set-option :pp-elim-extracts true)

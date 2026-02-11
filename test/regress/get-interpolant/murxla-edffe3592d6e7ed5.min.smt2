@@ -1,3 +1,4 @@
+; ignore output
 (set-option :produce-interpolants true)
 (set-option :interpolants-simp true)
 (declare-const x (_ BitVec 1))
@@ -5,5 +6,6 @@
 (assert (distinct x9 (bvredxor (_ bv0 1))))
 (assert (not (bvsle (_ bv0 1) x)))
 (assert (! (bvsle (bvshl (_ bv1 1) x9) x) :named a1))
+(set-info :status unsat)
 (check-sat)
 (get-interpolants (a1))

@@ -1,2 +1,0 @@
-unsat
-(and (= a #b0) (= #b1 ((_ extract 1 1) s)))

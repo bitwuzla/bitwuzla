@@ -1,3 +1,4 @@
+; ignore output
 (set-option :produce-interpolants 1)
 (set-option :interpolants-algo "pudlak")
 (declare-const x Bool)
@@ -7,7 +8,9 @@
 ;(check-sat-assuming ((not (ite x1 false x))))
 (push 1)
 (assert (not (ite x1 false x)))
+(set-info :status unsat)
 (check-sat)
 (pop 1)
+(set-info :status unsat)
 (check-sat)
 (get-interpolant (a1))
