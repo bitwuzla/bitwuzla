@@ -8,8 +8,34 @@ This file collects a summary of important and/or user-visible changes.
 - Removed unreliable **GMP** fallback subproject. The build system now requires
   shared/static GMP libraries to be installed **on the system**.
 
-- C++ API: Add support for injecting an **external SAT solver factory** via new
-  constructor: `Bitwuzla(TermManager&, SatSolverFactory&, const Options&)`
+- Add support for **interpolation**.  
+  Bitwuzla now supports queries for a single interpolant and
+  (inductive) interpolation sequences, see
+  `Aina Niemetz and Mathias Preiner. Bit-Precise Interpolation in Bitwuzla.
+  TACAS 2026, Springer, 2026`.
+  - **Full** interpolation support for **QF_BV**.
+  - **Experimental** interpolation support for **floating-point arithmetic**.
+    Produced interpolants may be Bitwuzla-specific if floating-point arithmetic
+    is involved as they may contain terms of solver-specific kinds that
+    represent the unpacked components of floating-point constants
+    (`FP_SYMFPU_EXP`, `FP_SYMFPU_SIG`, `FP_SYMFPU_SIGN`, `FP_SYMFPU_INF`
+     `FP_SYMFPU_NAN`, `FP_SYMFPU_ZERO`).
+  - **Partial** interpolation support for combinations with **arrays** and
+    **uninterpreted functions**. Interpolation queries with A/B-mixed lemmas in
+    the SAT proof core cannot be handled currently and will trigger an exception.
+  - C++ API:
+    - `Term get_interpolant(const std::vector<Term>&)`
+    - `std::vector<Term> get_interpolants(const std::vector<std::vector<Term>>&)`
+  - C API:
+    - `BitwuzlaTerm bitwuzla_get_interpolant(Bitwuzla*, uint32_t, BitwuzlaTerm[])`
+    - `BitwuzlaTerm* bitwuzla_get_interpolants(Bitwuzla*, uint32_t, uint32_t*, BitwuzlaTerm*[], size_t*)`
+  - Python API:
+    - `Term get_interpolants(self, A: list[list[Term]]) -> list[Term]`
+    - `list[Term] get_interpolant(self, A: list[Term]) -> Term`
+
+- Add support for injecting an **external SAT solver factory** via new
+  constructor:
+  - C++ API: `Bitwuzla(TermManager&, SatSolverFactory&, const Options&)`
 
 - SMT2 parser: Add support for SMT-LIB 2.7 command `define-const`.
 
