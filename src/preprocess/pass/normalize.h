@@ -30,8 +30,6 @@ class PassNormalize : public PreprocessingPass
   void apply(AssertionVector& assertions) override;
   Node process(const Node& node) override;
 
-  void disable() { d_disabled = true; };
-
  private:
   /**
    * Compute the  number of occurrences of the leafs of a
@@ -170,9 +168,6 @@ class PassNormalize : public PreprocessingPass
    * Clear after a call to process to avoid sharing.
    */
   std::unordered_map<Node, Node> d_cache;
-
-  // FIXME: Not required anymore once new preprocessing infrastructure is merged
-  std::unordered_map<Node, Node> d_assertion_cache;
 
   std::vector<Node> d_adder_chains;
   std::unordered_map<Node, uint64_t> d_adder_chains_length;

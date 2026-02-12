@@ -1262,7 +1262,7 @@ PassNormalize::apply(AssertionVector& assertions)
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
     const Node& assertion = assertions[i];
-    if (!processed(assertion) && !inconsistent && !d_disabled)
+    if (!processed(assertion) && !inconsistent)
     {
       Node proc = process(assertion);
       assert(proc == process(assertion));
@@ -1276,12 +1276,6 @@ PassNormalize::apply(AssertionVector& assertions)
     }
     else
     {
-      // Already processed in a previous pass, used cached result
-      auto it = d_assertion_cache.find(assertion);
-      if (it != d_assertion_cache.end() && it->second != assertion)
-      {
-        assertions.replace(i, it->second);
-      }
       assertions_pass1.push_back(assertion);
     }
   }
@@ -1378,7 +1372,6 @@ PassNormalize::apply(AssertionVector& assertions)
       cache_assertion(assertions[i]);
       if (assertions[i] != norm_assertion)
       {
-        d_assertion_cache.emplace(assertions[i], norm_assertion);
         cache_assertion(norm_assertion);
         assertions.replace(i, norm_assertion);
         ++d_stats.num_normalized_assertions;

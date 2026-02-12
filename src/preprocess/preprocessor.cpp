@@ -261,11 +261,6 @@ Preprocessor::apply(AssertionVector& assertions)
   bool skel_done = !assertions.initial_assertions();
   // Only apply on first call for now (for incremental it may be too expensive).
   bool apply_normalization = d_num_preprocess == 1;
-  // FIXME: Re-evaluate when new preprocessing infrastructure merged
-  if (!apply_normalization)
-  {
-    d_pass_normalize.disable();
-  }
   // fixed-point passes
   do
   {
@@ -369,7 +364,8 @@ Preprocessor::apply(AssertionVector& assertions)
       }
     }
 
-    if (options.rewrite_level() >= 2 && options.pp_normalize())
+    if (apply_normalization && options.rewrite_level() >= 2
+        && options.pp_normalize())
     {
       d_pass_normalize.apply(assertions);
       if (d_logger.is_msg_enabled(1))
