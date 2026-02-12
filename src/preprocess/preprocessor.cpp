@@ -261,14 +261,18 @@ Preprocessor::apply(AssertionVector& assertions)
   bool skel_done = !assertions.initial_assertions();
   // Only apply on first call for now (for incremental it may be too expensive).
   bool apply_normalization = d_num_preprocess == 1;
+
+  bool modified;
   // fixed-point passes
   do
   {
-    // Reset changed flag.
-    assertions.reset_modified();
+    // Reset modified flag.
+    modified = false;
     ++d_stats.num_iterations;
 
+    assertions.reset_modified();
     d_pass_rewrite.apply(assertions);
+    modified |= assertions.modified();
     if (d_logger.is_msg_enabled(1))
     {
       print_statistics(d_pass_rewrite, assertions);
@@ -280,7 +284,9 @@ Preprocessor::apply(AssertionVector& assertions)
 
     if (options.pp_flatten_and())
     {
+      assertions.reset_modified();
       d_pass_flatten_and.apply(assertions);
+      modified |= assertions.modified();
       if (d_logger.is_msg_enabled(1))
       {
         print_statistics(d_pass_flatten_and, assertions);
@@ -297,6 +303,7 @@ Preprocessor::apply(AssertionVector& assertions)
       {
         assertions.reset_modified();
         d_pass_variable_substitution.apply(assertions);
+        modified |= assertions.modified();
         if (d_logger.is_msg_enabled(1))
         {
           print_statistics(d_pass_variable_substitution, assertions);
@@ -310,7 +317,9 @@ Preprocessor::apply(AssertionVector& assertions)
 
     if (options.pp_skeleton_preproc() && !skel_done)
     {
+      assertions.reset_modified();
       d_pass_skeleton_preproc.apply(assertions);
+      modified |= assertions.modified();
       skel_done = true;
       if (d_logger.is_msg_enabled(1))
       {
@@ -324,7 +333,9 @@ Preprocessor::apply(AssertionVector& assertions)
 
     if (options.pp_embedded_constr())
     {
+      assertions.reset_modified();
       d_pass_embedded_constraints.apply(assertions);
+      modified |= assertions.modified();
       if (d_logger.is_msg_enabled(1))
       {
         print_statistics(d_pass_embedded_constraints, assertions);
@@ -337,14 +348,18 @@ Preprocessor::apply(AssertionVector& assertions)
 
     if (options.pp_contr_ands())
     {
+      assertions.reset_modified();
       d_pass_contr_ands.apply(assertions);
+      modified |= assertions.modified();
       if (d_logger.is_msg_enabled(1))
       {
         print_statistics(d_pass_contr_ands, assertions);
       }
     }
 
+    assertions.reset_modified();
     d_pass_elim_lambda.apply(assertions);
+    modified |= assertions.modified();
     if (d_logger.is_msg_enabled(1))
     {
       print_statistics(d_pass_elim_lambda, assertions);
@@ -367,7 +382,9 @@ Preprocessor::apply(AssertionVector& assertions)
     if (apply_normalization && options.rewrite_level() >= 2
         && options.pp_normalize())
     {
+      assertions.reset_modified();
       d_pass_normalize.apply(assertions);
+      modified |= assertions.modified();
       if (d_logger.is_msg_enabled(1))
       {
         print_statistics(d_pass_normalize, assertions);
@@ -380,7 +397,9 @@ Preprocessor::apply(AssertionVector& assertions)
 
     if (options.pp_elim_bv_extracts())
     {
+      assertions.reset_modified();
       d_pass_elim_extract.apply(assertions);
+      modified |= assertions.modified();
       if (d_logger.is_msg_enabled(1))
       {
         print_statistics(d_pass_elim_extract, assertions);
@@ -391,7 +410,7 @@ Preprocessor::apply(AssertionVector& assertions)
       }
     }
 
-  } while (assertions.modified() && !is_inconsistent() && !d_env.terminate());
+  } while (modified && !is_inconsistent() && !d_env.terminate());
 
 #ifndef NDEBUG
   if (d_env.options().dbg_pp_node_thresh())
