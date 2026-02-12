@@ -1440,6 +1440,50 @@ RewriteRule<RewriteRuleKind::ITE_COND_EQUAL>::_apply(Rewriter& rewriter,
 }
 
 /**
+ * match:  (ite (= t #b0) #b0 #b1)
+ * match:  (ite (= t #b1) #b1 #b0)
+ * result: t
+ *
+ * match:  (ite (= t #b0) #b1 #b0)
+ * match:  (ite (= t #b1) #b0 #b1)
+ * result: (bvnot t)
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::ITE_BOOL_TO_BV1>::_apply(Rewriter& rewriter,
+                                                      const Node& node)
+{
+  if (node[0].kind() == Kind::EQUAL && node[0][1].type().is_bv()
+      && node[0][1].type().bv_size() == 1 && node[1].is_value()
+      && node[2].is_value())
+  {
+    if (node[0][0].is_value())
+    {
+      if (node[0][0] == node[1])
+      {
+        return node[0][1];
+      }
+      if (node[0][0] == node[2])
+      {
+        return rewriter.invert_node(node[0][1]);
+      }
+    }
+    else if (node[0][1].is_value())
+    {
+      if (node[0][1] == node[1])
+      {
+        return node[0][0];
+      }
+      if (node[0][1] == node[2])
+      {
+        return rewriter.invert_node(node[0][0]);
+      }
+    }
+  }
+  return node;
+}
+
+/**
  * match:  (ite c (concat a b) (concat a d))
  * result: (concat a (ite c b d))
  *

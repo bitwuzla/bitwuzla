@@ -148,6 +148,11 @@ Node RewriteRule<RewriteRuleKind::ITE_BOOL>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::ITE_COND_EQUAL>::_apply(Rewriter& rewriter,
                                                           const Node& node);
+
+template <>
+Node RewriteRule<RewriteRuleKind::ITE_BOOL_TO_BV1>::_apply(Rewriter& rewriter,
+                                                           const Node& node);
+
 // concat_cond
 template <>
 Node RewriteRule<RewriteRuleKind::ITE_BV_CONCAT>::_apply(Rewriter& rewriter,

@@ -1139,6 +1139,7 @@ Rewriter::rewrite_ite(const Node& node)
     BZLA_APPLY_RW_RULE(ITE_ELSE_ITE3);
     BZLA_APPLY_RW_RULE(ITE_BOOL);
     BZLA_APPLY_RW_RULE(ITE_COND_EQUAL);
+    BZLA_APPLY_RW_RULE(ITE_BOOL_TO_BV1);
   }
   if (d_level >= 2)
   {
@@ -2063,6 +2064,7 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     CASE(ITE_ELSE_ITE3);
     CASE(ITE_BOOL);
     CASE(ITE_COND_EQUAL);
+    CASE(ITE_BOOL_TO_BV1);
     CASE(ITE_BV_CONCAT);
     CASE(ITE_BV_OP);
     CASE(NOT_NOT);

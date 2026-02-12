@@ -406,6 +406,7 @@ enum class RewriteRuleKind
   ITE_ELSE_ITE3,
   ITE_BOOL,
   ITE_COND_EQUAL,
+  ITE_BOOL_TO_BV1,
   // Level 2+
   ITE_BV_CONCAT,
   ITE_BV_OP,
