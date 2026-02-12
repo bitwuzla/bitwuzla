@@ -121,10 +121,9 @@ RewriteRule<RewriteRuleKind::NORM_BV_ADD_CONCAT>::_apply(Rewriter& rewriter,
   return res;
 }
 
-/*
- * match:  (bvnot (bvand (bvnot a)) (bvnot (bvshl b a)))
- *         (is rewritten form of (bvor a (bvshl b a)))
- * result: (bvadd a (bvshl b a))
+/**
+ * match:  (bvor t (bvshl b t))
+ * result: (bvadd t (bvshl b t))
  */
 template <>
 Node
@@ -133,17 +132,21 @@ RewriteRule<RewriteRuleKind::NORM_BV_NOT_OR_SHL>::_apply(Rewriter& rewriter,
 {
   //  Note: Do not use rewriter.is_bv_or() here as this may trigger recursive
   //  calls.
-  if (node.is_inverted() && node[0].kind() == Kind::AND)
+  if (node.is_inverted() && node[0].kind() == Kind::BV_AND)
   {
-    const Node& _or = node[0];
-    if ((_or[0].is_inverted() && _or[0][0].kind() == Kind::BV_SHL
-         && _or[0][0][1] == _or[1])
-        || (_or[1].is_inverted() && _or[1][0].kind() == Kind::BV_SHL
-            && _or[1][0][1] == _or[0]))
+    const Node& or0 = node[0][0];
+    const Node& or1 = node[0][1];
+    if (or0.is_inverted() && or0[0].kind() == Kind::BV_SHL
+        && rewriter.is_inverted_node_of(or0[0][1], or1))
     {
-      return rewriter.mk_node(
-          Kind::BV_ADD,
-          {rewriter.invert_node(_or[0]), rewriter.invert_node(_or[1])});
+      return rewriter.mk_node(Kind::BV_ADD,
+                              {or0[0], rewriter.invert_node(or1)});
+    }
+    else if (or1.is_inverted() && or1[0].kind() == Kind::BV_SHL
+             && rewriter.is_inverted_node_of(or1[0][1], or0))
+    {
+      return rewriter.mk_node(Kind::BV_ADD,
+                              {or1[0], rewriter.invert_node(or0)});
     }
   }
   assert(node[0].kind() != Kind::BV_OR);  // should be eliminated

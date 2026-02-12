@@ -102,6 +102,10 @@ class Rewriter
    * @return The inverted node.
    */
   const Node& invert_node(const Node& node);
+
+  /** @return whether a is inverted version of b. */
+  bool is_inverted_node_of(const Node& a, const Node& b) const;
+
   /**
    * Helper to conditionally create an inverted Boolean or bit-vector node.
    * @param condition True to invert the given node.
