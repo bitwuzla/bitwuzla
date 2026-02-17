@@ -66,6 +66,29 @@ class PassVariableSubstitution : public PreprocessingPass
 
   Node process(const Node& term, const Node& excl_var);
 
+  void process_extracts(
+      const std::unordered_map<Node, std::vector<std::pair<Node, Node>>>& extract_map,
+      AssertionVector& assertions,
+      std::unordered_map<Node, Node>& new_substs,
+      std::unordered_map<Node, size_t>& subst_index);
+
+  /** Helper struct for extract elimination. */
+  struct Range
+  {
+    uint64_t upper;
+    uint64_t lower;
+    std::vector<Node> terms;
+  };
+
+  /**
+   * Compute the non-overlapping set of given index ranges indices.
+   */
+  std::vector<Range> compute_non_overlapping(
+      NodeManager& nm,
+      uint64_t size,
+      std::unordered_map<std::pair<uint64_t, uint64_t>, std::vector<Node>>&
+          indices);
+
   /**
    * Determines whether we can fully substitute given variable, or if we have
    * to keep the substitution assertion.
@@ -129,12 +152,15 @@ class PassVariableSubstitution : public PreprocessingPass
     util::TimerStatistic& time_substitute;
     util::TimerStatistic& time_find_vars;
     util::TimerStatistic& time_find_substitution;
+    util::TimerStatistic& time_compute_non_overlap;
     uint64_t& num_substs;
     uint64_t& num_norm_eq_linear_eq;
     uint64_t& num_norm_eq_gauss_elim;
     uint64_t& num_norm_eq_bv_concat;
     uint64_t& num_norm_bv_ult;
     uint64_t& num_norm_bv_slt;
+    uint64_t& num_eq_elim_extracts;
+    uint64_t& num_eq_elim_extracts_substs;
   } d_stats;
 };
 

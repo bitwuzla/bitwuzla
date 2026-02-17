@@ -20,6 +20,7 @@
 #include "node/unordered_node_ref_map.h"
 #include "node/unordered_node_ref_set.h"
 #include "rewrite/rewriter.h"
+#include "util/hash.h"
 #include "util/logger.h"
 
 namespace bzla::preprocess::pass {
@@ -549,6 +550,66 @@ PassVariableSubstitution::normalize_for_substitution(const Node& assertion)
   return normalize_substitution_eq_bv_concat(assertion);
 }
 
+namespace {
+
+void
+collect_extracts(const Node& assertion,
+                 std::unordered_map<Node, std::vector<std::pair<Node, Node>>>& extracts)
+{
+  if (assertion.kind() == Kind::EQUAL)
+  {
+    if (assertion[0].kind() == Kind::BV_EXTRACT && assertion[0][0].is_const())
+    {
+      extracts[assertion[0][0]].emplace_back(assertion[0], assertion[1]);
+    }
+    if (assertion[1].kind() == Kind::BV_EXTRACT && assertion[1][0].is_const())
+    {
+      extracts[assertion[1][0]].emplace_back(assertion[1], assertion[0]);
+    }
+  }
+}
+
+void
+extract_terms(NodeManager& nm,
+              uint64_t offset,
+              uint64_t upper,
+              uint64_t lower,
+              const std::vector<Node>& terms,
+              std::vector<Node>& res)
+{
+  assert(!terms.empty());
+#ifndef NDEBUG
+  uint64_t size = terms[0].type().bv_size();
+#endif
+  upper -= offset;
+  lower -= offset;
+  for (const auto& t : terms)
+  {
+    assert(t.type().bv_size() == size);
+    assert(upper < size);
+    assert(lower < size);
+    assert(lower <= upper);
+    // Avoid double extract
+    if (t.kind() == Kind::BV_EXTRACT)
+    {
+      const auto l = t.index(1);
+      res.push_back(nm.mk_node(Kind::BV_EXTRACT, {t[0]}, {upper + l, lower + l}));
+    }
+    else
+    {
+      res.push_back(nm.mk_node(Kind::BV_EXTRACT, {t}, {upper, lower}));
+    }
+  }
+  #ifndef NDEBUG
+  for (const auto& n : res)
+  {
+    assert(n.type().bv_size() == upper - lower + 1);
+  }
+  #endif
+}
+
+}  // namespace
+
 /* --- PassVariableSubstitution public -------------------------------------- */
 
 PassVariableSubstitution::PassVariableSubstitution(
@@ -589,6 +650,7 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
   // Check current set of assertions for variable substitutions
   std::unordered_map<Node, Node> new_substs;
   std::unordered_map<Node, size_t> subst_index;
+  std::unordered_map<Node, std::vector<std::pair<Node, Node>>> extract_map;
   {
     util::Timer timer(d_stats.time_register);
     for (size_t i = 0, size = assertions.size(); i < size; ++i)
@@ -617,6 +679,7 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
       // No variable substitution
       if (var.is_null())
       {
+        collect_extracts(assertion, extract_map);
         continue;
       }
       // If var already substituted, check if term is also a variable.
@@ -654,8 +717,14 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
         Log(2) << "Add substitution: " << var << " -> " << term_processed;
       }
     }
-    Log(1) << "Found " << new_substs.size() << " new substitutions";
   }
+
+  if (!extract_map.empty())
+  {
+    process_extracts(extract_map, assertions, new_substs, subst_index);
+  }
+
+  Log(1) << "Found " << new_substs.size() << " new substitutions";
 
   // Remove substitution cycles
   {
@@ -1014,10 +1083,231 @@ PassVariableSubstitution::process(const Node& term, const Node& excl_var)
       substitute(term, excl_var, d_cache.substitutions(), d_cache.cache()));
 }
 
+namespace {
+
+// Prefer value kinds, then constants, then everything else.
+int32_t
+priority(const Node& n)
+{
+  if (n.is_value()) return 0;
+  if (n.is_const()) return 1;
+  return 2;
+}
+
+}  // namespace
+
+void
+PassVariableSubstitution::process_extracts(
+    const std::unordered_map<Node, std::vector<std::pair<Node, Node>>>& extract_map,
+    AssertionVector& assertions,
+    std::unordered_map<Node, Node>& new_substs,
+    std::unordered_map<Node, size_t>& subst_index)
+{
+  NodeManager& nm = d_env.nm();
+  Rewriter& rw = d_env.rewriter();
+
+  for (const auto& [var, extracts] : extract_map)
+  {
+    if (d_substitutions.find(var) != d_substitutions.end()
+        || new_substs.find(var) != new_substs.end())
+    {
+      continue;
+    }
+    if (d_exclude_consts.find(var) != d_exclude_consts.end())
+    {
+      continue;
+    }
+
+    std::unordered_map<std::pair<uint64_t, uint64_t>, std::vector<Node>> indices;
+    uint64_t size = var.type().bv_size();
+
+    for (const auto& [extract, term] : extracts)
+    {
+      indices[std::make_pair(extract.index(0), extract.index(1))].push_back(
+          term);
+    }
+    auto non_overlapping = compute_non_overlapping(nm, size, indices);
+    if (non_overlapping.empty())
+    {
+      continue;
+    }
+
+    bool full_subst = true;
+    std::vector<Node> slices;
+    for (const auto& [upper, lower, terms] : non_overlapping)
+    {
+      std::vector<Node> terms_rw;
+      for (const auto& t : terms)
+      {
+        terms_rw.push_back(rw.rewrite(t));
+      }
+      std::sort(
+          terms_rw.begin(), terms_rw.end(), [](const Node& n1, const Node& n2) {
+            auto p1 = priority(n1), p2 = priority(n2);
+            return p1 < p2 || (p1 == p2 && n1.id() < n2.id());
+          });
+      bool added = false;
+      for (const auto& t : terms_rw)
+      {
+        if (t == var || (t.kind() == Kind::BV_EXTRACT && t[0] == var))
+        {
+          continue;
+        }
+        slices.push_back(t);
+        added = true;
+        break;
+      }
+      if (!added)
+      {
+        full_subst = false;
+        break;
+      }
+    }
+    if (full_subst)
+    {
+      Node concat = utils::mk_nary(nm, Kind::BV_CONCAT, slices);
+      if (!is_direct_cycle(var, concat))
+      {
+        Node eq = nm.mk_node(Kind::EQUAL, {var, concat});
+        subst_index.emplace(var, assertions.size());
+        assertions.push_back(eq, Node());
+        new_substs.emplace(var, concat);
+        d_stats.num_eq_elim_extracts += extracts.size();
+        ++d_stats.num_eq_elim_extracts_substs;
+        Log(2) << "Add substitution: " << var << " -> " << concat;
+      }
+    }
+  }
+}
+
+// Partition overlapping bit-ranges into non-overlapping sub-ranges.
+//
+// `indices` maps bit-ranges [u:l] to the terms (BV_EXTRACT nodes) that use
+// that range.  When two ranges overlap, they are split into non-overlapping
+// sub-ranges so that each sub-range collects terms from all original ranges
+// that covered it.
+//
+// The algorithm works in a single pass using a boundary sweep:
+//
+//   1. Collect boundaries: every entry [u:l] contributes l (start) and u+1
+//      (one-past-end) to a boundary set.
+//
+//   2. Sort and deduplicate the boundaries.  Consecutive pairs of boundaries
+//      define the non-overlapping sub-ranges that partition the bit axis.
+//
+//   3. For each sub-range, find all original entries that cover it and collect
+//      their terms (via extract_terms, or by direct move for exact matches).
+//
+// Example:
+//   Input:  [7:0] -> {a}, [5:2] -> {b}
+//   Boundaries: {0, 2, 6, 8}
+//   Sub-ranges: [1:0], [5:2], [7:6]
+//   Result: [1:0] -> {a[1:0]}, [5:2] -> {b, a[5:2]}, [7:6] -> {a[7:6]}
+//
+// Returns the non-overlapping sub-ranges sorted descending by upper bound if
+// they fully cover [size-1:0], or an empty vector otherwise.
+std::vector<PassVariableSubstitution::Range>
+PassVariableSubstitution::compute_non_overlapping(
+    NodeManager& nm,
+    uint64_t size,
+    std::unordered_map<std::pair<uint64_t, uint64_t>, std::vector<Node>>&
+        indices)
+{
+  std::vector<Range> result;
+
+  util::Timer timer(d_stats.time_compute_non_overlap);
+
+  // Step 1: Collect all entries and their range boundaries.
+  // Each entry [u:l] contributes boundaries l and u+1 (one-past-end).
+  std::vector<Range> ranges;
+  std::vector<uint64_t> boundaries;
+  ranges.reserve(indices.size());
+  boundaries.reserve(2 * indices.size());
+  for (auto& [key, terms] : indices)
+  {
+    auto [u, l] = key;
+    ranges.push_back({u, l, std::move(terms)});
+    boundaries.push_back(l);
+    boundaries.push_back(u + 1);
+  }
+  indices.clear();
+
+  // Step 2: Sort and deduplicate boundaries.
+  std::sort(boundaries.begin(), boundaries.end());
+  boundaries.erase(std::unique(boundaries.begin(), boundaries.end()),
+                   boundaries.end());
+
+  // Step 3: Walk consecutive boundaries to form sub-ranges.
+  // Each pair (boundaries[j], boundaries[j+1]) defines a sub-range
+  // [boundaries[j+1]-1 : boundaries[j]].  For each sub-range, collect
+  // terms from all original entries that cover it.
+  for (size_t j = 0; j + 1 < boundaries.size(); ++j)
+  {
+    uint64_t sub_l = boundaries[j];
+    uint64_t sub_u = boundaries[j + 1] - 1;
+
+    std::vector<Node> terms;
+    bool covered = false;
+    for (auto& r : ranges)
+    {
+      // Range [r.upper:r.lower] does not cover [sub_u:sub_l].
+      if (r.lower > sub_l || r.upper < sub_u)
+      {
+        continue;
+      }
+      covered = true;
+      if (r.lower == sub_l && r.upper == sub_u)
+      {
+        // Exact match — move terms directly, no extract needed.
+        terms.insert(terms.end(),
+                     std::make_move_iterator(r.terms.begin()),
+                     std::make_move_iterator(r.terms.end()));
+      }
+      else
+      {
+        // Entry is wider than the sub-range — extract the relevant slice.
+        extract_terms(nm, r.lower, sub_u, sub_l, r.terms, terms);
+      }
+    }
+    if (covered)
+    {
+#ifndef NDEBUG
+      for (const auto& t : terms)
+      {
+        assert(t.type() == terms[0].type());
+      }
+#endif
+      result.push_back({sub_u, sub_l, std::move(terms)});
+    }
+  }
+
+  // Sort descending by upper bound (then by lower bound).
+  std::sort(result.begin(), result.end(), [](const Range& a, const Range& b) {
+    return a.upper > b.upper || (a.upper == b.upper && a.lower > b.lower);
+  });
+
+  // Verify full coverage of [size-1 : 0]
+  if (!result.empty())
+  {
+    bool covers =
+        (result.front().upper == size - 1) && (result.back().lower == 0);
+    for (size_t i = 0; covers && i + 1 < result.size(); ++i)
+    {
+      covers = (result[i].lower == result[i + 1].upper + 1);
+    }
+    if (!covers)
+    {
+      result.clear();
+    }
+  }
+
+  return result;
+}
+
 PassVariableSubstitution::Statistics::Statistics(util::Statistics& stats,
                                                  const std::string& prefix)
     : time_register(
-        stats.new_stat<util::TimerStatistic>(prefix + "time_register")),
+          stats.new_stat<util::TimerStatistic>(prefix + "time_register")),
       time_direct_cycle_check(stats.new_stat<util::TimerStatistic>(
           prefix + "time_direct_cycle_check")),
       time_remove_cycles(
@@ -1028,6 +1318,8 @@ PassVariableSubstitution::Statistics::Statistics(util::Statistics& stats,
           stats.new_stat<util::TimerStatistic>(prefix + "time_find_vars")),
       time_find_substitution(stats.new_stat<util::TimerStatistic>(
           prefix + "time_find_substitution")),
+      time_compute_non_overlap(stats.new_stat<util::TimerStatistic>(
+          prefix + "time_compute_non_overlap")),
       num_substs(stats.new_stat<uint64_t>(prefix + "num_substs")),
       num_norm_eq_linear_eq(
           stats.new_stat<uint64_t>(prefix + "normalize_eq::num_linear_eq")),
@@ -1038,7 +1330,11 @@ PassVariableSubstitution::Statistics::Statistics(util::Statistics& stats,
       num_norm_bv_ult(
           stats.new_stat<uint64_t>(prefix + "normalize_bv_ineq::num_ult")),
       num_norm_bv_slt(
-          stats.new_stat<uint64_t>(prefix + "normalize_bv_ineq::num_slt"))
+          stats.new_stat<uint64_t>(prefix + "normalize_bv_ineq::num_slt")),
+      num_eq_elim_extracts(
+          stats.new_stat<uint64_t>(prefix + "num_eq_elim_extract")),
+      num_eq_elim_extracts_substs(
+          stats.new_stat<uint64_t>(prefix + "num_eq_elim_extract_substs"))
 
 {
 }
