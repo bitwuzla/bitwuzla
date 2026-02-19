@@ -4324,7 +4324,11 @@ TEST_F(TestApi, sat_factory)
   {
    public:
     TestSatSolver(SatSolver* sat_solver) : d_sat_solver(sat_solver) {}
-    void add(int32_t lit) override { d_sat_solver->add(lit); }
+    void add(int32_t lit, int64_t cgroup_id = 0) override
+    {
+      (void) cgroup_id;
+      d_sat_solver->add(lit);
+    }
     void assume(int32_t lit) override { d_sat_solver->assume(lit); }
     int32_t value(int32_t lit) override { return d_sat_solver->value(lit); }
     bool failed(int32_t lit) override { return d_sat_solver->failed(lit); }

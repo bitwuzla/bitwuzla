@@ -28,8 +28,9 @@ CryptoMiniSat::CryptoMiniSat(uint32_t nthreads)
 }
 
 void
-CryptoMiniSat::add(int32_t lit)
+CryptoMiniSat::add(int32_t lit, int64_t cgroup_id)
 {
+  (void) cgroup_id;
   if (lit)
   {
     d_clause.push_back(import_lit(lit));

@@ -32,9 +32,14 @@ class SatSolver
 
   /**
    * Add valid literal to current clause.
-   * @param lit The literal to add, 0 to terminate clause..
+   * @param lit       The literal to add, 0 to terminate clause..
+   * @param cgroup_id The "clause group" id, associates a clause with a
+   *                  clause group. This is only relevant for interpolation
+   *                  where this labeling allows for mapping back clauses to
+   *                  the corresponding nodes in the bit-level circuit.
+   *                  It can be left at its default value, otherwise.
    */
-  virtual void add(int32_t lit) = 0;
+  virtual void add(int32_t lit, int64_t cgroup_id = 0) = 0;
   /**
    * Assume valid (non-zero) literal for next call to 'check_sat'.
    * @param lit The literal to assume.

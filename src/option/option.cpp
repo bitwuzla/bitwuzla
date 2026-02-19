@@ -838,8 +838,13 @@ Options::finalize()
   }
   if (produce_interpolants())
   {
+#ifdef BZLA_USE_CADICAL
     // Interpolation is currently only supported with CaDiCaL.
     sat_solver.set(SatSolver::CADICAL);
+#else
+    throw Unsupported(
+        "interpolation generation only supported with CaDiCaL (not available)");
+#endif
 
     // Introduces fresh variables
     // Assertion abstraction adds back assertions as lemmas, which is generally

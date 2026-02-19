@@ -40,8 +40,9 @@ Kissat::Kissat() { init(); }
 Kissat::~Kissat() { kissat_release(d_solver); }
 
 void
-Kissat::add(int32_t lit)
+Kissat::add(int32_t lit, int64_t cgroup_id)
 {
+  (void) cgroup_id;
   d_literals.push_back(lit);
 }
 

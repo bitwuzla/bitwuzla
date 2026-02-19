@@ -12,7 +12,6 @@
 #define BZLA_SOLVER_BV_BV_INTERPOLATOR_H_INCLUDED
 
 #include <cstdint>
-#include <unordered_set>
 
 #include "backtrack/unordered_set.h"
 #include "bitblast/aig_bitblaster.h"
@@ -27,6 +26,9 @@ namespace bzla {
 
 namespace sat {
 class Cadical;
+namespace interpolants {
+class Tracer;
+}
 }  // namespace sat
 
 namespace bv {

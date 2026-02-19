@@ -24,10 +24,6 @@
 
 namespace bzla {
 
-namespace sat::interpolants {
-class Tracer;
-}
-
 namespace bv {
 
 class BvSolver;
@@ -62,7 +58,8 @@ class BvBitblastSolver : public Solver,
   void push() override {}
   void pop() override;
 
-  sat::interpolants::Tracer* tracer() { return d_tracer.get(); }
+  /** Get the associated SAT solver instance. */
+  sat::SatSolver* sat_solver() { return d_sat_solver.get(); }
 
   /**
    * Get interpolant I of formulas A and B such that
@@ -82,6 +79,8 @@ class BvBitblastSolver : public Solver,
    *       This is necessary because for labeling, the interpolation engine
    *       needs to process the assertions that have actually been processed
    *       during solving.
+   *
+   * @return The interpolant.
    */
   Node interpolant(const std::vector<Node>& ppA, const std::vector<Node>& ppB);
 
@@ -124,8 +123,6 @@ class BvBitblastSolver : public Solver,
 
   /** True if produce-interpolants is enabled. */
   bool d_produce_interpolants = false;
-  /** Interpolation proof tracer. */
-  std::unique_ptr<sat::interpolants::Tracer> d_tracer;
   /** True to reset SAT solver on each solve() call. */
   bool d_reset_sat = false;
 

@@ -14,6 +14,8 @@
 
 #include "sat/cadical.h"
 
+#include "sat/interpolants/cadical_tracer.h"
+
 namespace bzla::sat {
 
 /* CadicalTerminator public ------------------------------------------------- */
@@ -39,9 +41,12 @@ Cadical::Cadical()
   d_solver->set("quiet", 1);
 }
 
+Cadical::~Cadical() {}
+
 void
-Cadical::add(int32_t lit)
+Cadical::add(int32_t lit, int64_t cgroup_id)
 {
+  (void) cgroup_id;
   d_solver->add(lit);
 }
 
@@ -99,6 +104,39 @@ const char *
 Cadical::get_version() const
 {
   return d_solver->version();
+}
+
+/* CadicalInterpol public --------------------------------------------------- */
+
+CadicalInterpol::CadicalInterpol() : Cadical() {}
+
+CadicalInterpol::~CadicalInterpol()
+{
+  if (d_tracer)
+  {
+    d_solver->disconnect_proof_tracer(d_tracer.get());
+    d_tracer.reset(nullptr);
+  }
+}
+
+void
+CadicalInterpol::connect_tracer(Env& env, bv::AigBitblaster& bitblaster)
+{
+  d_tracer.reset(new sat::interpolants::CadicalTracer(env, bitblaster));
+  d_solver->connect_proof_tracer(d_tracer.get(), true);
+}
+
+void
+CadicalInterpol::add(int32_t lit, int64_t cgroup_id)
+{
+  assert(d_tracer);
+  // We need to notify the interpolation SAT proof tracer which AIG id the
+  // following, currently encoded SAT clauses are associated with. This
+  // mapping is later utilized to generate dynamic labeling of variables and
+  // clauses according to the partition of the set of current assertions into
+  // A and B formulas.
+  d_tracer->set_current_aig_id(cgroup_id);
+  Cadical::add(lit);
 }
 
 /* -------------------------------------------------------------------------- */

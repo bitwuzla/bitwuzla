@@ -39,8 +39,9 @@ Gimsatul::~Gimsatul()
 }
 
 void
-Gimsatul::add(int32_t lit)
+Gimsatul::add(int32_t lit, int64_t cgroup_id)
 {
+  (void) cgroup_id;
   int32_t var = std::abs(lit);
   if (var > d_max_var)
   {

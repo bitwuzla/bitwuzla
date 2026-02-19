@@ -30,7 +30,7 @@ class CryptoMiniSat : public SatSolver
  public:
   CryptoMiniSat(uint32_t nthreads);
 
-  void add(int32_t lit) override;
+  void add(int32_t lit, int64_t cgroup_id = 0) override;
   void assume(int32_t lit) override;
   int32_t value(int32_t lit) override;
   bool failed(int32_t lit) override;

@@ -1405,8 +1405,12 @@ class SatSolverFactoryInternal : public bzla::sat::SatSolverFactory
   {
   }
   virtual ~SatSolverFactoryInternal() {}
-  std::unique_ptr<SatSolver> new_sat_solver() override
+  std::unique_ptr<SatSolver> new_sat_solver(
+      bool produce_interpolants = false) override
   {
+    BITWUZLA_CHECK(!produce_interpolants)
+        << "interpolant generation not supported with external SAT solver "
+           "factory";
     return d_sat_factory.new_sat_solver();
   }
   bool has_terminator_support() override

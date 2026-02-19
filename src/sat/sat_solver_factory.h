@@ -28,7 +28,8 @@ class SatSolverFactory
   }
   virtual ~SatSolverFactory() {}
   /** Create new SAT solver instance. */
-  virtual std::unique_ptr<SatSolver> new_sat_solver();
+  virtual std::unique_ptr<SatSolver> new_sat_solver(
+      bool produce_interpolants = false);
   /** Determine if configured SAT solver has terminator support. */
   virtual bool has_terminator_support();
 

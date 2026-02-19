@@ -18,6 +18,7 @@
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
 #include "node/unordered_node_ref_set.h"
+#include "sat/cadical.h"
 #include "sat/interpolants/tracer.h"
 #include "sat/interpolants/tracer_kinds.h"
 #include "solver/bv/aig_bitblaster.h"
@@ -41,7 +42,8 @@ BvInterpolator::BvInterpolator(Env& env,
       d_logger(env.logger()),
       d_lemmas(state.lemma_cache()),
       d_bitblaster(bb_solver.bitblaster()),
-      d_tracer(bb_solver.tracer()),
+      d_tracer(reinterpret_cast<sat::CadicalInterpol*>(bb_solver.sat_solver())
+                   ->tracer()),
       d_word_blaster(state.fp_solver().word_blaster())
 {
 }

@@ -12,6 +12,7 @@
 #define BZLA_SAT_CADICAL_H_INCLUDED
 
 /*----------------------------------------------------------------------------*/
+#include "solver/bv/aig_bitblaster.h"
 #ifdef BZLA_USE_CADICAL
 /*----------------------------------------------------------------------------*/
 
@@ -22,7 +23,19 @@
 #include "solver/result.h"
 #include "terminator.h"
 
-namespace bzla::sat {
+namespace bzla {
+
+class Env;
+
+namespace bv {
+class AigBitblaster;
+}
+
+namespace sat {
+
+namespace interpolants {
+class Tracer;
+}
 
 class CadicalTerminator : public CaDiCaL::Terminator
 {
@@ -39,8 +52,9 @@ class Cadical : public SatSolver
 {
  public:
   Cadical();
+  ~Cadical();
 
-  void add(int32_t lit) override;
+  void add(int32_t lit, int64_t cgroup_id = 0) override;
   void assume(int32_t lit) override;
   int32_t value(int32_t lit) override;
   bool failed(int32_t lit) override;
@@ -52,12 +66,27 @@ class Cadical : public SatSolver
 
   CaDiCaL::Solver* solver() { return d_solver.get(); }
 
- private:
+ protected:
   std::unique_ptr<CaDiCaL::Solver> d_solver   = nullptr;
   std::unique_ptr<CaDiCaL::Terminator> d_term = nullptr;
 };
 
-}  // namespace bzla::sat
+class CadicalInterpol : public Cadical
+{
+ public:
+  CadicalInterpol();
+  ~CadicalInterpol();
+  void add(int32_t lit, int64_t cgroup_id = 0) override;
+  void connect_tracer(Env& env, bv::AigBitblaster& bitblaster);
+  interpolants::Tracer* tracer() { return d_tracer.get(); }
+
+ private:
+  /** Interpolation proof tracer. */
+  std::unique_ptr<sat::interpolants::Tracer> d_tracer;
+};
+
+}  // namespace sat
+}  // namespace bzla
 
 /*----------------------------------------------------------------------------*/
 #endif
