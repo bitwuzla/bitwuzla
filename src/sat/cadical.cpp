@@ -211,7 +211,10 @@ Cadical::get_version() const
 
 /* CadicalInterpol public --------------------------------------------------- */
 
-CadicalInterpol::CadicalInterpol() : Cadical() {}
+CadicalInterpol::CadicalInterpol() : Cadical()
+{
+  d_solver->set("factor", 0);  // Disable bva, produces RAT steps
+}
 
 CadicalInterpol::~CadicalInterpol()
 {
