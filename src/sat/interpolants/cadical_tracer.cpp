@@ -422,24 +422,16 @@ CadicalTracer::get_interpolant(
     else if (type == ClauseType::ASSUMPTION)
     {
       const auto& antecedents = clause.d_antecedents;
-      if (antecedents.empty())
-      {
-        assert(clause.d_clause.size() == 2);
-        bool is_ass_lit0 =
-            d_assumptions.find(-clause.d_clause[0]) != d_assumptions.end();
-        bool is_ass_lit1 =
-            d_assumptions.find(-clause.d_clause[1]) != d_assumptions.end();
-        if (!is_ass_lit0 || !is_ass_lit1)
-        {
-          assert(d_clauses.size() == id);
-          int32_t lit = is_ass_lit0 ? -clause.d_clause[1] : -clause.d_clause[0];
-          assert(d_part_interpolants.find(id) != d_part_interpolants.end());
-          ClauseKind kind = clause_labels.at(-lit);
-          d_part_interpolants.emplace(
-              id, get_interpolant(var_labels, {-lit}, kind));
-          continue;
-        }
-      }
+
+      // All literals in assumption clause must be assumption literals if it
+      // does not have antecedents since we don't use constraint(). Note that
+      // this only occurs if there is a trivial conflict due to assumptions.
+      assert(
+          !antecedents.empty()
+          || (clause.d_clause.size() == 2
+              && d_assumptions.find(-clause.d_clause[0]) != d_assumptions.end()
+              && d_assumptions.find(-clause.d_clause[1])
+                     != d_assumptions.end()));
 
       Interpolant ipol =
           antecedents.size() ? d_part_interpolants.at(id) : Interpolant();
