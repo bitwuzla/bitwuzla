@@ -1,3 +1,4 @@
+; ignore output
 (set-logic QF_ABV)
 (declare-fun v7 () Bool)
 (declare-fun v19 () Bool)
