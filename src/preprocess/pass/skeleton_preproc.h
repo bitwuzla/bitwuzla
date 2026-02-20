@@ -29,6 +29,7 @@ class Cadical;
 
 namespace preprocess::pass {
 
+#ifdef BZLA_USE_CADICAL
 class FixedListener;
 
 /**
@@ -83,6 +84,19 @@ class PassSkeletonPreproc : public PreprocessingPass
   } d_stats;
 };
 
+#else
+
+class PassSkeletonPreproc : public PreprocessingPass
+{
+ public:
+  PassSkeletonPreproc(Env& env, backtrack::BacktrackManager* backtrack_mgr)
+      : PreprocessingPass(env, backtrack_mgr, "sp", "skeleton_preproc")
+  {
+  }
+  void apply(AssertionVector& assertions) override { (void) assertions; }
+};
+
+#endif
 }  // namespace preprocess::pass
 }  // namespace bzla
 #endif

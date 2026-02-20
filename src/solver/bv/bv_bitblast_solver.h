@@ -12,7 +12,6 @@
 #define BZLA_SOLVER_BV_BV_BITBLAST_SOLVER_H_INCLUDED
 
 #include "backtrack/backtrackable.h"
-#include "backtrack/unordered_set.h"
 #include "backtrack/vector.h"
 #include "bitblast/aig/aig_cnf.h"
 #include "bitblast/aig/aig_printer.h"

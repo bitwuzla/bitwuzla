@@ -8,6 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+#ifdef BZLA_USE_CADICAL
+
 #include "preprocess/pass/skeleton_preproc.h"
 
 #include <cadical/cadical.hpp>
@@ -18,9 +20,7 @@
 #include "env.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
-#ifdef BZLA_USE_CADICAL
 #include "sat/cadical.h"
-#endif
 #include "solver/bv/aig_bitblaster.h"
 
 namespace bzla::preprocess::pass {
@@ -92,7 +92,6 @@ PassSkeletonPreproc::apply(AssertionVector& assertions)
 {
   util::Timer timer(d_stats_pass.time_apply);
   (void) assertions;
-#ifdef BZLA_USE_CADICAL
   // Disabled if unsat cores enabled.
   if (d_env.options().produce_unsat_cores())
   {
@@ -216,7 +215,6 @@ PassSkeletonPreproc::apply(AssertionVector& assertions)
   d_done = true;
   d_sat_solver.reset(new sat::Cadical());
   d_encode_cache.clear();
-#endif
 }
 
 /* --- PassSkeletonPreproc private ------------------------------------------ */
@@ -244,3 +242,5 @@ PassSkeletonPreproc::Statistics::Statistics(util::Statistics& stats,
 }
 
 }  // namespace bzla::preprocess::pass
+
+#endif

@@ -11,6 +11,8 @@
 #ifndef BZLA_SAT_INTERPOLANTS_CADICAL_TRACER_H_INCLUDED
 #define BZLA_SAT_INTERPOLANTS_CADICAL_TRACER_H_INCLUDED
 
+#ifdef BZLA_USE_CADICAL
+
 #include <unordered_map>
 #include <unordered_set>
 
@@ -203,4 +205,5 @@ std::ostream& operator<<(std::ostream& out,
                          const CadicalTracer::Interpolant& interpolant);
 
 }  // namespace bzla::sat::interpolants
+#endif
 #endif

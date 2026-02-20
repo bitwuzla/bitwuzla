@@ -16,6 +16,7 @@
 
 #include "config.h"
 #include "rewrite/rewriter.h"
+#include "util/exceptions.h"
 
 namespace bzla::option {
 

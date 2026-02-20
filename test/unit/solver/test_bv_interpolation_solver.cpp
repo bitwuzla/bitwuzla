@@ -8,6 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+#if BZLA_USE_CADICAL
+
 #include <cstdint>
 #include <iostream>
 #include <unordered_set>
@@ -1172,3 +1174,5 @@ TEST_F(TestBvInterpolationSolver, interpol_quant2)
 }
 #endif
 }  // namespace bzla::test
+
+#endif

@@ -8,6 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+#ifdef BZLA_USE_CADICAL
+
 #include "sat/interpolants/cadical_tracer.h"
 
 #include <cassert>
@@ -740,3 +742,5 @@ operator<<(std::ostream& out, const CadicalTracer::Interpolant& interpolant)
 
 /* -------------------------------------------------------------------------- */
 }  // namespace bzla::sat::interpolants
+
+#endif

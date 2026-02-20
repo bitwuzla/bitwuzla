@@ -19,6 +19,7 @@
 
 #include "sat/cadical.h"
 #include "sat/cryptominisat.h"
+#include "sat/gimsatul.h"
 #include "sat/kissat.h"
 #include "test/unit/test.h"
 
@@ -1506,6 +1507,7 @@ TEST_F(TestApi, get_assertions)
   ASSERT_EQ(bitwuzla.get_assertions(), expected);
 }
 
+#if defined(BZLA_USE_CADICAL) || defined(BZLA_USE_CMS)
 TEST_F(TestApi, is_unsat_assumption)
 {
   {
@@ -1631,6 +1633,7 @@ TEST_F(TestApi, get_unsat_core)
     ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNSAT);
   }
 }
+#endif
 
 TEST_F(TestApi, simplify)
 {
@@ -1767,6 +1770,7 @@ TEST_F(TestApi, get_rm_value)
   ASSERT_EQ("RTZ", d_rm_rtz.value<std::string>());
 }
 
+#ifdef BZLA_USE_CADICAL
 TEST_F(TestApi, get_interpolant)
 {
   bitwuzla::Sort bv4  = d_tm.mk_bv_sort(4);
@@ -1867,6 +1871,7 @@ TEST_F(TestApi, get_interpolant)
     ASSERT_EQ(interpolants.size(), 6);
   }
 }
+#endif
 
 /* -------------------------------------------------------------------------- */
 /* Printing                                                                   */
@@ -4397,17 +4402,14 @@ TEST_F(TestApi, sat_factory)
     TestGimsatul(sat::Gimsatul* gimsatul) : TestSatSolver(gimsatul) {}
     const char* get_name() const override { return "external-gimsatul"; }
   };
-  class TestGimsatul : public bitwuzla::SatSolverFactory
+  class TestGimsatulFactory : public bitwuzla::SatSolverFactory
   {
    public:
-    TestGimsatul(const bitwuzla::Options& options)
-        : bitwuzla::SatSolverFactory((options))
-    {
-    }
+    TestGimsatulFactory() : bitwuzla::SatSolverFactory() {}
     std::unique_ptr<bitwuzla::SatSolver> new_sat_solver() override
     {
       return std::unique_ptr<TestGimsatul>(
-          new TestCryptoMinisat(new sat::Gimsatul(1)));
+          new TestGimsatul(new sat::Gimsatul(1)));
     }
     bool has_terminator_support() override { return false; }
   };
@@ -4478,7 +4480,7 @@ TEST_F(TestApi, sat_factory)
     bitwuzla::Options opts;
     opts.set(bitwuzla::Option::VERBOSITY, 1);
     opts.set(bitwuzla::Option::PREPROCESS, false);
-    TestGimsatulFactory sat_factory(opts);
+    TestGimsatulFactory sat_factory;
     bitwuzla::Bitwuzla bitwuzla(d_tm, sat_factory, opts);
     bitwuzla.assert_formula(b);
     ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNSAT);

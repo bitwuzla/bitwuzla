@@ -2530,6 +2530,7 @@ TEST_F(TestCApi, assert)
   bitwuzla_delete(bitwuzla);
 }
 
+#if defined(BZLA_USE_CADICAL) || defined(BZLA_USE_CMS)
 TEST_F(TestCApi, is_unsat_assumption)
 {
   {
@@ -2685,6 +2686,7 @@ TEST_F(TestCApi, get_unsat_core)
     bitwuzla_options_delete(options);
   }
 }
+#endif
 
 TEST_F(TestCApi, simplify)
 {
@@ -2868,6 +2870,7 @@ TEST_F(TestCApi, get_rm_value)
   ASSERT_EQ("RTZ", std::string(bitwuzla_term_value_get_str_fmt(d_rm_rtz, 10)));
 }
 
+#ifdef BZLA_USE_CADICAL
 TEST_F(TestCApi, get_interpolant)
 {
   BitwuzlaSort bv4  = bitwuzla_mk_bv_sort(d_tm, 4);
@@ -2996,6 +2999,7 @@ TEST_F(TestCApi, get_interpolant)
     ASSERT_EQ(size, 6);
   }
 }
+#endif
 
 /* -------------------------------------------------------------------------- */
 /* Printing                                                                   */

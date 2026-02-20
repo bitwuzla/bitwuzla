@@ -1127,7 +1127,6 @@ tests_smt2 = [
   ['solver/bv/preprop1.smt2'],
   ['solver/bv/prim8bugreduced.btor.smt2'],
   ['solver/bv/problem_130.smt2'],
-  ['solver/bv/prop/murxla-110deca336eefafd.min.smt2'],
   ['solver/bv/prop/prels-funs.smt2', ['--bv-solver=preprop']],
   ['solver/bv/prop/prop_essential_checks_cycle.smt2', ['--bv-solver=prop --prop-sext --prop-ineq-bounds']], # --prop-use-inv-lt-concat" # TODO option currently disabled
   ['solver/bv/prop/prop_fp.smt2', ['--bv-solver=prop']],
@@ -1142,7 +1141,6 @@ tests_smt2 = [
   ['solver/bv/redand3twice.btor.smt2'],
   ['solver/bv/redand3twice.smt2'],
   ['solver/bv/redor3.btor.smt2'],
-  ['solver/bv/red-murxla-771693115476ea54.min.smt2'],
   ['solver/bv/regr-5smod3.btor.smt2'],
   ['solver/bv/regr-5srem3.btor.smt2'],
   ['solver/bv/regr-6smod3.btor.smt2'],
@@ -1554,6 +1552,8 @@ tests_smt2_get_interpolant = [
   ['get-interpolant/murxla-6c8ada822bcad6a4.min.lift.smt2'],
   ['get-interpolant/murxla-6c8ada822bcad6a4.min.pudlak.smt2'],
   #
+  ['get-interpolant/red-murxla-771693115476ea54.min.smt2'],
+  #
   ['get-interpolant/murxla-71bda919abd73fe9.min.smt2'],
   ['get-interpolant/murxla-71bda919abd73fe9.min.lift.smt2'],
   ['get-interpolant/murxla-71bda919abd73fe9.min.pudlak.smt2'],
@@ -1666,6 +1666,7 @@ tests_smt2_get_interpolant = [
   ['get-interpolant/murxla-556e2bd662ece5fe.smt2'],
   ['get-interpolant/bug-vgasim.min.smt2'],
   ['get-interpolant/interp-query.12.smt2'],
+  ['get-interpolant/prop-murxla-110deca336eefafd.min.smt2'],
 ]
 
 if get_option('cadical')

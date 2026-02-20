@@ -11,6 +11,8 @@
 #ifndef BZLA_SAT_INTERPOLANTS_TRACER_H_INCLUDED
 #define BZLA_SAT_INTERPOLANTS_TRACER_H_INCLUDED
 
+#ifdef BZLA_USE_CADICAL
+
 #include <cadical/tracer.hpp>
 
 #include "bitblast/aig/aig_manager.h"
@@ -132,4 +134,5 @@ class Tracer : public CaDiCaL::Tracer
 }  // namespace sat::interpolants
 }  // namespace bzla
 
+#endif
 #endif

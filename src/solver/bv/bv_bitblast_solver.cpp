@@ -18,6 +18,7 @@
 #include "sat/cadical.h"
 #include "sat/interpolants/tracer.h"
 #include "sat/sat_solver_factory.h"
+#include "solver/bv/bv_interpolator.h"
 #include "solver/bv/bv_solver.h"
 
 namespace bzla::bv {
@@ -319,10 +320,12 @@ BvBitblastSolver::init_sat_solver()
 
   if (d_produce_interpolants)
   {
+#ifdef BZLA_USE_CADICAL
     reinterpret_cast<sat::CadicalInterpol*>(d_sat_solver.get())
         ->connect_tracer(d_env, d_bitblaster);
     d_bitblast_sat_solver.reset(
         new InterpolationSatSolver(d_env, *d_sat_solver));
+#endif
   }
   else
   {

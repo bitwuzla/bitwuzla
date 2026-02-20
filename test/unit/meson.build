@@ -156,6 +156,9 @@ endif
 if kissat_dep.found()
   cpp_args += ['-DBZLA_USE_KISSAT']
 endif
+if gimsatul_dep.found()
+  cpp_args += ['-DBZLA_USE_GIMSATUL']
+endif
 if is_sat_solver_configured
   cpp_args += ['-DBZLA_IS_SAT_SOLVER_CONFIGURED']
 endif

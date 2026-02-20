@@ -8,6 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+#ifdef BZLA_USE_CADICAL
+
 #include "solver/bv/bv_interpolator.h"
 
 #include <cstdint>
@@ -25,7 +27,6 @@
 #include "solver/bv/bv_bitblast_solver.h"
 #include "solver/bv/bv_solver.h"
 #include "solver/fp/fp_solver.h"
-#include "util/exceptions.h"
 
 using namespace bzla::node;
 using namespace bzla::sat::interpolants;
@@ -623,3 +624,5 @@ BvInterpolator::Statistics::Statistics(util::Statistics& stats,
 }
 
 }  // namespace bzla::bv
+
+#endif

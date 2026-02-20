@@ -21,17 +21,19 @@
 #include "solver/fp/word_blaster.h"
 #include "solver/solver.h"
 #include "util/statistics.h"
+#include "util/exceptions.h"
 
 namespace bzla {
 
 namespace sat {
-class Cadical;
 namespace interpolants {
 class Tracer;
 }
 }  // namespace sat
 
 namespace bv {
+
+#ifdef BZLA_USE_CADICAL
 
 class AigBitblaster;
 class BvSolver;
@@ -226,6 +228,28 @@ class BvInterpolator
   /** The associated word_blaster. */
   const fp::WordBlaster& d_word_blaster;
 };
+
+#else
+
+class BvInterpolator
+{
+ public:
+  BvInterpolator(Env& env, SolverState& state, BvBitblastSolver& bb_solver)
+  {
+    (void) env;
+    (void) state;
+    (void) bb_solver;
+  }
+  Node interpolant(const std::vector<Node>& ppA, const std::vector<Node>& ppB)
+  {
+    (void) ppA;
+    (void) ppB;
+    throw Unsupported(
+        "interpolant generation only supported when CaDiCaL is available");
+  }
+};
+
+#endif
 
 }  // namespace bv
 }  // namespace bzla

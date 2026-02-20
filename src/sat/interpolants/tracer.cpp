@@ -8,6 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+#ifdef BZLA_USE_CADICAL
+
 #include "sat/interpolants/tracer.h"
 
 #include "node/node_utils.h"
@@ -160,3 +162,5 @@ Tracer::get_node_from_bb_cache(
 }
 
 }  // namespace bzla::sat::interpolants
+
+#endif
