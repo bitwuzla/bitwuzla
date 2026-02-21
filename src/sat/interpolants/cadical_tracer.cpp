@@ -8,6 +8,7 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+#include "bitblast/aig/aig_cnf.h"
 #ifdef BZLA_USE_CADICAL
 
 #include "sat/interpolants/cadical_tracer.h"
@@ -27,8 +28,10 @@ using namespace bzla::node;
 
 namespace bzla::sat::interpolants {
 
-CadicalTracer::CadicalTracer(Env& env, bv::AigBitblaster& bitblaster)
-    : Tracer(env, bitblaster, env.options().interpolants_lift()),
+CadicalTracer::CadicalTracer(Env& env,
+                             bv::AigBitblaster& bitblaster,
+                             const bitblast::AigCnfEncoder& cnf_encoder)
+    : Tracer(env, bitblaster, cnf_encoder, env.options().interpolants_lift()),
       d_algo(env.options().interpolants_algo())
 {
 }
@@ -37,10 +40,11 @@ CadicalTracer::~CadicalTracer() {}
 
 namespace {
 VariableKind
-get_var_label(const std::unordered_map<int64_t, VariableKind>& var_labels,
+get_var_label(const std::vector<int64_t>& cnf2aig,
+              const std::unordered_map<int64_t, VariableKind>& var_labels,
               int64_t lit)
 {
-  auto it = var_labels.find(std::abs(lit));
+  auto it = var_labels.find(cnf2aig[std::abs(lit)]);
   if (it == var_labels.end())
   {
     // if not labeled, it is not active, i.e., it is part of a definition
@@ -48,6 +52,16 @@ get_var_label(const std::unordered_map<int64_t, VariableKind>& var_labels,
     return VariableKind::NONE;
   }
   assert(it->second != VariableKind::NONE);
+  return it->second;
+}
+ClauseKind
+get_clause_label(const std::vector<int64_t>& cnf2aig,
+                 const std::unordered_map<int64_t, ClauseKind>& clause_labels,
+                 int64_t lit)
+{
+  int32_t cnf_id = cnf2aig[std::abs(lit)];
+  auto it        = clause_labels.find(lit < 0 ? -cnf_id : cnf_id);
+  assert(it != clause_labels.end());
   return it->second;
 }
 }  // namespace
@@ -347,6 +361,8 @@ CadicalTracer::get_interpolant(
     Log(2);
   }
 
+  std::vector<int64_t> cnf2aig = compute_cnf2aig(d_cnf_encoder.aig2cnf());
+
   for (uint64_t id : d_proof_core)
   {
     assert(id <= d_clauses.size());
@@ -379,7 +395,7 @@ CadicalTracer::get_interpolant(
       ClauseKind kind = it->second;
       assert(d_part_interpolants.find(id) == d_part_interpolants.end());
       d_part_interpolants.emplace(
-          id, get_interpolant(var_labels, clause.d_clause, kind));
+          id, get_interpolant(cnf2aig, var_labels, clause.d_clause, kind));
     }
     else if (type == ClauseType::DERIVED)
     {
@@ -408,13 +424,13 @@ CadicalTracer::get_interpolant(
           {
             continue;
           }
-          auto label = get_var_label(var_labels, lit);
+          auto label = get_var_label(cnf2aig, var_labels, lit);
           assert(label != VariableKind::NONE);
           // If NONE, then lit is not active (i.e., it is not part of a
           // clause that is currently asserted/assumed) and thus irrelevant
           // (the interpolant is not extended with it).
           extend_interpolant(
-              ipol, d_part_interpolants[antecedents[idx]], lit, label);
+              cnf2aig, ipol, d_part_interpolants[antecedents[idx]], lit, label);
         }
       }
       d_part_interpolants[id] = ipol;
@@ -441,12 +457,13 @@ CadicalTracer::get_interpolant(
         {
           continue;
         }
-        ClauseKind kind = clause_labels.at(-lit);
-        Interpolant ip = get_interpolant(var_labels, {-lit}, kind);
+        ClauseKind kind = get_clause_label(cnf2aig, clause_labels, -lit);
+        Interpolant ip  = get_interpolant(cnf2aig, var_labels, {-lit}, kind);
         assert(!ip.is_null());
         if (!ipol.is_null())
         {
-          extend_interpolant(ipol, ip, -lit, get_var_label(var_labels, lit));
+          extend_interpolant(
+              cnf2aig, ipol, ip, -lit, get_var_label(cnf2aig, var_labels, lit));
         }
         else
         {
@@ -467,13 +484,16 @@ CadicalTracer::get_interpolant(
     Interpolant interpolant = d_part_interpolants.at(final_clause_id);
     for (int32_t lit : d_clauses[final_clause_id].d_clause)
     {
-      ClauseKind kind = clause_labels.at(-lit);
-      Interpolant ip = get_interpolant(var_labels, {-lit}, kind);
+      ClauseKind kind = get_clause_label(cnf2aig, clause_labels, -lit);
+      Interpolant ip  = get_interpolant(cnf2aig, var_labels, {-lit}, kind);
       assert(!ip.is_null());
       if (!interpolant.is_null())
       {
-        extend_interpolant(
-            interpolant, ip, -lit, get_var_label(var_labels, lit));
+        extend_interpolant(cnf2aig,
+                           interpolant,
+                           ip,
+                           -lit,
+                           get_var_label(cnf2aig, var_labels, lit));
       }
       else
       {
@@ -632,6 +652,7 @@ CadicalTracer::mk_or(const std::vector<AigNode>& aigs) const
 
 CadicalTracer::Interpolant
 CadicalTracer::get_interpolant(
+    const std::vector<int64_t>& cnf2aig,
     const std::unordered_map<int64_t, VariableKind>& var_labels,
     const std::vector<int32_t>& clause,
     ClauseKind kind)
@@ -646,9 +667,11 @@ CadicalTracer::get_interpolant(
         std::vector<AigNode> lits;
         for (int32_t lit : clause)
         {
-          if (get_var_label(var_labels, lit) == VariableKind::GLOBAL)
+          if (get_var_label(cnf2aig, var_labels, lit) == VariableKind::GLOBAL)
           {
-            lits.push_back(d_amgr.get_node(lit));
+            int32_t cnf_var = std::abs(lit);
+            int64_t aig_id  = lit < 0 ? -cnf2aig[cnf_var] : cnf2aig[cnf_var];
+            lits.push_back(d_amgr.get_node(aig_id));
           }
         }
         res = mk_or(lits);
@@ -661,7 +684,8 @@ CadicalTracer::get_interpolant(
 }
 
 void
-CadicalTracer::extend_interpolant(Interpolant& interpolant,
+CadicalTracer::extend_interpolant(const std::vector<int64_t>& cnf2aig,
+                                  Interpolant& interpolant,
                                   Interpolant& ext,
                                   int32_t lit,
                                   VariableKind kind)
@@ -704,9 +728,11 @@ CadicalTracer::extend_interpolant(Interpolant& interpolant,
         else
         {
           assert(kind == VariableKind::GLOBAL);
+          int32_t cnf_var = std::abs(lit);
+          int64_t aig_id  = lit < 0 ? -cnf2aig[cnf_var] : cnf2aig[cnf_var];
           interpolant.d_interpolant = d_amgr.mk_and(
-              mk_or(interpolant.d_interpolant, d_amgr.get_node(-lit)),
-              mk_or(ext.d_interpolant, d_amgr.get_node(lit)));
+              mk_or(interpolant.d_interpolant, d_amgr.get_node(-aig_id)),
+              mk_or(ext.d_interpolant, d_amgr.get_node(aig_id)));
         }
     }
   }

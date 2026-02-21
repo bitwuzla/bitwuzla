@@ -164,6 +164,31 @@ Tracer::get_node_from_bb_cache(
   return node;
 }
 
+std::vector<int64_t>
+Tracer::compute_cnf2aig(const std::vector<int32_t>& aig2cnf) const
+{
+  std::vector<int64_t> res;
+  if (aig2cnf.empty())
+  {
+    return res;
+  }
+  res.resize(aig2cnf[aig2cnf.size() - 1] + 1, 0);
+  for (size_t i = 0, n = aig2cnf.size(); i < n; ++i)
+  {
+    int32_t cnf_var = aig2cnf[i];
+    int64_t aig_id  = i + 1;  // this might change
+    if ((size_t) cnf_var >= res.size())
+    {
+      res.resize(cnf_var + 1, 0);
+    }
+    if (cnf_var)
+    {
+      res[cnf_var] = aig_id;
+    }
+  }
+  return res;
+}
+
 }  // namespace bzla::sat::interpolants
 
 #endif

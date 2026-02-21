@@ -84,6 +84,15 @@ class AigCnfEncoder
 
   int32_t value(const AigNode& node);
 
+  /** @return CNF variable of given encoded AIG node. */
+  int32_t cnf_var(const AigNode& aig) const;
+
+  /** @return CNF literal of given encoded AIG node. */
+  int32_t cnf_lit(const AigNode& aig) const;
+
+  /** @return The AIG id to CNF id map. */
+  const std::vector<int32_t>& aig2cnf() const { return d_aig_encoded; }
+
   /** @return CNF statistics. */
   const Statistics& statistics() const;
 

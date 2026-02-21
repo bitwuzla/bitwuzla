@@ -44,6 +44,7 @@ BvInterpolator::BvInterpolator(Env& env,
       d_logger(env.logger()),
       d_lemmas(state.lemma_cache()),
       d_bitblaster(bb_solver.bitblaster()),
+      d_cnf_encoder(bb_solver.cnf_encoder()),
       d_tracer(reinterpret_cast<sat::CadicalInterpol*>(bb_solver.sat_solver())
                    ->tracer()),
       d_word_blaster(state.fp_solver().word_blaster()),

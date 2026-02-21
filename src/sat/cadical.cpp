@@ -14,6 +14,7 @@
 
 #include "sat/cadical.h"
 
+#include "bitblast/aig/aig_cnf.h"
 #include "sat/interpolants/cadical_tracer.h"
 
 namespace bzla::sat {
@@ -120,9 +121,12 @@ CadicalInterpol::~CadicalInterpol()
 }
 
 void
-CadicalInterpol::connect_tracer(Env& env, bv::AigBitblaster& bitblaster)
+CadicalInterpol::connect_tracer(Env& env,
+                                bv::AigBitblaster& bitblaster,
+                                const bitblast::AigCnfEncoder& cnf_encoder)
 {
-  d_tracer.reset(new sat::interpolants::CadicalTracer(env, bitblaster));
+  d_tracer.reset(
+      new sat::interpolants::CadicalTracer(env, bitblaster, cnf_encoder));
   d_solver->connect_proof_tracer(d_tracer.get(), true);
 }
 

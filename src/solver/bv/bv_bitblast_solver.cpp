@@ -321,8 +321,6 @@ BvBitblastSolver::init_sat_solver()
   if (d_produce_interpolants)
   {
 #ifdef BZLA_USE_CADICAL
-    reinterpret_cast<sat::CadicalInterpol*>(d_sat_solver.get())
-        ->connect_tracer(d_env, d_bitblaster);
     d_bitblast_sat_solver.reset(
         new InterpolationSatSolver(d_env, *d_sat_solver));
 #endif
@@ -332,6 +330,13 @@ BvBitblastSolver::init_sat_solver()
     d_bitblast_sat_solver.reset(new BitblastSatSolver(*d_sat_solver));
   }
   d_cnf_encoder.reset(new bitblast::AigCnfEncoder(*d_bitblast_sat_solver));
+  if (d_produce_interpolants)
+  {
+#ifdef BZLA_USE_CADICAL
+    reinterpret_cast<sat::CadicalInterpol*>(d_sat_solver.get())
+        ->connect_tracer(d_env, d_bitblaster, *d_cnf_encoder);
+#endif
+  }
 }
 
 void

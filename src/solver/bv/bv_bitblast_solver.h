@@ -51,6 +51,9 @@ class BvBitblastSolver : public Solver,
   /** Get AIG bit-blaster instance. */
   AigBitblaster& bitblaster() { return d_bitblaster; }
 
+  /** Get CNF encoder instance. */
+  const bitblast::AigCnfEncoder& cnf_encoder() const { return *d_cnf_encoder; }
+
   /** Get statistics. */
   const auto& statistics() const { return d_stats; }
 

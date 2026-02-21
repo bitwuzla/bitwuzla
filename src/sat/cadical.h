@@ -12,7 +12,6 @@
 #define BZLA_SAT_CADICAL_H_INCLUDED
 
 /*----------------------------------------------------------------------------*/
-#include "solver/bv/aig_bitblaster.h"
 #ifdef BZLA_USE_CADICAL
 /*----------------------------------------------------------------------------*/
 
@@ -27,6 +26,9 @@ namespace bzla {
 
 class Env;
 
+namespace bitblast {
+class AigCnfEncoder;
+}
 namespace bv {
 class AigBitblaster;
 }
@@ -77,7 +79,9 @@ class CadicalInterpol : public Cadical
   CadicalInterpol();
   ~CadicalInterpol();
   void add(int32_t lit, int64_t cgroup_id = 0) override;
-  void connect_tracer(Env& env, bv::AigBitblaster& bitblaster);
+  void connect_tracer(Env& env,
+                      bv::AigBitblaster& bitblaster,
+                      const bitblast::AigCnfEncoder& cnf_encoder);
   interpolants::Tracer* tracer() { return d_tracer.get(); }
 
  private:

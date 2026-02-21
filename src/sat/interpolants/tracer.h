@@ -15,6 +15,7 @@
 
 #include <cadical/tracer.hpp>
 
+#include "bitblast/aig/aig_cnf.h"
 #include "bitblast/aig/aig_manager.h"
 #include "env.h"
 #include "sat/interpolants/tracer_kinds.h"
@@ -40,11 +41,15 @@ class Tracer : public CaDiCaL::Tracer
    *                   theory level. Else, the interpolant corresponds exactly
    *                   to the bit-level AIG interpolant.
    */
-  Tracer(Env& env, bv::AigBitblaster& bitblaster, bool lift)
+  Tracer(Env& env,
+         bv::AigBitblaster& bitblaster,
+         const bitblast::AigCnfEncoder& cnf_encoder,
+         bool lift)
       : d_stats(env.statistics(), "sat::interpolants::tracer::"),
         d_nm(env.nm()),
         d_bitblaster(bitblaster),
         d_amgr(bitblaster.amgr()),
+        d_cnf_encoder(cnf_encoder),
         d_logger(env.logger()),
         d_lift(lift)
   {
@@ -116,12 +121,22 @@ class Tracer : public CaDiCaL::Tracer
       const std::unordered_map<Node, sat::interpolants::VariableKind>&
           term_labels) const;
 
+  /**
+   * Helper to compute reverse mapping from CNF id to AIG id.
+   * @param aig2cnf The mapping from AIG id to CNF id.
+   * @return The CNF id -> AIG id mapping.
+   */
+  std::vector<int64_t> compute_cnf2aig(
+      const std::vector<int32_t>& aig2cnf) const;
+
   /** The associated node manager. */
   NodeManager& d_nm;
   /** The associated bitblaster. */
   bv::AigBitblaster& d_bitblaster;
   /** The associated AIG manager. */
   bitblast::AigManager& d_amgr;
+  /** CNF encoder. */
+  const bitblast::AigCnfEncoder& d_cnf_encoder;
   /** The associated logger instance. */
   util::Logger& d_logger;
   /** True if lifting the interpolant to the theory level is enabled. */

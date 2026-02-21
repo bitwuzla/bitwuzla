@@ -11,6 +11,7 @@
 #ifndef BZLA_SAT_INTERPOLANTS_CADICAL_TRACER_H_INCLUDED
 #define BZLA_SAT_INTERPOLANTS_CADICAL_TRACER_H_INCLUDED
 
+#include "bitblast/aig/aig_cnf.h"
 #ifdef BZLA_USE_CADICAL
 
 #include <unordered_map>
@@ -23,7 +24,9 @@ namespace bzla::sat::interpolants {
 class CadicalTracer : public Tracer
 {
  public:
-  CadicalTracer(Env& env, bv::AigBitblaster& bitblaster);
+  CadicalTracer(Env& env,
+                bv::AigBitblaster& bitblaster,
+                const bitblast::AigCnfEncoder& cnf_encoder);
   ~CadicalTracer();
 
   enum class ClauseType
@@ -121,12 +124,14 @@ class CadicalTracer : public Tracer
  private:
   /**
    * Construct interpolant for given clause.
+   * @param cnf2aig   The mapping from CNF id to AIG id.
    * @param var_kinds The mapping from AIG id to variable kinds.
    * @param clause The clause to construct the interpolant for.
    * @param kind   The kind of the clause.
    * @return The interpolant.
    */
   Interpolant get_interpolant(
+      const std::vector<int64_t>& cnf2aig,
       const std::unordered_map<int64_t, VariableKind>& var_kinds,
       const std::vector<int32_t>& clause,
       ClauseKind kind);
@@ -146,12 +151,14 @@ class CadicalTracer : public Tracer
    * @note The actual pivot literal `lit` as it occurs in c2 is only required
    *       for Pudlak's algorithm. McMillan's algorithm only requires its kind.
    *
+   * @param cnf2aig   The mapping from CNF id to AIG id.
    * @param interpolant The partial interpolant (of c1) to be extended.
    * @param ext         The partial interpolant (of c2) to extend with.
    * @param lit         The pivot literal as it occurs in c2.
    * @param kind        The variable kind of the given literal.
    */
-  void extend_interpolant(Interpolant& interpolant,
+  void extend_interpolant(const std::vector<int64_t>& cnf2aig,
+                          Interpolant& interpolant,
                           Interpolant& ext,
                           int32_t lit,
                           VariableKind kind);

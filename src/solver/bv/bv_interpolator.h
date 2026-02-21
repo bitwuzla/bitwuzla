@@ -224,6 +224,8 @@ class BvInterpolator
 
   /** AIG bit-blaster. */
   AigBitblaster& d_bitblaster;
+  /** CNF encoder. */
+  const bitblast::AigCnfEncoder& d_cnf_encoder;
   /** The associated proof tracer for interpolants. */
   sat::interpolants::Tracer* d_tracer;
   /** The associated word_blaster. */
