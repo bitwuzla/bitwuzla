@@ -26,8 +26,8 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
       d_logger(env.logger()),
       d_solver_state(state),
       d_rewriter(env.rewriter()),
-      d_active_abstractions(state.backtrack_mgr()),
-      d_assertion_abstractions(state.backtrack_mgr()),
+      d_active_term_abstractions(state.backtrack_mgr()),
+      d_active_assertion_abstractions(state.backtrack_mgr()),
       d_assertion_abstractions_cache(state.backtrack_mgr()),
       d_lemma_cache(state.backtrack_mgr()),
       // Some lemmas are not valid for bit-vectors of size 1 or 2. Hence, we
@@ -179,7 +179,16 @@ void
 AbstractionModule::register_abstraction(const Node& node)
 {
   assert(is_abstraction(node));
-  d_active_abstractions.push_back(node);
+  if (d_opt_abstract_assertions
+      && d_abstraction_cache_assertions.find(node)
+             != d_abstraction_cache_assertions.end())
+  {
+    d_active_assertion_abstractions.push_back(node);
+  }
+  else
+  {
+    d_active_term_abstractions.push_back(node);
+  }
 }
 
 bool
@@ -205,15 +214,17 @@ AbstractionModule::check()
   d_added_lemma = false;
 
   // New abstraction may be added while checking
-  for (size_t i = 0; i < d_active_abstractions.size(); ++i)
+  for (size_t i = 0; i < d_active_term_abstractions.size(); ++i)
   {
     // Do not use reference here, since d_active_abstractions may change when
     // calling check_term_abstraction().
-    const Node abstr_term = d_active_abstractions[i];
+    const Node abstr_term = d_active_term_abstractions[i];
     check_term_abstraction(abstr_term);
   }
 
-  // Check abstracted assertions
+  // Check abstracted assertions.
+  // Assertion abstractions must be checked after we are done checking that
+  // all term abstractions are consistent.
   if (!d_added_lemma && d_opt_abstract_assertions)
   {
     check_assertion_abstractions();
@@ -290,10 +301,12 @@ AbstractionModule::process(const Node& term)
 const Node&
 AbstractionModule::process_assertion(const Node& assertion, bool is_lemma)
 {
+  Log(2) << "process assertion: " << assertion << " (" << is_lemma << ")";
   const Node& processed = process(assertion);
 
-  // Do not abstract assertions that are lemmas
-  if (d_opt_abstract_assertions && !is_lemma)
+  // Do not abstract assertions that are values, consts or lemmas.
+  if (d_opt_abstract_assertions && !processed.is_value()
+      && !processed.is_const() && !is_lemma)
   {
     if (processed.kind() != Kind::AM_ABSTRACT)
     {
@@ -302,9 +315,9 @@ AbstractionModule::process_assertion(const Node& assertion, bool is_lemma)
              << ", orig: " << assertion << ")";
       d_abstraction_cache[abstr] = abstr;
       d_abstraction_cache_assertions.emplace(abstr, assertion);
-      return d_abstraction_cache[processed];
+      d_active_assertion_abstractions.push_back(abstr);
+      return d_abstraction_cache.at(abstr);
     }
-    d_assertion_abstractions.push_back(processed);
     return processed;
   }
 
@@ -611,9 +624,10 @@ AbstractionModule::check_assertion_abstractions()
 {
   uint64_t nadded = 0;
   NodeManager& nm = d_env.nm();
-  for (size_t i = 0, size = d_assertion_abstractions.size(); i < size; ++i)
+  for (size_t i = 0, size = d_active_assertion_abstractions.size(); i < size;
+       ++i)
   {
-    const Node& abstr = d_assertion_abstractions[i];
+    const Node& abstr = d_active_assertion_abstractions[i];
     auto it           = d_assertion_abstractions_cache.find(abstr);
     if (it != d_assertion_abstractions_cache.end())
     {

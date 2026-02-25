@@ -97,8 +97,10 @@ class AbstractionModule
   SolverState& d_solver_state;
   Rewriter& d_rewriter;
 
-  /** Currently registered (active) abstractions. */
-  backtrack::vector<Node> d_active_abstractions;
+  /** Currently registered (active) term abstractions. */
+  backtrack::vector<Node> d_active_term_abstractions;
+  /** Currently registered (active) assertion abstractions. */
+  backtrack::vector<Node> d_active_assertion_abstractions;
   /** Maps abstracted terms (original) to abstractions. */
   std::unordered_map<Node, Node> d_abstractions;
   /** Cache for process(). */
@@ -112,8 +114,6 @@ class AbstractionModule
   std::unordered_map<Node, uint64_t> d_value_insts;
   /** Number of times a value instantiation was a square multiplication. */
   std::unordered_map<Node, uint64_t> d_value_insts_square;
-  /** Abstracted assertions. */
-  backtrack::vector<Node> d_assertion_abstractions;
   /** Stores refined assertions. */
   backtrack::unordered_set<Node> d_assertion_abstractions_cache;
   /** Buffer used for delaying sending lemmas. */

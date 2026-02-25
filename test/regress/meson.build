@@ -850,6 +850,7 @@ tests_smt2 = [
   ['solver/abstract/murxla-67f411058e7b0ea7.min.smt2'],
   ['solver/abstract/murxla-a2f5f3aa83d5a854.min.smt2'],
   ['solver/abstract/murxla-346218efd24c9aba.min.smt2'],
+  ['solver/abstract/murxla-cc7db96bcf2e620d.min.smt2'],
   ['solver/abstract/red-bench-8002.smt2'],
   ['solver/abstract/eagerrefine1.smt2'],
   ['solver/array/arraycond1.btor.smt2'],
