@@ -19,7 +19,8 @@ mpfr_dep = dependency('mpfr',
 
 # CaDiCaL does not provide pkg-config to find dependency
 cadical_dep = cpp_compiler.find_library('cadical',
-                                        has_headers: 'cadical.hpp',
+                                        has_headers: ['cadical/cadical.hpp',
+                                                      'cadical/tracer.hpp'],
                                         static: build_static,
                                         required: false)
 if not cadical_dep.found()
