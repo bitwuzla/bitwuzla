@@ -14,7 +14,7 @@
 #include <cassert>
 #include <cstdint>
 #include <functional>
-#include <iomanip>
+#include <string>
 
 namespace bzla::bitblast {
 
