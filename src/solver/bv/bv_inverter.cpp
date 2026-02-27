@@ -25,6 +25,30 @@ BvInverter::~BvInverter() {}
 
 /* -------------------------------------------------------------------------- */
 
+namespace {
+/** @return True if x occurs in given node. */
+bool check_for_x(const Node& node, const Node& x)
+{
+  std::vector<Node> visit{node};
+  std::unordered_set<Node> cache;
+  do
+  {
+    auto cur    = visit.back();
+    auto [it, inserted] = cache.emplace(cur);
+    visit.pop_back();
+    if (cur == x)
+    {
+      return true;
+    }
+    if (inserted)
+    {
+      visit.insert(visit.end(), cur.begin(), cur.end());
+    }
+  } while (!visit.empty());
+  return false;
+}
+
+}
 std::pair<Node, std::vector<Node>>
 BvInverter::invert(const Node& node, const Node& x)
 {
@@ -121,6 +145,7 @@ BvInverter::invert(const Node& node, const Node& x)
   for (auto& c : conds)
   {
     c = utils::substitute(d_nm, c, {{x, t}}, subst_cache);
+    assert(!check_for_x(c, x));
   }
   return {t, conds};
 }
