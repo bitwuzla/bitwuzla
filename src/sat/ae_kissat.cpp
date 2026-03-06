@@ -44,8 +44,9 @@ AEKissat::AEKissat()
 AEKissat::~AEKissat() { kissat_release(d_solver); }
 
 void
-AEKissat::add(int32_t lit)
+AEKissat::add(int32_t lit, int64_t cgroup_id)
 {
+  (void) cgroup_id;
   kissat_add(d_solver, lit);
 }
 
