@@ -52,6 +52,12 @@ if not ae_kissat_dep.found()
   ae_kissat_dep = dependency('ae_kissat2025_mab', required: get_option('ae_kissat'))
 endif
 
+# ae_kissat exports the same C symbol names as kissat and cannot be linked
+# together with it. When ae_kissat is enabled, disable regular kissat.
+if ae_kissat_dep.found() and kissat_dep.found()
+  kissat_dep = dependency('', required: false)
+endif
+
 # Using system include type suppresses compile warnings originating from the
 # symfpu headers
 symfpu_dep = dependency('symfpu', include_type: 'system', required: true)

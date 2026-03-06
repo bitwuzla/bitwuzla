@@ -48,9 +48,9 @@ SatSolverFactory::new_sat_solver(bool produce_interpolants)
   }
 #endif
 #ifdef BZLA_USE_AE_KISSAT
-  if (options.sat_solver() == option::SatSolver::AE_KISSAT)
+  if (d_sat_solver == option::SatSolver::AE_KISSAT)
   {
-    return new AEKissat();
+    return std::unique_ptr<SatSolver>(new AEKissat());
   }
 #endif
 #ifdef BZLA_USE_CMS
@@ -96,7 +96,7 @@ SatSolverFactory::has_terminator_support()
   }
 #endif
 #ifdef BZLA_USE_AE_KISSAT
-  if (options.sat_solver() == option::SatSolver::AE_KISSAT)
+  if (d_sat_solver == option::SatSolver::AE_KISSAT)
   {
     return false;
   }
