@@ -25,3 +25,33 @@ dist = []
 setup = ['-Dpython=true']
 compile = ['python-bindings']
 install = ['--tags=python-bindings']
+
+[tool.cibuildwheel]
+build-verbosity = 1
+test-command = "python -c \"import bitwuzla; tm = bitwuzla.TermManager(); opts = bitwuzla.Options(); b = bitwuzla.Bitwuzla(tm, opts); print('bitwuzla OK')\""
+
+[tool.cibuildwheel.linux]
+before-all = "bash {project}/contrib/cibw/build-deps-linux.sh"
+environment = { PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig" }
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"
+
+[tool.cibuildwheel.macos]
+before-all = "brew install gmp mpfr"
+environment-pass = ["MACOSX_DEPLOYMENT_TARGET"]
+
+[tool.cibuildwheel.macos.environment]
+CFLAGS = "-I/opt/homebrew/include -I/usr/local/include"
+LDFLAGS = "-L/opt/homebrew/lib -L/usr/local/lib"
+PKG_CONFIG_PATH = "/opt/homebrew/lib/pkgconfig:/usr/local/lib/pkgconfig"
+
+[tool.cibuildwheel.windows]
+before-all = 'C:\msys64\usr\bin\bash -lc "pacman --noconfirm -S mingw-w64-x86_64-gcc mingw-w64-x86_64-gmp mingw-w64-x86_64-mpfr mingw-w64-x86_64-pkg-config"'
+before-build = "pip install delvewheel"
+repair-wheel-command = "delvewheel repair --add-path C:/msys64/mingw64/bin -w {dest_dir} {wheel}"
+environment-pass = ["PATH"]
+
+[tool.cibuildwheel.windows.environment]
+CC = "C:/msys64/mingw64/bin/gcc.exe"
+CXX = "C:/msys64/mingw64/bin/g++.exe"
+PKG_CONFIG_PATH = "C:/msys64/mingw64/lib/pkgconfig"
