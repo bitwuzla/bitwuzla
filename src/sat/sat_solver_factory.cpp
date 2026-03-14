@@ -73,6 +73,7 @@ SatSolverFactory::new_sat_solver(bool produce_interpolants)
   }
   return std::unique_ptr<SatSolver>(new Cadical());
 #else
+  (void) produce_interpolants;
   return nullptr;
 #endif
 }
