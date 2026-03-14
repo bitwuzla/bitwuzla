@@ -9,6 +9,10 @@ on:
         description: 'Publish to PyPI'
         type: boolean
         default: false
+      test:
+        description: 'Publish to TestPyPI'
+        type: boolean
+        default: false
 
 jobs:
   build-sdist:
@@ -86,3 +90,21 @@ jobs:
           merge-multiple: true
 
       - uses: pypa/gh-action-pypi-publish@release/v1
+
+  test:
+    name: Publish to TestPyPI
+    needs: [build-sdist, build-wheels]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && inputs.test
+    environment: testpypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          path: dist
+          merge-multiple: true
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
