@@ -13,6 +13,7 @@ on:
 jobs:
   build-sdist:
     name: Build sdist
+    if: github.event_name != 'release' || github.event.release.tag_name != 'latest'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -32,6 +33,7 @@ jobs:
 
   build-wheels:
     name: Build wheels (${{ matrix.os }}, ${{ matrix.archs }})
+    if: github.event_name != 'release' || github.event.release.tag_name != 'latest'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -73,7 +75,7 @@ jobs:
     name: Publish to PyPI
     needs: [build-sdist, build-wheels]
     runs-on: ubuntu-latest
-    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.publish)
+    if: (github.event_name == 'release' && github.event.release.tag_name != 'latest') || (github.event_name == 'workflow_dispatch' && inputs.publish)
     environment: pypi
     permissions:
       id-token: write
