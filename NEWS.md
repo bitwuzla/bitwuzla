@@ -2,6 +2,8 @@
 
 This file collects a summary of important and/or user-visible changes.
 
+## News for version 0.9.0
+
 - **MPFR >= 4.2.1** is now a **required dependency**. As with GMP, it is
   required that shared/static MPFR libraries are installed **on the system**.
 
@@ -36,6 +38,9 @@ This file collects a summary of important and/or user-visible changes.
 - Add support for injecting an **external SAT solver factory** via new
   constructor:
   - C++ API: `Bitwuzla(TermManager&, SatSolverFactory&, const Options&)`
+
+- Use updated version of **SymFPU**, which addresses issues with fp.div encoding
+  (issues #130 and #164).
 
 - SMT2 parser: Add support for SMT-LIB 2.7 command `define-const`.
 
