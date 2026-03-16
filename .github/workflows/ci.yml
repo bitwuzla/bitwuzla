@@ -34,6 +34,43 @@ jobs:
               --repo $GITHUB_REPOSITORY
           fi
 
+      - name: Create release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXTRACT_NEWS: |
+            import re
+            from pathlib import Path
+            news_file = Path("NEWS.md")
+            relmsg = ""
+            if news_file.exists():
+              content = news_file.read_text(encoding="utf-8")
+              pattern = re.compile(r'## News for version [0-9]\.[0-9]+\.[0-9]+\n')
+              m = pattern.search(content)
+              if m:
+                start = m.end()
+                m = pattern.search(content, start + 1)
+                if m:
+                  end = m.start()
+                  relmsg = content[start:end].strip()
+              print(relmsg)
+        run: |
+          tag="${GITHUB_REF#refs/tags/}"
+          # Check if release already exists
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release for tag $tag already exists. Skipping creation."
+            exit 0
+          fi
+          echo "New release for tag $tag"
+          relmsg=$(python3 -c "$EXTRACT_NEWS")
+          if [ -z "$relmsg" ]; then
+            echo "No matching section found in NEWS.md, using commit message."
+            relmsg=$(git log -1 --pretty=%B)
+          fi
+          gh release create "$tag" \
+            --title "Release $tag" \
+            --notes "$relmsg"
+
   build:
     needs: [update-latest]
     strategy:
