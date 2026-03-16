@@ -47,9 +47,28 @@ def update_version(major, minor, patch, prerelease):
         content = re.sub(r'  version:\s\'(.*)\'', f'  version: \'{version}\'', content)
     with open('meson.build', 'w') as outfile:
         outfile.write(content)
+    if not prerelease:
+        with open('NEWS.md', 'r') as infile:
+            content = infile.read()
+            pattern = re.compile(r'## News for version [0-9]\.[0-9]+\.[0-9]+\n')
+            m = pattern.search(content)
+            versionstr = f'## News for version {version}\n'
+            if m and m.group(0) != versionstr:
+                print(f'[warning] did not find expected version string: {versionstr}')
+                pattern = r'^This file collects a summary.*\n'
+                m = re.search(pattern, content, flags = re.MULTILINE)
+                mstr = m.group(0) if m else ''
+                content = re.sub(
+                        pattern,
+                        f'{mstr}\n{versionstr}',
+                        content,
+                        flags = re.MULTILINE)
+        with open('NEWS.md', 'w') as outfile:
+             outfile.write(content)
+
 
 def create_commit(msg):
-    subprocess.check_call(['git', 'commit', 'meson.build', '-m', msg])
+    subprocess.check_call(['git', 'commit', 'meson.build', 'NEWS.md', '-m', msg])
 
 def create_git_tag(tag):
     subprocess.check_call(['git', 'tag', tag])
