@@ -44,6 +44,17 @@ Building Bitwuzla on Linux and macOS
 
 Python Bindings
 ---------------
+
+Install latest version from PyPi
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code:: bash
+
+  pip install bitwuzla
+
+Install latest version from source with pip
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 .. code:: bash
 
   # Clone Bitwuzla repository
