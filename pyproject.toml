@@ -5,9 +5,10 @@ requires = ['meson-python', 'cython>=3.0.0']
 [project]
 name = 'bitwuzla'
 dynamic = ['version']
-description = 'Bitwuzla Satisfiability Modulo Theories Solver'
+description = {file = 'README.md'}
 requires-python = '>= 3.7'
-license = {file = 'COPYING'}
+license = 'MIT'
+license_file = {file = 'COPYING'}
 authors = [
   {name = 'Aina Niemetz'},
   {name = 'Mathias Preiner'},
