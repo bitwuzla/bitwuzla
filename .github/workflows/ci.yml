@@ -71,6 +71,20 @@ jobs:
             --title "Release $tag" \
             --notes "$relmsg"
 
+  publish-pypi:
+    needs: [build]
+    if: startsWith(github.ref, 'refs/tags/') && github.ref_name != 'latest'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger PyPI workflow
+        env:
+          GH_TOKEN: ${{ secrets.PYPI_DISPATCH_TOKEN }}
+        run: |
+          gh workflow run pypi.yml \
+            --repo $GITHUB_REPOSITORY \
+            --ref ${{ github.ref_name }} \
+            -f publish=true
+
   build:
     needs: [update-latest]
     strategy:
