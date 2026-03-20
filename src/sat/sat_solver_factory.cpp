@@ -23,6 +23,9 @@
 #ifdef BZLA_USE_GIMSATUL
 #include "sat/gimsatul.h"
 #endif
+#ifdef BZLA_USE_AE_KISSAT
+#include "sat/ae_kissat.h"
+#endif
 
 #include <cassert>
 
@@ -42,6 +45,12 @@ SatSolverFactory::new_sat_solver(bool produce_interpolants)
       throw Unsupported("interpolant generation not supported with Kissat");
     }
     return std::unique_ptr<SatSolver>(new Kissat());
+  }
+#endif
+#ifdef BZLA_USE_AE_KISSAT
+  if (d_sat_solver == option::SatSolver::AE_KISSAT)
+  {
+    return std::unique_ptr<SatSolver>(new AEKissat());
   }
 #endif
 #ifdef BZLA_USE_CMS
@@ -83,6 +92,12 @@ SatSolverFactory::has_terminator_support()
 {
 #ifdef BZLA_USE_KISSAT
   if (d_sat_solver == option::SatSolver::KISSAT)
+  {
+    return false;
+  }
+#endif
+#ifdef BZLA_USE_AE_KISSAT
+  if (d_sat_solver == option::SatSolver::AE_KISSAT)
   {
     return false;
   }

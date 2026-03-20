@@ -134,6 +134,7 @@ enum class SatSolver
   CRYPTOMINISAT,
   GIMSATUL,
   KISSAT,
+  AE_KISSAT,
 #if !defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
   NONE,
 #endif
