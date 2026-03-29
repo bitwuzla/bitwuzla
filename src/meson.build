@@ -15,6 +15,17 @@ mpfr_dep = dependency('mpfr',
                      required: true,
                      static: build_static)
 
+# MPFR's .pc file includes '-lgmp' in its Libs field. On systems where GMP
+# and MPFR are in different prefixes (e.g Homebrew on macOS), the linker
+# cannot resolve -lgmp using MPFR's -L path alone. Explicitly add GMP's
+# library directory to the link search path.
+_gmp_libdir = gmp_dep.get_variable(pkgconfig: 'libdir', default_value: '')
+if _gmp_libdir != ''
+  gmp_link_dir = declare_dependency(link_args: '-L' + _gmp_libdir)
+else
+  gmp_link_dir = declare_dependency()
+endif
+
 # Subproject dependencies
 
 # CaDiCaL does not provide pkg-config to find dependency
@@ -48,7 +59,7 @@ gimsatul_dep = dependency('gimsatul', required: get_option('gimsatul'))
 symfpu_dep = dependency('symfpu', include_type: 'system', required: true)
 
 dependencies = [
-  gmp_dep, mpfr_dep, symfpu_dep, cadical_dep, cms_dep, kissat_dep, gimsatul_dep]
+  gmp_dep, gmp_link_dir, mpfr_dep, symfpu_dep, cadical_dep, cms_dep, kissat_dep, gimsatul_dep]
 
 cpp_args = []
 if cadical_dep.found()
