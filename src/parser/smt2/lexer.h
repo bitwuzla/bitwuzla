@@ -140,7 +140,7 @@ class Lexer
    * Constructor.
    * @param infile The input file.
    */
-  Lexer() { d_buffer = std::vector<signed char>(d_buf_size, 0); }
+  Lexer() { d_buffer = std::vector<unsigned char>(d_buf_size, 0); }
   /** @return The next token. */
   Token next_token();
   /**
@@ -184,6 +184,8 @@ class Lexer
   size_t d_buf_size = 1024;
   /** The index of the next character to be read from the buffer. */
   size_t d_buf_idx = d_buf_size;
+  /** The (virtual) index of the EOF character in the buffer. */
+  size_t d_buf_eof = d_buf_size + 1;
 
  private:
   /** Helper for next_token(). */
@@ -199,13 +201,18 @@ class Lexer
     {
       assert(!d_saved);
       d_input->read(reinterpret_cast<char*>(d_buffer.data()), d_buf_size);
-      size_t cnt = d_input->gcount();
       if (d_input->eof())
       {
-        d_buffer[cnt] = EOF;
+        d_buf_eof = d_input->gcount();
       }
       d_buf_idx = 0;
     }
+
+    if (d_buf_idx == d_buf_eof)
+    {
+      return EOF;
+    }
+
     d_saved     = false;
     int32_t res = d_buffer[d_buf_idx++];
     if (res == '\n')
@@ -244,8 +251,15 @@ class Lexer
   void save_char(int32_t ch)
   {
     assert(!d_saved);
-    assert(d_buf_idx > 0);
+
     d_saved = true;
+    if (ch == EOF)
+    {
+      d_buf_eof = d_buf_idx;
+      return;
+    }
+
+    assert(d_buf_idx > 0);
     d_buf_idx -= 1;
     assert(d_buffer[d_buf_idx] == ch);
     if (ch == '\n')
@@ -298,7 +312,7 @@ class Lexer
    * Characters are read from the input file into the buffer in d_buf_size
    * chunks, and next_char() then reads character by character from the buffer.
    */
-  std::vector<signed char> d_buffer;  // value-initialized to 0
+  std::vector<unsigned char> d_buffer;  // value-initialized to 0
   /** True if we saved a character that has not been consumed yet. */
   bool d_saved = false;
 

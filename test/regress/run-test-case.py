@@ -34,7 +34,9 @@ def check(testfile, expected, out, err, output_dir):
     if not expected:
         n_check_sat = 0
         n_status = 0
-        with open(testfile, 'r') as infile:
+        # parser/lexascii255.smt2 contains non-unicode characters, we can
+        # safely replace those since we only check for specific lines.
+        with open(testfile, 'r', errors='replace') as infile:
             for line in infile:
                 line = line.strip()
                 if line.startswith("(set-info :status"):

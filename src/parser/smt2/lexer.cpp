@@ -80,7 +80,8 @@ Lexer::init(std::istream* input)
 {
   assert(input);
   d_input = input;
-  d_buf_idx = d_buf_size;
+  d_buf_idx         = d_buf_size;
+  d_buf_eof         = d_buf_size + 1;
   d_saved           = false;
   d_coo             = {1, 1};
   d_cur_coo         = {1, 1};
@@ -93,7 +94,8 @@ Lexer::configure_buffer(size_t buf_size)
 {
   d_buf_size = buf_size;
   d_buf_idx  = d_buf_size;
-  d_buffer   = std::vector<signed char>(d_buf_size, 0);
+  d_buf_eof  = d_buf_size + 1;
+  d_buffer   = std::vector<unsigned char>(d_buf_size, 0);
 }
 
 Token
