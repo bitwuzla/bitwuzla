@@ -358,7 +358,8 @@ QuantSolver::process(const Node& q)
           vars.erase(cur[0]);
         }
 
-        if (vars.empty() && d_process_cache.insert(cur).second)
+        if (vars.empty() && cur.kind() != Kind::FORALL
+            && d_process_cache.insert(cur).second)
         {
           d_ground_terms.push_back(cur);
         }

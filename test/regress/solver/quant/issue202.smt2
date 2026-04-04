@@ -1,0 +1,5 @@
+(declare-const x Bool)
+(declare-const x8 RoundingMode)
+(assert (xor (forall ((x6 RoundingMode)) (distinct x (forall ((x7 Bool)) (= (not (distinct x7 (distinct x8 x6))) (distinct (distinct x (not (forall ((x6 RoundingMode)) (distinct x (and x (forall ((x6 RoundingMode)) (distinct x (forall ((x7 Bool)) (= x7 (distinct x7 (distinct x8 x8))))))))))) (distinct x8 x8)))))) (forall ((x7 Bool)) (= x7 (xor (forall ((x6 RoundingMode)) (and (forall ((x6 RoundingMode)) (=> x7 (distinct x (forall ((x7 Bool)) (= x7 (distinct (xor (distinct x7 (distinct x8 x6)) x7) (distinct x8 x6))))))) (distinct x7 (distinct x8 x6)))) (forall ((x6 RoundingMode)) (and (forall ((x6 RoundingMode)) (=> x7 (distinct x (forall ((x7 Bool)) (= x7 (distinct (xor (distinct x7 (distinct x8 x6)) x7) (distinct x8 x6))))))) (distinct x7 (distinct x8 x6)))))))))
+(set-info :status sat)
+(check-sat)
