@@ -95,7 +95,7 @@ enum ENUM(Option)
    * **Seed for the random number generator.**
    *
    * *Values:*
-   *  - **min**: 1
+   *  - **min**: 0
    *  - **max**: UINT32_MAX
    *  - **default**: 27644437
    */
@@ -244,8 +244,8 @@ enum ENUM(Option)
    * satisfied top level inequalities.
    *
    * *Values:*
-   *  - **true**: enable
-   *  - **false**: disable [**default**]
+   *  - **true**: enable [**default**]
+   *  - **false**: disable
    */
 #ifndef BITWUZLA_API_USE_C_ENUMS
   /*! @see Option::BV_SOLVER
@@ -396,8 +396,8 @@ enum ENUM(Option)
    * sign extension.
    *
    * *Values:*
-   *  - **true**: enable
-   *  - **false**: disable [**default**]
+   *  - **true**: enable [**default**]
+   *  - **false**: disable
    */
 #ifndef BITWUZLA_API_USE_C_ENUMS
   /*! @see Option::BV_SOLVER
@@ -420,8 +420,8 @@ enum ENUM(Option)
    * \endverbatim
    *
    * *Values:*
-   *  - **1**: enable
-   *  - **0**: disable [**default**]
+   *  - **true**: enable [**default**]
+   *  - **false**: disable
    *
    * @warning This is an expert option to configure the abstraction module.
    */
@@ -435,7 +435,7 @@ enum ENUM(Option)
    * *Values:*
    *  - **min**: >=3
    *  - **max**: UINT64_MAX
-   *  - **default**: 32
+   *  - **default**: 33
    */
 #ifndef BITWUZLA_API_USE_C_ENUMS
   /*! @see Option::ABSTRACTION
@@ -454,8 +454,8 @@ enum ENUM(Option)
    * When enabled, violated refinement lemmas are added eagerly.
    *
    * *Values:*
-   *  - **1**: enable
-   *  - **0**: disable [**default**]
+   *  - **true**: enable
+   *  - **false**: disable [**default**]
    */
 #ifndef BITWUZLA_API_USE_C_ENUMS
   /*! @see Option::ABSTRACTION
@@ -704,8 +704,8 @@ enum ENUM(Option)
    * to the bit-level AIG interpolant.
    *
    * *Values:*
-   *  - **true**: enable
-   *  - **false**: disable [**default**]
+   *  - **true**: enable [**default**]
+   *  - **false**: disable
    *
    * @warning This is an expert option to configure interpolant generation.
    */
@@ -870,8 +870,8 @@ enum ENUM(Option)
    * **Preprocessing: Variable substitution: Disequality Normalization.**
    *
    * *Values:*
-   *  - **true**: enable [**default**]
-   *  - **false**: disable
+   *  - **true**: enable
+   *  - **false**: disable [**default**]
    */
   EVALUE(PP_VARIABLE_SUBST_NORM_DISEQ),
   /*!
@@ -879,8 +879,8 @@ enum ENUM(Option)
    *   Bit-Vector Inequality Normalization.**
    *
    * *Values:*
-   *  - **true**: enable [**default**]
-   *  - **false**: disable
+   *  - **true**: enable
+   *  - **false**: disable [**default**]
    */
   EVALUE(PP_VARIABLE_SUBST_NORM_BV_INEQ),
 
