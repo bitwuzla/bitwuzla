@@ -2537,36 +2537,27 @@ TEST_F(TestFpFrom, to_fp_from_ubv_sbv)
       BitVector bv = BitVector::from_ui(bw, i);
       for (RoundingMode rm : d_all_rms)
       {
+        for (auto sign : {false, true})
         {
-          FloatingPoint fp(d_fp16.first, d_fp16.second, rm, bv, false);
-          FloatingPointSymFPU fp_symfpu(d_typefp16, rm, bv, false);
-          ASSERT_EQ(fp.str(), fp_symfpu.str());
-        }
-        {
-          FloatingPoint fp(d_fp16.first, d_fp16.second, rm, bv, true);
-          FloatingPointSymFPU fp_symfpu(d_typefp16, rm, bv, true);
+          FloatingPoint fp(d_fp16.first, d_fp16.second, rm, bv, sign);
+          FloatingPointSymFPU fp_symfpu(d_typefp16, rm, bv, sign);
           ASSERT_EQ(fp.str(), fp_symfpu.str());
         }
       }
     }
   }
 #if 0
-  // For the same reason as above we can not enable this test for now.
+  // For the same reason as above we cannot enable this test for now.
   for (uint64_t i = 0; i < 10000; ++i)
   {
     BitVector bv(d_rng->pick<uint64_t>(1, 257));
     FpFormat format = pick_format(d_all_formats);
     Type type = d_nm.mk_fp_type(format.first, format.second);
     RoundingMode rm = pick_rm();
+    for (bool sign : {false, true})
     {
-      FloatingPoint fp(format.first, format.second, rm, bv, false);
-      FloatingPointSymFPU fp_symfpu(type, rm, bv, false);
-      ASSERT_EQ(fp.str(), fp_symfpu.str());
-      ASSERT_EQ(fp.to_real_str(), fp_symfpu.to_real_str());
-    }
-    {
-      FloatingPointSymFPU fp(format.first, format.second, rm, bv, true);
-      FloatingPoint fp_symfpu(type, rm, bv, true);
+      FloatingPoint fp(format.first, format.second, rm, bv, sign);
+      FloatingPointSymFPU fp_symfpu(type, rm, bv, sign);
       ASSERT_EQ(fp.str(), fp_symfpu.str());
       ASSERT_EQ(fp.to_real_str(), fp_symfpu.to_real_str());
     }

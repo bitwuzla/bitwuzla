@@ -99,123 +99,46 @@ TEST_F(TestFpUnary, rti) { TEST_UNARY_RM(rti); }
 
 TEST_F(TestFpUnary, isX)
 {
-  for (uint64_t i = 0; i < (1u << 5); ++i)
-  {
-    BitVector bvexp = BitVector::from_ui(5, i);
+  auto fun = [this](const BitVector& bvexp, const BitVector& bvsig) {
     bool exp_iszero = bvexp.is_zero();
     bool exp_isones = bvexp.is_ones();
-    for (uint64_t j = 0; j < (1u << 10); ++j)
+    for (bool sign : {false, true})
     {
-      BitVector bvsig = BitVector::from_ui(10, j);
-
-      FloatingPoint fp_pos(
-          5, 11, BitVector::mk_false().ibvconcat(bvexp).ibvconcat(bvsig));
-      FloatingPoint fp_neg(
-          5, 11, BitVector::mk_true().ibvconcat(bvexp).ibvconcat(bvsig));
-
-      FloatingPointSymFPU fp_pos_symfpu(
-          d_typefp16, BitVector::mk_false().ibvconcat(bvexp).ibvconcat(bvsig));
-      FloatingPointSymFPU fp_neg_symfpu(
-          d_typefp16, BitVector::mk_false().ibvconcat(bvexp).ibvconcat(bvsig));
+      BitVector bvsign = sign ? BitVector::mk_true() : BitVector::mk_false();
+      FloatingPoint fp(5, 11, bvsign.bvconcat(bvexp).ibvconcat(bvsig));
+      FloatingPoint fp_symfpu(5, 11, bvsign.bvconcat(bvexp).ibvconcat(bvsig));
+      ASSERT_EQ(fp.fpisnormal(), fp_symfpu.fpisnormal());
+      ASSERT_EQ(fp.fpissubnormal(), fp_symfpu.fpissubnormal());
+      ASSERT_EQ(fp.fpiszero(), fp_symfpu.fpiszero());
+      ASSERT_EQ(fp.fpisinf(), fp_symfpu.fpisinf());
+      ASSERT_EQ(fp.fpisnan(), fp_symfpu.fpisnan());
       if (!exp_iszero)
       {
         if (!exp_isones)
         {
-          ASSERT_TRUE(fp_pos.fpisnormal());
-          ASSERT_TRUE(fp_neg.fpisnormal());
-
-          ASSERT_FALSE(fp_pos.fpissubnormal());
-          ASSERT_FALSE(fp_neg.fpissubnormal());
-
-          ASSERT_FALSE(fp_pos.fpisinf());
-          ASSERT_FALSE(fp_neg.fpisinf());
-
-          ASSERT_FALSE(fp_pos.fpisnan());
-          ASSERT_FALSE(fp_neg.fpisnan());
-
-          ASSERT_FALSE(fp_pos.fpiszero());
-          ASSERT_FALSE(fp_neg.fpiszero());
-
-          ASSERT_TRUE(fp_pos_symfpu.fpisnormal());
-          ASSERT_TRUE(fp_neg_symfpu.fpisnormal());
-
-          ASSERT_FALSE(fp_pos_symfpu.fpissubnormal());
-          ASSERT_FALSE(fp_neg_symfpu.fpissubnormal());
-
-          ASSERT_FALSE(fp_pos_symfpu.fpisinf());
-          ASSERT_FALSE(fp_neg_symfpu.fpisinf());
-
-          ASSERT_FALSE(fp_pos_symfpu.fpisnan());
-          ASSERT_FALSE(fp_neg_symfpu.fpisnan());
-
-          ASSERT_FALSE(fp_pos_symfpu.fpiszero());
-          ASSERT_FALSE(fp_neg_symfpu.fpiszero());
+          ASSERT_TRUE(fp.fpisnormal());
+          ASSERT_FALSE(fp.fpissubnormal());
+          ASSERT_FALSE(fp.fpisinf());
+          ASSERT_FALSE(fp.fpisnan());
+          ASSERT_FALSE(fp.fpiszero());
         }
         else
         {
           if (bvsig.is_zero())
           {
-            ASSERT_TRUE(fp_pos.fpisinf());
-            ASSERT_TRUE(fp_neg.fpisinf());
-
-            ASSERT_FALSE(fp_pos.fpisnan());
-            ASSERT_FALSE(fp_neg.fpisnan());
-
-            ASSERT_FALSE(fp_pos.fpisnormal());
-            ASSERT_FALSE(fp_neg.fpisnormal());
-
-            ASSERT_FALSE(fp_pos.fpissubnormal());
-            ASSERT_FALSE(fp_neg.fpissubnormal());
-
-            ASSERT_FALSE(fp_pos.fpiszero());
-            ASSERT_FALSE(fp_neg.fpiszero());
-
-            ASSERT_TRUE(fp_pos_symfpu.fpisinf());
-            ASSERT_TRUE(fp_neg_symfpu.fpisinf());
-
-            ASSERT_FALSE(fp_pos_symfpu.fpisnan());
-            ASSERT_FALSE(fp_neg_symfpu.fpisnan());
-
-            ASSERT_FALSE(fp_pos_symfpu.fpisnormal());
-            ASSERT_FALSE(fp_neg_symfpu.fpisnormal());
-
-            ASSERT_FALSE(fp_pos_symfpu.fpissubnormal());
-            ASSERT_FALSE(fp_neg_symfpu.fpissubnormal());
-
-            ASSERT_FALSE(fp_pos_symfpu.fpiszero());
-            ASSERT_FALSE(fp_neg_symfpu.fpiszero());
+            ASSERT_TRUE(fp.fpisinf());
+            ASSERT_FALSE(fp.fpisnan());
+            ASSERT_FALSE(fp.fpisnormal());
+            ASSERT_FALSE(fp.fpissubnormal());
+            ASSERT_FALSE(fp.fpiszero());
           }
           else
           {
-            ASSERT_TRUE(fp_pos.fpisnan());
-            ASSERT_TRUE(fp_neg.fpisnan());
-
-            ASSERT_FALSE(fp_pos.fpisinf());
-            ASSERT_FALSE(fp_neg.fpisinf());
-
-            ASSERT_FALSE(fp_pos.fpisnormal());
-            ASSERT_FALSE(fp_neg.fpisnormal());
-
-            ASSERT_FALSE(fp_pos.fpissubnormal());
-            ASSERT_FALSE(fp_neg.fpissubnormal());
-
-            ASSERT_FALSE(fp_pos.fpiszero());
-            ASSERT_FALSE(fp_neg.fpiszero());
-
-            ASSERT_TRUE(fp_pos_symfpu.fpisnan());
-            ASSERT_TRUE(fp_neg_symfpu.fpisnan());
-
-            ASSERT_FALSE(fp_pos_symfpu.fpisinf());
-            ASSERT_FALSE(fp_neg_symfpu.fpisinf());
-
-            ASSERT_FALSE(fp_pos_symfpu.fpisnormal());
-            ASSERT_FALSE(fp_neg_symfpu.fpisnormal());
-
-            ASSERT_FALSE(fp_pos_symfpu.fpissubnormal());
-            ASSERT_FALSE(fp_neg_symfpu.fpissubnormal());
-
-            ASSERT_FALSE(fp_pos_symfpu.fpiszero());
-            ASSERT_FALSE(fp_neg_symfpu.fpiszero());
+            ASSERT_TRUE(fp.fpisnan());
+            ASSERT_FALSE(fp.fpisinf());
+            ASSERT_FALSE(fp.fpisnormal());
+            ASSERT_FALSE(fp.fpissubnormal());
+            ASSERT_FALSE(fp.fpiszero());
           }
         }
       }
@@ -223,71 +146,24 @@ TEST_F(TestFpUnary, isX)
       {
         if (bvsig.is_zero())
         {
-          ASSERT_TRUE(fp_pos.fpiszero());
-          ASSERT_TRUE(fp_neg.fpiszero());
-
-          ASSERT_FALSE(fp_pos.fpisnormal());
-          ASSERT_FALSE(fp_neg.fpisnormal());
-
-          ASSERT_FALSE(fp_pos.fpissubnormal());
-          ASSERT_FALSE(fp_neg.fpissubnormal());
-
-          ASSERT_FALSE(fp_pos.fpisinf());
-          ASSERT_FALSE(fp_neg.fpisinf());
-
-          ASSERT_FALSE(fp_pos.fpisnan());
-          ASSERT_FALSE(fp_neg.fpisnan());
-
-          ASSERT_TRUE(fp_pos_symfpu.fpiszero());
-          ASSERT_TRUE(fp_neg_symfpu.fpiszero());
-
-          ASSERT_FALSE(fp_pos_symfpu.fpisnormal());
-          ASSERT_FALSE(fp_neg_symfpu.fpisnormal());
-
-          ASSERT_FALSE(fp_pos_symfpu.fpissubnormal());
-          ASSERT_FALSE(fp_neg_symfpu.fpissubnormal());
-
-          ASSERT_FALSE(fp_pos_symfpu.fpisinf());
-          ASSERT_FALSE(fp_neg_symfpu.fpisinf());
-
-          ASSERT_FALSE(fp_pos_symfpu.fpisnan());
-          ASSERT_FALSE(fp_neg_symfpu.fpisnan());
+          ASSERT_TRUE(fp.fpiszero());
+          ASSERT_FALSE(fp.fpisnormal());
+          ASSERT_FALSE(fp.fpissubnormal());
+          ASSERT_FALSE(fp.fpisinf());
+          ASSERT_FALSE(fp.fpisnan());
         }
         else
         {
-          ASSERT_TRUE(fp_pos.fpissubnormal());
-          ASSERT_TRUE(fp_neg.fpissubnormal());
-
-          ASSERT_FALSE(fp_pos.fpisnormal());
-          ASSERT_FALSE(fp_neg.fpisnormal());
-
-          ASSERT_FALSE(fp_pos.fpisinf());
-          ASSERT_FALSE(fp_neg.fpisinf());
-
-          ASSERT_FALSE(fp_pos.fpisnan());
-          ASSERT_FALSE(fp_neg.fpisnan());
-
-          ASSERT_FALSE(fp_pos.fpiszero());
-          ASSERT_FALSE(fp_neg.fpiszero());
-
-          ASSERT_TRUE(fp_pos_symfpu.fpissubnormal());
-          ASSERT_TRUE(fp_neg_symfpu.fpissubnormal());
-
-          ASSERT_FALSE(fp_pos_symfpu.fpisnormal());
-          ASSERT_FALSE(fp_neg_symfpu.fpisnormal());
-
-          ASSERT_FALSE(fp_pos_symfpu.fpisinf());
-          ASSERT_FALSE(fp_neg_symfpu.fpisinf());
-
-          ASSERT_FALSE(fp_pos_symfpu.fpisnan());
-          ASSERT_FALSE(fp_neg_symfpu.fpisnan());
-
-          ASSERT_FALSE(fp_pos_symfpu.fpiszero());
-          ASSERT_FALSE(fp_neg_symfpu.fpiszero());
+          ASSERT_TRUE(fp.fpissubnormal());
+          ASSERT_FALSE(fp.fpisnormal());
+          ASSERT_FALSE(fp.fpisinf());
+          ASSERT_FALSE(fp.fpisnan());
+          ASSERT_FALSE(fp.fpiszero());
         }
       }
     }
-  }
+  };
+  test_for_float16(fun);
 }
 
 /* -------------------------------------------------------------------------- */
