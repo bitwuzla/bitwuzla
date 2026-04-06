@@ -12,4 +12,4 @@ built as thin wrappers on top of the C++ API.
   cpp/api
   c/api
   python/api
-  ocaml/api
+  OCaml API Documentation <https://ocaml.org/p/bitwuzla-cxx/latest/doc/index.html>
