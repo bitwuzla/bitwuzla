@@ -2524,45 +2524,26 @@ TEST_F(TestFpFrom, fp_from_real_rat_str_rtz)
 
 TEST_F(TestFpFrom, to_fp_from_ubv_sbv)
 {
-  // Exhaustive for Float16
-  for (uint64_t bw = 1; bw <= 16; ++bw)
+  for (const auto& f : d_all_formats)
   {
-    // SymFpu's conversion from ubv/sbv has issues in the rounder. It produces
-    // intermediate bit-widths that do not match its own expectations. For
-    // Float16, this occurs with bw \in {11, 12}.
-    // We therefore cannot perform this full test until this is fixed.
-    if (bw == 11 || bw == 12) continue;
-    for (uint64_t i = 0; i < (1ul << bw); ++i)
+    for (uint64_t bw = 1; bw <= 16; ++bw)
     {
-      BitVector bv = BitVector::from_ui(bw, i);
-      for (RoundingMode rm : d_all_rms)
+      for (uint64_t i = 0; i < N_TESTS; ++i)
       {
-        for (auto sign : {false, true})
+        BitVector bv(bw, *d_rng);
+        for (RoundingMode rm : d_all_rms)
         {
-          FloatingPoint fp(d_fp16.first, d_fp16.second, rm, bv, sign);
-          FloatingPointSymFPU fp_symfpu(d_typefp16, rm, bv, sign);
-          ASSERT_EQ(fp.str(), fp_symfpu.str());
+          for (auto sign : {false, true})
+          {
+            FloatingPoint fp(f.first, f.second, rm, bv, sign);
+            FloatingPointSymFPU fp_symfpu(
+                d_nm.mk_fp_type(f.first, f.second), rm, bv, sign);
+            ASSERT_EQ(fp.str(), fp_symfpu.str());
+          }
         }
       }
     }
   }
-#if 0
-  // For the same reason as above we cannot enable this test for now.
-  for (uint64_t i = 0; i < 10000; ++i)
-  {
-    BitVector bv(d_rng->pick<uint64_t>(1, 257));
-    FpFormat format = pick_format(d_all_formats);
-    Type type = d_nm.mk_fp_type(format.first, format.second);
-    RoundingMode rm = pick_rm();
-    for (bool sign : {false, true})
-    {
-      FloatingPoint fp(format.first, format.second, rm, bv, sign);
-      FloatingPointSymFPU fp_symfpu(type, rm, bv, sign);
-      ASSERT_EQ(fp.str(), fp_symfpu.str());
-      ASSERT_EQ(fp.to_real_str(), fp_symfpu.to_real_str());
-    }
-  }
-#endif
 }
 
 TEST_F(TestFpFrom, to_fp_from_fp)
