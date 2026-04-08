@@ -7,6 +7,8 @@
 #include <iostream>
 #include <thread>
 
+#include "bitwuzla/cpp/parser.h"
+
 namespace bzla::main {
 
 // Workaround for condition variables in glibc < 2.34 to avoid segfault before
@@ -31,10 +33,25 @@ std::condition_variable cv;
 std::mutex cv_m;
 bool time_limit_set = false;
 
+bitwuzla::parser::Parser* g_parser = nullptr;
+
 void
 timeout_reached()
 {
   std::cout << "unknown" << std::endl;
+  if (g_parser != nullptr)
+  {
+    auto bitwuzla = g_parser->bitwuzla();
+    if (bitwuzla != nullptr)
+    {
+      auto stats = bitwuzla->statistics();
+      stats.merge(g_parser->statistics());
+      for (auto& [name, val] : stats)
+      {
+        std::cout << name << ": " << val << std::endl;
+      }
+    }
+  }
   std::_Exit(EXIT_SUCCESS);
 }
 
@@ -66,6 +83,12 @@ reset_time_limit()
   {
     cv.notify_all();
   }
+}
+
+void
+print_statistics_time_limit(bitwuzla::parser::Parser* parser)
+{
+  g_parser = parser;
 }
 
 }  // namespace bzla::main
