@@ -16,6 +16,29 @@ using namespace node;
 
 /* -------------------------------------------------------------------------- */
 
+TEST_F(TestFp, move)
+{
+  BitVector bv1(d_fp16.first + d_fp16.second, *d_rng);
+  BitVector bv2(d_fp128.first + d_fp128.second, *d_rng);
+  FloatingPoint fp1(d_fp16.first, d_fp16.second, bv1);
+  FloatingPoint fp2(d_fp128.first, d_fp128.second, bv2);
+
+  fp1 = std::move(fp2);
+  ASSERT_EQ(fp1.as_bv(), bv2);
+  ASSERT_EQ(fp1.exp_size(), d_fp128.first);
+  ASSERT_EQ(fp1.sig_size(), d_fp128.second);
+
+  auto fp3 = std::move(fp1);
+  ASSERT_EQ(fp3.as_bv(), bv2);
+  ASSERT_EQ(fp3.exp_size(), d_fp128.first);
+  ASSERT_EQ(fp3.sig_size(), d_fp128.second);
+
+  FloatingPoint fp4(std::move(fp3));
+  ASSERT_EQ(fp4.as_bv(), bv2);
+  ASSERT_EQ(fp4.exp_size(), d_fp128.first);
+  ASSERT_EQ(fp4.sig_size(), d_fp128.second);
+}
+
 TEST_F(TestFp, hash)
 {
   std::unordered_map<size_t, std::vector<FloatingPoint>> occs;

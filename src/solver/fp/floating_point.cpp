@@ -358,6 +358,12 @@ FloatingPoint::FloatingPoint(const FloatingPoint& other)
   mpfr_set(d_mpfr, other.d_mpfr, MPFR_RNDN);
 }
 
+FloatingPoint::FloatingPoint(FloatingPoint&& other)
+    : FloatingPoint(other.d_exp_size, other.d_sig_size)
+{
+  mpfr_swap(d_mpfr, other.d_mpfr);
+}
+
 FloatingPoint&
 FloatingPoint::operator=(const FloatingPoint& other)
 {
@@ -377,6 +383,16 @@ FloatingPoint::operator=(const FloatingPoint& other)
   d_sig_size = other.d_sig_size;
   mpfr_set_eminmax_for_format(d_exp_size, d_sig_size);
   mpfr_set(d_mpfr, other.d_mpfr, MPFR_RNDN);
+  return *this;
+}
+
+FloatingPoint&
+FloatingPoint::operator=(FloatingPoint&& other)
+{
+  assert(other.d_exp_size && other.d_sig_size);
+  d_exp_size = other.d_exp_size;
+  d_sig_size = other.d_sig_size;
+  mpfr_swap(d_mpfr, other.d_mpfr);
   return *this;
 }
 

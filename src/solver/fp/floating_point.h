@@ -174,8 +174,12 @@ class FloatingPoint
 
   /** Copy constructor. */
   FloatingPoint(const FloatingPoint &other);
+  /** Move constructor. */
+  FloatingPoint(FloatingPoint&& other);
   /** Copy assignment. */
   FloatingPoint &operator=(const FloatingPoint &other);
+  /** Move assignment. */
+  FloatingPoint& operator=(FloatingPoint&& other);
   /** Destructor. */
   ~FloatingPoint();
 
