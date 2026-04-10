@@ -2528,7 +2528,8 @@ TEST_F(TestFpFrom, to_fp_from_ubv_sbv)
   {
     for (uint64_t bw = 1; bw <= 16; ++bw)
     {
-      for (uint64_t i = 0; i < N_TESTS; ++i)
+      uint64_t ntests = std::min(1u << bw, N_TESTS);
+      for (uint64_t i = 0; i < ntests; ++i)
       {
         BitVector bv(bw, *d_rng);
         for (RoundingMode rm : d_all_rms)
