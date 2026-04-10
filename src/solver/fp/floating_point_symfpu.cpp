@@ -177,13 +177,10 @@ FloatingPointSymFPU::FloatingPointSymFPU(const Type& type,
   {
     if (bv.size() == 1)
     {
-      /* Note: We must copy the bv here, because 1) the corresponding
-       * constructor doesn't copy it but sets d_bv = bv and 2) the wrong
-       * constructor is matched (const bool &val). */
-      UnpackedFloat uf =
-          symfpu::convertUBVToFloat<fp::SymFpuTraits>(*d_size, rm, bv);
       /* We need special handling for bit-vectors of size one since symFPU does
        * not allow conversions from signed bit-vectors of size one.  */
+      UnpackedFloat uf =
+          symfpu::convertUBVToFloat<fp::SymFpuTraits>(*d_size, rm, bv);
       if (bv.is_one())
       {
         d_uf.reset(
@@ -196,9 +193,6 @@ FloatingPointSymFPU::FloatingPointSymFPU(const Type& type,
     }
     else
     {
-      /* Note: We must copy the bv here, because 1) the corresponding
-       * constructor doesn't copy it but sets d_bv = bv and 2) the wrong
-       * constructor is matched (const bool &val). */
       d_uf.reset(new UnpackedFloat(
           symfpu::convertSBVToFloat<fp::SymFpuTraits>(*d_size, rm, bv)));
     }
