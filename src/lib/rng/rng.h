@@ -73,7 +73,7 @@ class RNG
   }
 
   /** Pick a floating point number with type T between 'from' and 'to'
-   * (inclusive). */
+   * (exclusive). */
   template <
       typename T,
       typename std::enable_if<std::is_floating_point<T>::value, int>::type = 0>
