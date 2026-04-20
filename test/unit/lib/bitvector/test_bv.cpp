@@ -4824,6 +4824,37 @@ TEST_F(TestBitVector, ctor_random_bit_range)
   test_ctor_random_bit_range(33);
 }
 
+TEST_F(TestBitVector, move)
+{
+  BitVector bv0;
+  BitVector bv1(4, *d_rng);
+  BitVector bv2(4, *d_rng);
+  BitVector bv3(7, *d_rng);
+
+  BitVector bv2_copy = bv2;
+  BitVector bv3_copy = bv3;
+
+  bv1 = std::move(bv2);
+  ASSERT_EQ(bv1, bv2_copy);
+  ASSERT_EQ(bv1.size(), 4);
+
+  bv0 = std::move(bv1);
+  ASSERT_EQ(bv0, bv2_copy);
+  ASSERT_EQ(bv0.size(), 4);
+
+  bv0 = std::move(bv3);
+  ASSERT_EQ(bv0, bv3_copy);
+  ASSERT_EQ(bv0.size(), 7);
+
+  BitVector bv4(std::move(bv0));
+  ASSERT_EQ(bv4, bv3_copy);
+  ASSERT_EQ(bv4.size(), 7);
+
+  BitVector bv00;
+  BitVector bv01(std::move(bv00));
+  ASSERT_TRUE(bv01.is_null());
+}
+
 TEST_F(TestBitVector, str)
 {
   ASSERT_EQ(BitVector(1).str(), "0");

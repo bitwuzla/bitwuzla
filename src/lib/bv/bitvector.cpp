@@ -400,32 +400,17 @@ BitVector::BitVector(const BitVector& other)
   }
 }
 
-BitVector::BitVector(BitVector&& other)
+BitVector::BitVector(BitVector&& other) noexcept
 {
-  if (is_gmp())
+  if (other.is_gmp())
   {
-    if (other.is_gmp())
-    {
-      mpz_set(d_val_gmp, other.d_val_gmp);
-      mpz_clear(other.d_val_gmp);
-    }
-    else
-    {
-      mpz_clear(d_val_gmp);
-      d_val_uint64 = std::exchange(other.d_val_uint64, 0);
-    }
+    mpz_init(d_val_gmp);
+    mpz_swap(d_val_gmp, other.d_val_gmp);
+    mpz_clear(other.d_val_gmp);
   }
   else
   {
-    if (other.is_gmp())
-    {
-      mpz_init_set(d_val_gmp, other.d_val_gmp);
-      mpz_clear(other.d_val_gmp);
-    }
-    else
-    {
-      d_val_uint64 = std::exchange(other.d_val_uint64, 0);
-    }
+    d_val_uint64 = std::exchange(other.d_val_uint64, 0);
   }
   d_size = std::exchange(other.d_size, 0);
 }
@@ -477,6 +462,55 @@ BitVector::operator=(const BitVector& other)
       }
     }
     d_size = other.d_size;
+  }
+  return *this;
+}
+
+BitVector&
+BitVector::operator=(BitVector&& other) noexcept
+{
+  if (&other == this) return *this;
+  if (other.is_null())
+  {
+    if (is_gmp())
+    {
+      mpz_clear(d_val_gmp);
+    }
+    d_size       = 0;
+    d_val_uint64 = 0;
+  }
+  else
+  {
+    if (!is_gmp())
+    {
+      if (other.is_gmp())
+      {
+        // this: uint64, other: gmp
+        mpz_init(d_val_gmp);
+        mpz_swap(d_val_gmp, other.d_val_gmp);
+        mpz_clear(other.d_val_gmp);
+      }
+      else
+      {
+        d_val_uint64 = other.d_val_uint64;
+      }
+    }
+    else
+    {
+      if (!other.is_gmp())
+      {
+        // this: gmp, other: uint64
+        mpz_clear(d_val_gmp);
+        d_val_uint64 = other.d_val_uint64;
+      }
+      else
+      {
+        // both gmp -> swap
+        mpz_swap(d_val_gmp, other.d_val_gmp);
+        mpz_clear(other.d_val_gmp);
+      }
+    }
+    d_size = std::exchange(other.d_size, 0);
   }
   return *this;
 }

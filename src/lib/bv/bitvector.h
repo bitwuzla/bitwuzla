@@ -241,13 +241,15 @@ class BitVector
   /** Copy constructor. */
   BitVector(const BitVector& other);
   /** Move constructor. */
-  BitVector(BitVector&& other);
+  BitVector(BitVector&& other) noexcept;
 
   /** Destructor. */
   ~BitVector();
 
   /** Copy assignment operator. */
   BitVector& operator=(const BitVector& other);
+  /** Move assignment operator. */
+  BitVector& operator=(BitVector&& other) noexcept;
 
   /** @return The hash value of this bit-vector. */
   size_t hash() const;
