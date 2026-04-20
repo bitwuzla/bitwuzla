@@ -358,7 +358,7 @@ FloatingPoint::FloatingPoint(const FloatingPoint& other)
   mpfr_set(d_mpfr, other.d_mpfr, MPFR_RNDN);
 }
 
-FloatingPoint::FloatingPoint(FloatingPoint&& other)
+FloatingPoint::FloatingPoint(FloatingPoint&& other) noexcept
     : FloatingPoint(other.d_exp_size, other.d_sig_size)
 {
   mpfr_swap(d_mpfr, other.d_mpfr);
@@ -367,6 +367,8 @@ FloatingPoint::FloatingPoint(FloatingPoint&& other)
 FloatingPoint&
 FloatingPoint::operator=(const FloatingPoint& other)
 {
+  if (&other == this) return *this;
+
   assert(other.d_exp_size && other.d_sig_size);
   if (is_null())
   {
@@ -387,8 +389,10 @@ FloatingPoint::operator=(const FloatingPoint& other)
 }
 
 FloatingPoint&
-FloatingPoint::operator=(FloatingPoint&& other)
+FloatingPoint::operator=(FloatingPoint&& other) noexcept
 {
+  if (&other == this) return *this;
+
   assert(other.d_exp_size && other.d_sig_size);
   d_exp_size = other.d_exp_size;
   d_sig_size = other.d_sig_size;
