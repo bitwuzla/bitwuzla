@@ -1448,6 +1448,7 @@ tests_smt2 = [
   ['solver/fp/fp_sort.smt2'],
   ['solver/fp/fp_to_fp.smt2'],
   ['solver/fp/fp_zero.smt2'],
+  ['solver/fp/issue36.smt2'],
   ['solver/fp/issue164.smt2'],
   ['solver/fp/issue207.smt2'],
   ['solver/fp/issue208_1.smt2'],
