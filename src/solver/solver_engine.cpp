@@ -16,6 +16,7 @@
 #include "env.h"
 #include "node/node.h"
 #include "node/node_ref_vector.h"
+#include "node/node_utils.h"
 #include "printer/smt2_printer.h"
 #include "rewrite/evaluator.h"
 #include "solver/abstract/abstraction_module.h"
@@ -34,6 +35,7 @@ SolverEngine::SolverEngine(SolvingContext& context)
       d_assertions(context.assertions()),
       d_register_assertion_cache(&d_backtrack_mgr),
       d_register_term_cache(&d_backtrack_mgr),
+      d_distinct_n(&d_backtrack_mgr),
       d_lemma_cache(&d_backtrack_mgr),
       d_sat_state(Result::UNKNOWN),
       d_in_solving_mode(false),
@@ -98,6 +100,9 @@ SolverEngine::solve()
       d_stats.num_lemmas_fp += d_lemmas.size();
       continue;
     }
+
+    check_distinct_n();
+
     if (d_am != nullptr)
     {
       d_am->check();
@@ -229,6 +234,56 @@ SolverEngine::lemma(const Node& lemma)
   return false;
 }
 
+void
+SolverEngine::hint(const Node& node, const Node& value)
+{
+  d_bv_solver.hint(node, value);
+}
+
+void
+SolverEngine::register_eq_heuristic(const std::vector<Node>& nodes)
+{
+  if (!nodes.empty())
+  {
+    const Type& t = nodes[0].type();
+
+    if (t.is_array())
+    {
+      d_array_solver.register_eq_heuristic(nodes);
+    }
+    else if (t.is_fp() || t.is_rm())
+    {
+      d_fp_solver.register_eq_heuristic(nodes);
+    }
+    else if (t.is_bool() || t.is_bv())
+    {
+      d_bv_solver.register_eq_heuristic(nodes);
+    }
+  }
+}
+
+void
+SolverEngine::register_distinct_heuristic(const std::vector<Node>& nodes)
+{
+  if (!nodes.empty())
+  {
+    const Type& t = nodes[0].type();
+
+    if (t.is_array())
+    {
+      d_array_solver.register_distinct_heuristic(nodes);
+    }
+    else if (t.is_fp() || t.is_rm())
+    {
+      d_fp_solver.register_distinct_heuristic(nodes);
+    }
+    else if (t.is_bool() || t.is_bv())
+    {
+      d_bv_solver.register_distinct_heuristic(nodes);
+    }
+  }
+}
+
 Result
 SolverEngine::ensure_model(const std::vector<Node>& terms)
 {
@@ -274,6 +329,83 @@ SolverEngine::backtrack_mgr()
 }
 
 /* --- SolverEngine private ------------------------------------------------- */
+
+void
+SolverEngine::check_distinct_n()
+{
+  NodeManager& nm = d_env.nm();
+  for (size_t i = 0, size = d_distinct_n.size(); i < size; ++i)
+  {
+    const Node& dc = d_distinct_n[i];
+
+    Node dc_val = d_solver_state.value(dc);
+
+    if (dc_val.value<bool>())
+    {
+      util::Integer card(dc[0].value<BitVector>());
+
+      // If rewriting is disabled, DISTINCT_N may simplify to false.
+      if (card > dc.num_children() - 1)
+      {
+        assert(d_env.options().rewrite_level() == 0);
+        d_solver_state.lemma(nm.mk_node(Kind::EQUAL, {dc, nm.mk_value(false)}));
+        continue;
+      }
+
+      util::Integer thresh(dc.num_children() - 1);
+      thresh -= card;
+      bool ok = true;
+      std::unordered_map<Node, std::vector<Node>> map;
+      uint64_t conflicts = 0;
+      for (size_t j = 1, nchildren = dc.num_children(); j < nchildren; ++j)
+      {
+        const Node& cur     = dc[j];
+        Node child_val      = d_solver_state.value(cur);
+        auto [it, inserted] = map.try_emplace(child_val);
+        it->second.push_back(cur);
+        if (!inserted)
+        {
+          ++conflicts;
+        }
+
+        if (thresh < conflicts)
+        {
+          Node lem;
+          std::vector<Node> eqs;
+          for (const auto& [_, terms] : map)
+          {
+            for (size_t k = 1, s = terms.size(); k < s; ++k)
+            {
+              eqs.push_back(nm.mk_node(Kind::EQUAL, {terms[k - 1], terms[k]}));
+              if (conflicts == eqs.size())
+              {
+                lem = nm.mk_node(
+                    Kind::IMPLIES,
+                    {dc,
+                     nm.mk_node(Kind::NOT,
+                                {utils::mk_nary(nm, Kind::AND, eqs)})});
+                break;
+              }
+            }
+            if (!lem.is_null())
+            {
+              break;
+            }
+          }
+
+          assert(!lem.is_null());
+          d_solver_state.lemma(lem);
+          ok = false;
+          break;
+        }
+      }
+      if (ok)
+      {
+        assert(card <= map.size());
+      }
+    }
+  }
+}
 
 void
 SolverEngine::sync_scope(size_t level)
@@ -348,7 +480,15 @@ SolverEngine::process_term(const Node& term)
     auto [it, inserted] = d_register_term_cache.insert(cur);
     if (inserted)
     {
-      if (quant::QuantSolver::is_theory_leaf(cur))
+      if (cur.kind() == Kind::DISTINCT_N
+          && (!d_env.options().adc_sat_propagator()
+              || (!cur[1].type().is_bool() && !cur[1].type().is_bv())))
+      {
+        d_distinct_n.push_back(cur);
+        register_eq_heuristic({cur, d_env.nm().mk_value(true)});
+        d_new_terms_registered = true;
+      }
+      else if (quant::QuantSolver::is_theory_leaf(cur))
       {
         Log(2) << "register quantifier term: " << cur;
         d_quant_solver.register_term(cur);
@@ -378,6 +518,11 @@ SolverEngine::process_term(const Node& term)
         {
           Log(2) << "register floating-point term: " << cur;
           d_fp_solver.register_term(cur);
+          d_new_terms_registered = true;
+        }
+        else if (bv::BvSolver::is_theory_leaf(cur))
+        {
+          d_bv_solver.register_term(cur);
           d_new_terms_registered = true;
         }
         visit.insert(visit.end(), cur.begin(), cur.end());
@@ -556,6 +701,8 @@ SolverEngine::_value(const Node& term)
           }
         }
         break;
+
+        case Kind::DISTINCT_N: value = d_bv_solver.value(cur); break;
 
         // Partial Floating-point kinds
         case Kind::FP_TO_SBV:

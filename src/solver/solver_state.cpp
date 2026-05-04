@@ -34,6 +34,24 @@ SolverState::lemma(const Node& lemma)
   return d_solver_engine.lemma(lemma);
 }
 
+void
+SolverState::hint(const Node& node, const Node& value)
+{
+  d_solver_engine.hint(node, value);
+}
+
+void
+SolverState::register_eq_heuristic(const std::vector<Node>& nodes)
+{
+  d_solver_engine.register_eq_heuristic(nodes);
+}
+
+void
+SolverState::register_distinct_heuristic(const std::vector<Node>& nodes)
+{
+  d_solver_engine.register_distinct_heuristic(nodes);
+}
+
 backtrack::BacktrackManager*
 SolverState::backtrack_mgr()
 {

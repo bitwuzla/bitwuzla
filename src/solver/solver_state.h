@@ -40,6 +40,12 @@ class SolverState
   /** Add a lemma. */
   bool lemma(const Node& lemma);
 
+  void hint(const Node& node, const Node& value);
+
+  void register_eq_heuristic(const std::vector<Node>& nodes);
+
+  void register_distinct_heuristic(const std::vector<Node>& nodes);
+
   /** @return Solver engine backtrack manager. */
   backtrack::BacktrackManager* backtrack_mgr();
 

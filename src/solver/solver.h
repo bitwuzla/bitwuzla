@@ -48,6 +48,16 @@ class Solver
     assert(false);
   }
 
+  virtual void register_eq_heuristic(const std::vector<Node>& nodes)
+  {
+    (void) nodes;
+  }
+
+  virtual void register_distinct_heuristic(const std::vector<Node>& nodes)
+  {
+    (void) nodes;
+  }
+
  protected:
   /** Associated environment. */
   Env& d_env;

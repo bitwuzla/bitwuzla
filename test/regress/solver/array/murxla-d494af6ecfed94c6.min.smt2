@@ -1,0 +1,6 @@
+(set-option :rewrite-level 0)
+(declare-const x0 (Array Bool Bool))
+(declare-const x (Array Bool (Array Bool Bool)))
+(assert (distinct x0 (select x (forall ((x Bool)) (exists ((x (Array Bool Bool))) (not (= x x0 x0)))))))
+(set-info :status sat)
+(check-sat)
