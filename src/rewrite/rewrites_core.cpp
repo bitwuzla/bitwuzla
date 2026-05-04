@@ -1773,6 +1773,12 @@ RewriteRule<RewriteRuleKind::NORMALIZE_COMM>::_apply(Rewriter& rewriter,
         return rewriter.nm().mk_node(k, {node[1], node[0]});
       }
     }
+    else if (node.num_children() >= 3)
+    {
+      std::vector<Node> children{node.begin(), node.end()};
+      std::sort(children.begin(), children.end());
+      return rewriter.nm().mk_node(k, children);
+    }
   }
   else if (k == Kind::FP_ADD || k == Kind::FP_MUL)
   {
