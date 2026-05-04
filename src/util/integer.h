@@ -13,10 +13,14 @@
 
 #include <gmp.h>
 
-#include <functional>
 #include <cstdint>
+#include <functional>
 
-namespace bzla::util {
+namespace bzla {
+
+class BitVector;
+
+namespace util {
 
 class Integer
 {
@@ -32,6 +36,7 @@ class Integer
   Integer(uint64_t val);
   Integer(const char* val);
   Integer(const std::string& val);
+  Integer(const BitVector& bv);
 
   /** Copy constructor. */
   Integer(const Integer& other);
@@ -96,13 +101,17 @@ class Integer
    */
   int64_t to_int64() const;
 
+  /** @return The number of bits required to store the Integer value. */
+  uint64_t base2_size() const;
+
  private:
   mpz_t d_val_gmp;
 };
 
 std::ostream& operator<<(std::ostream& os, const Integer& i);
 
-}  // namespace bzla::util
+}  // namespace util
+}  // namespace bzla
 
 namespace std {
 
