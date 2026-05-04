@@ -213,7 +213,6 @@ sources = files([
   'preprocess/assertion_tracker.cpp',
   'preprocess/assertion_vector.cpp',
   'preprocess/pass/contradicting_ands.cpp',
-  'preprocess/pass/elim_extract.cpp',
   'preprocess/pass/elim_lambda.cpp',
   'preprocess/pass/elim_udiv.cpp',
   'preprocess/pass/embedded_constraints.cpp',
