@@ -1,0 +1,18 @@
+(declare-const i1 (_ BitVec 1))
+(declare-const i2 (_ BitVec 1))
+(declare-const i3 (_ BitVec 1))
+(declare-const i4 (_ BitVec 1))
+(declare-const e1 (_ BitVec 1))
+(declare-const e2 (_ BitVec 1))
+(declare-const e3 (_ BitVec 1))
+(declare-const e4 (_ BitVec 1))
+(define-fun A0 () (Array (_ BitVec 1) (_ BitVec 1)) ((as const (Array (_ BitVec 1) (_ BitVec 1))) #b0))
+(define-fun A1 () (Array (_ BitVec 1) (_ BitVec 1)) ((as const (Array (_ BitVec 1) (_ BitVec 1))) #b1))
+(assert
+ (=
+  (store (store A0 i2 e2) i1 e1)
+  (store (store A1 i3 e3) i4 e4)
+ )
+)
+(set-info :status sat)
+(check-sat)

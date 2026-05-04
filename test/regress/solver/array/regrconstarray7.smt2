@@ -1,0 +1,7 @@
+(define-fun A0 () (Array (_ BitVec 1) (_ BitVec 1)) ((as const (Array (_ BitVec 1) (_ BitVec 1))) #b0))
+(define-fun A1 () (Array (_ BitVec 1) (_ BitVec 1)) ((as const (Array (_ BitVec 1) (_ BitVec 1))) #b1))
+(declare-const i1 (_ BitVec 1))
+(declare-const i2 (_ BitVec 1))
+(assert (= A0 (store (store A1 i1 #b0) i2 #b0)))
+(set-info :status sat)
+(check-sat)

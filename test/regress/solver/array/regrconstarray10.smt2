@@ -1,0 +1,8 @@
+(declare-const i1 (_ BitVec 1))
+(declare-const i2 (_ BitVec 1))
+(define-fun A0 () (Array (_ BitVec 1) (_ BitVec 1)) ((as const (Array (_ BitVec 1) (_ BitVec 1))) i1))
+(define-fun A1 () (Array (_ BitVec 1) (_ BitVec 1)) ((as const (Array (_ BitVec 1) (_ BitVec 1))) i2))
+(assert (distinct i1 i2))
+(assert (= A0 A1))
+(set-info :status unsat)
+(check-sat)

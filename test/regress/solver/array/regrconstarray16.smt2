@@ -1,0 +1,5 @@
+(define-fun A0 () (Array Bool Bool) ((as const (Array Bool Bool)) false))
+(define-fun A1 () (Array Bool Bool) ((as const (Array Bool Bool)) true))
+(assert (= A0 (store (store A1 false false) true false)))
+(set-info :status sat)
+(check-sat)
