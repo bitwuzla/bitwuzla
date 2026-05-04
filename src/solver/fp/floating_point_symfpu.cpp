@@ -25,6 +25,8 @@
 #include <symfpu/core/sqrt.h>
 #include <symfpu/core/unpackedFloat.h>
 
+#include <sstream>
+
 #include "node/node_manager.h"
 #include "solver/fp/symfpu_floating_point_typeinfo.h"
 #include "solver/fp/symfpu_wrapper.h"

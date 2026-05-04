@@ -15,6 +15,7 @@
 #include <sys/types.h>
 
 #include <cstdint>
+#include <sstream>
 
 #include "node/node_manager.h"
 #include "util/gmp_utils.h"

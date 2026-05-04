@@ -19,6 +19,8 @@
 #include "rewrite/rewriter.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
+#include "type/card.h"
+#include "util/integer.h"
 
 namespace bzla::fp {
 
@@ -45,6 +47,7 @@ FpSolver::FpSolver(Env& env, SolverState& state)
     : Solver(env, state),
       d_word_blaster(env, state),
       d_word_blast_queue(state.backtrack_mgr()),
+      d_distinct_n(state.backtrack_mgr()),
       d_word_blast_index(state.backtrack_mgr()),
       d_valid_constraints_cache(state.backtrack_mgr())
 {
@@ -87,9 +90,9 @@ FpSolver::check()
        i < size;
        ++i)
   {
+    node_ref_vector visit;
     const Node& node = d_word_blast_queue[i];
-
-    node_ref_vector visit{node};
+    visit.push_back(node);
     do
     {
       const Node& cur = visit.back();
@@ -121,6 +124,7 @@ FpSolver::check()
        ++i)
   {
     const Node& node = d_word_blast_queue[i];
+
     Node wb = d_word_blaster.word_blast(node);
 
     if (wb == node) continue;
@@ -182,6 +186,47 @@ void
 FpSolver::register_term(const Node& term)
 {
   d_word_blast_queue.push_back(term);
+}
+
+void
+FpSolver::register_eq_heuristic(const std::vector<Node>& nodes)
+{
+  std::vector<Node> wb_nodes;
+  for (const Node& n : nodes)
+  {
+    if (n.is_value())
+    {
+      continue;
+    }
+    Node wb = d_word_blaster.word_blast(n);
+    Node rw = d_env.rewriter().rewrite(wb);
+    if (rw.is_value())
+    {
+      continue;
+    }
+    wb_nodes.push_back(rw);
+  }
+  d_solver_state.register_eq_heuristic(wb_nodes);
+}
+
+void
+FpSolver::register_distinct_heuristic(const std::vector<Node>& nodes)
+{
+  std::vector<Node> wb_nodes;
+  for (const Node& n : nodes)
+  {
+    if (n.is_value())
+    {
+      continue;
+    }
+    Node wb = d_word_blaster.word_blast(n);
+    Node rw = d_env.rewriter().rewrite(wb);
+    if (!rw.is_value())
+    {
+      wb_nodes.push_back(rw);
+    }
+  }
+  d_solver_state.register_distinct_heuristic(wb_nodes);
 }
 
 }  // namespace bzla::fp

@@ -40,11 +40,15 @@ class FpSolver : public Solver
 
   const WordBlaster& word_blaster() const { return d_word_blaster; }
 
+  void register_eq_heuristic(const std::vector<Node>& nodes) override;
+  void register_distinct_heuristic(const std::vector<Node>& nodes) override;
+
  private:
   /** The word blaster. */
   WordBlaster d_word_blaster;
   /** The current queue of nodes to word-blast on the next check() call. */
   backtrack::vector<Node> d_word_blast_queue;
+  backtrack::vector<Node> d_distinct_n;
   /** Index in d_word_blast_queue to mark already word-blasted terms. */
   backtrack::object<size_t> d_word_blast_index;
   backtrack::unordered_set<Node> d_valid_constraints_cache;
