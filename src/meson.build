@@ -253,6 +253,7 @@ sources = files([
   'sat/interpolants/tracer.cpp',
   'sat/interpolants/tracer_kinds.cpp',
   'sat/kissat.cpp',
+  'sat/propagator.cpp',
   'sat/sat_solver_factory.cpp',
   'solver/array/array_solver.cpp',
   'solver/abstract/abstraction_lemmas.cpp',

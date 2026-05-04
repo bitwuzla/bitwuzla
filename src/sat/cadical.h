@@ -50,6 +50,8 @@ class CadicalTerminator : public CaDiCaL::Terminator
   bzla::Terminator* d_terminator = nullptr;
 };
 
+class Propagator;
+
 class Cadical : public SatSolver
 {
  public:
@@ -62,6 +64,9 @@ class Cadical : public SatSolver
   int32_t value(int32_t lit) override;
   bool failed(int32_t lit) override;
   int32_t fixed(int32_t lit) override;
+  void phase(int32_t lit) override;
+  void unphase(int32_t lit) override;
+  void register_propagator(std::unique_ptr<SatPropagator> sp) override;
   Result solve() override;
   void configure_terminator(Terminator* terminator) override;
   const char *get_name() const override { return "CaDiCaL"; }
@@ -73,6 +78,7 @@ class Cadical : public SatSolver
   int32_t d_max_var                           = 1;
   std::unique_ptr<CaDiCaL::Solver> d_solver   = nullptr;
   std::unique_ptr<CaDiCaL::Terminator> d_term = nullptr;
+  std::unique_ptr<Propagator> d_propagator;
 };
 
 class CadicalInterpol : public Cadical

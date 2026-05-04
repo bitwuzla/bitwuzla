@@ -14,8 +14,11 @@
 
 #include "sat/cadical.h"
 
+#include <cassert>
+
 #include "bitblast/aig/aig_cnf.h"
 #include "sat/interpolants/cadical_tracer.h"
+#include "sat/propagator.h"
 
 namespace bzla::sat {
 
@@ -40,6 +43,10 @@ Cadical::Cadical()
   d_solver.reset(new CaDiCaL::Solver());
   d_solver->set("shrink", 0);
   d_solver->set("quiet", 1);
+  d_propagator.reset(new Propagator());
+  d_propagator->attach_solver(d_solver.get());
+  d_solver->connect_external_propagator(d_propagator.get());
+  d_solver->connect_fixed_listener(d_propagator.get());
 }
 
 Cadical::~Cadical() {}
@@ -47,6 +54,7 @@ Cadical::~Cadical() {}
 int32_t
 Cadical::new_var()
 {
+  d_propagator->resize(d_max_var);
   return d_max_var++;
 }
 
@@ -54,6 +62,12 @@ void
 Cadical::add(int32_t lit, int64_t cgroup_id)
 {
   (void) cgroup_id;
+  int32_t var = std::abs(lit);
+  assert(var < d_max_var);
+  if (d_propagator && var)
+  {
+    d_propagator->info(var).active = true;
+  }
   d_solver->add(lit);
 }
 
@@ -82,6 +96,25 @@ int32_t
 Cadical::fixed(int32_t lit)
 {
   return d_solver->fixed(lit);
+}
+
+void
+Cadical::phase(int32_t lit)
+{
+  assert(std::abs(lit) < d_max_var);
+  d_propagator->force_phase(lit);
+}
+
+void
+Cadical::unphase(int32_t lit)
+{
+  return d_solver->unphase(lit);
+}
+
+void
+Cadical::register_propagator(std::unique_ptr<SatPropagator> adc)
+{
+  d_propagator->register_propagator(std::move(adc));
 }
 
 Result
