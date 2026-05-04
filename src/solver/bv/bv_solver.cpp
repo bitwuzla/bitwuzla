@@ -52,7 +52,18 @@ BvSolver::is_leaf(const Node& term)
          || k == Kind::FP_SYMFPU_ZERO
          // Equalities over terms that are not Booleans or bit-vectors
          || (k == Kind::EQUAL && !term[0].type().is_bool()
-             && !term[0].type().is_bv());
+             && !term[0].type().is_bv())
+         || k == Kind::DISTINCT_N;
+  // || (k == Kind::DISTINCT_N && !term[0].type().is_bool()
+  //     && !term[0].type().is_bv());
+}
+
+bool
+BvSolver::is_theory_leaf(const Node& term)
+{
+  Kind k = term.kind();
+  return k == Kind::DISTINCT_N
+         && (term[0].type().is_bool() || term[0].type().is_bv());
 }
 
 BvSolver::BvSolver(Env& env, SolverState& state)
@@ -160,6 +171,32 @@ BvSolver::value(const Node& term)
 }
 
 void
+BvSolver::register_term(const Node& term)
+{
+  // No DISTINCT_N support for prop solver yet.
+  assert(d_cur_solver == option::BvSolver::BITBLAST);
+  d_bitblast_solver.register_term(term);
+}
+
+void
+BvSolver::register_eq_heuristic(const std::vector<Node>& nodes)
+{
+  if (d_cur_solver == option::BvSolver::BITBLAST)
+  {
+    d_bitblast_solver.register_eq_heuristic(nodes);
+  }
+}
+
+void
+BvSolver::register_distinct_heuristic(const std::vector<Node>& nodes)
+{
+  if (d_cur_solver == option::BvSolver::BITBLAST)
+  {
+    d_bitblast_solver.register_distinct_heuristic(nodes);
+  }
+}
+
+void
 BvSolver::unsat_core(std::vector<Node>& core) const
 {
   if (d_cur_solver == option::BvSolver::BITBLAST)
@@ -170,6 +207,15 @@ BvSolver::unsat_core(std::vector<Node>& core) const
   {
     assert(d_cur_solver == option::BvSolver::PROP);
     d_prop_solver->unsat_core(core);
+  }
+}
+
+void
+BvSolver::hint(const Node& node, const Node& value)
+{
+  if (d_cur_solver == option::BvSolver::BITBLAST)
+  {
+    d_bitblast_solver.hint(node, value);
   }
 }
 

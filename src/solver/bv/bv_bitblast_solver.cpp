@@ -15,7 +15,10 @@
 #include "node/node_manager.h"
 #include "node/node_utils.h"
 #include "option/option.h"
+#include "sat/distinct_n_propagator.h"
 #include "sat/cadical.h"
+#include "sat/distinct_decision_heuristic.h"
+#include "sat/eq_decision_heuristic.h"
 #include "sat/interpolants/tracer.h"
 #include "sat/sat_solver_factory.h"
 #include "solver/bv/bv_interpolator.h"
@@ -208,6 +211,14 @@ BvBitblastSolver::solve()
 }
 
 void
+BvBitblastSolver::register_term(const Node& term)
+{
+  assert(term.kind() == Kind::DISTINCT_N);
+  assert(term[1].type().is_bool() || term[1].type().is_bv());
+  register_distinct_n(term);
+}
+
+void
 BvBitblastSolver::register_assertion(const Node& assertion,
                                      bool top_level,
                                      bool is_lemma)
@@ -240,6 +251,48 @@ BvBitblastSolver::register_assertion(const Node& assertion,
   update_statistics();
 }
 
+void
+BvBitblastSolver::register_eq_heuristic(const std::vector<Node>& nodes)
+{
+  std::vector<std::vector<int32_t>> bits;
+  for (const auto& n : nodes)
+  {
+    assert(n.type().is_bv() || n.type().is_bool());
+    d_bitblaster.bitblast(n);
+    std::vector<int32_t> ids;
+    for (const auto& bit : d_bitblaster.bits(n))
+    {
+      d_cnf_encoder->encode(bit, false);
+      ids.push_back(d_cnf_encoder->cnf_lit(bit));
+    }
+    bits.emplace_back(std::move(ids));
+  }
+  std::unique_ptr<sat::EqDecisionHeuristic> eqh(
+      new sat::EqDecisionHeuristic(bits));
+  d_sat_solver->register_propagator(std::move(eqh));
+}
+
+void
+BvBitblastSolver::register_distinct_heuristic(const std::vector<Node>& nodes)
+{
+  std::vector<std::vector<int32_t>> bits;
+  for (const auto& n : nodes)
+  {
+    assert(n.type().is_bv() || n.type().is_bool());
+    d_bitblaster.bitblast(n);
+    std::vector<int32_t> ids;
+    for (const auto& bit : d_bitblaster.bits(n))
+    {
+      d_cnf_encoder->encode(bit, false);
+      ids.push_back(d_cnf_encoder->cnf_lit(bit));
+    }
+    bits.emplace_back(std::move(ids));
+  }
+  std::unique_ptr<sat::DistinctDecisionHeuristic> dih(
+      new sat::DistinctDecisionHeuristic(bits));
+  d_sat_solver->register_propagator(std::move(dih));
+}
+
 Node
 BvBitblastSolver::value(const Node& term)
 {
@@ -253,6 +306,7 @@ BvBitblastSolver::value(const Node& term)
   // Return default value if not bit-blasted
   if (bits.empty())
   {
+    // std::cout << "bv::value::default: " << term << std::endl;
     return utils::mk_default_value(nm, type);
   }
 
@@ -266,6 +320,7 @@ BvBitblastSolver::value(const Node& term)
   {
     val.set_bit(size - 1 - i, d_cnf_encoder->value(bits[i]) == 1);
   }
+  // std::cout << "bv::value:: " << term << " -> " << val << std::endl;
   return nm.mk_value(val);
 }
 
@@ -311,6 +366,25 @@ BvBitblastSolver::interpolant(const std::vector<Node>& ppA,
   return d_bv_interpolator->interpolant(ppA, ppB);
 }
 
+void
+BvBitblastSolver::hint(const Node& node, const Node& value)
+{
+  if (!value.type().is_bv())
+  {
+    return;
+  }
+  const auto& v = value.value<BitVector>();
+  d_bitblaster.bitblast(node);
+  const auto& bits = d_bitblaster.bits(node);
+  for (uint64_t i = 0, size = bits.size(); i < size; ++i)
+  {
+    d_cnf_encoder->encode(bits[i], false);
+    int32_t id    = d_cnf_encoder->cnf_lit(bits[i]);
+    int32_t phase = v.bit(size - 1 - i) ? id : -id;
+    d_sat_solver->phase(phase);
+  }
+}
+
 /* --- BvBitblastSolver private --------------------------------------------- */
 
 void
@@ -341,6 +415,31 @@ BvBitblastSolver::init_sat_solver()
         ->connect_tracer(d_env, d_bitblaster, *d_cnf_encoder);
 #endif
   }
+}
+
+void
+BvBitblastSolver::register_distinct_n(const Node& node)
+{
+  std::vector<std::vector<int32_t>> bits;
+  for (uint64_t i = 1, size = node.num_children(); i < size; ++i)
+  {
+    const Node& n = node[i];
+    assert(n.type().is_bv() || n.type().is_bool());
+    d_bitblaster.bitblast(n);
+    std::vector<int32_t> ids;
+    for (const auto& bit : d_bitblaster.bits(n))
+    {
+      d_cnf_encoder->encode(bit, false);
+      ids.push_back(d_cnf_encoder->cnf_lit(bit));
+    }
+    bits.emplace_back(std::move(ids));
+  }
+  const auto& bit = d_bitblaster.bits(node)[0];
+  d_cnf_encoder->encode(bit, false);
+  util::Integer card(node[0].value<BitVector>());
+  std::unique_ptr<sat::DistinctNPropagator> distinct_n(
+      new sat::DistinctNPropagator(card, d_cnf_encoder->cnf_var(bit), bits));
+  d_sat_solver->register_propagator(std::move(distinct_n));
 }
 
 void

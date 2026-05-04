@@ -64,6 +64,8 @@ class AigBitblaster
     return d_bitblaster_cache;
   }
 
+  const auto& get_consts() const { return d_consts; }
+
  protected:
   bitblast::AigBitblaster::Bits d_empty;
 
@@ -73,6 +75,7 @@ class AigBitblaster
   std::unordered_map<Node, bitblast::AigBitblaster::Bits> d_bitblaster_cache;
 
   bool d_bool_bv1_mode = false;
+  std::vector<Node> d_consts;
 };
 
 }  // namespace bzla::bv

@@ -38,15 +38,23 @@ class BvBitblastSolver : public Solver,
 
   Result solve() override;
 
+  void register_term(const Node& term) override;
+
   void register_assertion(const Node& assertion,
                           bool top_level,
                           bool is_lemma) override;
+
+  void register_eq_heuristic(const std::vector<Node>& nodes) override;
+
+  void register_distinct_heuristic(const std::vector<Node>& nodes) override;
 
   /** Query value of leaf node. */
   Node value(const Node& term) override;
 
   /** Get unsat core of last solve() call. */
   void unsat_core(std::vector<Node>& core) const override;
+
+  void hint(const Node& node, const Node& term) override;
 
   /** Get AIG bit-blaster instance. */
   AigBitblaster& bitblaster() { return d_bitblaster; }
@@ -89,6 +97,9 @@ class BvBitblastSolver : public Solver,
  private:
   /** Initialize sat solver and bitblast infrastructure. */
   void init_sat_solver();
+
+  void register_distinct_n(const Node& node);
+
   /** Update AIG and CNF statistics. */
   void update_statistics();
 

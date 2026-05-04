@@ -32,11 +32,24 @@ class BvSolver : public Solver, public BvSolverInterface
    */
   static bool is_leaf(const Node& term);
 
+  /**
+   * Nodes that the bit-vector solver should be notified about separately in
+   * the registration phase. We could also traverse registered assertions,
+   * however, we do not want to keep another traversal cache since the solver
+   * engine already traverses the assertion.
+   */
+  static bool is_theory_leaf(const Node& term);
+
   BvSolver(Env& env, SolverState& state);
   ~BvSolver();
 
   // Solver interface
   Node value(const Node& term) override;
+
+  void register_term(const Node& term) override;
+
+  void register_eq_heuristic(const std::vector<Node>& nodes) override;
+  void register_distinct_heuristic(const std::vector<Node>& nodes) override;
 
   // BvSolver interface
   void register_assertion(const Node& assertion,
@@ -66,6 +79,8 @@ class BvSolver : public Solver, public BvSolverInterface
    *       during solving.
    */
   Node interpolant(const std::vector<Node>& ppA, const std::vector<Node>& ppB);
+
+  void hint(const Node& node, const Node& value) override;
 
   /** Get overall BV solver statistics. */
   const auto& statistics() const { return d_stats; }

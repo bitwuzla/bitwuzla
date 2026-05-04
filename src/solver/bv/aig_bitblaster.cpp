@@ -31,7 +31,7 @@ AigBitblaster::bitblast(const Node& t)
     auto [it, inserted] = d_bitblaster_cache.try_emplace(cur);
     if (inserted)
     {
-      if (!BvSolver::is_leaf(cur))
+      if (!BvSolver::is_leaf(cur) && cur.kind() != Kind::DISTINCT_N)
       {
         if (d_bool_bv1_mode)
         {
@@ -95,6 +95,10 @@ AigBitblaster::bitblast(const Node& t)
         case Kind::SELECT:
         case Kind::APPLY:
         case Kind::CONSTANT:
+          if (cur.kind() == Kind::CONSTANT)
+          {
+            d_consts.push_back(cur);
+          }
           assert(BvSolver::is_leaf(cur));
           it->second = type.is_bool()
                            ? d_bitblaster.bv_constant(1)
@@ -154,6 +158,8 @@ AigBitblaster::bitblast(const Node& t)
           }
         }
         break;
+
+        case Kind::DISTINCT_N: it->second = d_bitblaster.bv_constant(1); break;
 
         case Kind::BV_COMP:
           assert(type.is_bv());
