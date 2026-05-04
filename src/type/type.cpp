@@ -11,6 +11,7 @@
 #include "type/type.h"
 
 #include <cassert>
+#include <sstream>
 #include <utility>
 
 #include "printer/smt2_printer.h"
