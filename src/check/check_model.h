@@ -28,9 +28,6 @@ class CheckModel
 
  private:
   void collect_consts();
-  void assert_array_model(SolvingContext& ctx,
-                          const Node& input,
-                          const Node& value) const;
   void assert_fun_model(SolvingContext& ctx,
                         const Node& input,
                         const Node& value) const;

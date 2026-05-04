@@ -50,13 +50,8 @@ CheckModel::check()
   {
     Node value = d_ctx.get_value(input);
     Log(2) << "check: " << input << " = " << value;
-    // Special handling until equality over constant arrays supported
-    if (input.type().is_array())
-    {
-      assert_array_model(check_ctx, input, value);
-    }
     // Special handling until equality over lambda supported
-    else if (input.type().is_fun())
+    if (input.type().is_fun())
     {
       assert_fun_model(check_ctx, input, value);
     }
@@ -116,30 +111,6 @@ CheckModel::collect_consts()
         visit.insert(visit.end(), cur.begin(), cur.end());
       }
     } while (!visit.empty());
-  }
-}
-
-void
-CheckModel::assert_array_model(SolvingContext& ctx,
-                               const Node& input,
-                               const Node& value) const
-{
-  NodeManager& nm = ctx.env().nm();
-  Node cur        = value;
-  std::unordered_set<Node> indices;
-  while (cur.kind() == Kind::STORE)
-  {
-    // Special handling until equality over constant arrays supported
-    if (!cur[2].type().is_array())
-    {
-      auto [it, inserted] = indices.insert(cur[1]);
-      if (inserted)
-      {
-        Node read = nm.mk_node(Kind::SELECT, {input, cur[1]});
-        ctx.assert_formula(nm.mk_node(Kind::EQUAL, {read, cur[2]}));
-      }
-    }
-    cur = cur[0];
   }
 }
 
