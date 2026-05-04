@@ -248,6 +248,8 @@ sources = files([
   'sat/distinct_n_propagator.cpp',
   'sat/cadical.cpp',
   'sat/cryptominisat.cpp',
+  'sat/eq_decision_heuristic.cpp',
+  'sat/distinct_decision_heuristic.cpp',
   'sat/gimsatul.cpp',
   'sat/interpolants/cadical_tracer.cpp',
   'sat/interpolants/tracer.cpp',
