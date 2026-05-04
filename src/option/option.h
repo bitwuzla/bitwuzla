@@ -33,9 +33,10 @@ enum class Option
   MEMORY_LIMIT,               // numeric
   NTHREADS,                   // numeric
 
-  BV_SOLVER,      // enum
-  REWRITE_LEVEL,  // numeric
-  SAT_SOLVER,     // enum
+  BV_SOLVER,           // enum
+  REWRITE_LEVEL,       // numeric
+  SAT_SOLVER,          // enum
+  ADC_SAT_PROPAGATOR,  // bool
 
   WRITE_AIGER,  // str
   WRITE_CNF,    // str
@@ -576,6 +577,7 @@ class Options
   // Bitwuzla-specific options
   OptionModeT<BvSolver> bv_solver;
   OptionModeT<SatSolver> sat_solver;
+  OptionBool adc_sat_propagator;
   OptionStr write_aiger;
   OptionStr write_cnf;
   OptionNumeric rewrite_level;

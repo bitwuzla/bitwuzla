@@ -268,6 +268,12 @@ Options::Options()
                  "backend SAT solver",
                  "sat-solver",
                  "S"),
+      adc_sat_propagator(this,
+                         Option::ADC_SAT_PROPAGATOR,
+                         false,
+                         "use ADC SAT propagator for DISTINCT_N "
+                         "(default: theory-level handling in solver engine)",
+                         "adc-sat-propagator"),
       write_aiger(this,
                   Option::WRITE_AIGER,
                   "",
@@ -939,6 +945,7 @@ Options::data(Option opt)
     case Option::PRODUCE_UNSAT_CORES: return &produce_unsat_cores;
     case Option::PRODUCE_INTERPOLANTS: return &produce_interpolants;
     case Option::SAT_SOLVER: return &sat_solver;
+    case Option::ADC_SAT_PROPAGATOR: return &adc_sat_propagator;
     case Option::WRITE_AIGER: return &write_aiger;
     case Option::WRITE_CNF: return &write_cnf;
     case Option::SEED: return &seed;

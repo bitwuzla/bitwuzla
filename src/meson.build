@@ -245,6 +245,7 @@ sources = files([
   'rewrite/rewrites_core.cpp',
   'rewrite/rewrites_fp.cpp',
   'resource_terminator.cpp',
+  'sat/distinct_n_propagator.cpp',
   'sat/cadical.cpp',
   'sat/cryptominisat.cpp',
   'sat/gimsatul.cpp',

@@ -178,6 +178,19 @@ enum ENUM(Option)
    *    as the backend SAT solver.
    */
   EVALUE(SAT_SOLVER),
+  /*!
+   * **Use ADC SAT propagator for DISTINCT_N.**
+   *
+   * When enabled, `DISTINCT_N` constraints are handled by the all-different
+   * with-collisions (ADC) SAT-level propagator. When disabled, the solver
+   * engine handles `DISTINCT_N` at the theory level via lazy expansion and
+   * equality decision heuristics.
+   *
+   * *Values:*
+   *  - **1**: enable (use ADC SAT propagator)
+   *  - **0**: disable (use theory-level handling) [**default**]
+   */
+  EVALUE(ADC_SAT_PROPAGATOR),
   /*! **Print bit-vector abstraction as AIG in binary or ascii AIGER format.**
    *
    * Expects a filename (as string) as the configuration value.
