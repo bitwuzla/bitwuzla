@@ -11,6 +11,7 @@
 #include "node/node.h"
 
 #include <cassert>
+#include <sstream>
 #include <utility>
 
 #include "node/node_data.h"

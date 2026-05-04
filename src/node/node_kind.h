@@ -11,10 +11,8 @@
 #ifndef BZLA_NODE_NODE_KIND_H_INCLUDED
 #define BZLA_NODE_NODE_KIND_H_INCLUDED
 
-#include <array>
-#include <cstddef>
 #include <cstdint>
-#include <sstream>
+#include <ostream>
 
 namespace bzla::node {
 
@@ -31,6 +29,7 @@ enum class Kind : uint8_t
   VALUE,
   VARIABLE,
   DISTINCT,
+  DISTINCT_N,
   EQUAL,
   ITE,
 

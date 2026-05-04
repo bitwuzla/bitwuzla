@@ -406,6 +406,7 @@ Smt2Printer::print(std::ostream& os,
         case Kind::IMPLIES:
         case Kind::XOR:
         case Kind::DISTINCT:
+        case Kind::DISTINCT_N:
         case Kind::EQUAL:
         case Kind::ITE:
         case Kind::AM_ABSTRACT:

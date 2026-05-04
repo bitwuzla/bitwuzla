@@ -12,6 +12,7 @@
 
 #include <deque>
 #include <functional>
+#include <sstream>
 
 #include "bv/bitvector.h"
 #include "node/kind_info.h"
@@ -254,6 +255,7 @@ NodeManager::compute_type(Kind kind,
     case Kind::IMPLIES:
     case Kind::XOR:
     case Kind::DISTINCT:
+    case Kind::DISTINCT_N:
     case Kind::EQUAL:
     case Kind::BV_ULT:
     case Kind::BV_UGE:
@@ -563,6 +565,21 @@ NodeManager::check_type(Kind kind,
         }
       }
       break;
+
+    case Kind::DISTINCT_N: {
+      assert(children.size() > 1);
+      assert(children[0].type().is_bv());
+      const Type& t = children[1].type();
+      for (size_t i = 2, size = children.size(); i < size; ++i)
+      {
+        if (children[i].type() != t)
+        {
+          ss << kind << ": Expected terms with same type.";
+          return std::make_pair(false, ss.str());
+        }
+      }
+    }
+    break;
 
     // Unary bit-vector operators
     case Kind::BV_DEC:

@@ -1,6 +1,7 @@
 #include "printer/btor2_printer.h"
 
 #include <set>
+#include <sstream>
 
 #include "backtrack/assertion_stack.h"
 #include "printer/exception.h"

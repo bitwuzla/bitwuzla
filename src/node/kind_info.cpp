@@ -44,7 +44,15 @@ constexpr KindInfo::KindInfo()
        0,
        "DISTINCT",
        "distinct",
-       KindInfo::PAIRWISE);
+       KindInfo::PAIRWISE,
+       true);
+  init(Kind::DISTINCT_N,
+       KindInfo::s_nary,
+       0,
+       "DISTINCT_N",
+       "distinct_n",
+       KindInfo::PAIRWISE,
+       true);
   init(Kind::EQUAL, 2, 0, "EQUAL", "=", KindInfo::CHAINABLE, true);
   init(Kind::ITE, 3, 0, "ITE", "ite");
 
