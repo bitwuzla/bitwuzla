@@ -1286,11 +1286,11 @@ Rewriter::rewrite_bv_extract(const Node& node)
     BZLA_APPLY_RW_RULE(BV_EXTRACT_CONCAT);
     BZLA_APPLY_RW_RULE(BV_EXTRACT_AND);
     BZLA_APPLY_RW_RULE(BV_EXTRACT_ITE);
-  }
 
-  if (!d_arithmetic)
-  {
-    BZLA_APPLY_RW_RULE(BV_EXTRACT_ADD_MUL);
+    if (!d_arithmetic)
+    {
+      BZLA_APPLY_RW_RULE(BV_EXTRACT_ADD_MUL);
+    }
   }
 
 DONE:
