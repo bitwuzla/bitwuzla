@@ -2287,6 +2287,9 @@ class BitVector
 
 std::ostream& operator<<(std::ostream& out, const BitVector& bv);
 
+/** Unsigned bit-vector comparison. */
+bool operator<(const BitVector& bv0, const BitVector& bv1);
+
 /* -------------------------------------------------------------------------- */
 
 }  // namespace bzla

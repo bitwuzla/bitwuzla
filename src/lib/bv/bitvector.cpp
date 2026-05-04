@@ -4132,6 +4132,13 @@ operator<<(std::ostream& out, const BitVector& bv)
   return out;
 }
 
+bool
+operator<(const BitVector& bv0, const BitVector& bv1)
+{
+  assert(bv0.size() == bv1.size());
+  return bv0.compare(bv1) < 0;
+}
+
 /* -------------------------------------------------------------------------- */
 
 }  // namespace bzla
