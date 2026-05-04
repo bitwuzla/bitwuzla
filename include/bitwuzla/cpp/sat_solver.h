@@ -15,6 +15,11 @@
 #include <bitwuzla/result.h>
 
 #include <cstdint>
+#include <memory>
+
+namespace bzla::sat {
+class SatPropagator;
+}
 
 namespace bitwuzla {
 
@@ -67,6 +72,16 @@ class SatSolver
    * @return 1 if it is implied, -1 if it is not implied and 0 if unknown.
    */
   virtual int32_t fixed(int32_t lit) = 0;
+
+  virtual void phase(int32_t lit) { (void) lit; }
+
+  virtual void unphase(int32_t lit) { (void) lit; }
+
+  virtual void register_propagator(std::unique_ptr<bzla::sat::SatPropagator> sp)
+  {
+    (void) sp;
+  }
+
   /**
    * Check satisfiability of current formula.
    * @return The result of the satisfiability check.
