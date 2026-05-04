@@ -1,0 +1,8 @@
+(set-option :global-declarations true)
+(set-option :rewrite-level 0)
+(set-option :produce-interpolants true)
+(declare-const _x0 (_ BitVec 23))
+(assert (! (fp.isSubnormal ((_ to_fp_unsigned 5 11) roundTowardNegative (concat _x0 _x0))) :named a1))
+(assert (! (let ((_let0 ((_ to_fp_unsigned 5 11) roundTowardNegative (concat _x0 _x0))))(fp.isPositive ((_ to_fp_unsigned 8 24) (ite (fp.isSubnormal _let0) roundTowardNegative roundTowardNegative) ((_ repeat 39) (bvredand ((_ fp.to_sbv 89) roundTowardNegative _let0)))))) :named a2))
+(check-sat)
+(get-interpolants (a2))

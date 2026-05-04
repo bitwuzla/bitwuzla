@@ -274,7 +274,12 @@ BvInterpolator::label_lemma(
       {
         continue;
       }
-      assert(!cur.is_const());
+      if (cur.is_const())
+      {
+        throw Unsupported(
+            "interpolation queries with lemmas that use fresh variables not "
+            "supported");
+      }
       VariableKind k = VariableKind::GLOBAL;
       for (const auto& c : cur)
       {
