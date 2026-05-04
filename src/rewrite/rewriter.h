@@ -206,6 +206,8 @@ class Rewriter
   /* Core ---------------------------------------- */
   Node rewrite_eq(const Node& node);
   Node rewrite_ite(const Node& node);
+  Node rewrite_distinct_n(const Node& node);
+
   /* Eliminated operators */
   Node rewrite_distinct(const Node& node);
 
@@ -434,6 +436,9 @@ enum class RewriteRuleKind
 
   // Level 1+
   DISTINCT_CARD,
+
+  // Level 1+
+  DISTINCT_N_FALSE,
 
   // Level 1+
   NORMALIZE_COMM,

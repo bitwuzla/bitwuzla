@@ -473,6 +473,7 @@ Rewriter::_rewrite(const Node& node)
   {
     case node::Kind::AND: res = rewrite_and(n); break;
     case node::Kind::DISTINCT: res = rewrite_distinct(n); break;
+    case node::Kind::DISTINCT_N: res = rewrite_distinct_n(n); break;
     case node::Kind::IMPLIES: res = rewrite_implies(n); break;
     case node::Kind::NOT: res = rewrite_not(n); break;
     case node::Kind::OR: res = rewrite_or(n); break;
@@ -1060,6 +1061,20 @@ Rewriter::rewrite_and(const Node& node)
     BZLA_APPLY_RW_RULE(AND_BV_LT);
   }
 
+DONE:
+  return res;
+}
+
+Node
+Rewriter::rewrite_distinct_n(const Node& node)
+{
+  RewriteRuleKind kind;
+  Node res = node;
+
+  if (d_level >= 1)
+  {
+    BZLA_APPLY_RW_RULE(DISTINCT_N_FALSE);
+  }
 DONE:
   return res;
 }
@@ -2093,6 +2108,7 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     CASE(NOT_XOR);
     CASE(NOT_EQUAL_BV1_BOOL);
     CASE(DISTINCT_CARD);
+    CASE(DISTINCT_N_FALSE);
     CASE(DISTINCT_ELIM);
     CASE(IMPLIES_ELIM);
     CASE(OR_ELIM);

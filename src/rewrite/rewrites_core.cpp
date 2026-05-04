@@ -22,6 +22,7 @@
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
 #include "type/card.h"
+#include "util/integer.h"
 
 namespace bzla {
 
@@ -1133,6 +1134,21 @@ RewriteRule<RewriteRuleKind::DISTINCT_CARD>::_apply(Rewriter& rewriter,
   return node;
 }
 
+/* distinct_n --------------------------------------------------------------- */
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::DISTINCT_N_FALSE>::_apply(Rewriter& rewriter,
+                                                       const Node& node)
+{
+  if (util::Integer(node.num_children() - 1)
+      < util::Integer(node[0].value<BitVector>()))
+  {
+    return rewriter.nm().mk_value(false);
+  }
+  return node;
+}
+
 /* ite ---------------------------------------------------------------------- */
 
 /**
@@ -1744,6 +1760,12 @@ RewriteRule<RewriteRuleKind::NORMALIZE_COMM>::_apply(Rewriter& rewriter,
   // after normalization.
   if (KindInfo::is_commutative(k))
   {
+    if (node.kind() == Kind::DISTINCT_N)
+    {
+      std::vector<Node> children{node.begin(), node.end()};
+      std::sort(children.begin() + 1, children.end());
+      return rewriter.nm().mk_node(k, children);
+    }
     if (node.num_children() == 2)
     {
       if (node[0].id() > node[1].id())

@@ -110,6 +110,12 @@ template <>
 Node RewriteRule<RewriteRuleKind::DISTINCT_CARD>::_apply(Rewriter& rewriter,
                                                          const Node& node);
 
+/* distinct_n --------------------------------------------------------------- */
+
+template <>
+Node RewriteRule<RewriteRuleKind::DISTINCT_N_FALSE>::_apply(Rewriter& rewriter,
+                                                            const Node& node);
+
 /* ite ---------------------------------------------------------------------- */
 
 // equal_branches_cond
