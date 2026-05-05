@@ -102,6 +102,11 @@ SolverEngine::solve()
     }
 
     check_distinct_n();
+    if (!d_lemmas.empty())
+    {
+      d_stats.num_lemmas_distinctn += d_lemmas.size();
+      continue;
+    }
 
     if (d_am != nullptr)
     {
@@ -929,6 +934,8 @@ SolverEngine::Statistics::Statistics(util::Statistics& stats,
       num_lemmas_fun(stats.new_stat<uint64_t>(prefix + "lemmas::fun")),
       num_lemmas_quant(stats.new_stat<uint64_t>(prefix + "lemmas::quant")),
       num_lemmas_abstr(stats.new_stat<uint64_t>(prefix + "lemmas::abstr")),
+      num_lemmas_distinctn(
+          stats.new_stat<uint64_t>(prefix + "lemmas::distinctn")),
       time_register_term(
           stats.new_stat<util::TimerStatistic>(prefix + "time_register_term")),
       time_solve(stats.new_stat<util::TimerStatistic>(prefix + "time_solve"))

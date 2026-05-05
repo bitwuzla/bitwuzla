@@ -205,6 +205,7 @@ class SolverEngine
     uint64_t& num_lemmas_fun;
     uint64_t& num_lemmas_quant;
     uint64_t& num_lemmas_abstr;
+    uint64_t& num_lemmas_distinctn;
     util::TimerStatistic& time_register_term;
     util::TimerStatistic& time_solve;
   } d_stats;
