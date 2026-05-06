@@ -4750,6 +4750,62 @@ dfs(bitwuzla::Bitwuzla& bitwuzla, const bitwuzla::Term& t)
 
 }  // namespace
 
+TEST_F(TestApi, issue184_term_outlives_term_manager)
+{
+  // https://github.com/bitwuzla/bitwuzla/issues/184
+  //
+  // A bitwuzla::Term outliving its TermManager must still see valid
+  // NodeData on destruction. The fix defers NodeManager's actual
+  // destruction until the last NodeData (kept alive by surviving Terms)
+  // is freed; otherwise ~Term would UAF in NodeData::dec_ref.
+  bitwuzla::Term t;
+  bitwuzla::Sort s;
+  {
+    bitwuzla::TermManager tm;
+    s = tm.mk_rm_sort();
+    t = tm.mk_rm_value(bitwuzla::RoundingMode::RNE);
+  }
+  ASSERT_TRUE(t.is_value());
+  ASSERT_TRUE(s.is_rm());
+}
+
+TEST_F(TestApi, issue184_sort_alone_outlives_term_manager)
+{
+  // Sort can outlive its TermManager independently of any Term: Sort holds
+  // a TypeData* through Type, and TypeData lives in TypeManager. The
+  // TypeData live-data counter on TypeManager defers its destruction in
+  // exactly this scenario — without it, this test would UAF in `~Sort` /
+  // `s.is_bv()`. Note that TypeManager has its own deferred destruction,
+  // independent of NodeManager.
+  bitwuzla::Sort s;
+  {
+    bitwuzla::TermManager tm;
+    s = tm.mk_bv_sort(8);
+  }
+  ASSERT_TRUE(s.is_bv());
+  ASSERT_EQ(s.bv_size(), 8u);
+}
+
+TEST_F(TestApi, issue184_children_outlive_parent_term_manager)
+{
+  // Children obtained via Term::children() / Term::operator[] must also
+  // keep the NodeManager alive after the originating TermManager goes
+  // out of scope.
+  std::vector<bitwuzla::Term> children;
+  {
+    bitwuzla::TermManager tm;
+    auto bv8 = tm.mk_bv_sort(8);
+    auto x   = tm.mk_const(bv8, "x");
+    auto y   = tm.mk_const(bv8, "y");
+    auto add = tm.mk_term(bitwuzla::Kind::BV_ADD, {x, y});
+    children = add.children();
+  }
+  for (const auto& c : children)
+  {
+    ASSERT_TRUE(c.is_const());
+  }
+}
+
 TEST_F(TestApi, issue197)
 {
   std::string smt2 = "(set-info :smt-lib-version 2.6)";

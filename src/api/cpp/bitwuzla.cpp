@@ -1820,6 +1820,13 @@ Bitwuzla::solver_state_change()
 
 /* TermManager public ------------------------------------------------------- */
 
+void
+TermManager::NodeManagerDeleter::operator()(
+    bzla::NodeManager* nm) const noexcept
+{
+  nm->release();
+}
+
 TermManager::TermManager() : d_nm(new bzla::NodeManager()) {}
 
 TermManager::~TermManager() {}

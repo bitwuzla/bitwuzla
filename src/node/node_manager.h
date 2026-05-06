@@ -34,10 +34,16 @@ class NodeManager
   friend node::NodeData;
 
  public:
-  NodeManager() = default;
+  NodeManager();
   ~NodeManager();
   NodeManager(const NodeManager&)            = delete;
   NodeManager& operator=(const NodeManager&) = delete;
+
+  /**
+   * Decrement reference count of node manager. NodeManager is destroyed when
+   * reference count goes to zero.
+   */
+  void release();
 
   type::TypeManager* tm();
 
@@ -259,8 +265,12 @@ class NodeManager
   const std::optional<std::reference_wrapper<const std::string>> get_symbol(
       const node::NodeData* d) const;
 
-  /** Type manager. */
-  type::TypeManager d_tm;
+  /**
+   * Type manager. Constructed by `NodeManager` and
+   * released through `NodeManager::release`, but never `delete`d directly.
+   * `TypeManager` self-destructs when its last `TypeData` dies.
+   */
+  type::TypeManager* d_tm;
 
   /** Node id counter. */
   uint64_t d_node_id_counter = 1;
@@ -279,6 +289,9 @@ class NodeManager
     uint64_t d_num_node_data = 0;
     uint64_t d_num_node_data_dealloc = 0;
   } d_stats;
+
+  /** Reference count: owning reference plus allocated NodeData. */
+  uint64_t d_refs = 1;
 };
 
 }  // namespace bzla

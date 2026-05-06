@@ -19,29 +19,21 @@ namespace bzla::type {
 
 /* --- TypeManager public -------------------------------------------------- */
 
+void
+TypeManager::release()
+{
+  assert(d_refs > 0);
+  if (--d_refs == 0 && !d_in_gc_mode)
+  {
+    delete this;
+  }
+}
+
 TypeManager::~TypeManager()
 {
-  // Cleanup remaining types without triggering garbage_collect().
-  //
-  // Note: Automatic reference counting of Type should actually prevent type
-  //       leaks. However, types that are stored in static memory and are
-  //       destructed after the TypeManager do not get garbage collected before
-  //       destructing the NodeManager (the owner of TypeManager). Hence, we
-  //       have to make sure to invalidate all types before destructing the
-  //       type manager.
-  for (std::unique_ptr<TypeData>& data : d_node_data)
-  {
-    if (data == nullptr) continue;
-    if (data->d_kind == TypeData::Kind::ARRAY
-        || data->d_kind == TypeData::Kind::FUN)
-    {
-      auto& types = std::get<std::vector<Type>>(data->d_data);
-      for (auto& type : types)
-      {
-        type.d_data = nullptr;
-      }
-    }
-  }
+  // `release()` defers destruction until the last `TypeData` is freed, so
+  // no live `Type` can reference this TypeManager by the time we run.
+  assert(d_unique_types.empty());
 }
 
 Type
@@ -103,6 +95,7 @@ TypeManager::init_id(TypeData* data)
   d_node_data.emplace_back(data);
   assert(d_node_data.size() == static_cast<size_t>(d_type_id_counter));
   data->d_id = d_type_id_counter++;
+  ++d_refs;  // Increment reference count on TypeManager
 }
 
 TypeData*
@@ -185,9 +178,18 @@ TypeManager::garbage_collect(TypeData* data)
 
     assert(d_node_data[cur->d_id - 1]->d_id == cur->d_id);
     d_node_data[cur->d_id - 1].reset(nullptr);
+    assert(d_refs > 0);
+    --d_refs;
   } while (!visit.empty());
 
   d_in_gc_mode = false;
+
+  // TypeManager destruction is deferred to here during GC. Destruct
+  // TypeManager if garbage collection freed up all reference counts.
+  if (d_refs == 0)
+  {
+    delete this;
+  }
 }
 
 }  // namespace bzla::type

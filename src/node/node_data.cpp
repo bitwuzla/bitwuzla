@@ -115,8 +115,13 @@ NodeData::alloc(Kind kind,
 void
 NodeData::dealloc(NodeData* data)
 {
+  NodeManager* nm = data->d_nm;
   data->~NodeData();
   std::free(data);
+  if (nm != nullptr)
+  {
+    nm->release();
+  }
 }
 
 NodeData::~NodeData()
