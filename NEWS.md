@@ -2,6 +2,11 @@
 
 This file collects a summary of important and/or user-visible changes.
 
+- Fixed issue with fp.min/fp.max handling of underspecific +/- zero case
+  (#207, #208).
+
+- Fixed issue with quantifier instantiation (#202).
+
 ## News for version 0.9.0
 
 - **MPFR >= 4.2.1** is now a **required dependency**. As with GMP, it is
