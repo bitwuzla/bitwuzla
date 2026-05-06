@@ -661,6 +661,8 @@ FloatingPoint::fpge(const FloatingPoint &fp) const
 FloatingPoint
 FloatingPoint::fpmin(const FloatingPoint &fp) const
 {
+  // Note: The +/- zero case is unspecified as per SMT-LIB but MPFR always
+  //       returns -zero.
   assert(!is_null());
   assert(!fp.is_null());
   assert(d_exp_size == fp.d_exp_size && d_sig_size == fp.d_sig_size);
@@ -672,6 +674,8 @@ FloatingPoint::fpmin(const FloatingPoint &fp) const
 FloatingPoint
 FloatingPoint::fpmax(const FloatingPoint &fp) const
 {
+  // Note: The +/- zero case is unspecified as per SMT-LIB but MPFR always
+  //       returns -zero.
   assert(!is_null());
   assert(!fp.is_null());
   assert(d_exp_size == fp.d_exp_size && d_sig_size == fp.d_sig_size);
