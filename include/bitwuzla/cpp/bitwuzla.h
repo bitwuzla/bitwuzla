@@ -1541,7 +1541,19 @@ class TermManager
 
 
  private:
-  std::unique_ptr<bzla::NodeManager> d_nm;
+  /**
+   * Custom deleter: forwards to `NodeManager::release()`, which signals
+   * the manager (and its `TypeManager`) that the API owner is gone. Real
+   * destruction of each manager is deferred until its own reference
+   * counter reaches zero, so any `bitwuzla::Term` or `bitwuzla::Sort`
+   * outliving this `TermManager` can still safely run its destructor.
+   */
+  struct NodeManagerDeleter
+  {
+    void operator()(bzla::NodeManager* nm) const noexcept;
+  };
+
+  std::unique_ptr<bzla::NodeManager, NodeManagerDeleter> d_nm;
 };
 
 /* -------------------------------------------------------------------------- */

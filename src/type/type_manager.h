@@ -32,6 +32,12 @@ class TypeManager
   ~TypeManager();
 
   /**
+   * Decrement reference count of type manager. TypeManager is destroyed when
+   * reference count goes to zero.
+   */
+  void release();
+
+  /**
    * @return Boolean type.
    */
   Type mk_bool_type();
@@ -122,6 +128,9 @@ class TypeManager
 
   /** Cache used for hash consing type data. */
   std::unordered_set<TypeData*, TypeDataHash, TypeDataKeyEqual> d_unique_types;
+
+  /** Reference count: owning reference plus allocated TypeData. */
+  uint64_t d_refs = 1;
 };
 
 }  // namespace type

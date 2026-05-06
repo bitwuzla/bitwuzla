@@ -25,31 +25,39 @@ using namespace node;
 
 /* --- NodeManager public -------------------------------------------------- */
 
+NodeManager::NodeManager() : d_tm(new type::TypeManager()), d_refs(1) {}
+
 NodeManager::~NodeManager()
 {
-  // Cleanup remaining node data for constants and variables.
-  //
-  // Note: Automatic reference counting of Node should actually prevent node
-  //       data leaks. However, nodes that are stored in static memory do not
-  //       get garbage collected. Hence, we have to make sure to invalidate all
-  //       node data before destructing the node manager.
-  for (NodeData* d : d_alloc_nodes)
+  // Release owning reference of type manager, will destruct when all TypeData
+  // is deallocated.
+  d_tm->release();
+  assert(d_alloc_nodes.empty());
+}
+
+void
+NodeManager::release()
+{
+  assert(d_refs > 0);
+  // Do not `delete this` during garbage collection, will be deleted after GC is
+  // done.
+  if (--d_refs == 0 && !d_in_gc_mode)
   {
-    NodeData::dealloc(d);
+    delete this;
   }
 }
 
 type::TypeManager*
 NodeManager::tm()
 {
-  return &d_tm;
+  return d_tm;
 }
 
 Node
 NodeManager::mk_const(const Type& t, const std::optional<std::string>& symbol)
 {
   assert(!t.is_null());
-  assert(t.tm() == &d_tm);
+  assert(t.tm() == d_tm);
   NodeData* data = NodeData::alloc(Kind::CONSTANT, symbol);
   data->d_type   = t;
   init_id(data);
@@ -64,7 +72,7 @@ NodeManager::mk_const_array(const Type& t, const Node& term)
   assert(!term.is_null());
   assert(t.is_array());
   assert(t.array_element() == term.type());
-  assert(t.tm() == &d_tm);
+  assert(t.tm() == d_tm);
   assert(term.nm() == this);
 
   NodeData* data = find_or_insert_node(Kind::CONST_ARRAY, t, {term}, {});
@@ -75,7 +83,7 @@ Node
 NodeManager::mk_var(const Type& t, const std::optional<std::string>& symbol)
 {
   assert(!t.is_null());
-  assert(t.tm() == &d_tm);
+  assert(t.tm() == d_tm);
   NodeData* data = NodeData::alloc(Kind::VARIABLE, symbol);
   data->d_type   = t;
   init_id(data);
@@ -179,43 +187,43 @@ NodeManager::invert_node(const Node& node)
 Type
 NodeManager::mk_bool_type()
 {
-  return d_tm.mk_bool_type();
+  return d_tm->mk_bool_type();
 }
 
 Type
 NodeManager::mk_bv_type(uint64_t size)
 {
-  return d_tm.mk_bv_type(size);
+  return d_tm->mk_bv_type(size);
 }
 
 Type
 NodeManager::mk_fp_type(uint64_t exp_size, uint64_t sig_size)
 {
-  return d_tm.mk_fp_type(exp_size, sig_size);
+  return d_tm->mk_fp_type(exp_size, sig_size);
 }
 
 Type
 NodeManager::mk_rm_type()
 {
-  return d_tm.mk_rm_type();
+  return d_tm->mk_rm_type();
 }
 
 Type
 NodeManager::mk_array_type(const Type& index, const Type& elem)
 {
-  return d_tm.mk_array_type(index, elem);
+  return d_tm->mk_array_type(index, elem);
 }
 
 Type
 NodeManager::mk_fun_type(const std::vector<Type>& types)
 {
-  return d_tm.mk_fun_type(types);
+  return d_tm->mk_fun_type(types);
 }
 
 Type
 NodeManager::mk_uninterpreted_type(const std::optional<std::string>& symbol)
 {
-  return d_tm.mk_uninterpreted_type(symbol);
+  return d_tm->mk_uninterpreted_type(symbol);
 }
 
 Type
@@ -280,29 +288,29 @@ NodeManager::compute_type(Kind kind,
     case Kind::FP_IS_SUBNORMAL:
     case Kind::FP_IS_ZERO:
     case Kind::FORALL:
-    case Kind::EXISTS: return d_tm.mk_bool_type();
+    case Kind::EXISTS: return d_tm->mk_bool_type();
 
     case Kind::BV_EXTRACT: {
       uint64_t upper = indices[0];
       uint64_t lower = indices[1];
-      return d_tm.mk_bv_type(upper - lower + 1);
+      return d_tm->mk_bv_type(upper - lower + 1);
     }
 
     case Kind::BV_REPEAT:
-      return d_tm.mk_bv_type(children[0].type().bv_size() * indices[0]);
+      return d_tm->mk_bv_type(children[0].type().bv_size() * indices[0]);
 
     case Kind::BV_SIGN_EXTEND:
     case Kind::BV_ZERO_EXTEND:
-      return d_tm.mk_bv_type(children[0].type().bv_size() + indices[0]);
+      return d_tm->mk_bv_type(children[0].type().bv_size() + indices[0]);
 
     case Kind::BV_CONCAT:
-      return d_tm.mk_bv_type(children[0].type().bv_size()
-                             + children[1].type().bv_size());
+      return d_tm->mk_bv_type(children[0].type().bv_size()
+                              + children[1].type().bv_size());
 
     case Kind::BV_COMP:
     case Kind::BV_REDAND:
     case Kind::BV_REDOR:
-    case Kind::BV_REDXOR: return d_tm.mk_bv_type(1);
+    case Kind::BV_REDXOR: return d_tm->mk_bv_type(1);
 
     case Kind::AM_ABSTRACT:
     case Kind::BV_ADD:
@@ -347,26 +355,26 @@ NodeManager::compute_type(Kind kind,
     case Kind::ITE: return children[1].type();
 
     case Kind::FP_FP:
-      return d_tm.mk_fp_type(children[1].type().bv_size(),
-                             children[2].type().bv_size() + 1);
+      return d_tm->mk_fp_type(children[1].type().bv_size(),
+                              children[2].type().bv_size() + 1);
     case Kind::FP_TO_SBV:
-    case Kind::FP_TO_UBV: return d_tm.mk_bv_type(indices[0]);
+    case Kind::FP_TO_UBV: return d_tm->mk_bv_type(indices[0]);
 
     case Kind::FP_TO_FP_FROM_BV:
     case Kind::FP_TO_FP_FROM_FP:
     case Kind::FP_TO_FP_FROM_SBV:
     case Kind::FP_TO_FP_FROM_UBV:
-      return d_tm.mk_fp_type(indices[0], indices[1]);
+      return d_tm->mk_fp_type(indices[0], indices[1]);
 
     case Kind::FP_SYMFPU_INF:
     case Kind::FP_SYMFPU_NAN:
     case Kind::FP_SYMFPU_SIGN:
-    case Kind::FP_SYMFPU_ZERO: return d_tm.mk_bv_type(1);
+    case Kind::FP_SYMFPU_ZERO: return d_tm->mk_bv_type(1);
 
     case Kind::FP_SYMFPU_EXP:
-      return d_tm.mk_bv_type(fp::WordBlaster::unpacked_exp_size(children[0]));
+      return d_tm->mk_bv_type(fp::WordBlaster::unpacked_exp_size(children[0]));
     case Kind::FP_SYMFPU_SIG:
-      return d_tm.mk_bv_type(fp::WordBlaster::unpacked_sig_size(children[0]));
+      return d_tm->mk_bv_type(fp::WordBlaster::unpacked_sig_size(children[0]));
 
     case Kind::SELECT: return children[0].type().array_element();
 
@@ -384,7 +392,7 @@ NodeManager::compute_type(Kind kind,
       {
         types.push_back(children[1].type());
       }
-      return d_tm.mk_fun_type(types);
+      return d_tm->mk_fun_type(types);
     }
   }
 
@@ -841,6 +849,7 @@ NodeManager::init_id(NodeData* data)
   data->d_id = d_node_id_counter++;
   data->d_nm = this;
   ++d_stats.d_num_node_data;
+  ++d_refs;  // Increment reference count on NodeManager
 }
 
 NodeData*
@@ -921,6 +930,13 @@ NodeManager::garbage_collect(NodeData* data)
   } while (!visit.empty());
 
   d_in_gc_mode = false;
+
+  // NodeManager destruction is deferred to here during GC. Destruct
+  // NodeManager if garbage collection freed up all reference counts.
+  if (d_refs == 0)
+  {
+    delete this;
+  }
 }
 
 const std::optional<std::reference_wrapper<const std::string>>

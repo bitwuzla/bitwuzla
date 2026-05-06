@@ -1,7 +1,7 @@
 pytest = find_program('pytest')
 
 if pytest.found()
-  tests = ['test_api']
+  tests = ['test_api', 'issue184']
 
   fs = import('fs')
   env = ['PYTHONPATH=' + fs.parent(bitwuzla_py_ext.full_path())]
