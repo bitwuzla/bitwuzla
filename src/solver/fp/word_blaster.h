@@ -125,7 +125,8 @@ class WordBlaster
    * domain size of the UF corresponds to the number of children of the
    * given min/max node.
    *
-   * @note UFs introduced for FP_MIN/FP_MAX are cached in `d_min_max_uf_map`.
+   * @note We cache one UF per kind and type. UFs introduced for FP_MIN are
+   *       cached in `d_min_uf_map`, and for FP_MAX in `d_max_uf_map`.
    *
    * @param node The min/max node.
    * @return The introduced UF.
@@ -149,8 +150,10 @@ class WordBlaster
 
   std::unique_ptr<Internal> d_internal;
 
-  /** Map floating-point type of FP_MIN and FP_MAX to introduced UF. */
-  std::unordered_map<Type, Node> d_min_max_uf_map;
+  /** Map floating-point type of FP_MIN to introduced UF. */
+  std::unordered_map<Type, Node> d_min_uf_map;
+  /** Map floating-point type of FP_MAX to introduced UF. */
+  std::unordered_map<Type, Node> d_max_uf_map;
   /** Map function type of UF introduced for FP_TO_SBV and FP_TO_UBV to UF. */
   std::unordered_map<Type, Node> d_sbv_ubv_uf_map;
 

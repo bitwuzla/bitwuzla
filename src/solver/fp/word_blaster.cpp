@@ -749,10 +749,14 @@ WordBlaster::_word_blast(const Node& node)
 const Node&
 WordBlaster::min_max_uf(const Node& node)
 {
+  assert(node.kind() == node::Kind::FP_MIN
+         || node.kind() == node::Kind::FP_MAX);
   const Type& type = node.type();
 
-  auto it = d_min_max_uf_map.find(type);
-  if (it != d_min_max_uf_map.end())
+  auto& ufmap = node.kind() == node::Kind::FP_MIN ? d_min_uf_map : d_max_uf_map;
+
+  auto it = ufmap.find(type);
+  if (it != ufmap.end())
   {
     return it->second;
   }
@@ -765,12 +769,12 @@ WordBlaster::min_max_uf(const Node& node)
   type_fun_args.push_back(nm.mk_bv_type(1));
   Type type_fun = nm.mk_fun_type(type_fun_args);
 
-  auto [iit, inserted] = d_min_max_uf_map.emplace(
+  auto [iit, inserted] = ufmap.emplace(
       type,
       nm.mk_const(
           type_fun,
           (node.kind() == node::Kind::FP_MIN ? "_fp_min_uf_" : "_fp_max_uf_")
-              + std::to_string(node.id()) + "_"));
+              + std::to_string(type.id()) + "_"));
   return iit->second;
 }
 

@@ -1,0 +1,16 @@
+(set-info :smt-lib-version 2.6)
+(set-info :license |https://www.gnu.org/licenses/gpl-3.0.html|)
+(set-logic QF_FP)
+(set-info :source |SPARK inspired floating point problems by Florian Schanda|)
+(set-info :category crafted)
+(set-info :status sat)
+
+(define-const a Float32 (fp.max (_ +zero 8 24) (_ -zero 8 24)))
+(define-const b Float32 (fp.max (_ -zero 8 24) (_ +zero 8 24)))
+(define-const c Float32 (fp.min (_ +zero 8 24) (_ -zero 8 24)))
+(define-const d Float32 (fp.min (_ -zero 8 24) (_ +zero 8 24)))
+
+(assert (distinct a b))
+(assert (distinct b c))
+(check-sat)
+(exit)
