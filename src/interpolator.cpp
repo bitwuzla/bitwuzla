@@ -456,7 +456,6 @@ Interpolator::apply_substs(const std::unordered_set<Node>& assertions,
   }
 
   option::Options opts;
-  opts.pp_elim_bv_extracts.set(false);
   SolvingContext ctx(d_env.nm(), opts, d_env.sat_factory(), "", true);
 
   auto& pp = ctx.preprocessor();
@@ -1372,7 +1371,6 @@ Interpolator::simplify(const Node& node)
 {
   util::Timer timer(d_stats.time_simplify);
   option::Options opts;
-  opts.pp_elim_bv_extracts.set(false);
   SolvingContext ctx(d_env.nm(), opts, d_env.sat_factory(), "", true);
 
   ctx.assert_formula(node.is_inverted() ? node[0] : node);

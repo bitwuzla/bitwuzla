@@ -795,16 +795,6 @@ enum ENUM(Option)
    */
   EVALUE(PP_CONTRADICTING_ANDS),
   /*!
-   * **Preprocessing: Eliminate bit-vector extracts on bit-vector constants.**
-   *
-   * When enabled, eliminates bit-vector extracts on constants.
-   *
-   * *Values:*
-   *  - **true**: enable
-   *  - **false**: disable [**default**]
-   */
-  EVALUE(PP_ELIM_BV_EXTRACTS),
-  /*!
    * **Preprocessing: Eliminate bit-vector operators bvudiv and bvurem.**
    *
    * When enabled, eliminates bit-vector unsigned division and remainder
