@@ -115,7 +115,10 @@ class TimeStatistic
 
 /**
  * Timer for measuring elapsed time.
- * Starts wrapped timer when constructd, stops timer when destructed.
+ * Starts wrapped timer when constructed if not already running, and stops it
+ * on destruction only if this instance was the one that started it. This
+ * makes nested Timers on the same TimerStatistic safe: inner Timers become
+ * no-ops and the outer Timer's accumulation is not cut off.
  */
 class Timer
 {
@@ -125,6 +128,7 @@ class Timer
 
  private:
   TimerStatistic& d_stat;
+  bool d_started;
 };
 
 class Statistics

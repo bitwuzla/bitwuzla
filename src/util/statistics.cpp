@@ -54,17 +54,18 @@ TimerStatistic::running() const
 
 /* --- Timer public --------------------------------------------------------- */
 
-Timer::Timer(TimerStatistic& stat) : d_stat(stat)
+Timer::Timer(TimerStatistic& stat) : d_stat(stat), d_started(false)
 {
   if (!d_stat.running())
   {
     d_stat.start();
+    d_started = true;
   }
 }
 
 Timer::~Timer()
 {
-  if (d_stat.running())
+  if (d_started)
   {
     d_stat.stop();
   }
