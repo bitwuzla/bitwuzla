@@ -605,26 +605,34 @@ BvInterpolator::log_bitblaster_cache(uint64_t level) const
   }
 }
 
+// BvInterpolator is instantiated per get-interpolant call, thus its stats
+// may already have been registered by a prior BvInterpolator instance.
 BvInterpolator::Statistics::Statistics(util::Statistics& stats,
                                        const std::string& prefix)
-    : time_sat(stats.new_stat<util::TimerStatistic>(prefix + "time_sat")),
-      time_interpol(
-          stats.new_stat<util::TimerStatistic>(prefix + "time_interpol")),
-      time_bitblast(
-          stats.new_stat<util::TimerStatistic>(prefix + "time_bitblast")),
-      time_label(stats.new_stat<util::TimerStatistic>(prefix + "time_label")),
-      time_encode(stats.new_stat<util::TimerStatistic>(prefix + "time_encode")),
-      size_interpolant(stats.new_stat<uint64_t>(prefix + "size_interpolant")),
-      bb_num_aig_ands(stats.new_stat<uint64_t>(prefix + "bb::aig::num_ands")),
+    : time_sat(
+          stats.new_or_get_stat<util::TimerStatistic>(prefix + "time_sat")),
+      time_interpol(stats.new_or_get_stat<util::TimerStatistic>(
+          prefix + "time_interpol")),
+      time_bitblast(stats.new_or_get_stat<util::TimerStatistic>(
+          prefix + "time_bitblast")),
+      time_label(
+          stats.new_or_get_stat<util::TimerStatistic>(prefix + "time_label")),
+      time_encode(
+          stats.new_or_get_stat<util::TimerStatistic>(prefix + "time_encode")),
+      size_interpolant(
+          stats.new_or_get_stat<uint64_t>(prefix + "size_interpolant")),
+      bb_num_aig_ands(
+          stats.new_or_get_stat<uint64_t>(prefix + "bb::aig::num_ands")),
       bb_num_aig_consts(
-          stats.new_stat<uint64_t>(prefix + "bb::aig::num_consts")),
+          stats.new_or_get_stat<uint64_t>(prefix + "bb::aig::num_consts")),
       bb_num_aig_shared(
-          stats.new_stat<uint64_t>(prefix + "bb::aig::num_shared")),
-      bb_num_cnf_vars(stats.new_stat<uint64_t>(prefix + "bb::cnf::num_vars")),
+          stats.new_or_get_stat<uint64_t>(prefix + "bb::aig::num_shared")),
+      bb_num_cnf_vars(
+          stats.new_or_get_stat<uint64_t>(prefix + "bb::cnf::num_vars")),
       bb_num_cnf_clauses(
-          stats.new_stat<uint64_t>(prefix + "bb::cnf::num_clauses")),
+          stats.new_or_get_stat<uint64_t>(prefix + "bb::cnf::num_clauses")),
       bb_num_cnf_literals(
-          stats.new_stat<uint64_t>(prefix + "bb::cnf::num_literals"))
+          stats.new_or_get_stat<uint64_t>(prefix + "bb::cnf::num_literals"))
 {
 }
 

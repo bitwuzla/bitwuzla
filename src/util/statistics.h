@@ -134,16 +134,29 @@ class Timer
 class Statistics
 {
  public:
-  /** @return Reference to new statistic. */
+  /**
+   * Register a new statistic of given name.
+   * @note Asserts that a statistic of given name has not yet been registered.
+   * @return Reference to the statistic.
+   */
   template <typename T>
   T& new_stat(const std::string& name)
   {
-    // assert(d_stats.find(name) == d_stats.end());
-    // auto [it, inserted] = d_stats.emplace(name, T());
-    // assert(inserted);
-    // return std::get<T>(it->second);
-    d_stats[name] = T();
-    return std::get<T>(d_stats[name]);
+    auto [it, inserted] = d_stats.emplace(name, T());
+    assert(inserted);
+    return std::get<T>(it->second);
+  }
+  /**
+   * Register a new or get an existing statistic of the given name.
+   * @note Use this to register a statistic from a class that may be
+   *       instantiated more than once.
+   * @return Reference to the statistic.
+   */
+  template <typename T>
+  T& new_or_get_stat(const std::string& name)
+  {
+    auto [it, _] = d_stats.emplace(name, T());
+    return std::get<T>(it->second);
   }
 
   /** Print statistics to std::cout. */

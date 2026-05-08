@@ -2319,12 +2319,19 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
 
 #undef CASE
 
+// Rewriter may not exist as a single instance, e.g., the Interpolator
+// utilizes a local rewriter instance that is separate from the main instance.
+// While stats for local instances are distinguished via the `id` given to the
+// rewriter at construction, classes like Interpolator may themselves be
+// instantiated more than once. Hence, rewriter stats may have already been
+// registered by a rewriter instance with the same prefix.
 Rewriter::Statistics::Statistics(util::Statistics& stats,
                                  const std::string& prefix)
-    : rewrites(stats.new_stat<util::HistogramStatistic>(prefix + "rewrite")),
-      evals(stats.new_stat<util::HistogramStatistic>(prefix + "eval")),
-      num_rewrites(stats.new_stat<uint64_t>(prefix + "num_rewrites")),
-      num_evals(stats.new_stat<uint64_t>(prefix + "num_evals"))
+    : rewrites(
+          stats.new_or_get_stat<util::HistogramStatistic>(prefix + "rewrite")),
+      evals(stats.new_or_get_stat<util::HistogramStatistic>(prefix + "eval")),
+      num_rewrites(stats.new_or_get_stat<uint64_t>(prefix + "num_rewrites")),
+      num_evals(stats.new_or_get_stat<uint64_t>(prefix + "num_evals"))
 {
 }
 

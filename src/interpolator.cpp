@@ -29,7 +29,7 @@ Interpolator::Interpolator(SolvingContext& ctx)
     : d_ctx(ctx),
       d_env(ctx.env()),
       d_logger(d_env.logger()),
-      d_rewriter(ctx.env(), ctx.rewriter().level()),
+      d_rewriter(ctx.env(), ctx.rewriter().level(), "interpolator"),
       d_original_assertions(ctx.original_assertions()),
       d_pp_assertions(ctx.assertions()),
       d_compute_stats(d_env.options().interpolants_stats()),
@@ -1422,50 +1422,54 @@ Interpolator::mk_node(Rewriter& rw,
   return rw.rewrite(d_env.nm().mk_node(k, children, indices));
 }
 
+// Interpolator is instantiated per get-interpolant call, thus its stats
+// may already have been registered by a prior Interpolator instance.
 Interpolator::Statistics::Statistics(util::Statistics& stats,
                                      const std::string& prefix)
-    : time_get_interpolant(stats.new_stat<util::TimerStatistic>(
+    : time_get_interpolant(stats.new_or_get_stat<util::TimerStatistic>(
           prefix + "time_get_interpolant")),
       interpolant_substA(
-          stats.new_stat<uint64_t>(prefix + "interpolant_substA")),
+          stats.new_or_get_stat<uint64_t>(prefix + "interpolant_substA")),
       interpolant_substB(
-          stats.new_stat<uint64_t>(prefix + "interpolant_substB")),
+          stats.new_or_get_stat<uint64_t>(prefix + "interpolant_substB")),
       interpolant_bitlevel(
-          stats.new_stat<uint64_t>(prefix + "interpolant_bitlevel")),
-      time_bit_level(
-          stats.new_stat<util::TimerStatistic>(prefix + "time_bit_level")),
-      time_post_process(
-          stats.new_stat<util::TimerStatistic>(prefix + "post::time_total")),
-      time_simplify(
-          stats.new_stat<util::TimerStatistic>(prefix + "post::time_simplify")),
-      time_lower_bv1(stats.new_stat<util::TimerStatistic>(
+          stats.new_or_get_stat<uint64_t>(prefix + "interpolant_bitlevel")),
+      time_bit_level(stats.new_or_get_stat<util::TimerStatistic>(
+          prefix + "time_bit_level")),
+      time_post_process(stats.new_or_get_stat<util::TimerStatistic>(
+          prefix + "post::time_total")),
+      time_simplify(stats.new_or_get_stat<util::TimerStatistic>(
+          prefix + "post::time_simplify")),
+      time_lower_bv1(stats.new_or_get_stat<util::TimerStatistic>(
           prefix + "post::time_lower_bv1")),
-      time_extract_gates(stats.new_stat<util::TimerStatistic>(
+      time_extract_gates(stats.new_or_get_stat<util::TimerStatistic>(
           prefix + "post::time_extract_gates")),
-      time_bv1_bool(
-          stats.new_stat<util::TimerStatistic>(prefix + "post::time_bv1_bool")),
-      num_merged_eq(stats.new_stat<uint64_t>(prefix + "post::merged_eq")),
+      time_bv1_bool(stats.new_or_get_stat<util::TimerStatistic>(
+          prefix + "post::time_bv1_bool")),
+      num_merged_eq(
+          stats.new_or_get_stat<uint64_t>(prefix + "post::merged_eq")),
       num_extracted_xor(
-          stats.new_stat<uint64_t>(prefix + "post::extracted_xor")),
+          stats.new_or_get_stat<uint64_t>(prefix + "post::extracted_xor")),
       num_extracted_xnor(
-          stats.new_stat<uint64_t>(prefix + "post::extracted_xnor")),
-      num_merged_and(stats.new_stat<uint64_t>(prefix + "post::merged_and")),
+          stats.new_or_get_stat<uint64_t>(prefix + "post::extracted_xnor")),
+      num_merged_and(
+          stats.new_or_get_stat<uint64_t>(prefix + "post::merged_and")),
       aig_size_bit_level(
-          stats.new_stat<uint64_t>(prefix + "size::aig::0_bit_level")),
+          stats.new_or_get_stat<uint64_t>(prefix + "size::aig::0_bit_level")),
       aig_size_eq_subst(
-          stats.new_stat<uint64_t>(prefix + "size::aig::eq_subst")),
-      aig_size_post_extract_gates(
-          stats.new_stat<uint64_t>(prefix + "size::aig::3_post_extract_gates")),
-      aig_size_post_simplify(
-          stats.new_stat<uint64_t>(prefix + "size::aig::1_post_simplify")),
+          stats.new_or_get_stat<uint64_t>(prefix + "size::aig::eq_subst")),
+      aig_size_post_extract_gates(stats.new_or_get_stat<uint64_t>(
+          prefix + "size::aig::3_post_extract_gates")),
+      aig_size_post_simplify(stats.new_or_get_stat<uint64_t>(
+          prefix + "size::aig::1_post_simplify")),
       node_size_bit_level(
-          stats.new_stat<uint64_t>(prefix + "size::node::0_bit_level")),
+          stats.new_or_get_stat<uint64_t>(prefix + "size::node::0_bit_level")),
       node_size_eq_subst(
-          stats.new_stat<uint64_t>(prefix + "size::node::eq_subst")),
-      node_size_post_extract_gates(stats.new_stat<uint64_t>(
+          stats.new_or_get_stat<uint64_t>(prefix + "size::node::eq_subst")),
+      node_size_post_extract_gates(stats.new_or_get_stat<uint64_t>(
           prefix + "size::node::3_post_extract_gates")),
-      node_size_post_simplify(
-          stats.new_stat<uint64_t>(prefix + "size::node::1_post_simplify"))
+      node_size_post_simplify(stats.new_or_get_stat<uint64_t>(
+          prefix + "size::node::1_post_simplify"))
 {
 }
 }  // namespace bzla
