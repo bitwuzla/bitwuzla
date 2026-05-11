@@ -23,13 +23,17 @@ namespace bzla::util {
 
 Integer::Integer() { mpz_init_set_ui(d_val_gmp, 0); }
 
-Integer::Integer(int val) { mpz_init_set_si(d_val_gmp, val); }
+void
+Integer::init(int64_t val)
+{
+  mpz_init_set_sll(d_val_gmp, val);
+}
 
-Integer::Integer(unsigned int val) { mpz_init_set_ui(d_val_gmp, val); }
-
-Integer::Integer(int64_t val) { mpz_init_set_sll(d_val_gmp, val); }
-
-Integer::Integer(uint64_t val) { mpz_init_set_ull(d_val_gmp, val); }
+void
+Integer::init(uint64_t val)
+{
+  mpz_init_set_ull(d_val_gmp, val);
+}
 
 Integer::Integer(const char* val)
 {

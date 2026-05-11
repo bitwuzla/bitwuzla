@@ -15,6 +15,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <type_traits>
 
 namespace bzla {
 
@@ -30,10 +31,18 @@ class Integer
 
   // Constructors
   Integer();
-  Integer(int val);
-  Integer(unsigned int val);
-  Integer(int64_t val);
-  Integer(uint64_t val);
+  template <typename T, std::enable_if_t<std::is_integral_v<T>, int> = 0>
+  Integer(T val)
+  {
+    if constexpr (std::is_signed_v<T>)
+    {
+      init(static_cast<int64_t>(val));
+    }
+    else
+    {
+      init(static_cast<uint64_t>(val));
+    }
+  }
   Integer(const char* val);
   Integer(const std::string& val);
   Integer(const BitVector& bv);
@@ -105,6 +114,9 @@ class Integer
   uint64_t base2_size() const;
 
  private:
+  void init(int64_t val);
+  void init(uint64_t val);
+
   mpz_t d_val_gmp;
 };
 
