@@ -441,6 +441,7 @@ tests_smt2 = [
   ['preprocess/varsubst5.smt2'],
   ['preprocess/varsubst6.smt2'],
   ['preprocess/varsubst7.smt2'],
+  ['preprocess/varsubstextract1.smt2'],
   ['preprocess/issue51.smt2'],
   ['preprocess/issue162.smt2'],
   ['printer/nested_letify.smt2', ['-p']],

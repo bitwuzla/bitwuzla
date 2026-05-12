@@ -1166,6 +1166,12 @@ PassVariableSubstitution::process_extracts(
     if (full_subst)
     {
       Node concat = utils::mk_nary(nm, Kind::BV_CONCAT, slices);
+      // Process term first to ensure that all variables in this term are
+      // substituted before we check for cycles.
+      if (!d_cache.substitutions().empty())
+      {
+        concat = process(concat);
+      }
       if (!is_direct_cycle(var, concat))
       {
         Node eq = nm.mk_node(Kind::EQUAL, {var, concat});
