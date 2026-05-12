@@ -229,7 +229,7 @@ SolverEngine::lemma(const Node& lemma)
   return false;
 }
 
-void
+Result
 SolverEngine::ensure_model(const std::vector<Node>& terms)
 {
   Log(1) << "*** ensure model";
@@ -251,6 +251,7 @@ SolverEngine::ensure_model(const std::vector<Node>& terms)
 
   // Process unregistered quantifiers and call solve() to check these
   // quantifiers.
+  auto res = Result::SAT;
   if (!unregistered.empty())
   {
     d_in_solving_mode = true;  // Registers new terms in value()
@@ -261,10 +262,9 @@ SolverEngine::ensure_model(const std::vector<Node>& terms)
     d_in_solving_mode = false;
     // New quantifiers were registered, check them now.
     assert(d_new_terms_registered);
-    auto res = solve();
-    assert(res == Result::SAT);
-    (void) res;
+    res = solve();
   }
+  return res;
 }
 
 backtrack::BacktrackManager*

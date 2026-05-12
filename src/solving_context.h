@@ -151,7 +151,7 @@ class SolvingContext
 
   void compute_formula_statistics(util::HistogramStatistic& stat);
 
-  void ensure_model();
+  Result ensure_model();
 
   /** Set resource terminator. */
   void set_resource_limits();

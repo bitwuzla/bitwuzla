@@ -78,7 +78,7 @@ SolvingContext::solve()
   if (d_sat_state == Result::SAT && d_have_quantifiers.get()
       && (options().produce_models() || options().dbg_check_model()))
   {
-    ensure_model();
+    d_sat_state = ensure_model();
   }
 
   check();
@@ -137,7 +137,7 @@ SolvingContext::get_value(const Node& term)
     // This only happens if we encounter a quantifier that was not registered
     // and therefore we cannot determine its value without calling
     // solve() again. We instead return the original term.
-    Log(2) << "encountered unregistered term while computing value: "
+    Log(2) << "Encountered unregistered term while computing value: "
            << e.node();
     return term;
   }
@@ -380,7 +380,7 @@ SolvingContext::compute_formula_statistics(util::HistogramStatistic& stat)
   }
 }
 
-void
+Result
 SolvingContext::ensure_model()
 {
   util::Timer timer(d_stats.time_ensure_model);
@@ -415,8 +415,17 @@ SolvingContext::ensure_model()
   // away by substitution preprocessing pass).
   if (need_check)
   {
-    d_solver_engine.ensure_model(terms);
+    Log(1)
+        << "Unregistered quantifiers encountered, ensure model check required.";
+    auto res = d_solver_engine.ensure_model(terms);
+    if (res == Result::UNKNOWN)
+    {
+      Log(1) << "Ensure model check returned unknown.";
+      return res;
+    }
+    assert(res == Result::SAT);
   }
+  return Result::SAT;
 }
 
 void

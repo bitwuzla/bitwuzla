@@ -94,7 +94,7 @@ class SolverEngine
   bool lemma(const Node& lemma);
 
   /** Ensure that we have model values for given terms. */
-  void ensure_model(const std::vector<Node>& terms);
+  Result ensure_model(const std::vector<Node>& terms);
 
   /** Print statistics line. */
   void print_statistics();
