@@ -50,6 +50,7 @@ tests_smt2 = [
   ['get-value/fp_regr9.smt2'],
   ## parser
   ['parser/echo.smt2'],
+  ['parser/get_interpolants_sat.smt2'],
   ['parser/issue59-1.smt2'],
   ['parser/issue59-2.smt2'],
   ['parser/issue59-3.smt2'],

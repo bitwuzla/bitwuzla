@@ -1,0 +1,6 @@
+(set-option :produce-interpolants true)
+(assert (! true :named a1))
+(set-info :status sat)
+(check-sat)
+(get-interpolants (a1))
+(get-interpolant (a1))

@@ -814,7 +814,7 @@ Parser::parse_command_get_interpolant(bool parse_only)
   {
     return true;
   }
-  if (!parse_only)
+  if (!parse_only && d_result == bitwuzla::Result::UNSAT)
   {
     bitwuzla::Term interpolant = d_bitwuzla->get_interpolant(args);
     (*d_out) << interpolant << std::endl;
@@ -832,11 +832,6 @@ Parser::parse_command_get_interpolants(bool parse_only)
   if (!d_options.get(bitwuzla::Option::PRODUCE_INTERPOLANTS))
   {
     return error("interpolant generation is not enabled");
-  }
-
-  if (d_result != bitwuzla::Result::UNSAT)
-  {
-    return true;
   }
 
   std::vector<std::vector<bitwuzla::Term>> partitions;
@@ -881,7 +876,7 @@ Parser::parse_command_get_interpolants(bool parse_only)
     }
   }
 
-  if (!parse_only)
+  if (!parse_only && d_result == bitwuzla::Result::UNSAT)
   {
     std::vector<bitwuzla::Term> interpolants =
         d_bitwuzla->get_interpolants(partitions);
