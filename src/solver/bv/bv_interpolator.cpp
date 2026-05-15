@@ -449,12 +449,18 @@ BvInterpolator::label_terms_and_leafs(
     auto [it, inserted] = cache.emplace(cur, true);
     if (inserted)
     {
-      visit.insert(visit.end(), cur.begin(), cur.end());
       if (BvSolver::is_leaf(cur) && cur.type().is_fp()
           && d_word_blaster.is_word_blasted(cur))
       {
+        // If the current BvSolver leaf is also an FpSolver leaf, when
+        // word-blasted it is deconstructed into "components" (operators
+        // fp.symfpu_*), which take the leaf as argument. Thus, we must push
+        // the word-blasted term for cur before its children to make sure that
+        // all of cur's children are visited before the children of the
+        // word-blasted term are visited.
         visit.push_back(d_word_blaster.word_blasted(cur));
       }
+      visit.insert(visit.end(), cur.begin(), cur.end());
       continue;
     }
     else if (it->second)

@@ -1,0 +1,12 @@
+; ignore output
+(set-option :produce-interpolants true)
+(declare-fun x (Float16) Float16)
+(declare-fun x1 (Bool) Bool)
+(declare-const _x Float16)
+(assert (fp.isZero _x))
+(assert (! (distinct (_ +zero 5 11) (x (_ +zero 5 11))) :named a2))
+(assert (fp.isNormal _x))
+(assert (x1 (fp.gt (_ +zero 5 11) (x (_ +zero 5 11)))))
+(set-info :status unsat)
+(check-sat)
+(get-interpolants (a2))
