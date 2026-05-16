@@ -1,0 +1,10 @@
+; ignore output
+(declare-const x (_ BitVec 4))
+(set-option :produce-interpolants true)
+(set-option :rewrite-level 0)
+(set-option :interpolants-simp true)
+(assert (! (bvuaddo (bvxnor (bvurem (bvand ((_ zero_extend 5) ((_ zero_extend 1) x)) (_ bv29 10)) (bvand ((_ zero_extend 5) ((_ zero_extend 1) x)) (_ bv29 10))) (bvand ((_ zero_extend 5) ((_ zero_extend 1) x)) (_ bv29 10))) (bvand ((_ zero_extend 5) ((_ zero_extend 1) x)) (_ bv29 10))) :named a1))
+(assert (fp.lt (fp (_ bv0 1) (_ bv0 5) (_ bv0 10)) (fp (bvredxor (_ bv0 10)) (_ bv0 5) ((_ zero_extend 6) x))))
+(set-info :status unsat)
+(check-sat)
+(get-interpolants (a1))

@@ -1558,6 +1558,8 @@ tests_smt2_get_interpolant = [
   ['get-interpolant/murxla-58cf094fd84cdb.min.lift.smt2'],
   ['get-interpolant/murxla-58cf094fd84cdb.min.pudlak.smt2'],
   #
+  ['get-interpolant/murxla-5ae0ab9746a672e1.min.smt2'],
+  #
   ['get-interpolant/murxla-6116f4988dde7b23.min.smt2'],
   ['get-interpolant/murxla-6116f4988dde7b23.min.lift.smt2'],
   ['get-interpolant/murxla-6116f4988dde7b23.min.pudlak.smt2'],

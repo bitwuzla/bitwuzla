@@ -30,7 +30,13 @@ Interpolator::Interpolator(SolvingContext& ctx)
     : d_ctx(ctx),
       d_env(ctx.env()),
       d_logger(d_env.logger()),
-      d_rewriter(ctx.env(), ctx.rewriter().level(), "interpolator"),
+      // The bit-level post-processing pipeline relies on basic structural
+      // normalization (e.g., elimination of double negation). We thus
+      // configure its rewriter instance to at least rewrite level 1,
+      // even if the user-facing rewrite level is configured at 0.
+      d_rewriter(ctx.env(),
+                 ctx.rewriter().level() < 1 ? 1 : ctx.rewriter().level(),
+                 "interpolator"),
       d_original_assertions(ctx.original_assertions()),
       d_pp_assertions(ctx.assertions()),
       d_compute_stats(d_env.options().interpolants_stats()),
