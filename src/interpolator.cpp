@@ -19,6 +19,7 @@
 #include "rewrite/rewriter.h"
 #include "sat/sat_solver_factory.h"
 #include "solver/bv/aig_bitblaster.h"
+#include "solver/bv/bv_solver.h"
 #include "util/hash.h"
 
 namespace bzla {
@@ -640,13 +641,17 @@ Interpolator::lower_bv1(const Node& node)
     Kind k   = cur.kind();
 
     auto [it, inserted] = cache.try_emplace(cur);
+
     if (inserted)
     {
-      if (is_bv1(cur)
-          || (cur.type().is_bool()
-              && (k == Kind::NOT || k == Kind::AND || k == Kind::XOR
-                  || (k == Kind::EQUAL && is_bv1_bool(cur[0]))
-                  || (k == Kind::ITE && is_bv1_bool(cur[1])))))
+      // We do not descend down BvSolver leafs. They are atomic from the
+      // bit-level point of view and are handled as terminals below.
+      if (!bv::BvSolver::is_leaf(cur)
+          && (is_bv1(cur)
+              || (cur.type().is_bool()
+                  && (k == Kind::NOT || k == Kind::AND || k == Kind::XOR
+                      || (k == Kind::EQUAL && is_bv1_bool(cur[0]))
+                      || (k == Kind::ITE && is_bv1_bool(cur[1]))))))
       {
         visit.insert(visit.end(), cur.begin(), cur.end());
       }
@@ -730,6 +735,7 @@ Interpolator::lower_bv1(const Node& node)
     visit.pop_back();
   }
 
+  assert(!cache.at(rw_node).is_null());
   return cache.at(rw_node);
 }
 
