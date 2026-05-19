@@ -1552,6 +1552,8 @@ tests_smt2_get_interpolant = [
   ['get-interpolant/murxla-22d302aad19922d4.min.lift.smt2'],
   ['get-interpolant/murxla-22d302aad19922d4.min.pudlak.smt2'],
   #
+  ['get-interpolant/murxla-3af6b72ab3364c31.min.smt2'],
+  #
   ['get-interpolant/murxla-53d78c6e77494db7.min.smt2'],
   #
   ['get-interpolant/murxla-58cf094fd84cdb.min.smt2'],
@@ -1563,6 +1565,8 @@ tests_smt2_get_interpolant = [
   ['get-interpolant/murxla-6116f4988dde7b23.min.smt2'],
   ['get-interpolant/murxla-6116f4988dde7b23.min.lift.smt2'],
   ['get-interpolant/murxla-6116f4988dde7b23.min.pudlak.smt2'],
+  #
+  ['get-interpolant/murxla-6692fa7c68fc1d5c.min.smt2'],
   #
   ['get-interpolant/murxla-6c8ada822bcad6a4.min.smt2'],
   ['get-interpolant/murxla-6c8ada822bcad6a4.min.lift.smt2'],

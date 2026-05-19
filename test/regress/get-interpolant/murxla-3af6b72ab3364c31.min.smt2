@@ -1,0 +1,8 @@
+(set-option :produce-interpolants true)
+(set-option :abstraction-bvadd true)
+(declare-const x RoundingMode)
+(assert (distinct x roundTowardZero))
+(declare-const _x Float16)
+(assert (fp.isNegative ((_ to_fp_unsigned 5 11) x ((_ fp.to_sbv 38) x _x))))
+(check-sat)
+(get-interpolants ((distinct x roundTowardZero)))

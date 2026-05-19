@@ -16,12 +16,13 @@
 #include "backtrack/unordered_set.h"
 #include "bitblast/aig_bitblaster.h"
 #include "sat/interpolants/tracer_kinds.h"
+#include "solver/abstract/abstraction_module.h"
 #include "solver/bv/aig_bitblaster.h"
 #include "solver/bv/bv_bitblast_solver.h"
 #include "solver/fp/word_blaster.h"
 #include "solver/solver.h"
-#include "util/statistics.h"
 #include "util/exceptions.h"
+#include "util/statistics.h"
 
 namespace bzla {
 
@@ -227,6 +228,8 @@ class BvInterpolator
   sat::interpolants::Tracer* d_tracer;
   /** The associated word_blaster. */
   const fp::WordBlaster& d_word_blaster;
+  /** The associated abstraction module, nulllptr if disabled. */
+  abstract::AbstractionModule* d_am = nullptr;
 };
 
 #else

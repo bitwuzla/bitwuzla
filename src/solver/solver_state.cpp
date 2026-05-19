@@ -58,6 +58,12 @@ SolverState::fp_solver() const
   return d_solver_engine.fp_solver();
 }
 
+abstract::AbstractionModule*
+SolverState::abstraction_module() const
+{
+  return d_solver_engine.abstraction_module();
+}
+
 const backtrack::unordered_set<Node>&
 SolverState::lemma_cache() const
 {

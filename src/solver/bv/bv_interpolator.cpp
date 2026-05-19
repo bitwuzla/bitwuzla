@@ -45,7 +45,8 @@ BvInterpolator::BvInterpolator(Env& env,
       d_bitblaster(bb_solver.bitblaster()),
       d_tracer(reinterpret_cast<sat::CadicalInterpol*>(bb_solver.sat_solver())
                    ->tracer()),
-      d_word_blaster(state.fp_solver().word_blaster())
+      d_word_blaster(state.fp_solver().word_blaster()),
+      d_am(state.abstraction_module())
 {
 }
 
@@ -84,7 +85,18 @@ BvInterpolator::interpolant(const std::vector<Node>& ppA,
 
     for (const auto& a : d_lemmas)
     {
-      label_lemma(var_labels, clause_labels, term_labels, a);
+      // If other theories than BV are involved, it can happen that lemmas
+      // sent by a theory solver contain terms that are abstracted via the
+      // abstraction module. Such lemmas are not directly bit-blasted
+      // (their abstracted version is), but cached in their original form in
+      // SolverEngine::lemma_cache() (which d_lemmas corresponds to) since this
+      // cache is used to filter duplicate lemmas sent by theory solvers.
+      // We thus query the abstraction module for the processed version of
+      // the lemma (= the original lemma if no abstractions were introduced).
+      label_lemma(var_labels,
+                  clause_labels,
+                  term_labels,
+                  d_am && d_am->is_processed(a) ? d_am->get_processed(a) : a);
     }
   }
 
@@ -135,7 +147,12 @@ BvInterpolator::interpolant(const std::vector<Node>& ppA,
       const Node& cur = visit.back();
       visit.pop_back();
       cache.insert(cur);
-      assert(term_labels.find(cur) != term_labels.end());
+      // We label the lemma processed by the abstraction module, since this is
+      // the one bit-blasted, not the original one.
+      assert(term_labels.find(d_am && d_am->is_processed(cur)
+                                  ? d_am->get_processed(cur)
+                                  : cur)
+             != term_labels.end());
     } while (!visit.empty());
   }
 #endif
@@ -201,10 +218,11 @@ BvInterpolator::label_lemma(
     std::unordered_map<int64_t, sat::interpolants::VariableKind>& var_labels,
     std::unordered_map<int64_t, sat::interpolants::ClauseKind>& clause_labels,
     std::unordered_map<Node, sat::interpolants::VariableKind>& term_labels,
-    const Node& node)
+    const Node& lemma)
 {
   // label SAT variables
-  const auto& bits = d_bitblaster.bits(node);
+  const auto& bits = d_bitblaster.bits(lemma);
+  assert(!bits.empty());
   bv::AigBitblaster::aig_node_ref_vector visit;
   std::unordered_set<int64_t> cache;
   for (const auto& aig : bits)
@@ -254,7 +272,7 @@ BvInterpolator::label_lemma(
 
   // label unlabeled terms
   std::unordered_map<Node, bool> ncache;
-  std::vector<Node> nvisit{node};
+  std::vector<Node> nvisit{lemma};
   do
   {
     Node cur            = nvisit.back();
@@ -313,7 +331,7 @@ BvInterpolator::label_lemma(
     {
       ss << " " << aig;
     }
-    Log(2) << "label lemma: " << node << " ["
+    Log(2) << "label lemma: " << lemma << " ["
            << (kind == VariableKind::GLOBAL || kind == VariableKind::A
                    ? ClauseKind::A
                    : ClauseKind::B)
@@ -321,7 +339,7 @@ BvInterpolator::label_lemma(
   }
 
   label_clauses(clause_labels,
-                {node},
+                {lemma},
                 kind == VariableKind::GLOBAL || kind == VariableKind::A
                     ? ClauseKind::A
                     : ClauseKind::B);

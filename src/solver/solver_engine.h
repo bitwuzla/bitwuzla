@@ -106,6 +106,8 @@ class SolverEngine
   const bv::BvSolver& bv_solver() const { return d_bv_solver; }
   /** @return The associated floating-point solver instance. */
   const fp::FpSolver& fp_solver() const { return d_fp_solver; }
+  /** @return The associated abstraction module, nullptr if disabled. */
+  abstract::AbstractionModule* abstraction_module() const { return d_am.get(); }
 
   const backtrack::unordered_set<Node>& lemma_cache() const
   {

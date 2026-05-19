@@ -345,6 +345,21 @@ AbstractionModule::get_original_assertion(const Node& processed_assertion)
   return it->second;
 }
 
+bool
+AbstractionModule::is_processed(const Node& node)
+{
+  auto it = d_abstraction_cache.find(node);
+  return it != d_abstraction_cache.end() && it->second != node;
+}
+
+const Node&
+AbstractionModule::get_processed(const Node& node)
+{
+  auto it = d_abstraction_cache.find(node);
+  assert(it != d_abstraction_cache.end());
+  return it->second;
+}
+
 Node
 AbstractionModule::remove_abstractions(const Node& node) const
 {

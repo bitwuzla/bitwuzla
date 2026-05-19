@@ -16,6 +16,10 @@
 
 namespace bzla {
 
+namespace abstract {
+class AbstractionModule;
+}
+
 namespace backtrack {
 class BacktrackManager;
 }
@@ -47,6 +51,9 @@ class SolverState
 
   /** @return The associated floating-point solver instance. */
   const fp::FpSolver& fp_solver() const;
+
+  /** @return The associated abstraction module, nullptr if disabled. */
+  abstract::AbstractionModule* abstraction_module() const;
 
   /** @return The current set of lemmas. */
   const backtrack::unordered_set<Node>& lemma_cache() const;
