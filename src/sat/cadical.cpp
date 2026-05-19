@@ -43,10 +43,6 @@ Cadical::Cadical()
   d_solver.reset(new CaDiCaL::Solver());
   d_solver->set("shrink", 0);
   d_solver->set("quiet", 1);
-  d_propagator.reset(new Propagator());
-  d_propagator->attach_solver(d_solver.get());
-  d_solver->connect_external_propagator(d_propagator.get());
-  d_solver->connect_fixed_listener(d_propagator.get());
 }
 
 Cadical::~Cadical() {}
@@ -54,7 +50,10 @@ Cadical::~Cadical() {}
 int32_t
 Cadical::new_var()
 {
-  d_propagator->resize(d_max_var);
+  if (d_propagator)
+  {
+    d_propagator->resize(d_max_var);
+  }
   return d_max_var++;
 }
 
@@ -102,6 +101,7 @@ void
 Cadical::phase(int32_t lit)
 {
   assert(std::abs(lit) < d_max_var);
+  assert(d_propagator);
   d_propagator->force_phase(lit);
 }
 
@@ -112,9 +112,18 @@ Cadical::unphase(int32_t lit)
 }
 
 void
-Cadical::register_propagator(std::unique_ptr<SatPropagator> adc)
+Cadical::register_propagator(std::unique_ptr<SatPropagator> sp)
 {
-  d_propagator->register_propagator(std::move(adc));
+  // Initialize propagator on demand.
+  if (!d_propagator)
+  {
+    d_propagator.reset(new Propagator());
+    d_propagator->attach_solver(d_solver.get());
+    d_solver->connect_external_propagator(d_propagator.get());
+    d_solver->connect_fixed_listener(d_propagator.get());
+    d_propagator->resize(d_max_var);
+  }
+  d_propagator->register_propagator(std::move(sp));
 }
 
 Result
