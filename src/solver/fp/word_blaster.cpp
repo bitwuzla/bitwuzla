@@ -189,6 +189,45 @@ WordBlaster::valid(const Node& node)
 Node
 WordBlaster::word_blasted(const Node& node) const
 {
+  node::Kind kind = node.kind();
+
+  if (kind == node::Kind::FP_SYMFPU_EXP || kind == node::Kind::FP_SYMFPU_INF
+      || kind == node::Kind::FP_SYMFPU_NAN || kind == node::Kind::FP_SYMFPU_SIG
+      || kind == node::Kind::FP_SYMFPU_SIGN
+      || kind == node::Kind::FP_SYMFPU_ZERO)
+  {
+    // node is the word-blasted representation if node[0] is a symbolic const
+    if (node[0].is_const())
+    {
+      return node;
+    }
+    // else the word-blasted representation is the unpacked one
+    auto it = d_internal->d_unpacked_float_map.find(node[0]);
+    assert(it != d_internal->d_unpacked_float_map.end());
+    if (kind == node::Kind::FP_SYMFPU_EXP)
+    {
+      return it->second.exponent.getNode();
+    }
+    if (kind == node::Kind::FP_SYMFPU_INF)
+    {
+      return it->second.inf.getNode();
+    }
+    if (kind == node::Kind::FP_SYMFPU_NAN)
+    {
+      return it->second.nan.getNode();
+    }
+    if (kind == node::Kind::FP_SYMFPU_SIG)
+    {
+      return it->second.significand.getNode();
+    }
+    if (kind == node::Kind::FP_SYMFPU_SIGN)
+    {
+      return it->second.sign.getNode();
+    }
+    assert(kind == node::Kind::FP_SYMFPU_ZERO);
+    return it->second.zero.getNode();
+  }
+
   Node res;
   if (d_internal->d_prop_map.find(node) != d_internal->d_prop_map.end())
   {
@@ -202,18 +241,12 @@ WordBlaster::word_blasted(const Node& node) const
   }
   else if (d_internal->d_sbv_map.find(node) != d_internal->d_sbv_map.end())
   {
-    assert(node.kind() == node::Kind::FP_TO_SBV);
+    assert(kind == node::Kind::FP_TO_SBV);
     res = d_internal->d_sbv_map.at(node).getNode();
   }
   else if (d_internal->d_ubv_map.find(node) != d_internal->d_ubv_map.end())
   {
-    assert(node.kind() == node::Kind::FP_TO_UBV
-           || node.kind() == node::Kind::FP_SYMFPU_EXP
-           || node.kind() == node::Kind::FP_SYMFPU_INF
-           || node.kind() == node::Kind::FP_SYMFPU_NAN
-           || node.kind() == node::Kind::FP_SYMFPU_SIG
-           || node.kind() == node::Kind::FP_SYMFPU_SIGN
-           || node.kind() == node::Kind::FP_SYMFPU_ZERO);
+    assert(kind == node::Kind::FP_TO_UBV);
     res = d_internal->d_ubv_map.at(node).getNode();
   }
   else
@@ -707,32 +740,9 @@ WordBlaster::_word_blast(const Node& node)
                || kind == node::Kind::FP_SYMFPU_ZERO)
       {
         assert(cur[0].type().is_fp());
-        auto it = d_internal->d_unpacked_float_map.find(cur[0]);
-        assert(it != d_internal->d_unpacked_float_map.end());
-        if (kind == node::Kind::FP_SYMFPU_EXP)
-        {
-          d_internal->d_ubv_map.emplace(cur, it->second.exponent);
-        }
-        else if (kind == node::Kind::FP_SYMFPU_INF)
-        {
-          d_internal->d_ubv_map.emplace(cur, it->second.inf);
-        }
-        else if (kind == node::Kind::FP_SYMFPU_NAN)
-        {
-          d_internal->d_ubv_map.emplace(cur, it->second.nan);
-        }
-        else if (kind == node::Kind::FP_SYMFPU_SIG)
-        {
-          d_internal->d_ubv_map.emplace(cur, it->second.significand);
-        }
-        else if (kind == node::Kind::FP_SYMFPU_SIGN)
-        {
-          d_internal->d_ubv_map.emplace(cur, it->second.sign);
-        }
-        else
-        {
-          d_internal->d_ubv_map.emplace(cur, it->second.zero);
-        }
+        assert(d_internal->d_unpacked_float_map.find(cur[0])
+               != d_internal->d_unpacked_float_map.end());
+        // nothing to do, already word-blasted
       }
       visited.at(cur) = 1;
     }
