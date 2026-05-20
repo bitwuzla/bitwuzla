@@ -358,6 +358,8 @@ NodeManager::compute_type(Kind kind,
     case Kind::FP_TO_FP_FROM_UBV:
       return d_tm.mk_fp_type(indices[0], indices[1]);
 
+    case Kind::FP_SYMFPU_RM: return d_tm.mk_bv_type(BZLA_RM_BV_SIZE);
+
     case Kind::FP_SYMFPU_INF:
     case Kind::FP_SYMFPU_NAN:
     case Kind::FP_SYMFPU_SIGN:
@@ -518,6 +520,14 @@ NodeManager::check_type(Kind kind,
         ss << kind
            << ": Floating-point format does not match size of bit-vector term "
               "at position 0";
+        return std::make_pair(false, ss.str());
+      }
+      break;
+
+    case Kind::FP_SYMFPU_RM:
+      if (!children[0].type().is_rm())
+      {
+        ss << kind << ": Expected rounding mode term at position 0";
         return std::make_pair(false, ss.str());
       }
       break;

@@ -1,0 +1,10 @@
+; ignore output
+(set-option :produce-interpolants true)
+(declare-const x RoundingMode)
+(declare-const x4 RoundingMode)
+(assert (not (= x x4)))
+(assert (= x RTN))
+(assert (= RTN x4))
+(set-info :status unsat)
+(check-sat)
+(get-interpolants ((= x RTN)))

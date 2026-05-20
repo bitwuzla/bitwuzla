@@ -101,6 +101,7 @@ AigBitblaster::bitblast(const Node& t)
                            : d_bitblaster.bv_constant(type.bv_size());
           break;
         // FP components, bit-blasted as BV consts
+        case Kind::FP_SYMFPU_RM:
         case Kind::FP_SYMFPU_EXP:
         case Kind::FP_SYMFPU_INF:
         case Kind::FP_SYMFPU_NAN:

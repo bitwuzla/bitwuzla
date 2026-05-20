@@ -27,6 +27,7 @@
 #include "solver/bv/bv_bitblast_solver.h"
 #include "solver/bv/bv_solver.h"
 #include "solver/fp/fp_solver.h"
+#include "util/printer.h"
 
 using namespace bzla::node;
 using namespace bzla::sat::interpolants;
@@ -467,7 +468,7 @@ BvInterpolator::label_terms_and_leafs(
     auto [it, inserted] = cache.emplace(cur, true);
     if (inserted)
     {
-      if (BvSolver::is_leaf(cur) && cur.type().is_fp()
+      if (BvSolver::is_leaf(cur) && (cur.type().is_fp() || cur.type().is_rm())
           && d_word_blaster.is_word_blasted(cur))
       {
         // If the current BvSolver leaf is also an FpSolver leaf, when

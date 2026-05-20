@@ -1110,8 +1110,7 @@ SymFpuSymRM::SymFpuSymRM(const Node &node)
     else
     {
       NodeManager &nm = SymFpuNM::get();
-      d_node          = nm.mk_const(nm.mk_bv_type(BZLA_RM_BV_SIZE),
-                           "_rm_var_" + std::to_string(node.id()) + "_");
+      d_node          = nm.mk_node(Kind::FP_SYMFPU_RM, {node});
     }
   }
 }

@@ -438,10 +438,10 @@ SolverEngine::_value(const Node& term)
       {
         assert(!d_in_solving_mode);
         Kind k = cur.kind();
-        if (k == Kind::FORALL || k == Kind::LAMBDA || k == Kind::FP_SYMFPU_EXP
-            || k == Kind::FP_SYMFPU_INF || k == Kind::FP_SYMFPU_NAN
-            || k == Kind::FP_SYMFPU_SIG || k == Kind::FP_SYMFPU_SIGN
-            || k == Kind::FP_SYMFPU_ZERO)
+        if (k == Kind::FORALL || k == Kind::LAMBDA || k == Kind::FP_SYMFPU_RM
+            || k == Kind::FP_SYMFPU_EXP || k == Kind::FP_SYMFPU_INF
+            || k == Kind::FP_SYMFPU_NAN || k == Kind::FP_SYMFPU_SIG
+            || k == Kind::FP_SYMFPU_SIGN || k == Kind::FP_SYMFPU_ZERO)
         {
           continue;
         }
@@ -512,6 +512,7 @@ SolverEngine::_value(const Node& term)
           [[fallthrough]];
 
         case Kind::AM_ABSTRACT:
+        case Kind::FP_SYMFPU_RM:
         case Kind::FP_SYMFPU_EXP:
         case Kind::FP_SYMFPU_INF:
         case Kind::FP_SYMFPU_NAN:

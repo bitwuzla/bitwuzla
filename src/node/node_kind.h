@@ -129,6 +129,8 @@ enum class Kind : uint8_t
   FP_TO_FP_FROM_UBV,  // ((_ to_fp_unsigned eb sb) RoundingMode (_ BitVec m))
   FP_TO_SBV,          // ((_ fp.to_sbv m) RoundingMode (_ FloatingPoint eb sb))
   FP_TO_UBV,          // ((_ fp.to_ubv m) RoundingMode (_ FloatingPoint eb sb))
+  // SymFPU internal representation of RM consts
+  FP_SYMFPU_RM,
   // SymFPU internal FP components
   FP_SYMFPU_EXP,
   FP_SYMFPU_INF,

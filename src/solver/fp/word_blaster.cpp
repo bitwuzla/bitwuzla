@@ -228,6 +228,18 @@ WordBlaster::word_blasted(const Node& node) const
     return it->second.zero.getNode();
   }
 
+  if (kind == node::Kind::FP_SYMFPU_RM)
+  {
+    // node is the word-blasted representation if node[0] is a symbolic const
+    if (node[0].is_const())
+    {
+      return node;
+    }
+    auto it = d_internal->d_rm_map.find(node[0]);
+    assert(it != d_internal->d_rm_map.end());
+    return it->second.getNode();
+  }
+
   Node res;
   if (d_internal->d_prop_map.find(node) != d_internal->d_prop_map.end())
   {
@@ -731,6 +743,12 @@ WordBlaster::_word_blast(const Node& node)
                 type,
                 d_internal->d_rm_map.at(cur[0]),
                 SymFpuSymBV<false>(cur[1])));
+      }
+      else if (kind == node::Kind::FP_SYMFPU_RM)
+      {
+        assert(cur[0].type().is_rm());
+        assert(d_internal->d_rm_map.find(cur[0]) != d_internal->d_rm_map.end());
+        // nothing to do, already word-blasted
       }
       else if (kind == node::Kind::FP_SYMFPU_EXP
                || kind == node::Kind::FP_SYMFPU_INF

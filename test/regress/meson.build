@@ -1690,6 +1690,8 @@ tests_smt2_get_interpolant = [
   ['get-interpolant/bug-vgasim.min.smt2'],
   ['get-interpolant/interp-query.12.smt2'],
   ['get-interpolant/prop-murxla-110deca336eefafd.min.smt2'],
+  ['get-interpolant/fp/murxla-2c592ff5bc4078f0.min.smt2'],
+  ['get-interpolant/fp/murxla-682023f92cc84abc.min.smt2'],
 ]
 
 if get_option('cadical')

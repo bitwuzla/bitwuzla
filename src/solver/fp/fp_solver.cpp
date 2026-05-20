@@ -36,6 +36,7 @@ FpSolver::is_theory_leaf(const Node& term)
          || k == Kind::FP_SYMFPU_EXP || k == Kind::FP_SYMFPU_SIG
          || k == Kind::FP_SYMFPU_SIGN || k == Kind::FP_SYMFPU_INF
          || k == Kind::FP_SYMFPU_NAN || k == Kind::FP_SYMFPU_ZERO
+         || k == Kind::FP_SYMFPU_RM
          || (k == Kind::EQUAL
              && (term[0].type().is_fp() || term[0].type().is_rm()));
 }

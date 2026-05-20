@@ -561,6 +561,8 @@ Rewriter::_rewrite(const Node& node)
     case node::Kind::FP_TO_SBV:
     case node::Kind::FP_TO_UBV: res = n; break;
 
+    // No rewrites for FP SymFPU representation of RM consts
+    case node::Kind::FP_SYMFPU_RM:
     // No rewrites for FP SymFPU components
     case node::Kind::FP_SYMFPU_EXP:
     case node::Kind::FP_SYMFPU_INF:
