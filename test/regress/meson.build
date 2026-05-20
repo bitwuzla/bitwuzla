@@ -1513,6 +1513,7 @@ tests_smt2 = [
 
 tests_smt2_get_interpolant = [
   ## get-interpolant
+  # different configs
   ['get-interpolant/a16-p018.dar.smt2'],
   ['get-interpolant/a16-p018.dar.lift.smt2'],
   ['get-interpolant/a16-p018.dar.pudlak.smt2'],
@@ -1533,9 +1534,6 @@ tests_smt2_get_interpolant = [
   ['get-interpolant/loop3.interp.lift.smt2'],
   ['get-interpolant/loop3.interp.pudlak.smt2'],
   #
-  ['get-interpolant/murxla-136034c02cd7865c-1.min.smt2'],
-  ['get-interpolant/murxla-136034c02cd7865c-2.min.smt2'],
-  #
   ['get-interpolant/murxla-14f02a0715edabfd.min.smt2'],
   ['get-interpolant/murxla-14f02a0715edabfd.min.lift.smt2'],
   ['get-interpolant/murxla-14f02a0715edabfd.min.pudlak.smt2'],
@@ -1552,33 +1550,25 @@ tests_smt2_get_interpolant = [
   ['get-interpolant/murxla-22d302aad19922d4.min.lift.smt2'],
   ['get-interpolant/murxla-22d302aad19922d4.min.pudlak.smt2'],
   #
-  ['get-interpolant/murxla-3af6b72ab3364c31.min.smt2'],
-  #
-  ['get-interpolant/murxla-53d78c6e77494db7.min.smt2'],
-  #
   ['get-interpolant/murxla-58cf094fd84cdb.min.smt2'],
   ['get-interpolant/murxla-58cf094fd84cdb.min.lift.smt2'],
   ['get-interpolant/murxla-58cf094fd84cdb.min.pudlak.smt2'],
-  #
-  ['get-interpolant/murxla-5ae0ab9746a672e1.min.smt2'],
   #
   ['get-interpolant/murxla-6116f4988dde7b23.min.smt2'],
   ['get-interpolant/murxla-6116f4988dde7b23.min.lift.smt2'],
   ['get-interpolant/murxla-6116f4988dde7b23.min.pudlak.smt2'],
   #
-  ['get-interpolant/murxla-6692fa7c68fc1d5c.min.smt2'],
+  ['get-interpolant/murxla-64e16770297cc670.min.smt2'],
+  ['get-interpolant/murxla-64e16770297cc670.min.lift.smt2'],
+  ['get-interpolant/murxla-64e16770297cc670.min.pudlak.smt2'],
   #
   ['get-interpolant/murxla-6c8ada822bcad6a4.min.smt2'],
   ['get-interpolant/murxla-6c8ada822bcad6a4.min.lift.smt2'],
   ['get-interpolant/murxla-6c8ada822bcad6a4.min.pudlak.smt2'],
   #
-  ['get-interpolant/red-murxla-771693115476ea54.min.smt2'],
-  #
   ['get-interpolant/murxla-71bda919abd73fe9.min.smt2'],
   ['get-interpolant/murxla-71bda919abd73fe9.min.lift.smt2'],
   ['get-interpolant/murxla-71bda919abd73fe9.min.pudlak.smt2'],
-  #
-  ['get-interpolant/murxla-8d8f129265b6c074.min.smt2'],
   #
   ['get-interpolant/murxla-cdfb7bd7fd6eb9fe.min.smt2'],
   ['get-interpolant/murxla-cdfb7bd7fd6eb9fe.min.lift.smt2'],
@@ -1640,15 +1630,9 @@ tests_smt2_get_interpolant = [
   ['get-interpolant/red-murxla-14f02a0715edabfd.min.lift.smt2'],
   ['get-interpolant/red-murxla-14f02a0715edabfd.min.pudlak.smt2'],
   #
-  ['get-interpolant/red-murxla-64e16770297cc670.min.smt2'],
-  ['get-interpolant/red-murxla-64e16770297cc670.min.lift.smt2'],
-  ['get-interpolant/red-murxla-64e16770297cc670.min.pudlak.smt2'],
-  #
   ['get-interpolant/red-murxla-6c8ada822bcad6a4.min.smt2'],
   ['get-interpolant/red-murxla-6c8ada822bcad6a4.min.lift.smt2'],
   ['get-interpolant/red-murxla-6c8ada822bcad6a4.min.pudlak.smt2'],
-  #
-  ['get-interpolant/red-murxla-b21df6c6cf3b808e.min.smt2'],
   #
   ['get-interpolant/red-picorv32_mutAY_nomem-p1.dar.smt2'],
   ['get-interpolant/red-picorv32_mutAY_nomem-p1.dar.lift.smt2'],
@@ -1678,20 +1662,32 @@ tests_smt2_get_interpolant = [
   ['get-interpolant/eqsubst2.smt2'],
   ['get-interpolant/eqsubst3.smt2'],
 
+  # default config
   ['get-interpolant/seq.subst1.smt2'],
-  ['get-interpolant/murxla-3432d8487343bf0e.min.smt2'],
-  ['get-interpolant/murxla-d40f4a4cdf334172.min.smt2'],
-  ['get-interpolant/murxla-e4a11d9f2204c5fc.min.smt2'],
-  ['get-interpolant/murxla-edffe3592d6e7ed5.min.smt2'],
-  ['get-interpolant/murxla-54fadb5bb5e62d88.min.smt2'],
   ['get-interpolant/murxla-1ab3c57122752408.min.smt2'],
   ['get-interpolant/murxla-1ab3c57122752408.min2.smt2'],
+  ['get-interpolant/murxla-3432d8487343bf0e.min.smt2'],
+  ['get-interpolant/murxla-53d78c6e77494db7.min.smt2'],
+  ['get-interpolant/murxla-54fadb5bb5e62d88.min.smt2'],
   ['get-interpolant/murxla-556e2bd662ece5fe.smt2'],
+  ['get-interpolant/murxla-771693115476ea54.min.smt2'],
+  ['get-interpolant/murxla-b21df6c6cf3b808e.min.smt2'],
+  ['get-interpolant/murxla-e4a11d9f2204c5fc.min.smt2'],
+  ['get-interpolant/murxla-edffe3592d6e7ed5.min.smt2'],
   ['get-interpolant/bug-vgasim.min.smt2'],
   ['get-interpolant/interp-query.12.smt2'],
   ['get-interpolant/prop-murxla-110deca336eefafd.min.smt2'],
+
+  # fp
+  ['get-interpolant/fp/murxla-136034c02cd7865c-1.min.smt2'],
+  ['get-interpolant/fp/murxla-136034c02cd7865c-2.min.smt2'],
   ['get-interpolant/fp/murxla-2c592ff5bc4078f0.min.smt2'],
+  ['get-interpolant/fp/murxla-3af6b72ab3364c31.min.smt2'],
+  ['get-interpolant/fp/murxla-5ae0ab9746a672e1.min.smt2'],
+  ['get-interpolant/fp/murxla-6692fa7c68fc1d5c.min.smt2'],
   ['get-interpolant/fp/murxla-682023f92cc84abc.min.smt2'],
+  ['get-interpolant/fp/murxla-8d8f129265b6c074.min.smt2'],
+  ['get-interpolant/fp/murxla-d40f4a4cdf334172.min.smt2'],
 ]
 
 if get_option('cadical')
