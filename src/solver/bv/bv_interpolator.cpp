@@ -221,7 +221,75 @@ BvInterpolator::label_lemma(
     std::unordered_map<Node, sat::interpolants::VariableKind>& term_labels,
     const Node& lemma)
 {
-  // label SAT variables
+  {
+    // Label unlabeled terms and leafs (e.g., abstracted terms).
+    std::unordered_map<Node, bool> cache;
+    std::vector<Node> visit{lemma};
+    do
+    {
+      Node cur            = visit.back();
+      auto [it, inserted] = cache.emplace(cur, true);
+      if (inserted)
+      {
+        visit.insert(visit.end(), cur.begin(), cur.end());
+        // we don't need to push word-blasted terms here as they should appear
+        // in lemmas if relevant
+        continue;
+      }
+      else if (it->second)
+      {
+        it->second          = false;
+        auto [it, inserted] = term_labels.emplace(cur, VariableKind::GLOBAL);
+        if (!inserted)
+        {
+          continue;
+        }
+        if (cur.is_const())
+        {
+          throw Unsupported(
+              "interpolation queries with lemmas that use fresh variables not "
+              "supported");
+        }
+        VariableKind k = VariableKind::GLOBAL;
+        for (const auto& c : cur)
+        {
+          auto it = term_labels.find(c);
+          assert(it != term_labels.end());
+          if (it->second != VariableKind::GLOBAL)
+          {
+            if (k != VariableKind::GLOBAL && k != it->second)
+            {
+              throw Unsupported(
+                  "interpolation queries with mixed lemmas not supported");
+            }
+            k = it->second;
+#ifdef NDEBUG
+            break;
+#endif
+          }
+        }
+        if (!inserted && it->second != VariableKind::GLOBAL && it->second != k)
+        {
+          it->second = VariableKind::GLOBAL;
+        }
+      }
+
+      if (BvSolver::is_leaf(cur) && !cur.is_const())
+      {
+        auto it = term_labels.find(cur);
+        assert(it != term_labels.end());
+        const auto& bits = d_bitblaster.bits(cur);
+        if (!bits.empty())
+        {
+          label_var(var_labels, bits, it->second);
+        }
+        // If not bit-blasted, it is not relevant for interpolant.
+      }
+      visit.pop_back();
+    } while (!visit.empty());
+  }
+
+  // Label SAT variables of the lemma's bit-blasted representation.
   const auto& bits = d_bitblaster.bits(lemma);
   assert(!bits.empty());
   bv::AigBitblaster::aig_node_ref_vector visit;
@@ -248,12 +316,7 @@ BvInterpolator::label_lemma(
     }
     else if (it->second == VariableKind::NONE)
     {
-      if (!cur.is_and())
-      {
-        throw Unsupported(
-            "interpolation queries with lemmas that use fresh variables not "
-            "supported");
-      }
+      assert(cur.is_and());
       // not labeled, label based on children
       VariableKind k0 = var_labels.at(std::abs(cur[0].get_id()));
       VariableKind k1 = var_labels.at(std::abs(cur[1].get_id()));
@@ -270,60 +333,6 @@ BvInterpolator::label_lemma(
 
   // the determined kind of the lemma
   VariableKind kind = var_labels.at(std::abs(bits[0].get_id()));
-
-  // label unlabeled terms
-  std::unordered_map<Node, bool> ncache;
-  std::vector<Node> nvisit{lemma};
-  do
-  {
-    Node cur            = nvisit.back();
-    auto [it, inserted] = ncache.emplace(cur, true);
-    if (inserted)
-    {
-      nvisit.insert(nvisit.end(), cur.begin(), cur.end());
-      // we don't need to push word-blasted terms here as they should appear
-      // in lemmas if relevant
-      continue;
-    }
-    else if (it->second)
-    {
-      it->second          = false;
-      auto [it, inserted] = term_labels.emplace(cur, VariableKind::GLOBAL);
-      if (!inserted)
-      {
-        continue;
-      }
-      if (cur.is_const())
-      {
-        throw Unsupported(
-            "interpolation queries with lemmas that use fresh variables not "
-            "supported");
-      }
-      VariableKind k = VariableKind::GLOBAL;
-      for (const auto& c : cur)
-      {
-        auto it = term_labels.find(c);
-        assert(it != term_labels.end());
-        if (it->second != VariableKind::GLOBAL)
-        {
-          if (k != VariableKind::GLOBAL && k != it->second)
-          {
-            throw Unsupported(
-                "interpolation queries with mixed lemmas not supported");
-          }
-          k = it->second;
-#ifdef NDEBUG
-          break;
-#endif
-        }
-      }
-      if (!inserted && it->second != VariableKind::GLOBAL && it->second != k)
-      {
-        it->second = VariableKind::GLOBAL;
-      }
-    }
-    nvisit.pop_back();
-  } while (!nvisit.empty());
 
   if (d_logger.is_log_enabled(2))
   {

@@ -1,0 +1,10 @@
+; ignore output
+(set-option :produce-interpolants true)
+(declare-const x (_ BitVec 8))
+(declare-const x1 RoundingMode)
+(declare-const x3 Float32)
+(assert (fp.lt (fp (_ bv0 1) (_ bv0 8) (_ bv0 23)) (fp.mul x1 x3 (fp (_ bv0 1) (_ bv0 8) (_ bv3 23))) (fp (_ bv0 1) (_ bv0 8) (_ bv0 23))))
+(assert (! (bvumulo x (_ bv170 8)) :named a1))
+(set-info :status unsat)
+(check-sat)
+(get-interpolant (a1))

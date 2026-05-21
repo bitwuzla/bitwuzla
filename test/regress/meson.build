@@ -1688,6 +1688,10 @@ tests_smt2_get_interpolant = [
   ['get-interpolant/fp/murxla-682023f92cc84abc.min.smt2'],
   ['get-interpolant/fp/murxla-8d8f129265b6c074.min.smt2'],
   ['get-interpolant/fp/murxla-d40f4a4cdf334172.min.smt2'],
+  ['get-interpolant/fp/murxla-30ef1f6dc227aa3d.min.smt2'],
+  ['get-interpolant/fp/murxla-30ef1f6dc227aa3d.smt2'],
+  ['get-interpolant/fp/murxla-396ce269d6b46a2e.min.smt2'],
+  ['get-interpolant/fp/red-murxla-30ef1f6dc227aa3d.min.smt2'],
 ]
 
 if get_option('cadical')
