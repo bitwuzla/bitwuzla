@@ -69,7 +69,7 @@ get_clause_label(const std::vector<int64_t>& cnf2aig,
 /* CaDiCaL::Tracer interface ------------------------------------------------ */
 
 void
-CadicalTracer::add_original_clause(uint64_t id,
+CadicalTracer::add_original_clause(int64_t id,
                                    bool redundant,
                                    const std::vector<int32_t>& clause,
                                    bool restore)
@@ -96,17 +96,19 @@ CadicalTracer::add_original_clause(uint64_t id,
     return;
   }
 
-  assert(d_clauses.size() == id);
+  assert(static_cast<int64_t>(d_clauses.size()) == id);
   // original clause, thus no antecedents
   d_clauses.emplace_back(clause, ClauseType::ORIGINAL, d_cur_aig_id);
 }
 
 void
-CadicalTracer::add_derived_clause(uint64_t id,
+CadicalTracer::add_derived_clause(int64_t id,
                                   bool redundant,
+                                  int32_t witness,
                                   const std::vector<int32_t>& clause,
-                                  const std::vector<uint64_t>& antecedents)
+                                  const std::vector<int64_t>& antecedents)
 {
+  assert(witness == 0);  // No RAT clauses supported
   if (d_logger.is_log_enabled(2))
   {
     std::stringstream ss;
@@ -126,14 +128,14 @@ CadicalTracer::add_derived_clause(uint64_t id,
   (void) id;
   (void) redundant;
   assert(!antecedents.empty());
-  assert(d_clauses.size() == id);
+  assert(static_cast<int64_t>(d_clauses.size()) == id);
   d_clauses.emplace_back(clause, ClauseType::DERIVED, 0, antecedents);
 }
 
 void
-CadicalTracer::add_assumption_clause(uint64_t id,
+CadicalTracer::add_assumption_clause(int64_t id,
                                      const std::vector<int32_t>& clause,
-                                     const std::vector<uint64_t>& antecedents)
+                                     const std::vector<int64_t>& antecedents)
 {
   if (d_logger.is_log_enabled(2))
   {
@@ -149,7 +151,7 @@ CadicalTracer::add_assumption_clause(uint64_t id,
   if (antecedents.size())
   {
     // We have a resolution of multiple clauses.
-    add_derived_clause(id, true, clause, antecedents);
+    add_derived_clause(id, true, 0, clause, antecedents);
   }
   else
   {
@@ -158,7 +160,7 @@ CadicalTracer::add_assumption_clause(uint64_t id,
     bool is_ass_lit1 = d_assumptions.find(-clause[1]) != d_assumptions.end();
     if (!is_ass_lit0 || !is_ass_lit1)
     {
-      assert(d_clauses.size() == id);
+      assert(static_cast<int64_t>(d_clauses.size()) == id);
       int32_t lit = is_ass_lit0 ? -clause[1] : -clause[0];
       d_clauses.push_back({{lit}, ClauseType::ASSUMPTION, 0, antecedents});
       d_assumption_clauses.push_back(id);
@@ -168,14 +170,14 @@ CadicalTracer::add_assumption_clause(uint64_t id,
 
   if (antecedents.empty())
   {
-    assert(d_clauses.size() == id);
+    assert(static_cast<int64_t>(d_clauses.size()) == id);
     d_clauses.emplace_back(clause, ClauseType::ASSUMPTION, 0, antecedents);
   }
   d_assumption_clauses.push_back(id);
 }
 
 void
-CadicalTracer::delete_clause(uint64_t id,
+CadicalTracer::delete_clause(int64_t id,
                              bool redundant,
                              const std::vector<int32_t>& clause)
 {
@@ -221,7 +223,7 @@ CadicalTracer::add_constraint(const std::vector<int>& clause)
 void
 CadicalTracer::reset_assumptions()
 {
-  for (uint64_t id : d_assumption_clauses)
+  for (int64_t id : d_assumption_clauses)
   {
     d_clauses[id].d_clause.clear();
     d_clauses[id].d_type   = ClauseType::NONE;
@@ -233,7 +235,7 @@ CadicalTracer::reset_assumptions()
 
 void
 CadicalTracer::conclude_unsat(CaDiCaL::ConclusionType conclusion,
-                              const std::vector<uint64_t>& clause_ids)
+                              const std::vector<int64_t>& clause_ids)
 {
   (void) conclusion;
   assert(conclusion != CaDiCaL::ConclusionType::CONSTRAINT);
@@ -242,7 +244,7 @@ CadicalTracer::conclude_unsat(CaDiCaL::ConclusionType conclusion,
   {
     // Single global conflict, proof chain contains single empty clause.
     assert(clause_ids.size() == 1);
-    assert(clause_ids[0] < d_clauses.size());
+    assert(clause_ids[0] < static_cast<int64_t>(d_clauses.size()));
     assert(d_clauses[clause_ids[0]].d_clause.empty());
   }
   else
@@ -251,19 +253,19 @@ CadicalTracer::conclude_unsat(CaDiCaL::ConclusionType conclusion,
     // One or more constraints are responsible for the conflict, conclusion of
     // proof chain is a single clause with failed assumptions.
     assert(clause_ids.size() == 1);
-    assert(clause_ids[0] < d_clauses.size());
+    assert(clause_ids[0] < static_cast<int64_t>(d_clauses.size()));
     assert(!d_clauses[clause_ids[0]].d_clause.empty());
   }
 #endif
   d_conclusion = conclusion;
   d_proof_core.clear();
   d_final_clause_ids = clause_ids;
-  std::vector<uint64_t> visit{clause_ids};
+  std::vector<int64_t> visit{clause_ids};
   std::vector<bool> visited(d_clauses.size(), false);
   // Compute proof core by tracing back from final clause ids
   while (!visit.empty())
   {
-    uint64_t id = visit.back();
+    int64_t id = visit.back();
     visit.pop_back();
     if (!visited[id])
     {
@@ -288,7 +290,7 @@ CadicalTracer::get_interpolant(
         term_labels)
 {
   d_part_interpolants.clear();
-  uint64_t final_clause_id = d_final_clause_ids[0];
+  int64_t final_clause_id = d_final_clause_ids[0];
 
   if (d_logger.is_log_enabled(2))
   {
@@ -363,9 +365,9 @@ CadicalTracer::get_interpolant(
 
   std::vector<int64_t> cnf2aig = compute_cnf2aig(d_cnf_encoder.aig2cnf());
 
-  for (uint64_t id : d_proof_core)
+  for (int64_t id : d_proof_core)
   {
-    assert(id <= d_clauses.size());
+    assert(id <= static_cast<int64_t>(d_clauses.size()));
     const auto& clause = d_clauses[id];
     ClauseType type    = clause.d_type;
     assert(type != ClauseType::NONE);
@@ -438,7 +440,6 @@ CadicalTracer::get_interpolant(
     else if (type == ClauseType::ASSUMPTION)
     {
       const auto& antecedents = clause.d_antecedents;
-
       // All literals in assumption clause must be assumption literals if it
       // does not have antecedents since we don't use constraint(). Note that
       // this only occurs if there is a trivial conflict due to assumptions.
@@ -534,7 +535,7 @@ CadicalTracer::get_interpolant_node(
   // Convert AIG interpolant to Node
   bv::AigBitblaster::aig_node_ref_vector visit{interpolant.d_interpolant};
   std::unordered_map<int64_t, Node> vars_to_nodes;
-  uint64_t interpol_size = 0;
+  int64_t interpol_size = 0;
   do
   {
     const bitblast::AigNode& cur = visit.back();

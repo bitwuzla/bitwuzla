@@ -53,11 +53,12 @@ Cadical::~Cadical() {}
 int32_t
 Cadical::new_var()
 {
+  d_max_var = d_solver->declare_one_more_variable();
   if (d_propagator)
   {
     d_propagator->resize(d_max_var);
   }
-  return d_max_var++;
+  return d_max_var;
 }
 
 void
@@ -65,7 +66,7 @@ Cadical::add(int32_t lit, int64_t cgroup_id)
 {
   (void) cgroup_id;
   int32_t var = std::abs(lit);
-  assert(var < d_max_var);
+  assert(var <= d_max_var);
   if (d_propagator && var)
   {
     d_propagator->info(var).active = true;
@@ -111,7 +112,7 @@ Cadical::fixed(int32_t lit)
 void
 Cadical::phase(int32_t lit)
 {
-  assert(std::abs(lit) < d_max_var);
+  assert(std::abs(lit) <= d_max_var);
   assert(d_propagator);
   d_propagator->force_phase(lit);
 }

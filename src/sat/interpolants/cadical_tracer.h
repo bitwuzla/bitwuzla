@@ -42,7 +42,7 @@ class CadicalTracer : public Tracer
     Clause(const std::vector<int32_t>& clause,
            ClauseType type,
            int64_t aig_id,
-           const std::vector<uint64_t>& antecedents = {})
+           const std::vector<int64_t>& antecedents = {})
         : d_clause(clause),
           d_type(type),
           d_aig_id(aig_id),
@@ -58,7 +58,7 @@ class CadicalTracer : public Tracer
     int64_t d_aig_id = 0;
 
     /** Antecedents of this clause in the proof. */
-    std::vector<uint64_t> d_antecedents;
+    std::vector<int64_t> d_antecedents;
   };
   struct Interpolant
   {
@@ -74,21 +74,22 @@ class CadicalTracer : public Tracer
 
   /* CaDiCaL::Tracer interface ------------------------------------------- */
 
-  void add_original_clause(uint64_t id,
+  void add_original_clause(int64_t id,
                            bool redundant,
                            const std::vector<int32_t>& clause,
                            bool restore = false) override;
 
-  void add_derived_clause(uint64_t id,
+  void add_derived_clause(int64_t id,
                           bool redundant,
+                          int32_t witness,
                           const std::vector<int32_t>& clause,
-                          const std::vector<uint64_t>& proof_chain) override;
+                          const std::vector<int64_t>& proof_chain) override;
 
-  void add_assumption_clause(uint64_t id,
+  void add_assumption_clause(int64_t id,
                              const std::vector<int32_t>& clause,
-                             const std::vector<uint64_t>& proof_chain) override;
+                             const std::vector<int64_t>& proof_chain) override;
 
-  void delete_clause(uint64_t id,
+  void delete_clause(int64_t id,
                      bool redundant,
                      const std::vector<int32_t>& clause) override;
 
@@ -99,7 +100,7 @@ class CadicalTracer : public Tracer
   void reset_assumptions() override;
 
   void conclude_unsat(CaDiCaL::ConclusionType conclusion,
-                      const std::vector<uint64_t>& clause_ids) override;
+                      const std::vector<int64_t>& clause_ids) override;
 
   /* --------------------------------------------------------------------- */
 
@@ -191,15 +192,15 @@ class CadicalTracer : public Tracer
   /** The currently active assumptions. */
   std::unordered_set<int32_t> d_assumptions;
   /** The clauses observed via add_assumption_clause(). */
-  std::vector<uint64_t> d_assumption_clauses;
+  std::vector<int64_t> d_assumption_clauses;
   /**
    * The partial interpolants, dummy at index 0 to enable access via clause id.
    */
-  std::unordered_map<uint64_t, Interpolant> d_part_interpolants = {
+  std::unordered_map<int64_t, Interpolant> d_part_interpolants = {
       {0, Interpolant()}};
 
-  std::vector<uint64_t> d_final_clause_ids;
-  std::vector<uint64_t> d_proof_core;
+  std::vector<int64_t> d_final_clause_ids;
+  std::vector<int64_t> d_proof_core;
   CaDiCaL::ConclusionType d_conclusion;
 
   /** The configured interpolants generation algorithm. */
