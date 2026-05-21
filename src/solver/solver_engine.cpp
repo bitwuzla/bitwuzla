@@ -926,22 +926,28 @@ SolverEngine::term_level(const Node& term)
     }
     else if (it->second == -1)
     {
-      if (bv::BvSolver::is_leaf(cur))
+      int64_t level = -1;
+      for (const auto& c : cur)
       {
-        auto itt   = d_register_term_cache.find(cur);
-        it->second = itt == d_register_term_cache.end()
+        level = std::max(level, d_term_level_cache.at(c));
+      }
+      if (level == -1)
+      {
+        assert(cur.num_children() == 0);
+        if (cur.is_value())
+        {
+          level = 0;
+        }
+        else
+        {
+          auto itt = d_register_term_cache.find(cur);
+          level    = itt == d_register_term_cache.end()
                          ? d_backtrack_mgr.num_levels()
                          : itt->second;
-      }
-      else
-      {
-        int64_t level = 0;
-        for (const auto& c : cur)
-        {
-          level = std::max(level, d_term_level_cache.at(c));
         }
-        it->second = level;
       }
+      assert(level > -1);
+      it->second = level;
     }
     visit.pop_back();
   } while (!visit.empty());
