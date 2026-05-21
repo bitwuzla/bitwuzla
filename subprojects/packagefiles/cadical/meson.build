@@ -1,6 +1,6 @@
 project('cadical',
-  'cpp',
-  version: '2.1.2',
+  ['cpp', 'c'],
+  version: '3.0.0',
   license: 'mit',
   default_options: [
     'cpp_std=c++11',
