@@ -1,9 +1,9 @@
 [wrap-file]
-directory = cadical-rel-2.1.2
+directory = cadical-rel-3.0.0
 
-source_url = https://github.com/arminbiere/cadical/archive/rel-2.1.2.tar.gz
-source_filename = cadical-2.1.2.tar.gz
-source_hash = 292c2bb8d712d6d05fce3d3df63b922b8fa45e03974a79f7bae5bf68c284f131
+source_url = https://github.com/arminbiere/cadical/archive/rel-3.0.0.tar.gz
+source_filename = cadical-3.0.0.tar.gz
+source_hash = 282b1c9422fde8631cb721b86450ae94df4e8de0545c17a69a301aaa4bf92fcf
 
 patch_directory = cadical
 
