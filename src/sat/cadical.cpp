@@ -84,7 +84,7 @@ Cadical::add(int32_t lit, int64_t cgroup_id)
 void
 Cadical::assume(int32_t lit)
 {
-  d_solver->assume(lit);
+  d_assumptions.push_back(lit);
 }
 
 int32_t
@@ -146,6 +146,11 @@ Cadical::solve()
     d_solver->assume(-d_activation_vars[i]);
   }
 #endif
+  for (const auto lit : d_assumptions)
+  {
+    d_solver->assume(lit);
+  }
+  d_assumptions.clear();
   int32_t res = d_solver->solve();
   if (res == 10) return Result::SAT;
   if (res == 20) return Result::UNSAT;
