@@ -27,10 +27,12 @@ Building Bitwuzla on Linux and macOS
   * `Python >= 3.7 <https://www.python.org>`_
   * `Meson >= 0.64 <https://mesonbuild.com>`_
   * `Ninja <https://ninja-build.org>`_
+  * `pkg-config <https://www.freedesktop.org/wiki/Software/pkg-config/>`_
   * `GMP >= v6.3 (GNU Multi-Precision arithmetic library) <https://gmplib.org>`_
   * `MPFR >= v4.2.1 (GNU Multiple Precision Floating-Point Reliable Library) <https://www.mpfr.org>`_
   * `CaDiCaL >= 1.5.0 <https://github.com/arminbiere/cadical>`_
   * `SymFPU <https://github.com/martin-cs/symfpu>`_
+  * `googletest <https://github.com/google/googletest>`_ (debug, testing)
 
 * **Optional Dependencies**
 
