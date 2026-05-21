@@ -2,10 +2,17 @@
 
 This file collects a summary of important and/or user-visible changes.
 
+## News for version 0.9.1
+
+- Updated SymFPU to version 1.2.0.
+
 - Fixed issue with fp.min/fp.max handling of underspecific +/- zero case
   (#207, #208).
 
 - Fixed issue with quantifier instantiation (#202).
+
+- Removed obsolete option `--pp-elim-extracts`. This preprocessing pass is now
+  subsumed by the variable substitution preprocessing pass.
 
 ## News for version 0.9.0
 
