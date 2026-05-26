@@ -381,7 +381,7 @@ BitwuzlaSort bitwuzla_sort_copy(BitwuzlaSort sort);
 /**
  * Release copy of sort.
  *
- * Decrements reference counter of `sort.
+ * Decrements reference counter of `sort`.
  *
  * @param sort The sort to release.
  *
