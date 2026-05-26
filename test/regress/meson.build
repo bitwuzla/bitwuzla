@@ -1733,6 +1733,8 @@ endif
 if get_option('fpexp')
   tests_smt2 += [
     ['check/regr_cm3.smt2'],
+    ['solver/fp/cvc5-issue9425-1.smt2'],
+    ['solver/fp/cvc5-issue9425-2.smt2'],
     ['solver/fp/fp_regr11.smt2'],
     ['solver/fp/issue130.smt2'],
     ['solver/quant/duplicatelemma1.smt2'],
