@@ -1,0 +1,29 @@
+{# Re-add the static version label below the project title in the sidebar.
+   sphinx_rtd_theme >= 3.0 removed this from layout.html. #}
+{% extends "!layout.html" %}
+
+{% block sidebartitle %}
+  {%- set _logo_url = logo_url|default(pathto('_static/' + (logo or ""), 1)) %}
+  {%- set _root_doc = root_doc|default(master_doc) %}
+  <a href="{{ pathto(_root_doc) }}"{% if not theme_logo_only %} class="icon icon-home"{% endif %}>
+    {% if not theme_logo_only %}{{ project }}{% endif %}
+    {%- if logo or logo_url %}
+      <img src="{{ _logo_url }}" class="logo" alt="{{ _('Logo') }}"/>
+    {%- endif %}
+  </a>
+
+  {%- if version %}
+  <div class="version">{{ version }}</div>
+  {%- endif %}
+
+  {%- if READTHEDOCS or DEBUG %}
+    {%- if theme_version_selector or theme_language_selector %}
+      <div class="switch-menus">
+        <div class="version-switch"></div>
+        <div class="language-switch"></div>
+      </div>
+    {%- endif %}
+  {%- endif %}
+
+  {%- include "searchbox.html" %}
+{% endblock %}

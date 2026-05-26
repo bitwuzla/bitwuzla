@@ -55,7 +55,13 @@ autosectionlabel_prefix_document = True
 bibtex_bibfiles = ['@current_source_dir@/references.bib']
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+# Only override layout for sphinx_rtd_theme >= 3.0, which dropped the
+# static version label below the project title in the sidebar.
+import sphinx_rtd_theme
+if int(sphinx_rtd_theme.__version__.split('.')[0]) >= 3:
+    templates_path = ['@current_source_dir@/_templates']
+else:
+    templates_path = []
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.

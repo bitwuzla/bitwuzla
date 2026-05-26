@@ -44,6 +44,8 @@ a:hover, a:focus {
 
 .wy-side-nav-search>div.version {
   color: #343131;
+  margin-top: -0.4045em;
+  margin-bottom: 0.809em;
 }
 
 .wy-side-nav-search > a {
