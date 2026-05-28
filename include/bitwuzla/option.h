@@ -877,6 +877,14 @@ enum ENUM(Option)
    *  - **false**: disable [**default**]
    */
   EVALUE(PP_VARIABLE_SUBST_NORM_BV_INEQ),
+  /*!
+   * **Preprocessing: Quantifiers.**
+   *
+   * *Values:*
+   *  * **true**: enable [**default**]
+   *  * **false**: disable
+   */
+  EVALUE(PP_QUANT),
 
   /*!
    * **Debug: Recursive rewrite threshold.**

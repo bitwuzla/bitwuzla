@@ -19,6 +19,7 @@
 #include "preprocess/pass/embedded_constraints.h"
 #include "preprocess/pass/flatten_and.h"
 #include "preprocess/pass/normalize.h"
+#include "preprocess/pass/quant.h"
 #include "preprocess/pass/rewrite.h"
 #include "preprocess/pass/skeleton_preproc.h"
 #include "preprocess/pass/variable_substitution.h"
@@ -125,6 +126,7 @@ class Preprocessor
   pass::PassFlattenAnd d_pass_flatten_and;
   pass::PassSkeletonPreproc d_pass_skeleton_preproc;
   pass::PassNormalize d_pass_normalize;
+  pass::PassQuant d_pass_quant;
 
   /** Counter for how often a statistics line was printed. */
   uint64_t d_num_printed_stats = 0;

@@ -87,6 +87,7 @@ enum class Option
   PP_NORMALIZE,         // bool
   PP_SKELETON_PREPROC,  // bool
   PP_VARIABLE_SUBST,    // bool
+  PP_QUANT,             // bool
   PP_OPT_END,
 
   // Preprocessing pass options for configuring passes
@@ -633,6 +634,7 @@ class Options
   OptionBool pp_variable_subst_norm_eq;
   OptionBool pp_variable_subst_norm_diseq;
   OptionBool pp_variable_subst_norm_bv_ineq;
+  OptionBool pp_quant;
 
   // Debug options
   OptionNumeric dbg_rw_node_thresh;

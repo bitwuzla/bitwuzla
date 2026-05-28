@@ -534,6 +534,11 @@ Options::Options()
           "enable bit-vector unsigned inequality normalization if variable "
           "substitution preprocessing pass is enabled",
           "pp-variable-subst-norm-bv-ineq"),
+      pp_quant(this,
+               Option::PP_QUANT,
+               false,
+               "enable quantifiers preprocessing pass",
+               "pp-quant"),
 
       // Debugging
       dbg_rw_node_thresh(
@@ -1016,6 +1021,7 @@ Options::data(Option opt)
     case Option::PP_VARIABLE_SUBST_NORM_EQ: return &pp_variable_subst_norm_eq;
     case Option::PP_VARIABLE_SUBST_NORM_DISEQ:
       return &pp_variable_subst_norm_diseq;
+    case Option::PP_QUANT: return &pp_quant;
 
     case Option::DBG_RW_NODE_THRESH: return &dbg_rw_node_thresh;
     case Option::DBG_PP_NODE_THRESH: return &dbg_pp_node_thresh;

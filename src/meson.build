@@ -230,6 +230,7 @@ sources = files([
   'preprocess/pass/rewrite.cpp',
   'preprocess/pass/skeleton_preproc.cpp',
   'preprocess/pass/variable_substitution.cpp',
+  'preprocess/pass/quant.cpp',
   'preprocess/preprocessing_pass.cpp',
   'preprocess/preprocessor.cpp',
   'printer/btor2_printer.cpp',

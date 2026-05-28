@@ -57,6 +57,7 @@ Preprocessor::Preprocessor(SolvingContext& context)
       d_pass_flatten_and(d_env, &d_backtrack_mgr),
       d_pass_skeleton_preproc(d_env, &d_backtrack_mgr),
       d_pass_normalize(d_env, &d_backtrack_mgr),
+      d_pass_quant(d_env, &d_backtrack_mgr),
       d_stats(d_env.statistics())
 {
 }
@@ -131,6 +132,7 @@ Preprocessor::preprocess()
   d_pass_flatten_and.clear_cache();
   d_pass_skeleton_preproc.clear_cache();
   d_pass_normalize.clear_cache();
+  d_pass_quant.clear_cache();
 
   // Note: We use d_assertions.is_inconsistent() here since we want to return
   // UNSAT if the assertions are inconsistent even if early termination is
@@ -373,6 +375,21 @@ Preprocessor::apply(AssertionVector& assertions)
       if (d_logger.is_msg_enabled(1))
       {
         print_statistics(d_pass_normalize, assertions);
+      }
+      if (is_inconsistent())
+      {
+        break;
+      }
+    }
+
+    if (options.pp_quant())
+    {
+      assertions.reset_modified();
+      d_pass_quant.apply(assertions);
+      modified |= assertions.modified();
+      if (d_logger.is_msg_enabled(1))
+      {
+        print_statistics(d_pass_quant, assertions);
       }
       if (is_inconsistent())
       {
