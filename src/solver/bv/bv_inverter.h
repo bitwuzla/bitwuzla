@@ -24,19 +24,53 @@ namespace bv {
 class BvInverter
 {
  public:
+  /** Constructor. */
   BvInverter(Env& env);
+  /** Destructor. */
   ~BvInverter();
 
+  /**
+   * Compute the inverse of a given node with respect to x.
+   * @param node The node.
+   * @param x    The x node.
+   * @return A pair of inverse and conditions. If conditions is not empty,
+   *         the resulting inverse is a conditional inverse. Returns a null
+   *         node for inverse with empty conditions if no inverse can be
+   *         computed. This is the case when either x does not occur in node,
+   *         or when an unconditional inverse can be computed but it contains x.
+   */
   std::pair<Node, std::vector<Node>> invert(const Node& node, const Node& x);
 
+  /**
+   * Compute the invertibility condition for a given node with respect to
+   * t and x = node[idx].
+   * @param node The node.
+   * @param t    The t node.
+   * @param idx  The idx of x.
+   */
   Node ic(const Node& node, const Node& t, size_t idx);
 
  private:
+  /** @return True if given node is of a kind that can be inverted. */
   bool is_invertible(const Node& node) const;
 
+  /**
+   * Compute the path from the given `node` to `x`.
+   * @param node The node to start from.
+   * @param x    The node to compute the path to.
+   * @return The path as a map from node to index of the child to follow. May
+   *         be empty if x does not occur in node.
+   */
   std::unordered_map<Node, size_t> compute_path(const Node& node,
                                                 const Node& x) const;
 
+  /**
+   * Compute the inverse of given `node` wrt. to x = node[idx].
+   * @note May return an inverse that contains x.
+   * @return The inverse, if an inverse be computed, else a null node. Only the
+   *         operator kind of the node determines if an inverse can be computed,
+   *         hence the resulting inverse may contain x.
+   */
   Node inverse(const Node& node, size_t idx, const Node& t);
 
   std::pair<Node, Node> ic(const Node& node,
