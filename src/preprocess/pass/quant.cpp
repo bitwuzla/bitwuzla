@@ -173,11 +173,16 @@ PassQuant::eliminate(const Node& node)
     body = body[1];
   }
 
-  // For a formula (forall x. (or (not A) B)), if we find a non-negated equality
-  // x = t in the body, we can replace the body C with C[x/t]. We do not only
-  // look for such verbatim equalities but also try to derive them via computing
-  // the inverse for x. Hence, when trying to find such equalities, we start
-  // with negated = true.
+  // Given a formula (forall x. (or (not A) B)), if we find a non-negated
+  // equality a = b in A (where x appears in either a or b) and can derive an
+  // inverse x = t for this equality and x does not occur in t, we can replace
+  // the body C with C[x/t].
+  //
+  // This is a more general version of destructive equality resolution (DER)
+  // where a body (or (not (= x t) B) can be simplified to B[x/t] if x does not
+  // occur in t.
+  //
+  // Hence, when trying to find such equalities, we start with negated = true.
   Node inv = find_inverse(body, var);
   if (inv.is_null())
   {
