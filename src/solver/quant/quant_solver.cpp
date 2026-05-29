@@ -526,6 +526,7 @@ QuantSolver::mbqi_lemma(
 
   NodeManager& nm = d_env.nm();
   std::unordered_map<Node, Node> map;
+  std::unordered_map<Node, Node> subst_cache;
   QuantSolver::LemmaKind lemma_kind = QuantSolver::LemmaKind::MBQI_INST;
 
   Node body = q;
@@ -561,6 +562,13 @@ QuantSolver::mbqi_lemma(
           auto [invert, conds] = d_bv_inverter.invert(body, cur[0]);
           if (!invert.is_null())
           {
+            subst_cache.clear();
+            invert =
+                utils::substitute(nm, invert, {{cur[0], value}}, subst_cache);
+            for (auto& c : conds)
+            {
+              c = utils::substitute(nm, c, {{cur[0], value}}, subst_cache);
+            }
             conditions.insert(conditions.end(), conds.begin(), conds.end());
             if (nquants == 1 || invert.is_const())
             {

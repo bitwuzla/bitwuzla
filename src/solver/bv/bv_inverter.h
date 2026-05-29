@@ -35,9 +35,9 @@ class BvInverter
    * @param x    The x node.
    * @return A pair of inverse and conditions. If conditions is not empty,
    *         the resulting inverse is a conditional inverse. Returns a null
-   *         node for inverse with empty conditions if no inverse can be
-   *         computed. This is the case when either x does not occur in node,
-   *         or when an unconditional inverse can be computed but it contains x.
+   *         node as inverse with empty conditions if x does not occur in x.
+   * @note Both the inverse and the conditions may contain x in case of multiple
+   *       occurences of x in node.
    */
   std::pair<Node, std::vector<Node>> invert(const Node& node, const Node& x);
 
