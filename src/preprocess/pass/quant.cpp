@@ -65,16 +65,8 @@ PassQuant::process(const Node& node)
     }
     else if (it->second.is_null())
     {
-      std::vector<Node> children;
-      for (const Node& child : cur)
-      {
-        auto iit = d_cache.find(child);
-        assert(iit != d_cache.end());
-        children.push_back(iit->second);
-      }
-
       it->second = d_env.rewriter().rewrite(
-          utils::rebuild_node(d_env.nm(), cur, children));
+          utils::rebuild_node(d_env.nm(), cur, d_cache));
       if (it->second.kind() == Kind::FORALL)
       {
         Node elim = eliminate(it->second);
