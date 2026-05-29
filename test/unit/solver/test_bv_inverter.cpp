@@ -45,9 +45,14 @@ class TestBvInverter : public TestCommon
 
   void test_ic_ineq(Kind predicate, uint64_t bw, size_t idx);
 
-  void check_conds(const std::vector<Node>& conds, const Node& x);
+  void check_conds(const std::vector<Node>& conds,
+                   const Node& x,
+                   bool expect_x = false);
 
-  void test_invert(const Node& node, const Node& x, bool expect_conds);
+  void test_invert(const Node& node,
+                   const Node& x,
+                   bool expect_conds,
+                   bool expect_x = false);
 
   NodeManager d_nm;
   option::Options d_options;
@@ -224,7 +229,10 @@ TestBvInverter::test_ic_bool(Kind predicate,
 /* -------------------------------------------------------------------------- */
 
 void
-TestBvInverter::test_invert(const Node& node, const Node& x, bool expect_conds)
+TestBvInverter::test_invert(const Node& node,
+                            const Node& x,
+                            bool expect_conds,
+                            bool expect_x)
 {
   auto [invert, conds] = d_inverter.invert(node, x);
   ASSERT_FALSE(invert.is_null());
@@ -236,7 +244,7 @@ TestBvInverter::test_invert(const Node& node, const Node& x, bool expect_conds)
   {
     std::cout << "- " << c << std::endl;
   }
-  check_conds(conds, x);
+  check_conds(conds, x, expect_x);
 
   // SolvingContext ctx(d_nm, d_options);
   // TODO add assertions to check
@@ -284,11 +292,13 @@ TestBvInverter::test_invert(const Node& node, const Node& x, bool expect_conds)
 }
 
 void
-TestBvInverter::check_conds(const std::vector<Node>& conds, const Node& x)
+TestBvInverter::check_conds(const std::vector<Node>& conds,
+                            const Node& x,
+                            bool expect_x)
 {
+  bool found_x = false;
   for (const auto& c : conds)
   {
-    bool found_x = false;
     std::vector<Node> visit{c};
     std::unordered_set<Node> cache;
     do
@@ -306,8 +316,8 @@ TestBvInverter::check_conds(const std::vector<Node>& conds, const Node& x)
         visit.insert(visit.end(), cur.begin(), cur.end());
       }
     } while (!visit.empty());
-    ASSERT_FALSE(found_x);
   }
+  ASSERT_EQ(found_x, expect_x);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -646,7 +656,7 @@ TEST_F(TestBvInverter, invert8)
   Node shl  = d_nm.mk_node(Kind::BV_MUL, {mul, s1});
   Node node = d_nm.mk_node(Kind::EQUAL, {shl, t});
 
-  test_invert(node, x, true);
+  test_invert(node, x, true, true);
 }
 
 TEST_F(TestBvInverter, invert9)
