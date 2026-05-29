@@ -358,6 +358,7 @@ substitute(NodeManager& nm,
       {
         auto iit = cache.find(its->second);
         assert(iit != cache.end());
+        assert(!iit->second.is_null());
         it->second = iit->second;
       }
       else
@@ -371,6 +372,7 @@ substitute(NodeManager& nm,
           children.push_back(itc->second);
         }
         it->second = node::utils::rebuild_node(nm, cur, children);
+        assert(!it->second.is_null());
       }
     }
     visit.pop_back();

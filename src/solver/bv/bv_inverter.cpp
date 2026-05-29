@@ -141,6 +141,11 @@ BvInverter::invert(const Node& node, const Node& x)
     cur = next;
   }
 
+  if (check_for_x(t, x))
+  {
+    return {Node(), {}};
+  }
+
   subst_cache.clear();
   for (auto& c : conds)
   {
