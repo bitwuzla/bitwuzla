@@ -885,6 +885,14 @@ enum ENUM(Option)
    *  * **false**: disable
    */
   EVALUE(PP_QUANT),
+  /*!
+   * **Preprocessing: Quantifiers.**
+   *
+   * *Values:*
+   *  * **true**: enable
+   *  * **false**: disable [**default**]
+   */
+  EVALUE(PP_QUANT_ALPHA),
 
   /*!
    * **Debug: Recursive rewrite threshold.**

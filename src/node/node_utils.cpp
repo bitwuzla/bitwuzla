@@ -269,6 +269,7 @@ rebuild_node(NodeManager& nm,
              const Node& node,
              const std::vector<Node>& children)
 {
+  assert(!node.is_null());
   assert(node.num_children() == children.size());
   if (node.num_children() == 0)
   {
@@ -295,6 +296,7 @@ rebuild_node(NodeManager& nm,
              const Node& node,
              const std::unordered_map<Node, Node>& cache)
 {
+  assert(!node.is_null());
   std::vector<Node> children;
 
   bool changed = false;
@@ -343,6 +345,7 @@ substitute(NodeManager& nm,
       auto its = substitutions.find(cur);
       if (its != substitutions.end() && its->second != cur)
       {
+        assert(!its->second.is_null());
         visit.push_back(its->second);
       }
       else

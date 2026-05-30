@@ -445,6 +445,8 @@ tests_smt2 = [
   ['preprocess/normalize22.smt2'],
   ['preprocess/normalize24.smt2'],
   ['preprocess/normalize-murxla-f860beab6dda8a8b.min.smt2'],
+  ['preprocess/quant/alpha.smt2', ['-p']],
+  ['preprocess/quant/alpha2.smt2', ['-p']],
   ['preprocess/regrinc1.smt2'],
   ['preprocess/rewrite1.smt2'],
   ['preprocess/rewrite2.smt2'],

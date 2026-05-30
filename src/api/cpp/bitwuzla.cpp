@@ -141,6 +141,7 @@ static const std::unordered_map<Option, bzla::option::Option>
         {Option::PP_VARIABLE_SUBST_NORM_BV_INEQ,
          bzla::option::Option::PP_VARIABLE_SUBST_NORM_BV_INEQ},
         {Option::PP_QUANT, bzla::option::Option::PP_QUANT},
+        {Option::PP_QUANT_ALPHA, bzla::option::Option::PP_QUANT_ALPHA},
         {Option::DBG_RW_NODE_THRESH, bzla::option::Option::DBG_RW_NODE_THRESH},
         {Option::DBG_PP_NODE_THRESH, bzla::option::Option::DBG_PP_NODE_THRESH},
         {Option::DBG_CHECK_INTERPOLANT,

@@ -596,7 +596,7 @@ QuantSolver::mbqi_lemma(
     cond = utils::mk_nary(nm, Kind::AND, conditions);
     cond = substitute(cond, map);
   }
-  Node inst       = substitute(cur, map);
+  Node inst = substitute(cur, map);
   Node lem =
       nm.mk_node(Kind::AND, {cond, nm.mk_node(Kind::IMPLIES, {q, inst})});
   lemma(lem, lemma_kind);

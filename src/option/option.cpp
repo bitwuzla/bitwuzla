@@ -539,6 +539,12 @@ Options::Options()
                false,
                "enable quantifiers preprocessing pass",
                "pp-quant"),
+      pp_quant_alpha(this,
+                     Option::PP_QUANT_ALPHA,
+                     false,
+                     "enable alpha equivalence processing in quantifiers "
+                     "preprocessing pass",
+                     "pp-quant-alpha"),
 
       // Debugging
       dbg_rw_node_thresh(
@@ -1022,6 +1028,7 @@ Options::data(Option opt)
     case Option::PP_VARIABLE_SUBST_NORM_DISEQ:
       return &pp_variable_subst_norm_diseq;
     case Option::PP_QUANT: return &pp_quant;
+    case Option::PP_QUANT_ALPHA: return &pp_quant_alpha;
 
     case Option::DBG_RW_NODE_THRESH: return &dbg_rw_node_thresh;
     case Option::DBG_PP_NODE_THRESH: return &dbg_pp_node_thresh;
