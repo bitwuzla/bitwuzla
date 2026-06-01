@@ -57,8 +57,13 @@ PassQuant::apply(AssertionVector& assertions)
         auto [it, _] = alpha_quants.emplace(c.second, std::set<Node>{});
         it->second.insert(c.first);
         quants.push_back(c.first);
+        if (it->second.size() > 1)
+        {
+          d_stats.num_alpha_elim += 1;
+        }
       }
     }
+    d_stats.num_quants += quants.size();
     std::unordered_map<Node, Node> substs;
     for (auto& q : quants)
     {
@@ -68,7 +73,6 @@ PassQuant::apply(AssertionVector& assertions)
       if (it->second.size() > 1)
       {
         substs.emplace(q, *it->second.begin());
-        d_stats.num_alpha_elim += 1;
       }
     }
     std::unordered_map<Node, Node> subst_cache;
@@ -416,11 +420,12 @@ PassQuant::alpha_normalize(const Node& node)
 }
 
 PassQuant::Statistics::Statistics(util::Statistics& stats)
-    : num_inv_elim(stats.new_stat<uint64_t>("preprocess::quant::num_inv_elim")),
-      num_alpha_elim(
+    : num_alpha_elim(
           stats.new_stat<uint64_t>("preprocess::quant::num_alpha_elim")),
-      time_alpha(
-          stats.new_stat<util::TimerStatistic>("preprocess:quant::time_alpha")),
+      num_inv_elim(stats.new_stat<uint64_t>("preprocess::quant::num_inv_elim")),
+      num_quants(stats.new_stat<uint64_t>("preprocess::quant::num_quants")),
+      time_alpha_elim(stats.new_stat<util::TimerStatistic>(
+          "preprocess::quant::time_alpha_elim")),
       time_inv_elim(stats.new_stat<util::TimerStatistic>(
           "preprocess:quant::time_inv_elim"))
 {

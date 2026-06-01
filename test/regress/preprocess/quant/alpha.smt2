@@ -1,6 +1,5 @@
 (set-option :pp-quant true)
 (set-option :pp-quant-alpha true)
-(set-option :pp-only true)
 (declare-fun i () Float64)
 (assert (and true (forall ((V (_ BitVec 32))) (and (= V (_ bv0 32)) (= (_ bv0 32) (bvadd V (bvmul V V)))))))
 (assert (and true (forall ((x (_ BitVec 32))) (and (= x (_ bv0 32)) (= (_ bv0 32) (bvadd x (bvmul x x)))))))

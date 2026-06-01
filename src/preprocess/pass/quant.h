@@ -47,9 +47,10 @@ class PassQuant : public PreprocessingPass
   struct Statistics
   {
     Statistics(util::Statistics& stats);
-    uint64_t& num_inv_elim;
     uint64_t& num_alpha_elim;
-    util::TimerStatistic& time_alpha;
+    uint64_t& num_inv_elim;
+    uint64_t& num_quants;
+    util::TimerStatistic& time_alpha_elim;
     util::TimerStatistic& time_inv_elim;
   } d_stats;
 };
