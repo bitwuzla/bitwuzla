@@ -45,9 +45,15 @@ class TestBvInverter : public TestCommon
 
   void test_ic_ineq(Kind predicate, uint64_t bw, size_t idx);
 
-  void check_conds(const std::vector<Node>& conds,
+  void check_conds(const Node& node,
                    const Node& x,
+                   const Node& invert,
+                   const std::vector<Node>& conds,
                    bool expect_x = false);
+  void check_inverse(const Node& node,
+                     const Node& x,
+                     const Node& invert,
+                     const std::vector<Node>& conds);
 
   void test_invert(const Node& node,
                    const Node& x,
@@ -235,65 +241,22 @@ TestBvInverter::test_invert(const Node& node,
                             bool expect_x)
 {
   auto [invert, conds] = d_inverter.invert(node, x);
+  if (invert.is_null() || (!conds.empty() != expect_conds))
+  {
+    std::cout << "node: " << node << std::endl;
+    std::cout << "invert: " << invert << std::endl;
+  }
   ASSERT_FALSE(invert.is_null());
   ASSERT_EQ(!conds.empty(), expect_conds);
-  std::cout << "node: " << node << std::endl;
-  std::cout << "invert: " << invert << std::endl;
-  std::cout << "conditions:" << std::endl;
-  for (const auto& c : conds)
-  {
-    std::cout << "- " << c << std::endl;
-  }
-  check_conds(conds, x, expect_x);
-
-  // SolvingContext ctx(d_nm, d_options);
-  // TODO add assertions to check
-  // Result res = ctx.solve();
-  //
-  // if (res != Result::UNSAT)
-  // {
-  //   std::cout << "node: " << node << std::endl;
-  //   std::cout << "invert: " << invert << std::endl;
-  //   std::cout << "conditions:" << std::endl;
-  //   for (const auto& c : conds)
-  //   {
-  //     std::cout << "- " << c << std::endl;
-  //   }
-  //   std::cout << "assertions:" << std::endl;
-  //   auto assertions = ctx.assertions();
-  //   std::vector<Node> visit;
-  //   for (size_t i = 0, n = assertions.size(); i < n; ++i)
-  //   {
-  //     std::cout << "  " << assertions[i] << std::endl;
-  //     visit.push_back(assertions[i]);
-  //   }
-  //   std::cout << "model:" << std::endl;
-  //   std::unordered_set<Node> cache;
-  //   do
-  //   {
-  //     Node cur = visit.back();
-  //     visit.pop_back();
-  //     auto [it, inserted] = cache.insert(cur);
-  //     if (inserted)
-  //     {
-  //       if (cur.is_const())
-  //       {
-  //         std::cout << "  " << cur << ": " << ctx.get_value(cur) <<
-  //         std::endl;
-  //       }
-  //       else
-  //       {
-  //         visit.insert(visit.end(), cur.begin(), cur.end());
-  //       }
-  //     }
-  //   } while (!visit.empty());
-  // }
-  // ASSERT_EQ(res, Result::UNSAT);
+  check_conds(node, x, invert, conds, expect_x);
+  check_inverse(node, x, invert, conds);
 }
 
 void
-TestBvInverter::check_conds(const std::vector<Node>& conds,
+TestBvInverter::check_conds(const Node& node,
                             const Node& x,
+                            const Node& invert,
+                            const std::vector<Node>& conds,
                             bool expect_x)
 {
   bool found_x = false;
@@ -317,7 +280,47 @@ TestBvInverter::check_conds(const std::vector<Node>& conds,
       }
     } while (!visit.empty());
   }
+  if (found_x != expect_x)
+  {
+    std::cout << "node: " << node << std::endl;
+    std::cout << "invert: " << invert << std::endl;
+    std::cout << "conditions:" << std::endl;
+    for (const auto& c : conds)
+    {
+      std::cout << "- " << c << std::endl;
+    }
+  }
   ASSERT_EQ(found_x, expect_x);
+}
+
+void
+TestBvInverter::check_inverse(const Node& node,
+                              const Node& x,
+                              const Node& invert,
+                              const std::vector<Node>& conds)
+{
+  SolvingContext ctx(d_nm, d_options, d_sat_factory);
+  std::unordered_map<Node, Node> subst_cache;
+  Node ass = utils::substitute(d_nm, node, {{x, invert}}, subst_cache);
+  if (conds.empty())
+  {
+    ctx.assert_formula(d_nm.mk_node(Kind::NOT, {ass}));
+    Result res = ctx.solve();
+    if (res != Result::UNSAT)
+    {
+      std::cout << "node: " << node << std::endl;
+      std::cout << "invert: " << invert << std::endl;
+    }
+    ASSERT_EQ(res, Result::UNSAT);
+  }
+  // For conditional inverses, we cannot easily test this similarly to
+  // unconditional inverses. The (conceptual) choice term's value is
+  // undetermined when the condition is false (the conditions are encoded over
+  // implications IC => predicate), i.e., the condition must be valid and the
+  // following condition would have to be checked:
+  //   \forall s, t. \exists y. (not (implies C P[y]))
+  // where y is one or more fresh symbols introduced by invert (the choice
+  // variables, and C is the conjunction of the conditions returned by invert).
 }
 
 /* -------------------------------------------------------------------------- */
