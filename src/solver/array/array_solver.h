@@ -11,13 +11,15 @@
 #ifndef BZLA_SOLVER_ARRAY_ARRAY_SOLVER_H_INCLUDED
 #define BZLA_SOLVER_ARRAY_ARRAY_SOLVER_H_INCLUDED
 
-#include <map>
+#include <cstdint>
 #include <unordered_map>
+#include <vector>
 
 #include "backtrack/unordered_map.h"
 #include "backtrack/unordered_set.h"
 #include "backtrack/vector.h"
 #include "solver/solver.h"
+#include "util/hash.h"
 #include "util/logger.h"
 #include "util/statistics.h"
 
@@ -28,6 +30,7 @@ enum class LemmaId
   CONGRUENCE,
   ACCESS_STORE,
   ACCESS_CONST_ARRAY,
+  CONST_ARRAY_DIFF,
   DISEQUALITY,
 };
 
@@ -74,6 +77,7 @@ class ArraySolver : public Solver
   {
    public:
     Access(const Node& access, SolverState& state);
+    Access(const Node& ca, const Node& ca_index, SolverState& state);
 
     /** @return Associated access node. */
     const Node& get() const;
@@ -105,6 +109,8 @@ class ArraySolver : public Solver
     Node d_value;
     /** Value of read index. */
     Node d_index_value;
+
+    Node d_const_array_index;
   };
 
   /** Hash struct for hashing Access. */
@@ -125,6 +131,9 @@ class ArraySolver : public Solver
 
   /** Check theory consistency of access. */
   void check_access(const Node& access);
+
+  /** Check theory consistency of constant array default values. */
+  void check_default_value(const Node& const_array);
 
   /** Check theory consistency of array equality. */
   void check_equality(const Node& eq);
@@ -156,6 +165,11 @@ class ArraySolver : public Solver
    * access. These are constructed via collect_path_conditions().
    */
   void add_access_const_array_lemma(const Access& acc, const Node& array);
+
+  bool add_const_array_equality_lemma(
+      const Access& acc,
+      const Node& array,
+      const std::vector<std::pair<Node, bool>>& prop_path);
 
   /**
    * Add array disequality lemma for a = b.
@@ -195,22 +209,36 @@ class ArraySolver : public Solver
   /**
    * Construct model value for array.
    *
-   * @param term: Array term.
-   * @param cache: Caches array term values.
-   * @param selected_index: Get model value for given index.
+   * @param term Array term.
+   * @param cache Caches array term values.
+   * @param selected_index Get model value for given index.
    */
   Node construct_model_value(const Node& term,
                              std::unordered_map<Node, Node>& cache,
                              const Node& selected_index = Node());
+  /**
+   * Construct model value for array element. This is a helper for
+   * construct_model_value().
+   *
+   * @param term Array element.
+   * @param cache Model construction cache.
+   */
+  Node construct_element_value(const Node& term,
+                               std::unordered_map<Node, Node>& cache);
 
   bool is_equal(const Access* acc1, const Access* acc2);
   bool is_equal(const Access* acc, const Node& a);
+
+  Node const_array_index(const Node& const_array);
 
   /** Registered array selects. */
   backtrack::vector<Node> d_selects;
 
   /** Registered array equalities. */
   backtrack::vector<Node> d_equalities;
+
+  std::vector<Node> d_eq_const_arrays;
+  std::unordered_map<Node, Node> d_const_array_indices;
 
   /**
    * Array models constructed during check().
@@ -220,6 +248,17 @@ class ArraySolver : public Solver
       Node,
       std::unordered_set<const Access*, HashAccess, CompareAccess>>
       d_array_models;
+
+  /**
+   * Maps (base array id, constant array id) to the store index values
+   * overwritten along the propagation path of the constant array's default
+   * value to the base array. Recorded in check_default_value
+   * and used in construct_model_value so model construction uses the actual
+   * updated index sets.
+   * @note This cache is reset each check() call.
+   */
+  std::unordered_map<std::pair<uint64_t, uint64_t>, std::vector<Node>>
+      d_updated_indices;
 
   /** Maps access node to Access objects. */
   std::unordered_map<Node, Access> d_accesses;
@@ -244,6 +283,8 @@ class ArraySolver : public Solver
   backtrack::unordered_map<Node, std::pair<Node, Node>>
       d_disequality_lemma_cache;
 
+  backtrack::unordered_set<Node> d_const_array_eq_lemma_cache;
+
   /** Lemma cache for finding duplicate lemmas in current check() call. */
   std::unordered_set<Node> d_lemma_cache;
 
@@ -261,6 +302,7 @@ class ArraySolver : public Solver
     uint64_t& num_propagations_up;
     uint64_t& num_propagations_down;
     uint64_t& num_selects;
+    uint64_t& num_stores;
     uint64_t& num_equalities;
     util::HistogramStatistic& num_lemma_size;
     util::HistogramStatistic& lemmas;
