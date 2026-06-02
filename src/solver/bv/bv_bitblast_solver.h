@@ -100,6 +100,12 @@ class BvBitblastSolver : public Solver,
 
   void register_distinct_n(const Node& node);
 
+  /** Process registered equality heuristics. */
+  void process_pending_eq_heuristics();
+
+  /** Process registered disequality heuristics. */
+  void process_pending_distinct_heuristics();
+
   /** Update AIG and CNF statistics. */
   void update_statistics();
 
@@ -138,6 +144,13 @@ class BvBitblastSolver : public Solver,
   bool d_produce_interpolants = false;
   /** True to reset SAT solver on each solve() call. */
   bool d_reset_sat = false;
+
+  /**
+   * Registered decision heuristics that need to be registered before the next
+   * solve call.
+   */
+  std::vector<std::vector<Node>> d_pending_eq_heuristics;
+  std::vector<std::vector<Node>> d_pending_distinct_heuristics;
 
   struct Statistics
   {

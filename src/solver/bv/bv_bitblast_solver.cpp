@@ -204,6 +204,10 @@ BvBitblastSolver::solve()
     }
   }
 
+  // Register pending heuristics.
+  process_pending_eq_heuristics();
+  process_pending_distinct_heuristics();
+
   util::Timer timer(d_stats.time_sat);
   d_last_result = d_sat_solver->solve();
 
@@ -254,43 +258,13 @@ BvBitblastSolver::register_assertion(const Node& assertion,
 void
 BvBitblastSolver::register_eq_heuristic(const std::vector<Node>& nodes)
 {
-  std::vector<std::vector<int32_t>> bits;
-  for (const auto& n : nodes)
-  {
-    assert(n.type().is_bv() || n.type().is_bool());
-    d_bitblaster.bitblast(n);
-    std::vector<int32_t> ids;
-    for (const auto& bit : d_bitblaster.bits(n))
-    {
-      d_cnf_encoder->encode(bit, false);
-      ids.push_back(d_cnf_encoder->cnf_lit(bit));
-    }
-    bits.emplace_back(std::move(ids));
-  }
-  std::unique_ptr<sat::EqDecisionHeuristic> eqh(
-      new sat::EqDecisionHeuristic(bits));
-  d_sat_solver->register_propagator(std::move(eqh));
+  d_pending_eq_heuristics.emplace_back(nodes);
 }
 
 void
 BvBitblastSolver::register_distinct_heuristic(const std::vector<Node>& nodes)
 {
-  std::vector<std::vector<int32_t>> bits;
-  for (const auto& n : nodes)
-  {
-    assert(n.type().is_bv() || n.type().is_bool());
-    d_bitblaster.bitblast(n);
-    std::vector<int32_t> ids;
-    for (const auto& bit : d_bitblaster.bits(n))
-    {
-      d_cnf_encoder->encode(bit, false);
-      ids.push_back(d_cnf_encoder->cnf_lit(bit));
-    }
-    bits.emplace_back(std::move(ids));
-  }
-  std::unique_ptr<sat::DistinctDecisionHeuristic> dih(
-      new sat::DistinctDecisionHeuristic(bits));
-  d_sat_solver->register_propagator(std::move(dih));
+  d_pending_distinct_heuristics.emplace_back(nodes);
 }
 
 Node
@@ -440,6 +414,56 @@ BvBitblastSolver::register_distinct_n(const Node& node)
   std::unique_ptr<sat::DistinctNPropagator> distinct_n(
       new sat::DistinctNPropagator(card, d_cnf_encoder->cnf_var(bit), bits));
   d_sat_solver->register_propagator(std::move(distinct_n));
+}
+
+void
+BvBitblastSolver::process_pending_eq_heuristics()
+{
+  for (const auto& nodes : d_pending_eq_heuristics)
+  {
+    std::vector<std::vector<int32_t>> bits;
+    for (const auto& n : nodes)
+    {
+      assert(n.type().is_bv() || n.type().is_bool());
+      d_bitblaster.bitblast(n);
+      std::vector<int32_t> ids;
+      for (const auto& bit : d_bitblaster.bits(n))
+      {
+        d_cnf_encoder->encode(bit, false);
+        ids.push_back(d_cnf_encoder->cnf_lit(bit));
+      }
+      bits.emplace_back(std::move(ids));
+    }
+    std::unique_ptr<sat::EqDecisionHeuristic> eqh(
+        new sat::EqDecisionHeuristic(bits));
+    d_sat_solver->register_propagator(std::move(eqh));
+  }
+  d_pending_eq_heuristics.clear();
+}
+
+void
+BvBitblastSolver::process_pending_distinct_heuristics()
+{
+  for (const auto& nodes : d_pending_distinct_heuristics)
+  {
+    std::vector<std::vector<int32_t>> bits;
+    for (const auto& n : nodes)
+    {
+      assert(n.type().is_bv() || n.type().is_bool());
+      d_bitblaster.bitblast(n);
+      std::vector<int32_t> ids;
+      for (const auto& bit : d_bitblaster.bits(n))
+      {
+        d_cnf_encoder->encode(bit, false);
+        ids.push_back(d_cnf_encoder->cnf_lit(bit));
+      }
+      bits.emplace_back(std::move(ids));
+    }
+    std::unique_ptr<sat::DistinctDecisionHeuristic> dih(
+        new sat::DistinctDecisionHeuristic(bits));
+    d_sat_solver->register_propagator(std::move(dih));
+  }
+  d_pending_distinct_heuristics.clear();
 }
 
 void
