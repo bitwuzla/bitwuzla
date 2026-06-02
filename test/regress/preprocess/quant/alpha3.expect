@@ -1,0 +1,6 @@
+(set-logic ALL)
+(define-const @def0 Bool (not (forall ((x Bool)) (forall ((y Bool)) (and x y)))))
+(assert @def0)
+(assert @def0)
+(check-sat)
+(exit)

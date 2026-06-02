@@ -31,7 +31,7 @@ class PassQuant : public PreprocessingPass
   Node find_inverse(const Node& body, const Node& var, bool negated = true);
   bool has_var(const Node& node, const Node& var) const;
   std::pair<bool, std::unordered_set<Node>> has_free_vars(
-      const Node& node) const;
+      const Node& node, const std::unordered_set<Node>& closed_quants) const;
 
   Node get_canonical_var(const Node& var);
   void release_canonical_var(const Node& var);

@@ -1,0 +1,7 @@
+(set-logic BV)
+(set-info :status sat)
+(set-option :pp-quant true)
+(set-option :pp-quant-alpha true)
+(assert (exists ((x Bool) (y Bool)) (not (and x y))))
+(assert (exists ((y Bool) (x Bool)) (not (and x y))))
+(check-sat)

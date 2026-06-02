@@ -170,7 +170,13 @@ Smt2Printer::print_formula(std::ostream& os,
   std::unordered_map<Node, uint64_t> parents;
   for (size_t i = 0, n = assertions.size(); i < n; ++i)
   {
-    visit.emplace_back(assertions[i]);
+    const Node& assertion = assertions[i];
+    parents[assertion] += 1;
+    if (assertion.num_children() > 0 && parents[assertion] == 2)
+    {
+      defs.push_back(assertion);
+    }
+    visit.emplace_back(assertion);
   }
   while (!visit.empty())
   {

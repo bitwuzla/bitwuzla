@@ -171,7 +171,8 @@ PassQuant::has_var(const Node& node, const Node& var) const
 }
 
 std::pair<bool, std::unordered_set<Node>>
-PassQuant::has_free_vars(const Node& node) const
+PassQuant::has_free_vars(const Node& node,
+                         const std::unordered_set<Node>& closed_quants) const
 {
   assert(node.kind() == Kind::FORALL);
   std::unordered_set<Node> quants;
@@ -180,9 +181,13 @@ PassQuant::has_free_vars(const Node& node) const
   std::unordered_set<Node> cache;
   do
   {
-    auto cur            = visit.back();
-    auto [it, inserted] = cache.emplace(cur);
+    auto cur = visit.back();
     visit.pop_back();
+    if (closed_quants.find(cur) != closed_quants.end())
+    {
+      continue;
+    }
+    auto [it, inserted] = cache.emplace(cur);
     if (inserted)
     {
       if (cur.kind() == Kind::VARIABLE)
@@ -296,14 +301,17 @@ PassQuant::get_canonical_var(const Node& var)
   Type type = var.type();
   auto [it, _] =
       d_alpha_vars.emplace(type, std::vector<std::pair<Node, bool>>{});
-  if (it->second.empty() || it->second.back().second)
+  for (auto& v : it->second)
   {
-    Node cvar = d_env.nm().mk_var(type);
-    it->second.push_back({cvar, true});
-    return cvar;
+    if (!v.second)
+    {
+      v.second = true;
+      return v.first;
+    }
   }
-  it->second.back().second = true;
-  return it->second.back().first;
+  Node cvar = d_env.nm().mk_var(type);
+  it->second.push_back({cvar, true});
+  return cvar;
 }
 
 void
@@ -311,7 +319,15 @@ PassQuant::release_canonical_var(const Node& var)
 {
   Type type = var.type();
   assert(d_alpha_vars.at(type).size());
-  d_alpha_vars.at(type).back().second = false;
+  auto& vars = d_alpha_vars.at(type);
+  for (size_t i = 0, size = vars.size(); i < size; ++i)
+  {
+    if (vars[size - i - 1].second)
+    {
+      vars[size - i - 1].second = false;
+      return;
+    }
+  }
 }
 
 Node
@@ -364,6 +380,7 @@ PassQuant::alpha_normalize(const Node& node)
   NodeManager& nm = d_env.nm();
   std::unordered_map<Node, Node> substs;
   std::unordered_set<Node> top_quants;
+  std::unordered_set<Node> closed_quants;
   std::vector<Node> visit{node};
   do
   {
@@ -375,7 +392,7 @@ PassQuant::alpha_normalize(const Node& node)
       if (cur.kind() == Kind::FORALL)
       {
         top_quants.insert(cur);
-        while (cur[0].kind() == Kind::FORALL)
+        while (cur[1].kind() == Kind::FORALL)
         {
           // skip nested quants
           cur = cur[1];
@@ -386,33 +403,39 @@ PassQuant::alpha_normalize(const Node& node)
     }
     else if (it->second.is_null())
     {
-      it->second = d_env.rewriter().rewrite(
-          utils::rebuild_node(d_env.nm(), cur, d_cache));
       if (cur.kind() == Kind::FORALL)
       {
         assert(top_quants.find(cur) != top_quants.end());
-        cur = it->second;
         // Get canonical variables for all quantiers in chain.
-        Node ccur = cur;
-        while (ccur.kind() == Kind::FORALL)
+        Node body = cur;
+        std::vector<Node> args;
+        while (body.kind() == Kind::FORALL)
         {
-          Node q = get_canonical_var(cur[0]);
-          substs.emplace(cur[0], q);
-          ccur = cur[1];
+          Node var = get_canonical_var(body[0]);
+          args.push_back(var);
+          substs.emplace(body[0], var);
+          body = body[1];
         }
         // Substitute and cache.
         std::unordered_map<Node, Node> subst_cache;
         Node norm = d_env.rewriter().rewrite(
-            utils::substitute(nm, cur, substs, subst_cache));
-        it->second              = norm;
-        auto [has_free, quants] = has_free_vars(cur);
+            utils::substitute(nm, d_cache.at(body), substs, subst_cache));
+        args.push_back(norm);
+        it->second              = utils::mk_nary(nm, Kind::FORALL, args);
+        auto [has_free, quants] = has_free_vars(it->second, closed_quants);
         if (!has_free)
         {
+          closed_quants.insert(cur);
           for (const auto& q : quants)
           {
             release_canonical_var(q);
           }
         }
+      }
+      else
+      {
+        it->second = d_env.rewriter().rewrite(
+            utils::rebuild_node(d_env.nm(), cur, d_cache));
       }
     }
     visit.pop_back();

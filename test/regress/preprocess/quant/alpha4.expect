@@ -1,0 +1,6 @@
+(set-logic BV)
+(define-const @def0 Bool (not (forall ((z (_ BitVec 2))) (not (= #b11 (concat ((_ extract 0 0) z) #b0))))))
+(assert @def0)
+(assert @def0)
+(check-sat)
+(exit)
