@@ -43,6 +43,9 @@ Cadical::Cadical()
   d_solver.reset(new CaDiCaL::Solver());
   d_solver->set("shrink", 0);
   d_solver->set("quiet", 1);
+#ifdef BZLA_SAT_CADICAL_ACTLIT
+  d_activation_vars.push_back(0);
+#endif
 }
 
 Cadical::~Cadical() {}
@@ -67,6 +70,14 @@ Cadical::add(int32_t lit, int64_t cgroup_id)
   {
     d_propagator->info(var).active = true;
   }
+#ifdef BZLA_SAT_CADICAL_ACTLIT
+  // Add activation literal of corresponding clause level when clause is closed.
+  if (!lit && d_clause_level > 0)
+  {
+    assert(d_clause_level < d_activation_vars.size());
+    d_solver->add(d_activation_vars[d_clause_level]);
+  }
+#endif
   d_solver->add(lit);
 }
 
@@ -129,10 +140,47 @@ Cadical::register_propagator(std::unique_ptr<SatPropagator> sp)
 Result
 Cadical::solve()
 {
+#ifdef BZLA_SAT_CADICAL_ACTLIT
+  for (size_t i = 1, size = d_activation_vars.size(); i < size; ++i)
+  {
+    d_solver->assume(-d_activation_vars[i]);
+  }
+#endif
   int32_t res = d_solver->solve();
   if (res == 10) return Result::SAT;
   if (res == 20) return Result::UNSAT;
   return Result::UNKNOWN;
+}
+
+void
+Cadical::push()
+{
+#ifdef BZLA_SAT_CADICAL_ACTLIT
+  d_activation_vars.push_back(new_var());
+#endif
+}
+
+void
+Cadical::pop()
+{
+#ifdef BZLA_SAT_CADICAL_ACTLIT
+  assert(d_activation_vars.size() > 1);
+  int32_t var = d_activation_vars.back();
+  d_activation_vars.pop_back();
+  // Permanently disable this level by adding the activation literal as unit.
+  d_solver->add(var);
+  d_solver->add(0);
+#endif
+}
+
+void
+Cadical::set_level(uint32_t level)
+{
+#ifdef BZLA_SAT_CADICAL_ACTLIT
+  d_clause_level = level;
+#else
+  (void) level;
+#endif
 }
 
 void
