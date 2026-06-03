@@ -35,6 +35,7 @@ SolverEngine::SolverEngine(SolvingContext& context)
       d_assertions(context.assertions()),
       d_register_assertion_cache(&d_backtrack_mgr),
       d_register_term_cache(&d_backtrack_mgr),
+      d_term_level_cache(&d_backtrack_mgr),
       d_distinct_n(&d_backtrack_mgr),
       d_lemma_cache(&d_backtrack_mgr),
       d_sat_state(Result::UNKNOWN),
@@ -519,12 +520,13 @@ SolverEngine::process_term(const Node& term)
   util::Timer timer(d_stats.time_register_term);
   // Make sure that terms are processed by the abstraction module.
   node::node_ref_vector visit{term};
+  uint64_t level = d_backtrack_mgr.num_levels();
   do
   {
     const Node& cur = visit.back();
     visit.pop_back();
 
-    auto [it, inserted] = d_register_term_cache.insert(cur);
+    auto [it, inserted] = d_register_term_cache.emplace(cur, level);
     if (inserted)
     {
       if (cur.kind() == Kind::DISTINCT_N
@@ -907,6 +909,43 @@ SolverEngine::cached_value(const Node& term) const
   assert(it != d_value_cache.end());
   assert(!it->second.is_null());
   return it->second;
+}
+
+uint64_t
+SolverEngine::term_level(const Node& term)
+{
+  std::vector<Node> visit{term};
+  do
+  {
+    Node cur            = visit.back();
+    auto [it, inserted] = d_term_level_cache.emplace(cur, -1);
+    if (inserted)
+    {
+      visit.insert(visit.end(), cur.begin(), cur.end());
+      continue;
+    }
+    else if (it->second == -1)
+    {
+      if (bv::BvSolver::is_leaf(cur))
+      {
+        auto itt   = d_register_term_cache.find(cur);
+        it->second = itt == d_register_term_cache.end()
+                         ? d_backtrack_mgr.num_levels()
+                         : itt->second;
+      }
+      else
+      {
+        int64_t level = 0;
+        for (const auto& c : cur)
+        {
+          level = std::max(level, d_term_level_cache.at(c));
+        }
+        it->second = level;
+      }
+    }
+    visit.pop_back();
+  } while (!visit.empty());
+  return d_term_level_cache.at(term);
 }
 
 void

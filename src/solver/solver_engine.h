@@ -14,6 +14,7 @@
 #include "backtrack/assertion_stack.h"
 #include "backtrack/backtrackable.h"
 #include "backtrack/pop_callback.h"
+#include "backtrack/unordered_map.h"
 #include "backtrack/unordered_set.h"
 #include "node/node.h"
 #include "rewrite/rewriter.h"
@@ -157,6 +158,13 @@ class SolverEngine
   /** Get cached model value for given term. */
   const Node& cached_value(const Node& term) const;
 
+  /**
+   * Compute the assertion level a term is associated with.
+   * Used to encode lemma terms at the level of their dependencies, rather than
+   * at the current top assertion level.
+   */
+  uint64_t term_level(const Node& term);
+
   /** Counter for how often a statistics line was printed. */
   uint64_t d_num_printed_stats = 0;
 
@@ -174,8 +182,13 @@ class SolverEngine
   backtrack::AssertionView& d_assertions;
   /** Assertion cache used by process_assertion(). */
   backtrack::unordered_set<Node> d_register_assertion_cache;
-  /** Term cache used by process_term(). */
-  backtrack::unordered_set<Node> d_register_term_cache;
+  /**
+   * Term cache used by process_term(). Maps registered term to the assertion
+   * level at which the term was first registered.
+   */
+  backtrack::unordered_map<Node, uint64_t> d_register_term_cache;
+  /** Cached term level computations. */
+  backtrack::unordered_map<Node, int64_t> d_term_level_cache;
   backtrack::vector<Node> d_distinct_n;
 
   /** Lemmas added via lemma(). */
