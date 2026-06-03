@@ -2214,6 +2214,7 @@ BvInverter::ic_bv_sext(Kind predicate,
                        const Node& t,
                        size_t idx_x)
 {
+  (void) idx_x;
   assert(idx_x == 0);
   const Node& x = node[0];
   uint64_t bw_t = t.type().bv_size();
