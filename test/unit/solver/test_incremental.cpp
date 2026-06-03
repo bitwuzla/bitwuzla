@@ -31,6 +31,9 @@ class TestIncremental : public TestCommon
     Node one = d_nm.mk_value(BitVector::mk_true());
     Node cur = d_nm.mk_value(BitVector::mk_zero(size));
 
+    Node count = d_nm.mk_const(d_nm.mk_bv_type(size), "count@0");
+    ctx.assert_formula(d_nm.mk_node(Kind::EQUAL, {count, cur}));
+
     uint32_t i = 0;
     for (;;)
     {
@@ -51,23 +54,29 @@ class TestIncremental : public TestCommon
 
       cur = next;
 
-      Node nonzero = d_nm.mk_node(Kind::BV_REDOR, {cur});
-      Node allzero = d_nm.mk_node(Kind::BV_NOT, {nonzero});
-
       i += 1;
 
-      // TODO refactor to use solve with assumptions when supported
+      Node count =
+          d_nm.mk_const(d_nm.mk_bv_type(size), "count@" + std::to_string(i));
+      ctx.assert_formula(d_nm.mk_node(Kind::EQUAL, {count, cur}));
+
+      Node nonzero = d_nm.mk_node(Kind::BV_REDOR, {count});
+      Node allzero = d_nm.mk_node(Kind::BV_NOT, {nonzero});
+
       ctx.push();
-      ctx.assert_formula(d_nm.mk_node(Kind::EQUAL, {allzero, one}));
+      Node reached = d_nm.mk_node(Kind::EQUAL, {allzero, one});
+      ctx.assert_formula(reached);
       Result res = ctx.solve();
+      ctx.pop();
       if (res == Result::SAT)
       {
         break;
       }
+      else
+      {
+        ctx.assert_formula(d_nm.mk_node(Kind::NOT, {reached}));
+      }
       ASSERT_EQ(res, Result::UNSAT);
-      // TODO check that allzero is an unsat assumption
-      // ASSERT_TRUE();
-      ctx.pop();
       ASSERT_LT(i, (uint32_t) (1 << size));
     }
     ASSERT_EQ(i, (uint32_t) (1 << size));
@@ -172,7 +181,7 @@ TEST_F(TestIncremental, lt8) { test_incremental_lt(8); }
 TEST_F(TestIncremental, assume_assert1)
 {
   option::Options options;
-  options.set<uint64_t>(option::Option::REWRITE_LEVEL, 0);
+  options.rewrite_level.set(0);
   sat::SatSolverFactory sat_factory(d_options);
   SolvingContext ctx = SolvingContext(d_nm, options, sat_factory);
 

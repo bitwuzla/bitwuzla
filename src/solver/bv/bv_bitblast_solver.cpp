@@ -28,6 +28,50 @@ namespace bzla::bv {
 
 using namespace bzla::node;
 
+/* --- PushPopCallback ----------------------------------------------------- */
+
+PushPopCallback::PushPopCallback(backtrack::BacktrackManager* mgr)
+    : backtrack::Backtrackable(mgr),
+      d_level(0),
+      d_sat_solver(nullptr),
+      d_cnf_encoder(nullptr)
+{
+}
+
+void
+PushPopCallback::pop()
+{
+  assert(d_sat_solver);
+  assert(d_cnf_encoder);
+  if (d_level > 0)
+  {
+    --d_level;
+    d_sat_solver->pop();
+    d_cnf_encoder->pop();
+  }
+}
+
+void
+PushPopCallback::set(sat::SatSolver* sat_solver,
+                     bitblast::AigCnfEncoder* cnf_enc)
+{
+  d_sat_solver  = sat_solver;
+  d_cnf_encoder = cnf_enc;
+}
+
+void
+PushPopCallback::sync_level(size_t level)
+{
+  assert(d_sat_solver);
+  assert(d_cnf_encoder);
+  while (d_level < level)
+  {
+    d_sat_solver->push();
+    d_cnf_encoder->push();
+    ++d_level;
+  }
+}
+
 /* --- BitblastSatSolver --------------------------------------------------- */
 
 /** Sat solver wrapper for AIG encoder for bitblasting, no interpolation. */
@@ -54,6 +98,8 @@ class BvBitblastSolver::BitblastSatSolver : public bitblast::SatInterface
     }
     d_solver.add(0);
   }
+
+  void set_level(uint32_t level) override { d_solver.set_level(level); }
 
   bool value(int64_t lit) override
   {
@@ -119,6 +165,8 @@ class BvBitblastSolver::InterpolationSatSolver : public bitblast::SatInterface
     add(0, aig_id);
   }
 
+  void set_level(uint32_t level) override { d_solver.set_level(level); }
+
   bool value(int64_t lit) override
   {
     return d_solver.value(lit) == 1 ? true : false;
@@ -140,10 +188,12 @@ BvBitblastSolver::BvBitblastSolver(Env& env, SolverState& state)
       backtrack::Backtrackable(state.backtrack_mgr()),
       d_assertions(state.backtrack_mgr()),
       d_assumptions(state.backtrack_mgr()),
+      d_encode_queue(state.backtrack_mgr()),
       d_last_result(Result::UNKNOWN),
       d_opt_print_aig(!env.options().write_aiger().empty()
                       || !env.options().write_cnf().empty()),
       d_produce_interpolants(env.options().produce_interpolants()),
+      d_push_pop_callback(state.backtrack_mgr()),
       d_stats(env.statistics(), "solver::bv::bitblast::")
 {
   init_sat_solver();
@@ -162,27 +212,37 @@ BvBitblastSolver::solve()
     d_reset_sat = false;
   }
 
-  if (!d_assertions.empty())
   {
     util::Timer timer(d_stats.time_encode);
-    for (const Node& assertion : d_assertions)
+    for (const auto& [n, is_assertion, is_lemma, level] : d_encode_queue)
     {
-      const auto& bits = d_bitblaster.bits(assertion);
-      assert(!bits.empty());
-      d_cnf_encoder->encode(bits[0], true);
+      // The interpolation proof tracer cannot label clauses that contain
+      // SAT-level activation literals, so when producing interpolants we
+      // always encode at level 0 (no activation literals) and rely on the
+      // d_reset_sat reset-on-pop path instead.
+      uint64_t enc_level = 0;
+      if (!d_produce_interpolants)
+      {
+        d_push_pop_callback.sync_level(level);
+        enc_level = is_lemma ? d_solver_state.term_level(n) : level;
+      }
+      const auto& bits = d_bitblaster.bits(n);
+      assert(bits.size() == 1);
+      d_cnf_encoder->encode(bits[0], is_assertion, enc_level);
     }
     if (!d_produce_interpolants)
     {
+      d_encode_queue.clear();
       d_assertions.clear();
+      d_push_pop_callback.sync_level(
+          d_solver_state.backtrack_mgr()->num_levels());
     }
   }
 
   for (const Node& assumption : d_assumptions)
   {
     const auto& bits = d_bitblaster.bits(assumption);
-    assert(!bits.empty());
-    util::Timer timer(d_stats.time_encode);
-    d_cnf_encoder->encode(bits[0], false);
+    assert(bits.size() == 1);
     d_sat_solver->assume(d_cnf_encoder->cnf_lit(bits[0]));
   }
 
@@ -250,6 +310,11 @@ BvBitblastSolver::register_assertion(const Node& assertion,
       d_aig_printer.add_output(d_bitblaster.bits(assertion)[0]);
     }
   }
+
+  d_encode_queue.emplace_back(assertion,
+                              top_level,
+                              is_lemma,
+                              d_solver_state.backtrack_mgr()->num_levels());
 
   // Update AIG statistics
   update_statistics();
@@ -389,6 +454,7 @@ BvBitblastSolver::init_sat_solver()
         ->connect_tracer(d_env, d_bitblaster, *d_cnf_encoder);
 #endif
   }
+  d_push_pop_callback.set(d_sat_solver.get(), d_cnf_encoder.get());
 }
 
 void
