@@ -554,7 +554,6 @@ QuantSolver::mbqi_lemma(
 
   NodeManager& nm = d_env.nm();
   std::unordered_map<Node, Node> map;
-  std::unordered_map<Node, Node> subst_cache;
   QuantSolver::LemmaKind lemma_kind = QuantSolver::LemmaKind::MBQI_INST;
 
   Node body = q;
@@ -591,16 +590,18 @@ QuantSolver::mbqi_lemma(
           auto [invert, conds] = d_bv_inverter.invert(body, cur[0]);
           if (!invert.is_null())
           {
-            subst_cache.clear();
-            invert =
-                utils::substitute(nm, invert, {{cur[0], value}}, subst_cache);
-            bool filtered =
-                d_opt_quant_ic_filter ? is_expensive(invert) : false;
-            for (size_t i = 0, size = conds.size(); !filtered && i < size; ++i)
+            bool filtered = false;
+            if (d_opt_quant_ic_filter)
             {
-              Node& c = conds[i];
-              c = utils::substitute(nm, c, {{cur[0], value}}, subst_cache);
-              filtered |= (d_opt_quant_ic_filter ? is_expensive(c) : false);
+              filtered = is_expensive(invert);
+              for (const auto& c : conds)
+              {
+                if (filtered)
+                {
+                  break;
+                }
+                filtered |= is_expensive(c);
+              }
             }
             // We do not use expensive IC lemmas for instantiation. Lemmas are
             // considered expensive if they introduce new multipliers or

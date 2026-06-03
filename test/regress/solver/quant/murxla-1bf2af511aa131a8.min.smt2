@@ -1,0 +1,8 @@
+(set-option :global-declarations true)
+(set-option :produce-unsat-cores true)
+(set-option :quant-ic true)
+(declare-const _x1 (_ BitVec 4))
+(declare-const _x2 Bool)
+(declare-const _x3 (_ BitVec 1))
+(set-info :status sat)
+(check-sat-assuming ( (forall ((_x6 (_ BitVec 4))) (bvsge (bvsub (ite (= _x2 (bvumulo _x3 _x3)) _x1 (bvsub _x6 #b1000)) _x1) (bvsub _x6 #b1000))) (not (bvumulo _x3 _x3)) (forall ((_x6 (_ BitVec 4))) (bvsge (bvsub (ite (= _x2 (bvumulo _x3 _x3)) _x1 (bvsub _x6 #b1000)) _x1) (bvsub _x6 #b1000)))))

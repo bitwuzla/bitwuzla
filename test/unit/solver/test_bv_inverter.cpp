@@ -58,7 +58,8 @@ class TestBvInverter : public TestCommon
   void test_invert(const Node& node,
                    const Node& x,
                    bool expect_conds,
-                   bool expect_x = false);
+                   bool expect_inv = true,
+                   bool expect_x   = false);
 
   NodeManager d_nm;
   option::Options d_options;
@@ -238,18 +239,25 @@ void
 TestBvInverter::test_invert(const Node& node,
                             const Node& x,
                             bool expect_conds,
+                            bool expect_inv,
                             bool expect_x)
 {
   auto [invert, conds] = d_inverter.invert(node, x);
-  if (invert.is_null() || (!conds.empty() != expect_conds))
+  if (expect_inv != !invert.is_null() || !conds.empty() != expect_conds)
   {
     std::cout << "node: " << node << std::endl;
-    std::cout << "invert: " << invert << std::endl;
+    if (!invert.is_null())
+    {
+      std::cout << "invert: " << invert << std::endl;
+    }
   }
-  ASSERT_FALSE(invert.is_null());
-  ASSERT_EQ(!conds.empty(), expect_conds);
-  check_conds(node, x, invert, conds, expect_x);
-  check_inverse(node, x, invert, conds);
+  ASSERT_EQ(expect_inv, !invert.is_null());
+  ASSERT_TRUE(!conds.empty() == expect_conds);
+  if (expect_inv)
+  {
+    check_conds(node, x, invert, conds, expect_x);
+    check_inverse(node, x, invert, conds);
+  }
 }
 
 void
@@ -659,7 +667,7 @@ TEST_F(TestBvInverter, invert8)
   Node shl  = d_nm.mk_node(Kind::BV_MUL, {mul, s1});
   Node node = d_nm.mk_node(Kind::EQUAL, {shl, t});
 
-  test_invert(node, x, true, true);
+  test_invert(node, x, false, false);
 }
 
 TEST_F(TestBvInverter, invert9)
@@ -681,7 +689,7 @@ TEST_F(TestBvInverter, invert9)
       d_nm.mk_node(Kind::EQUAL, {d_nm.mk_value(BitVector::mk_zero(8)), concat});
   Node node = d_nm.mk_node(Kind::AND, {eq, ad});
 
-  // test_invert(node, x, true);
+  test_invert(node, x, true);
   test_invert(node, t, true);
 }
 
@@ -706,7 +714,7 @@ TEST_F(TestBvInverter, invert10)
       d_nm.mk_node(Kind::EQUAL, {d_nm.mk_value(BitVector::mk_zero(8)), concat});
   Node node = d_nm.mk_node(Kind::AND, {eq, ad});
 
-  // test_invert(node, x, true);
+  test_invert(node, x, true);
   test_invert(node, t, true);
 }
 

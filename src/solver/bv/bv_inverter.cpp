@@ -25,6 +25,63 @@ BvInverter::~BvInverter() {}
 
 /* -------------------------------------------------------------------------- */
 
+namespace {
+/** @return True if x occurs in given node. */
+bool
+check_for_x(const Node& node, const Node& x)
+{
+  std::vector<Node> visit{node};
+  std::unordered_set<Node> cache;
+  do
+  {
+    auto cur            = visit.back();
+    auto [it, inserted] = cache.emplace(cur);
+    visit.pop_back();
+    if (cur == x)
+    {
+      return true;
+    }
+    if (inserted)
+    {
+      visit.insert(visit.end(), cur.begin(), cur.end());
+    }
+  } while (!visit.empty());
+  return false;
+}
+
+/** @return True if given node has multiple occurrences of x. */
+bool
+has_multi_x(const Node& node, const Node& x)
+{
+  std::vector<Node> visit{node};
+  std::unordered_set<Node> cache;
+  std::unordered_map<Node, uint64_t> parents;
+  do
+  {
+    auto cur            = visit.back();
+    auto [it, inserted] = cache.emplace(cur);
+    visit.pop_back();
+    for (const auto& c : cur)
+    {
+      parents[c] += 1;
+    }
+    if (inserted)
+    {
+      visit.insert(visit.end(), cur.begin(), cur.end());
+    }
+  } while (!visit.empty());
+  auto it = parents.find(x);
+  if (it == parents.end() || it->second == 1)
+  {
+    return false;
+  }
+  return true;
+}
+
+}  // namespace
+
+/* -------------------------------------------------------------------------- */
+
 std::pair<Node, std::vector<Node>>
 BvInverter::invert(const Node& node, const Node& x)
 {
@@ -32,6 +89,11 @@ BvInverter::invert(const Node& node, const Node& x)
   std::vector<Node> conds;
   std::unordered_map<Node, Node> subst_cache;
 
+  // check for multiple occurrences of x, we give up on multiple occurrences
+  if (has_multi_x(node, x))
+  {
+    return {Node(), {}};
+  }
   // compute path to x
   auto path = compute_path(node, x);
   if (path.empty())
@@ -117,6 +179,7 @@ BvInverter::invert(const Node& node, const Node& x)
     cur = next;
   }
 
+  assert(!check_for_x(t, x));
   return {t, conds};
 }
 
