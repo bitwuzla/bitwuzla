@@ -87,6 +87,16 @@ class SatSolver
    * @return The result of the satisfiability check.
    */
   virtual Result solve() = 0;
+
+  /** Push assertion level. */
+  virtual void push() {};
+
+  /** Pop assertion level. */
+  virtual void pop() {};
+
+  /** Set assertion level for incoming clauses. */
+  virtual void set_level(uint32_t level) { (void) level; };
+
   /**
    * Configure a termination callback function via a terminator.
    * @param terminator The terminator.
