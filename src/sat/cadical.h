@@ -11,6 +11,8 @@
 #ifndef BZLA_SAT_CADICAL_H_INCLUDED
 #define BZLA_SAT_CADICAL_H_INCLUDED
 
+#define BZLA_SAT_CADICAL_ACTLIT
+
 /*----------------------------------------------------------------------------*/
 #ifdef BZLA_USE_CADICAL
 /*----------------------------------------------------------------------------*/
@@ -68,6 +70,9 @@ class Cadical : public SatSolver
   void unphase(int32_t lit) override;
   void register_propagator(std::unique_ptr<SatPropagator> sp) override;
   Result solve() override;
+  void push() override;
+  void pop() override;
+  void set_level(uint32_t level) override;
   void configure_terminator(Terminator* terminator) override;
   const char *get_name() const override { return "CaDiCaL"; }
   const char *get_version() const override;
@@ -79,6 +84,10 @@ class Cadical : public SatSolver
   std::unique_ptr<CaDiCaL::Solver> d_solver   = nullptr;
   std::unique_ptr<CaDiCaL::Terminator> d_term = nullptr;
   std::unique_ptr<Propagator> d_propagator;
+#ifdef BZLA_SAT_CADICAL_ACTLIT
+  std::vector<int32_t> d_activation_vars;
+  uint32_t d_clause_level = 0;
+#endif
 };
 
 class CadicalInterpol : public Cadical
