@@ -28,6 +28,28 @@ namespace bv {
 class BvSolver;
 class BvInterpolator;
 
+/**
+ * Backtrackable callback used by BvBitblastSolver to sync push/pop of the
+ * underlying SAT solver and CNF encoder with the bit-vector solver's backtrack
+ * manager.
+ */
+class PushPopCallback : public backtrack::Backtrackable
+{
+ public:
+  PushPopCallback(backtrack::BacktrackManager* mgr);
+
+  void push() override {};
+  void pop() override;
+
+  void set(sat::SatSolver* sat_solver, bitblast::AigCnfEncoder* cnf_enc);
+  void sync_level(size_t level);
+
+ private:
+  size_t d_level;
+  sat::SatSolver* d_sat_solver;
+  bitblast::AigCnfEncoder* d_cnf_encoder;
+};
+
 class BvBitblastSolver : public Solver,
                          public BvSolverInterface,
                          public backtrack::Backtrackable
@@ -118,6 +140,12 @@ class BvBitblastSolver : public Solver,
   backtrack::vector<Node> d_assertions;
   /** The current set of assumptions. */
   backtrack::vector<Node> d_assumptions;
+  /**
+   * Queue of (node, is_assertion, is_lemma, level) tuples pending CNF
+   * encoding. Backtrackable, so entries above a popped level are dropped
+   * automatically.
+   */
+  backtrack::vector<std::tuple<Node, bool, bool, size_t>> d_encode_queue;
 
   /** AIG bit-blaster. */
   AigBitblaster d_bitblaster;
@@ -151,6 +179,9 @@ class BvBitblastSolver : public Solver,
    */
   std::vector<std::vector<Node>> d_pending_eq_heuristics;
   std::vector<std::vector<Node>> d_pending_distinct_heuristics;
+
+  /** Synchronizes SAT solver + CNF encoder push/pop with backtrack manager. */
+  PushPopCallback d_push_pop_callback;
 
   struct Statistics
   {
