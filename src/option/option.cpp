@@ -478,8 +478,17 @@ Options::Options()
       quant_ic(this,
                Option::QUANT_IC,
                false,
-               "use invertibility-condition-based MBQI strategy",
+               "use bit-vector invertibility-condition-based MBQI strategy",
                "quant-ic"),
+      quant_ic_value_limit(
+          this,
+          Option::QUANT_IC_VALUE_LIMIT,
+          0,
+          0,
+          UINT64_MAX,
+          "number of value instantiations per quantifier before trying to find "
+          "a symbolic instantiation based on invertibility conditions",
+          "quant-ic-value-limit"),
       // Preprocessing
       preprocess(
           this, Option::PREPROCESS, true, "enable preprocessing", "preprocess"),
@@ -1014,6 +1023,7 @@ Options::data(Option opt)
     case Option::INTERPOLANTS_PRINT_STATS: return &interpolants_print_stats;
 
     case Option::QUANT_IC: return &quant_ic;
+    case Option::QUANT_IC_VALUE_LIMIT: return &quant_ic_value_limit;
 
     case Option::PREPROCESS: return &preprocess;
     case Option::PP_ELIM_BV_UDIV: return &pp_elim_bv_udiv;

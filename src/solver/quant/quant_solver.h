@@ -101,12 +101,17 @@ class QuantSolver : public Solver
   std::unordered_map<Node, Node> d_mbqi_inst;
   backtrack::unordered_set<Node> d_lemma_cache;
 
+  /** Maps the number of value instantiations per quantified variable. */
+  std::unordered_map<Node, uint64_t> d_value_insts;
+  /** Cache quantified variables for which we have created an IC inst. */
   backtrack::unordered_set<Node> d_inv_cache;
 
   bool d_added_lemma;
 
   /** Cache configuration of option QUANT_IC. */
-  bool d_quant_ic;
+  bool d_opt_quant_ic;
+  /** Cache configuration of option QUANT_IC_VALUE_LIMIT. */
+  uint64_t d_opt_quant_ic_value_limit;
 
   struct Statistics
   {

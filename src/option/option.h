@@ -77,7 +77,8 @@ enum class Option
   INTERPOLANTS_PRINT_STATS,  // bool
 
   // Quantifiers
-  QUANT_IC,  // bool
+  QUANT_IC,              // bool
+  QUANT_IC_VALUE_LIMIT,  // numeric
 
   // Preprocessing options for enabling/disabling passes
   PREPROCESS,           // bool
@@ -623,6 +624,7 @@ class Options
 
   // Quantifiers
   OptionBool quant_ic;
+  OptionNumeric quant_ic_value_limit;
 
   // Preprocessing
   OptionBool preprocess;

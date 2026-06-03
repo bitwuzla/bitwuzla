@@ -787,6 +787,27 @@ enum ENUM(Option)
    * @warning This is an expert option to configure the quantifier engine.
    */
   EVALUE(QUANT_IC),
+  /*!
+   * **Quantifiers: Value instantiation limit.**
+   *
+   * Configure `n` for the number of value instantiations to try for a quantified
+   * variable before we try to find a symbolic invertibility-condition-based
+   * instantiation.
+   *
+   * *Values:*
+   *  - An unsigned 64-bit integer. [**default:** 0]
+   */
+#ifndef BITWUZLA_API_USE_C_ENUMS
+  /*! @see Option::QUANT_IC
+   */
+#else
+  /*! @see BITWUZLA_OPT_QUANT_IC
+   */
+#endif
+  /*!
+   * @warning This is an expert option to configure the quantifier engine.
+   */
+  EVALUE(QUANT_IC_VALUE_LIMIT),
 
   /*!
    * **Preprocessing.**

@@ -53,7 +53,8 @@ QuantSolver::QuantSolver(Env& env, SolverState& state)
       d_skolemization_lemmas(state.backtrack_mgr()),
       d_lemma_cache(state.backtrack_mgr()),
       d_inv_cache(state.backtrack_mgr()),
-      d_quant_ic(env.options().quant_ic()),
+      d_opt_quant_ic(env.options().quant_ic()),
+      d_opt_quant_ic_value_limit(env.options().quant_ic_value_limit()),
       d_stats(env.statistics(), "solver::quant::")
 {
 }
@@ -531,7 +532,7 @@ QuantSolver::mbqi_lemma(
 
   Node body = q;
   uint64_t nquants = 1;
-  if (d_quant_ic)
+  if (d_opt_quant_ic)
   {
     // Determine body of quantified formula for BvInverter queries.
     while (body.kind() == Kind::FORALL)
@@ -550,12 +551,13 @@ QuantSolver::mbqi_lemma(
   {
     const Node& ic = inst_const(cur);
     Node value     = symbolic_term(model_values.at(ic), ground_terms);
-    if (d_quant_ic)
+    if (d_opt_quant_ic)
     {
       // Only try to compute IC-based lemma for bit-vector variables, and only
       // if default strategy does not find a symbolic instantiation. Also, only
       // generate one per quantified variable.
-      if (value.is_value() && value.type().is_bv() && !body.is_value())
+      if (value.is_value() && value.type().is_bv() && !body.is_value()
+          && d_value_insts[cur[0]] >= d_opt_quant_ic_value_limit)
       {
         if (d_inv_cache.insert(cur[0]).second)
         {
@@ -584,6 +586,11 @@ QuantSolver::mbqi_lemma(
           }
         }
       }
+    }
+    // Cache the number of value instantations per quantifier.
+    if (value.is_value())
+    {
+      d_value_insts[cur[0]] += 1;
     }
     map.emplace(cur[0], value);
     assert(!ic.is_null());

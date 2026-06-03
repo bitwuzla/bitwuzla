@@ -125,6 +125,8 @@ static const std::unordered_map<Option, bzla::option::Option>
         {Option::NUM_OPTS, bzla::option::Option::NUM_OPTIONS},
 
         {Option::QUANT_IC, bzla::option::Option::QUANT_IC},
+        {Option::QUANT_IC_VALUE_LIMIT,
+         bzla::option::Option::QUANT_IC_VALUE_LIMIT},
 
         {Option::PREPROCESS, bzla::option::Option::PREPROCESS},
         {Option::PP_ELIM_BV_UDIV, bzla::option::Option::PP_ELIM_BV_UDIV},
