@@ -480,6 +480,13 @@ Options::Options()
                false,
                "use bit-vector invertibility-condition-based MBQI strategy",
                "quant-ic"),
+      quant_ic_filter(
+          this,
+          Option::QUANT_IC_FILTER,
+          false,
+          "filter lemmas from bit-vector invertibility-condition-based MBQI "
+          "strategy, will add any lemma from that strategy if false",
+          "quant-ic-filter"),
       quant_ic_value_limit(
           this,
           Option::QUANT_IC_VALUE_LIMIT,
@@ -1023,6 +1030,7 @@ Options::data(Option opt)
     case Option::INTERPOLANTS_PRINT_STATS: return &interpolants_print_stats;
 
     case Option::QUANT_IC: return &quant_ic;
+    case Option::QUANT_IC_FILTER: return &quant_ic_filter;
     case Option::QUANT_IC_VALUE_LIMIT: return &quant_ic_value_limit;
 
     case Option::PREPROCESS: return &preprocess;

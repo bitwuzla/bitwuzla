@@ -54,6 +54,7 @@ QuantSolver::QuantSolver(Env& env, SolverState& state)
       d_lemma_cache(state.backtrack_mgr()),
       d_inv_cache(state.backtrack_mgr()),
       d_opt_quant_ic(env.options().quant_ic()),
+      d_opt_quant_ic_filter(env.options().quant_ic_filter()),
       d_opt_quant_ic_value_limit(env.options().quant_ic_value_limit()),
       d_stats(env.statistics(), "solver::quant::")
 {
@@ -517,6 +518,32 @@ QuantSolver::mbqi_inst(const Node& q)
   return iit->second;
 }
 
+bool
+QuantSolver::is_expensive(const Node& node) const
+{
+  std::vector<Node> visit{node};
+  std::unordered_set<Node> cache;
+  do
+  {
+    auto cur            = visit.back();
+    auto [it, inserted] = cache.emplace(cur);
+    visit.pop_back();
+    if (inserted)
+    {
+      Kind kind = cur.kind();
+      if ((kind == Kind::BV_MUL || kind == Kind::BV_UREM
+           || kind == Kind::BV_UDIV)
+          && !cur[0].is_value() && !cur[1].is_value()
+          && d_process_cache.find(cur) == d_process_cache.end())
+      {
+        return true;
+      }
+      visit.insert(visit.end(), cur.begin(), cur.end());
+    }
+  } while (!visit.empty());
+  return false;
+}
+
 void
 QuantSolver::mbqi_lemma(
     const Node& q,
@@ -567,22 +594,32 @@ QuantSolver::mbqi_lemma(
             subst_cache.clear();
             invert =
                 utils::substitute(nm, invert, {{cur[0], value}}, subst_cache);
-            for (auto& c : conds)
+            bool filtered =
+                d_opt_quant_ic_filter ? is_expensive(invert) : false;
+            for (size_t i = 0, size = conds.size(); !filtered && i < size; ++i)
             {
+              Node& c = conds[i];
               c = utils::substitute(nm, c, {{cur[0], value}}, subst_cache);
+              filtered |= (d_opt_quant_ic_filter ? is_expensive(c) : false);
             }
-            conditions.insert(conditions.end(), conds.begin(), conds.end());
-            if (nquants == 1 || invert.is_const())
+            // We do not use expensive IC lemmas for instantiation. Lemmas are
+            // considered expensive if they introduce new multipliers or
+            // dividers with symbolic operands.
+            if (!filtered)
             {
-              value = invert;
+              conditions.insert(conditions.end(), conds.begin(), conds.end());
+              if (nquants == 1 || invert.is_const())
+              {
+                value = invert;
+              }
+              else
+              {
+                Node a = nm.mk_const(cur[0].type());
+                conditions.push_back(nm.mk_node(Kind::EQUAL, {a, invert}));
+                value = a;
+              }
+              lemma_kind = QuantSolver::LemmaKind::MBQI_INST_INV;
             }
-            else
-            {
-              Node a = nm.mk_const(cur[0].type());
-              conditions.push_back(nm.mk_node(Kind::EQUAL, {a, invert}));
-              value = a;
-            }
-            lemma_kind = QuantSolver::LemmaKind::MBQI_INST_INV;
           }
         }
       }

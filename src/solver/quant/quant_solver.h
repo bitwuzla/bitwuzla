@@ -81,6 +81,9 @@ class QuantSolver : public Solver
       const Node& term,
       const std::unordered_map<Node, std::vector<Node>>& ground_terms);
 
+  /** @return True if node is considered too expensive to add as a lemma. */
+  bool is_expensive(const Node& node) const;
+
   bv::BvInverter d_bv_inverter;
 
   backtrack::vector<Node> d_quantifiers;
@@ -110,6 +113,8 @@ class QuantSolver : public Solver
 
   /** Cache configuration of option QUANT_IC. */
   bool d_opt_quant_ic;
+  /** Cache configuration of option QUANT_IC_FILTER. */
+  bool d_opt_quant_ic_filter;
   /** Cache configuration of option QUANT_IC_VALUE_LIMIT. */
   uint64_t d_opt_quant_ic_value_limit;
 
