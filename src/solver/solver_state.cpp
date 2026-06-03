@@ -88,4 +88,10 @@ SolverState::lemma_cache() const
   return d_solver_engine.lemma_cache();
 }
 
+uint64_t
+SolverState::term_level(const Node& term)
+{
+  return d_solver_engine.term_level(term);
+}
+
 }  // namespace bzla
