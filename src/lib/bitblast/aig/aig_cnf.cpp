@@ -18,19 +18,30 @@
 namespace bzla::bitblast {
 
 AigCnfEncoder::AigCnfEncoder(SatInterface& sat_solver)
-    : d_sat_solver(sat_solver)
+    : d_sat_solver(sat_solver), d_true_var(0)
 {
-  // Reserve SAT variable 1 for true/false (slot 0 in d_aig_encoded).
-  // BvInterpolator labels SAT variable 1 as GLOBAL, so this allocation must
-  // happen up-front, before any AIGs are encoded.
+  // Reserve slot for true, the actual SAT variable is allocated in
+  // initialize().
   d_aig_encoded.push_back(0);
-  d_true_var         = d_sat_solver.new_var();
-  d_aig_encoded[0]   = d_true_var;
+}
+
+void
+AigCnfEncoder::initialize()
+{
+  // Allocate SAT variable for true.
+  assert(d_true_var == 0);
+  d_true_var       = d_sat_solver.new_var();
+  d_aig_encoded[0] = d_true_var;
 }
 
 void
 AigCnfEncoder::encode(const AigNode& node, bool top_level, uint64_t level)
 {
+  if (d_true_var == 0)
+  {
+    initialize();
+  }
+
   d_sat_solver.set_level(static_cast<uint32_t>(level));
   if (top_level)
   {
