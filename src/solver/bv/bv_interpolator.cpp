@@ -74,8 +74,8 @@ BvInterpolator::interpolant(const std::vector<Node>& ppA,
   // map SAT clause to label
   std::unordered_map<int64_t, ClauseKind> clause_labels;
 
-  // SAT variable with id 1 represents true/false. We always label it as GLOBAL.
-  var_labels[1] = VariableKind::GLOBAL;
+  // SAT variable that represents true/false. We always label it as GLOBAL.
+  var_labels[d_cnf_encoder.true_var()] = VariableKind::GLOBAL;
 
   std::unordered_map<Node, VariableKind> term_labels;
   {

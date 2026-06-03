@@ -107,6 +107,9 @@ class AigCnfEncoder
   /** @return Whether `aig` was already encoded to CNF. */
   bool is_encoded(const AigNode& aig) const;
 
+  /** @return CNF variable representing true. */
+  int32_t true_var() const { return d_true_var; };
+
   /** @return The AIG id to CNF id map. */
   const std::vector<int32_t>& aig2cnf() const { return d_aig_encoded; }
 
@@ -121,6 +124,11 @@ class AigCnfEncoder
   const Statistics& statistics() const;
 
  private:
+  /**
+   * Lazily initializes d_true_var on the first encode() call.
+   */
+  void initialize();
+
   /** Encode AIG to CNF. */
   void _encode(const AigNode& node);
   /** Ensure that `d_aig_encoded` is big enough to store `aig`. */
@@ -146,7 +154,7 @@ class AigCnfEncoder
   /** SAT solver. */
   SatInterface& d_sat_solver;
   /** Variable allocated for true/false. */
-  int32_t d_true_var;
+  int32_t d_true_var = 0;
 
   /** CNF statistics. */
   Statistics d_statistics;
