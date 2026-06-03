@@ -172,10 +172,10 @@ Tracer::compute_cnf2aig(const std::vector<int32_t>& aig2cnf) const
   {
     return res;
   }
-  res.resize(aig2cnf[aig2cnf.size() - 1] + 1, 0);
+  res.resize(std::abs(aig2cnf.back()) + 1, 0);
   for (size_t i = 0, n = aig2cnf.size(); i < n; ++i)
   {
-    int32_t cnf_var = aig2cnf[i];
+    int32_t cnf_var = std::abs(aig2cnf[i]);
     int64_t aig_id  = i + 1;  // this might change
     if ((size_t) cnf_var >= res.size())
     {

@@ -20,15 +20,18 @@ namespace bzla::bitblast {
 AigCnfEncoder::AigCnfEncoder(SatInterface& sat_solver)
     : d_sat_solver(sat_solver)
 {
-  // Get variable for true/false, but do not set as encoded yet.
+  // Reserve SAT variable 1 for true/false (slot 0 in d_aig_encoded).
+  // BvInterpolator labels SAT variable 1 as GLOBAL, so this allocation must
+  // happen up-front, before any AIGs are encoded.
   d_aig_encoded.push_back(0);
-  d_true_var = d_sat_solver.new_var();
-  ++d_statistics.num_vars;
+  d_true_var         = d_sat_solver.new_var();
+  d_aig_encoded[0]   = d_true_var;
 }
 
 void
-AigCnfEncoder::encode(const AigNode& node, bool top_level)
+AigCnfEncoder::encode(const AigNode& node, bool top_level, uint64_t level)
 {
+  d_sat_solver.set_level(static_cast<uint32_t>(level));
   if (top_level)
   {
     // flatten, thus only add leafs of top-level AIGs
@@ -100,17 +103,37 @@ AigCnfEncoder::cnf_var(const AigNode& aig) const
   int64_t id = aig.get_id();
   size_t pos = static_cast<size_t>(std::abs(id) - 1);
   assert(pos < d_aig_encoded.size());
-  return d_aig_encoded[pos];
+  return std::abs(d_aig_encoded[pos]);
 }
 
 int32_t
 AigCnfEncoder::cnf_lit(const AigNode& aig) const
 {
   assert(is_encoded(aig));
-  int64_t id = aig.get_id();
-  size_t pos = static_cast<size_t>(std::abs(id) - 1);
-  assert(pos < d_aig_encoded.size());
-  return id < 0 ? -d_aig_encoded[pos] : d_aig_encoded[pos];
+  int32_t var = cnf_var(aig);
+  return aig.is_negated() ? -var : var;
+}
+
+void
+AigCnfEncoder::push()
+{
+  d_aig_encoded_ids_control.push_back(d_aig_encoded_ids.size());
+}
+
+void
+AigCnfEncoder::pop()
+{
+  assert(!d_aig_encoded_ids_control.empty());
+  size_t size = d_aig_encoded_ids_control.back();
+  d_aig_encoded_ids_control.pop_back();
+  while (d_aig_encoded_ids.size() > size)
+  {
+    size_t pos = d_aig_encoded_ids.back();
+    d_aig_encoded_ids.pop_back();
+    // Flip back from encoded (<0) to allocated-but-not-encoded (>0).
+    d_aig_encoded[pos] *= -1;
+    --d_statistics.num_vars;
+  }
 }
 
 const AigCnfEncoder::Statistics&
@@ -217,27 +240,24 @@ AigCnfEncoder::_encode(const AigNode& aig)
   do
   {
     auto cur = visit.back();
-    resize(*cur);
-
     if (is_encoded(*cur))
     {
       visit.pop_back();
       continue;
     }
 
-    if (cur->is_true() || cur->is_false())
+    if (!cur->is_and())
     {
-      visit.pop_back();
-      // Set that we encoded true/false.
-      d_aig_encoded[0] = d_true_var;
-      d_sat_solver.add_clause({d_true_var}, std::abs(cur->get_id()));
-      ++d_statistics.num_clauses;
-      ++d_statistics.num_literals;
-    }
-    else if (cur->is_const())
-    {
+      assert(cur->is_const() || cur->is_true() || cur->is_false());
       visit.pop_back();
       set_encoded(*cur);
+
+      if (cur->is_true() || cur->is_false())
+      {
+        d_sat_solver.add_clause({cnf_var(*cur)}, std::abs(cur->get_id()));
+        ++d_statistics.num_clauses;
+        ++d_statistics.num_literals;
+      }
     }
     else
     {
@@ -314,7 +334,7 @@ AigCnfEncoder::resize(const AigNode& aig)
   {
     return;
   }
-  d_aig_encoded.resize(pos + 1, false);
+  d_aig_encoded.resize(pos + 1, 0);
 }
 
 bool
@@ -323,7 +343,7 @@ AigCnfEncoder::is_encoded(const AigNode& aig) const
   size_t pos = static_cast<size_t>(std::abs(aig.get_id()) - 1);
   if (pos < d_aig_encoded.size())
   {
-    return d_aig_encoded[pos] > 0;
+    return d_aig_encoded[pos] < 0;
   }
   return false;
 }
@@ -331,11 +351,20 @@ AigCnfEncoder::is_encoded(const AigNode& aig) const
 void
 AigCnfEncoder::set_encoded(const AigNode& aig)
 {
+  resize(aig);
   size_t pos = static_cast<size_t>(std::abs(aig.get_id()) - 1);
   assert(pos < d_aig_encoded.size());
-  assert(d_aig_encoded[pos] == 0);
-  d_aig_encoded[pos] = d_sat_solver.new_var();
+  auto& encoded = d_aig_encoded[pos];
+  // No variable allocated in SAT solver yet.
+  if (encoded == 0)
+  {
+    encoded = d_sat_solver.new_var();
+  }
+  // Variable allocated, but not yet encoded.
+  assert(encoded > 0);
+  encoded *= -1;
   ++d_statistics.num_vars;
+  d_aig_encoded_ids.push_back(pos);
 }
 
 }  // namespace bzla::bitblast
