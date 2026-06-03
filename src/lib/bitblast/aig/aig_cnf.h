@@ -60,6 +60,13 @@ class SatInterface
     */
    virtual void add_clause(const std::initializer_list<int64_t>& literals,
                            int64_t aig_id = 0) = 0;
+
+   /**
+    * Forward the current SAT solver clause level for activation-literal-based
+    * push/pop.
+    */
+   virtual void set_level(uint32_t level) { (void) level; }
+
    /**
     * Query the value of the given literal.
     * @return True if the literal evaluates to true.
@@ -85,8 +92,9 @@ class AigCnfEncoder
    * @param node The AIG node to encode.
    * @param top_level Indicates whether given node is at the top level, which
    *        enables certain optimization.
+   * @param level Assertion level to encode at (forwarded to the SAT solver).
    * */
-  void encode(const AigNode& node, bool top_level = false);
+  void encode(const AigNode& node, bool top_level = false, uint64_t level = 0);
 
   int32_t value(const AigNode& node);
 
@@ -102,6 +110,13 @@ class AigCnfEncoder
   /** @return The AIG id to CNF id map. */
   const std::vector<int32_t>& aig2cnf() const { return d_aig_encoded; }
 
+  /** Push assertion level. */
+  void push();
+
+  /** Pop assertion level: reset AIG encoded state for AIGs encoded since
+   *  the corresponding push(). SAT variables remain allocated. */
+  void pop();
+
   /** @return CNF statistics. */
   const Statistics& statistics() const;
 
@@ -113,8 +128,21 @@ class AigCnfEncoder
   /** Mark `aig` as encoded. */
   void set_encoded(const AigNode& aig);
 
-  /** Maps AIG id to CNF id, which indicates whether the AIG was encoded. */
+  /**
+   * Maps AIG id to CNF id, which indicates whether the AIG was encoded.
+   * We distinguish three cases for the entry:
+   *
+   * (1) 0  ... no SAT variable allocated
+   * (2) >0 ... SAT variable allocated, but AIG not encoded
+   * (3) <0 ... SAT variable allocated and AIG encoded
+   *
+   * pop() does not fully delete the entry, but sets AIGs back to state (2).
+   */
   std::vector<int32_t> d_aig_encoded;
+  /** Tracks the AIGs encoded since last push. */
+  std::vector<size_t> d_aig_encoded_ids;
+  /** Tracks encoded AIGs by assertion level. */
+  std::vector<size_t> d_aig_encoded_ids_control;
   /** SAT solver. */
   SatInterface& d_sat_solver;
   /** Variable allocated for true/false. */
