@@ -531,6 +531,8 @@ QuantSolver::is_expensive(const Node& node) const
     if (inserted)
     {
       Kind kind = cur.kind();
+      // Lemmas are considered expensive if they introduce new multipliers or
+      // dividers with symbolic operands.
       if ((kind == Kind::BV_MUL || kind == Kind::BV_UREM
            || kind == Kind::BV_UDIV)
           && !cur[0].is_value() && !cur[1].is_value()
@@ -579,50 +581,13 @@ QuantSolver::mbqi_lemma(
     Node value     = symbolic_term(model_values.at(ic), ground_terms);
     if (d_opt_quant_ic)
     {
-      // Only try to compute IC-based lemma for bit-vector variables, and only
-      // if default strategy does not find a symbolic instantiation. Also, only
-      // generate one per quantified variable.
-      if (value.is_value() && value.type().is_bv() && !body.is_value()
-          && d_value_insts[cur[0]] >= d_opt_quant_ic_value_limit)
+      // Try to find instantiation via inverse term computation. Conditional
+      // logic to actually try to find this inverse is encoded in inverse_term.
+      Node inv = inverse_term(cur[0], body, nquants, value, conditions);
+      if (!inv.is_null())
       {
-        if (d_inv_cache.insert(cur[0]).second)
-        {
-          auto [invert, conds] = d_bv_inverter.invert(body, cur[0]);
-          if (!invert.is_null())
-          {
-            bool filtered = false;
-            if (d_opt_quant_ic_filter)
-            {
-              filtered = is_expensive(invert);
-              for (const auto& c : conds)
-              {
-                if (filtered)
-                {
-                  break;
-                }
-                filtered |= is_expensive(c);
-              }
-            }
-            // We do not use expensive IC lemmas for instantiation. Lemmas are
-            // considered expensive if they introduce new multipliers or
-            // dividers with symbolic operands.
-            if (!filtered)
-            {
-              conditions.insert(conditions.end(), conds.begin(), conds.end());
-              if (nquants == 1 || invert.is_const())
-              {
-                value = invert;
-              }
-              else
-              {
-                Node a = nm.mk_const(cur[0].type());
-                conditions.push_back(nm.mk_node(Kind::EQUAL, {a, invert}));
-                value = a;
-              }
-              lemma_kind = QuantSolver::LemmaKind::MBQI_INST_INV;
-            }
-          }
-        }
+        value      = inv;
+        lemma_kind = QuantSolver::LemmaKind::MBQI_INST_INV;
       }
     }
     // Cache the number of value instantations per quantifier.
@@ -630,11 +595,13 @@ QuantSolver::mbqi_lemma(
     {
       d_value_insts[cur[0]] += 1;
     }
+    // Map instantiation.
     map.emplace(cur[0], value);
     assert(!ic.is_null());
     cur = cur[1];
   }
-
+  // Inverse term instantiations are potentially conditional, we conjunct
+  // these conditions to the instantiation lemma.
   Node cond = nm.mk_value(true);
   if (!conditions.empty())
   {
@@ -695,6 +662,61 @@ QuantSolver::symbolic_term(
     visit.pop_back();
   }
   return cache.at(term);
+}
+
+Node
+QuantSolver::inverse_term(const Node& var,
+                          const Node& body,
+                          uint64_t n_quants,
+                          const Node& value,
+                          std::vector<Node>& conditions)
+{
+  // Only try to compute IC-based lemma for bit-vector variables, and only
+  // if default strategy does not find a symbolic instantiation.
+  if (value.is_value() && value.type().is_bv()
+      && !body.is_value()
+      // Also, only if we have tried d_opt_quant_ic_value_limit value
+      // instantiations for this quantifier first.
+      && d_value_insts[var] >= d_opt_quant_ic_value_limit
+      // Also, only generate one per quantified variable.
+      && d_inv_cache.insert(var).second)
+  {
+    auto [invert, conds] = d_bv_inverter.invert(body, var);
+    if (!invert.is_null())
+    {
+      bool filtered = false;
+      if (d_opt_quant_ic_filter)
+      {
+        filtered = is_expensive(invert);
+        for (const auto& c : conds)
+        {
+          if (filtered)
+          {
+            break;
+          }
+          filtered |= is_expensive(c);
+        }
+      }
+      // If filtering option is enabled, we do not use potentially
+      // expensive IC lemmas for instantiation.
+      if (!filtered)
+      {
+        conditions.insert(conditions.end(), conds.begin(), conds.end());
+        if (n_quants == 1 || invert.is_const())
+        {
+          return invert;
+        }
+        else
+        {
+          NodeManager& nm = d_env.nm();
+          Node a          = nm.mk_const(var.type());
+          conditions.push_back(nm.mk_node(Kind::EQUAL, {a, invert}));
+          return a;
+        }
+      }
+    }
+  }
+  return Node();
 }
 
 QuantSolver::Statistics::Statistics(util::Statistics& stats,

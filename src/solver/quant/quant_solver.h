@@ -81,6 +81,23 @@ class QuantSolver : public Solver
       const Node& term,
       const std::unordered_map<Node, std::vector<Node>>& ground_terms);
 
+  /**
+   * Try to find an inverse term instantiation for var.
+   * @param var The variable to find the instantiation for.
+   * @param body The body of the quantified term.
+   * @param n_quants The number of quantifiers in the quantified term. Will be
+   *                 > 1 in case of a chained quantified term.
+   * @param inst     The instantiation term determined via symbolic_term().
+   * @param conditions The set of conditions for currently active conditional
+   *                   inverses, i.e., inverses used for instantiation.
+   * @return The inverse term.
+   */
+  Node inverse_term(const Node& var,
+                    const Node& body,
+                    uint64_t n_quants,
+                    const Node& inst,
+                    std::vector<Node>& conditions);
+
   /** @return True if node is considered too expensive to add as a lemma. */
   bool is_expensive(const Node& node) const;
 
