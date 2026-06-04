@@ -1,0 +1,12 @@
+--- a/src/external.cpp
++++ b/src/external.cpp
+@@ -356,7 +356,8 @@
+   int eidx = abs (elit);
+ 
+   REQUIRE (eidx > max_var ||
+-               (!marked (witness, elit) && !marked (witness, -elit)),
++               (!marked (witness, elit) && !marked (witness, -elit)) ||
++               !internal->level,
+            "Only clean variables are allowed to be observed.");
+   // if (eidx <= max_var &&
+   //     (marked (witness, elit) || marked (witness, -elit))) {

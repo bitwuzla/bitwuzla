@@ -6,6 +6,7 @@ source_filename = cadical-3.0.0.tar.gz
 source_hash = 282b1c9422fde8631cb721b86450ae94df4e8de0545c17a69a301aaa4bf92fcf
 
 patch_directory = cadical
+diff_files = cadical/0001-allow-observing-eliminated-var-at-root.patch
 
 [provide]
 cadical = cadical_dep
