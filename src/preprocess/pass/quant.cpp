@@ -237,12 +237,36 @@ PassQuant::find_inverse(const Node& body, const Node& var, bool negated)
     return Node();
   }
 
+  // Given a formula (forall x. (or (not A) B)), if we find a non-negated
+  // equality x = t in A  and x does not occur in t, we can replace the body
+  // C with C[x/t]. This is also referred to as destructive equality resolution
+  // (DER) in the literature.
+  //
+  // If x is a bit-vector variable, we can generalize by means of inverse
+  // computation: if we find a non-negated equality a = b in A (where x appears
+  // in either a or b) and can derive an inverse x = t for this equality and x
+  // does not occur in t, we can replace the body C with C[x/t].
+
   if (kind == Kind::EQUAL && !negated && has_var(cur, var))
   {
-    auto [inv, conds] = d_bv_inverter.invert(cur, var);
-    if (!inv.is_null() && conds.empty() && !has_var(inv, var))
+    if (var.type().is_bv() || var.type().is_bool())
     {
-      return inv;
+      auto [inv, conds] = d_bv_inverter.invert(cur, var);
+      if (!inv.is_null() && conds.empty() && !has_var(inv, var))
+      {
+        return inv;
+      }
+    }
+    else
+    {
+      if (cur[0] == var && !utils::has_x(cur[1], var))
+      {
+        return cur[1];
+      }
+      if (cur[1] == var && !utils::has_x(cur[0], var))
+      {
+        return cur[0];
+      }
     }
   }
   return Node();
@@ -256,11 +280,6 @@ PassQuant::eliminate(const Node& node)
   assert(node.kind() == Kind::FORALL);
 
   const Node& var = node[0];
-  if (!var.type().is_bv())
-  {
-    return node;
-  }
-
   Node body = node[1];
   std::vector<Node> quants;
   while (body.kind() == Kind::FORALL)
@@ -279,11 +298,13 @@ PassQuant::eliminate(const Node& node)
   // occur in t.
   //
   // Hence, when trying to find such equalities, we start with negated = true.
+  // Note: find_inverse() also handles the common DER case for non-BV vars.
   Node inv = find_inverse(body, var);
   if (inv.is_null())
   {
     return node;
   }
+  assert(!utils::has_x(inv, var));
   std::unordered_map<Node, Node> substs{{var, inv}};
   std::unordered_map<Node, Node> cache;
   NodeManager& nm = d_env.nm();

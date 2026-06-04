@@ -1,0 +1,7 @@
+(set-logic QF_FP)
+(declare-const v Bool)
+(declare-const v6 RoundingMode)
+(declare-const v12 RoundingMode)
+(assert (not (and (not v) (= v6 v12))))
+(check-sat)
+(exit)

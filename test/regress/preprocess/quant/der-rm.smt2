@@ -1,0 +1,8 @@
+(set-logic FP)
+(set-info :status sat)
+(set-option :pp-quant true)
+(declare-fun v () Bool)
+(declare-const v6 RoundingMode)
+(declare-const v12 RoundingMode)
+(assert (or (forall ((q0 RoundingMode) (q1 RoundingMode) (q2 RoundingMode)) (not (= v6 q1 v12 q0 q1 v6 q2))) v))
+(check-sat)

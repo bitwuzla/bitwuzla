@@ -450,6 +450,7 @@ tests_smt2 = [
   ['preprocess/quant/alpha3.smt2', ['-p']],
   ['preprocess/quant/alpha4.smt2', ['-p']],
   ['preprocess/quant/alpha5.smt2', ['-p']],
+  ['preprocess/quant/der-rm.smt2', ['-p']],
   ['preprocess/regrinc1.smt2'],
   ['preprocess/rewrite1.smt2'],
   ['preprocess/rewrite2.smt2'],
