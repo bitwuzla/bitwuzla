@@ -148,28 +148,6 @@ PassQuant::process(const Node& node)
 
 /* --- PassQuant private ---------------------------------------------------- */
 
-bool
-PassQuant::has_var(const Node& node, const Node& var) const
-{
-  std::vector<Node> visit{node};
-  std::unordered_set<Node> cache;
-  do
-  {
-    auto cur            = visit.back();
-    auto [it, inserted] = cache.emplace(cur);
-    visit.pop_back();
-    if (cur == var)
-    {
-      return true;
-    }
-    if (inserted)
-    {
-      visit.insert(visit.end(), cur.begin(), cur.end());
-    }
-  } while (!visit.empty());
-  return false;
-}
-
 std::pair<bool, std::unordered_set<Node>>
 PassQuant::has_free_vars(const Node& node,
                          const std::unordered_set<Node>& closed_quants) const
@@ -247,12 +225,13 @@ PassQuant::find_inverse(const Node& body, const Node& var, bool negated)
   // in either a or b) and can derive an inverse x = t for this equality and x
   // does not occur in t, we can replace the body C with C[x/t].
 
-  if (kind == Kind::EQUAL && !negated && has_var(cur, var))
+  if (kind == Kind::EQUAL && !negated && utils::has_x(cur, var))
   {
     if (var.type().is_bv() || var.type().is_bool())
     {
       auto [inv, conds] = d_bv_inverter.invert(cur, var);
-      if (!inv.is_null() && conds.empty() && !has_var(inv, var))
+      assert(!utils::has_x(inv, var));
+      if (!inv.is_null() && conds.empty())
       {
         return inv;
       }

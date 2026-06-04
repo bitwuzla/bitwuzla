@@ -26,56 +26,33 @@ BvInverter::~BvInverter() {}
 /* -------------------------------------------------------------------------- */
 
 namespace {
-/** @return True if x occurs in given node. */
-bool
-check_for_x(const Node& node, const Node& x)
+/**
+ * @return A map of nodes to list of parents, as pairs of parent and index at
+ *         which the node occurs in parent.
+ */
+std::unordered_map<Node, std::vector<std::pair<Node, size_t>>>
+compute_parents(const Node& node)
 {
   std::vector<Node> visit{node};
   std::unordered_set<Node> cache;
+  std::unordered_map<Node, std::vector<std::pair<Node, size_t>>> parents;
   do
   {
     auto cur            = visit.back();
     auto [it, inserted] = cache.emplace(cur);
     visit.pop_back();
-    if (cur == x)
+    for (size_t i = 0, n = cur.num_children(); i < n; ++i)
     {
-      return true;
+      auto [pit, inserted] =
+          parents.emplace(cur[i], std::vector<std::pair<Node, size_t>>{});
+      pit->second.push_back({cur, i});
     }
     if (inserted)
     {
       visit.insert(visit.end(), cur.begin(), cur.end());
     }
   } while (!visit.empty());
-  return false;
-}
-
-/** @return True if given node has multiple occurrences of x. */
-bool
-has_multi_x(const Node& node, const Node& x)
-{
-  std::vector<Node> visit{node};
-  std::unordered_set<Node> cache;
-  std::unordered_map<Node, uint64_t> parents;
-  do
-  {
-    auto cur            = visit.back();
-    auto [it, inserted] = cache.emplace(cur);
-    visit.pop_back();
-    for (const auto& c : cur)
-    {
-      parents[c] += 1;
-    }
-    if (inserted)
-    {
-      visit.insert(visit.end(), cur.begin(), cur.end());
-    }
-  } while (!visit.empty());
-  auto it = parents.find(x);
-  if (it == parents.end() || it->second == 1)
-  {
-    return false;
-  }
-  return true;
+  return parents;
 }
 
 }  // namespace
@@ -89,11 +66,6 @@ BvInverter::invert(const Node& node, const Node& x)
   std::vector<Node> conds;
   std::unordered_map<Node, Node> subst_cache;
 
-  // check for multiple occurrences of x, we give up on multiple occurrences
-  if (has_multi_x(node, x))
-  {
-    return {Node(), {}};
-  }
   // compute path to x
   auto path = compute_path(node, x);
   if (path.empty())
@@ -111,7 +83,7 @@ BvInverter::invert(const Node& node, const Node& x)
   //     cur = cur[path[cur]];
   //   }
   // }
-  ///
+  // ///
 
   // compute inverse for top-level predicate
   Node cur       = node;
@@ -179,7 +151,7 @@ BvInverter::invert(const Node& node, const Node& x)
     cur = next;
   }
 
-  assert(!check_for_x(t, x));
+  assert(!utils::has_x(t, x));
   return {t, conds};
 }
 
@@ -330,53 +302,33 @@ BvInverter::is_invertible(const Node& node) const
 std::unordered_map<Node, size_t>
 BvInverter::compute_path(const Node& node, const Node& x) const
 {
-  std::vector<std::pair<Node, size_t>> visit{{node, 0}};
-  std::unordered_map<Node, bool> cache;
+  auto parents = compute_parents(node);
+  auto it      = parents.find(x);
+  if (it == parents.end())
+  {
+    // no occurrence of x
+    return {};
+  }
+  std::unordered_map<Node, size_t> res;
   do
   {
-    auto [cur, idx]     = visit.back();
-    auto [it, inserted] = cache.emplace(cur, true);
+    auto& pars = it->second;
+    auto& p    = pars[0];
 
-    if (cur == x)
+    if (p.first != x && !is_invertible(p.first))
     {
-      assert(inserted);
-      break;
+      // non-invertible node on path
+      return {};
     }
-    if (!is_invertible(cur))
-    {
-      it->second = false;
-      visit.pop_back();
-      continue;
-    }
-    if (inserted)
-    {
-      for (size_t i = 0, n = cur.num_children(); i < n; ++i)
-      {
-        visit.push_back({cur[i], i});
-      }
-    }
-    else
-    {
-      it->second = false;
-      visit.pop_back();
-    }
-  } while (!visit.empty());
 
-  std::vector<std::pair<Node, size_t>> path;
-  for (const auto& v : visit)
-  {
-    auto it = cache.find(v.first);
-    if (it != cache.end() && it->second)
+    if (pars.size() > 1)
     {
-      path.push_back(std::move(v));
+      // multiple occurrences of x
+      return {};
     }
-  }
-
-  std::unordered_map<Node, size_t> res;
-  for (size_t i = 1, n = path.size(); i < n; ++i)
-  {
-    res[path[i - 1].first] = path[i].second;
-  }
+    res.emplace(p.first, p.second);
+    it = parents.find(p.first);
+  } while (it != parents.end() && it->second.size());
   return res;
 }
 

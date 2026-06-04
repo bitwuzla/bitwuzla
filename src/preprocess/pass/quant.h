@@ -29,7 +29,6 @@ class PassQuant : public PreprocessingPass
   void alpha_normalize(const Node& node);
   Node eliminate(const Node& node);
   Node find_inverse(const Node& body, const Node& var, bool negated = true);
-  bool has_var(const Node& node, const Node& var) const;
   std::pair<bool, std::unordered_set<Node>> has_free_vars(
       const Node& node, const std::unordered_set<Node>& closed_quants) const;
 
