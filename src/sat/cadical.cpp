@@ -43,6 +43,7 @@ Cadical::Cadical()
   d_solver.reset(new CaDiCaL::Solver());
   d_solver->set("shrink", 0);
   d_solver->set("quiet", 1);
+  d_solver->set("ilb", 2);  // Useful for incremental
 #ifdef BZLA_SAT_CADICAL_ACTLIT
   d_activation_vars.push_back(0);
 #endif
