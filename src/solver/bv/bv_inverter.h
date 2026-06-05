@@ -40,6 +40,22 @@ class BvInverter
    * @note Neither the inverse nor the conditions will contain x.
    */
   std::pair<Node, std::vector<Node>> invert(const Node& node, const Node& x);
+  /**
+   * Compute the inverse of a given node and path with respect to x.
+   * @param node The node.
+   * @param x    The x node.
+   * @param path The path to x, given as a map from node to index of the
+   *             child to follow along the path.
+   * @return A pair of inverse and conditions. If conditions is not empty,
+   *         the resulting inverse is a conditional inverse. Returns a null
+   *         node as inverse with empty conditions if x does not occur in
+   *         node, or if it occurs multiple times.
+   * @note Neither the inverse nor the conditions will contain x.
+   */
+  std::pair<Node, std::vector<Node>> invert(
+      const Node& node,
+      const Node& x,
+      const std::unordered_map<Node, size_t>& path);
 
   /**
    * Compute the invertibility condition for a given node with respect to

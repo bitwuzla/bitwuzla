@@ -62,12 +62,20 @@ compute_parents(const Node& node)
 std::pair<Node, std::vector<Node>>
 BvInverter::invert(const Node& node, const Node& x)
 {
+  // compute path to x
+  auto path = compute_path(node, x);
+  return invert(node, x, path);
+}
+
+std::pair<Node, std::vector<Node>>
+BvInverter::invert(const Node& node,
+                   const Node& x,
+                   const std::unordered_map<Node, size_t>& path)
+{
   Node res;
   std::vector<Node> conds;
   std::unordered_map<Node, Node> subst_cache;
 
-  // compute path to x
-  auto path = compute_path(node, x);
   if (path.empty())
   {
     return {Node(), {}};
