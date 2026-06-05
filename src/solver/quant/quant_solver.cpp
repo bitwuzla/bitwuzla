@@ -338,7 +338,11 @@ QuantSolver::process(const Node& q)
     {
       if (cur.kind() == Kind::CONSTANT)
       {
-        d_consts.push_back(cur);
+        if (d_process_cache.insert(cur).second)
+        {
+          d_consts.push_back(cur);
+          d_ground_terms.push_back(cur);
+        }
       }
       visit.insert(visit.end(), cur.begin(), cur.end());
       continue;
