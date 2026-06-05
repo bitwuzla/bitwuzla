@@ -83,20 +83,55 @@ class QuantSolver : public Solver
 
   /**
    * Try to find an inverse term instantiation for var.
-   * @param var The variable to find the instantiation for.
-   * @param body The body of the quantified term.
-   * @param n_quants The number of quantifiers in the quantified term. Will be
-   *                 > 1 in case of a chained quantified term.
-   * @param inst     The instantiation term determined via symbolic_term().
-   * @param conditions The set of conditions for currently active conditional
-   *                   inverses, i.e., inverses used for instantiation.
+   * @param q            The active quantified formula.
+   * @param var          The variable to find the instantiation for.
+   * @param body         The body of the quantified formula.
+   * @param n_quants     The number of quantifiers in the quantified term. Will
+   *                     be > 1 in case of a chained quantified term.
+   * @param inst         The instantiation term determined via symbolic_term().
+   * @param conditions   The set of conditions for currently active conditional
+   *                     inverses, i.e., inverses used for instantiation.
+   * @param model_values The current model values of the currently active
+   *                     instantiation constants.
    * @return The inverse term.
    */
-  Node inverse_term(const Node& var,
+  Node inverse_term(const Node& q,
+                    const Node& var,
                     const Node& body,
                     uint64_t n_quants,
                     const Node& inst,
+                    const std::unordered_map<Node, Node>& model_values,
                     std::vector<Node>& conditions);
+
+  /**
+   * Helper for inverse_term(). Determines the node and path to consider
+   * for computing an inverse term. For example, when bounds-based projection
+   * is enabled, it will replace the bit-vectore inequality in the path with
+   * an equality based on the operands model values.
+   * @param q            The active quantified formula.
+   * @param node         The node.
+   * @param var          The variable to find the instantiation for.
+   * @param model_values The current model values of the currently active
+   *                     instantiation constants.
+   */
+  std::pair<Node, std::unordered_map<Node, size_t>> project(
+      const Node& q,
+      const Node& node,
+      const Node& var,
+      const std::unordered_map<Node, Node>& model_values);
+
+  /**
+   * Helper for project(). Determines the model values of the operands of the
+   * given node (must be a bit-vector equality or inequality).
+   * @param q            The active quantified formula.
+   * @param node         The node.
+   * @param model_values The current model values of the currently active
+   *                     instantiation constants.
+   */
+  std::pair<BitVector, BitVector> get_value_for_operands(
+      const Node& q,
+      const Node& node,
+      const std::unordered_map<Node, Node>& model_values);
 
   /** @return True if node is considered too expensive to add as a lemma. */
   bool is_expensive(const Node& node) const;
@@ -130,6 +165,8 @@ class QuantSolver : public Solver
 
   /** Cache configuration of option QUANT_IC. */
   bool d_opt_quant_ic;
+  /** Cache configuration of option QUANT_IC_BOUNDS. */
+  bool d_opt_quant_ic_bounds;
   /** Cache configuration of option QUANT_IC_FILTER. */
   bool d_opt_quant_ic_filter;
   /** Cache configuration of option QUANT_IC_VALUE_LIMIT. */

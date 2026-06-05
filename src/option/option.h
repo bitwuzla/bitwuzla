@@ -78,6 +78,7 @@ enum class Option
 
   // Quantifiers
   QUANT_IC,              // bool
+  QUANT_IC_BOUNDS,       // bool
   QUANT_IC_FILTER,       // bool
   QUANT_IC_VALUE_LIMIT,  // numeric
 
@@ -625,6 +626,7 @@ class Options
 
   // Quantifiers
   OptionBool quant_ic;
+  OptionBool quant_ic_bounds;
   OptionBool quant_ic_filter;
   OptionNumeric quant_ic_value_limit;
 

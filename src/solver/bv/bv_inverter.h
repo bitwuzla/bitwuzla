@@ -66,10 +66,6 @@ class BvInverter
    */
   Node ic(const Node& node, const Node& t, size_t idx);
 
- private:
-  /** @return True if given node is of a kind that can be inverted. */
-  bool is_invertible(const Node& node) const;
-
   /**
    * Compute the path from the given `node` to `x`.
    * @param node The node to start from.
@@ -79,6 +75,10 @@ class BvInverter
    */
   std::unordered_map<Node, size_t> compute_path(const Node& node,
                                                 const Node& x) const;
+
+ private:
+  /** @return True if given node is of a kind that can be inverted. */
+  bool is_invertible(const Node& node) const;
 
   /**
    * Compute the inverse of given `node` wrt. to x = node[idx].

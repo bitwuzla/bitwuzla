@@ -54,6 +54,7 @@ QuantSolver::QuantSolver(Env& env, SolverState& state)
       d_lemma_cache(state.backtrack_mgr()),
       d_inv_cache(state.backtrack_mgr()),
       d_opt_quant_ic(env.options().quant_ic()),
+      d_opt_quant_ic_bounds(env.options().quant_ic_bounds()),
       d_opt_quant_ic_filter(env.options().quant_ic_filter()),
       d_opt_quant_ic_value_limit(env.options().quant_ic_value_limit()),
       d_stats(env.statistics(), "solver::quant::")
@@ -583,7 +584,8 @@ QuantSolver::mbqi_lemma(
     {
       // Try to find instantiation via inverse term computation. Conditional
       // logic to actually try to find this inverse is encoded in inverse_term.
-      Node inv = inverse_term(cur[0], body, nquants, value, conditions);
+      Node inv = inverse_term(
+          q, cur[0], body, nquants, value, model_values, conditions);
       if (!inv.is_null())
       {
         value      = inv;
@@ -664,11 +666,131 @@ QuantSolver::symbolic_term(
   return cache.at(term);
 }
 
+std::pair<BitVector, BitVector>
+QuantSolver::get_value_for_operands(
+    const Node& q,
+    const Node& node,
+    const std::unordered_map<Node, Node>& model_values)
+{
+  assert(node.kind() == Kind::EQUAL || node.kind() == Kind::BV_ULT
+         || node.kind() == Kind::BV_SLT);
+  assert(node[0].type().is_bv());
+
+  std::unordered_map<Node, Node> substs;
+  Node cur = q;
+  while (cur.kind() == Kind::FORALL)
+  {
+    auto it = d_instantiation_consts.find(cur);
+    assert(it != d_instantiation_consts.end());
+    const Node& ic = it->second;
+    substs.emplace(cur[0], model_values.at(ic));
+    cur = cur[1];
+  }
+
+  Node instantiated = substitute(node, substs);
+  return {d_solver_state.value(instantiated[0]).value<BitVector>(),
+          d_solver_state.value(instantiated[1]).value<BitVector>()};
+}
+
+std::pair<Node, std::unordered_map<Node, size_t>>
+QuantSolver::project(const Node& q,
+                     const Node& node,
+                     const Node& var,
+                     const std::unordered_map<Node, Node>& model_values)
+{
+  Node res  = node;
+  auto path = d_bv_inverter.compute_path(node, var);
+
+  if (!path.empty() && d_opt_quant_ic_bounds)
+  {
+    std::vector<Node> work;
+    Node cur = node;
+    assert(path.find(node) != path.end());
+    Kind kind = cur.kind();
+
+    while (cur != var)
+    {
+      work.push_back(cur);
+
+      if (kind == Kind::BV_ULT || kind == Kind::BV_SLT)
+      {
+        break;
+      }
+
+      cur  = cur[path[cur]];
+      kind = cur.kind();
+    }
+    if (cur != var)
+    {
+      NodeManager& nm   = d_env.nm();
+      auto [val0, val1] = get_value_for_operands(q, cur, model_values);
+      int32_t cmp       = cur.kind() == Kind::BV_SLT ? val0.signed_compare(val1)
+                                                     : val0.compare(val1);
+      Node s, t;
+      if (cmp == 0)
+      {
+        // treat as (cur[0] = cur[1])
+        s = cur[0];
+        t = cur[1];
+      }
+      else if (cmp < 0)
+      {
+        // treat as (cur[0] + 1 = cur[1])
+        s = nm.mk_node(
+            Kind::BV_ADD,
+            {cur[0], nm.mk_value(BitVector::mk_one(cur[1].type().bv_size()))});
+        t = cur[1];
+      }
+      else
+      {
+        // treat as (cur[0] = cur[1] + 1)
+        s = cur[0];
+        t = nm.mk_node(
+            Kind::BV_ADD,
+            {cur[1], nm.mk_value(BitVector::mk_one(cur[1].type().bv_size()))});
+      }
+      // Rebuild nodes in path.
+      assert(work.back() == cur);
+      work.pop_back();
+      kind = Kind::EQUAL;
+      std::vector<Node> children{s, t};
+      res = nm.mk_node(kind, children);
+      if (cur != res)
+      {
+        while (!work.empty())
+        {
+          cur = work.back();
+          work.pop_back();
+          children.clear();
+          auto idx = path.at(cur);
+          for (size_t i = 0, num = cur.num_children(); i < num; ++i)
+          {
+            if (i == idx)
+            {
+              children.push_back(res);
+            }
+            else
+            {
+              children.push_back(cur[i]);
+            }
+          }
+          res = utils::rebuild_node(nm, cur, children);
+        }
+        path = d_bv_inverter.compute_path(res, var);
+      }
+    }
+  }
+
+  return {res, path};
+}
+
 Node
-QuantSolver::inverse_term(const Node& var,
+QuantSolver::inverse_term(const Node& q,
+                          const Node& var,
                           const Node& body,
                           uint64_t n_quants,
                           const Node& value,
+                          const std::unordered_map<Node, Node>& model_values,
                           std::vector<Node>& conditions)
 {
   // Only try to compute IC-based lemma for bit-vector variables, and only
@@ -681,7 +803,8 @@ QuantSolver::inverse_term(const Node& var,
       // Also, only generate one per quantified variable.
       && d_inv_cache.insert(var).second)
   {
-    auto [invert, conds] = d_bv_inverter.invert(body, var);
+    auto [bbody, path]   = project(q, body, var, model_values);
+    auto [invert, conds] = d_bv_inverter.invert(bbody, var, path);
     if (!invert.is_null())
     {
       bool filtered = false;

@@ -480,6 +480,11 @@ Options::Options()
                false,
                "use bit-vector invertibility-condition-based MBQI strategy",
                "quant-ic"),
+      quant_ic_bounds(this,
+                      Option::QUANT_IC_BOUNDS,
+                      false,
+                      "use bounds-based projection function for predicates",
+                      "quant-ic-bounds"),
       quant_ic_filter(
           this,
           Option::QUANT_IC_FILTER,
@@ -1030,6 +1035,7 @@ Options::data(Option opt)
     case Option::INTERPOLANTS_PRINT_STATS: return &interpolants_print_stats;
 
     case Option::QUANT_IC: return &quant_ic;
+    case Option::QUANT_IC_BOUNDS: return &quant_ic_bounds;
     case Option::QUANT_IC_FILTER: return &quant_ic_filter;
     case Option::QUANT_IC_VALUE_LIMIT: return &quant_ic_value_limit;
 

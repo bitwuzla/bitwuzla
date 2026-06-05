@@ -81,18 +81,6 @@ BvInverter::invert(const Node& node,
     return {Node(), {}};
   }
 
-  // ///
-  //  {
-  //   std::cout << "## path:" << std::endl;
-  //   Node cur = node;
-  //   while (cur != x)
-  //   {
-  //     std::cout << cur << ": " << path[cur] << std::endl;
-  //     cur = cur[path[cur]];
-  //   }
-  // }
-  // ///
-
   // compute inverse for top-level predicate
   Node cur       = node;
   size_t idx     = path.at(cur);
@@ -337,6 +325,18 @@ BvInverter::compute_path(const Node& node, const Node& x) const
     res.emplace(p.first, p.second);
     it = parents.find(p.first);
   } while (it != parents.end() && it->second.size());
+  // ///
+  //  {
+  //   std::cout << "## path:" << std::endl;
+  //   Node cur = node;
+  //   while (!res.empty() && cur != x)
+  //   {
+  //     std::cout << cur << ": " << res[cur] << std::endl;
+  //     cur = cur[res[cur]];
+  //   }
+  // }
+  // ///
+
   return res;
 }
 
