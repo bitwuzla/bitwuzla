@@ -80,6 +80,7 @@ enum class Option
   QUANT_IC,              // bool
   QUANT_IC_BOUNDS,       // bool
   QUANT_IC_FILTER,       // bool
+  QUANT_IC_UNDERDET,     // bool
   QUANT_IC_VALUE_LIMIT,  // numeric
 
   // Preprocessing options for enabling/disabling passes
@@ -628,6 +629,7 @@ class Options
   OptionBool quant_ic;
   OptionBool quant_ic_bounds;
   OptionBool quant_ic_filter;
+  OptionBool quant_ic_underdet;
   OptionNumeric quant_ic_value_limit;
 
   // Preprocessing

@@ -24,8 +24,25 @@ namespace bv {
 class BvInverter
 {
  public:
-  /** Constructor. */
-  BvInverter(Env& env);
+  /**
+   * Constructor.
+   *
+   * Optionally configures inverter to produce under-determined inverses on
+   * inverse() and invert() (`underdet` = true).
+   *
+   * If configured, produces under-determined (lossy) inverses for BV_EXTRACT
+   * and BV_CONCAT. For extract, this concerns bits that were sliced away, which
+   * are reconstructed as fresh constants. For concat, instead of a conditional
+   * inverse, we compute an inverse while disregarding that it is conditional on
+   * s. These under-determined inverses may only be used for (quantifier)
+   * instantiation (any witness is Configures inverter as either always
+   * producing unique inverses (default).
+   *
+   * @param env      The associated environment.
+   * @param underdet True to enable under-determined (lossy) inverses for
+   *                 extract and concat.
+   */
+  BvInverter(Env& env, bool underdet = false);
   /** Destructor. */
   ~BvInverter();
 
@@ -270,6 +287,8 @@ class BvInverter
   Env& d_env;
   /** The associated node manager. */
   NodeManager& d_nm;
+  /** Enable under-determined (lossy) inverses for extract/concat. */
+  bool d_underdet;
 };
 
 }  // namespace bv

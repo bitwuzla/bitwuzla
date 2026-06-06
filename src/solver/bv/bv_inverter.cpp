@@ -19,7 +19,10 @@ namespace bzla::bv {
 
 /* --- BvInverter public ---------------------------------------------------- */
 
-BvInverter::BvInverter(Env& env) : d_env(env), d_nm(env.nm()) {}
+BvInverter::BvInverter(Env& env, bool underdet)
+    : d_env(env), d_nm(env.nm()), d_underdet(underdet)
+{
+}
 
 BvInverter::~BvInverter() {}
 
@@ -257,6 +260,9 @@ BvInverter::is_invertible(const Node& node) const
     case Kind::BV_SHL:
     case Kind::BV_SHR: return true;
 
+    // Extract is only in under-determined mode.
+    case Kind::BV_EXTRACT: return d_underdet;
+
     default:
       assert(kind != Kind::BV_COMP);
       assert(kind != Kind::BV_DEC);
@@ -355,6 +361,30 @@ BvInverter::inverse(const Node& node, size_t idx, const Node& t)
   {
     return d_nm.mk_node(kind, {t});
   }
+  if (d_underdet && kind == Kind::BV_EXTRACT)
+  {
+    // (= ((_ extract hi lo) x) t)  ==>  x = (concat free_hi t free_lo)
+    // The bits of x outside [hi:lo] are unconstrained, so we fill them with
+    // fresh free constants. This is an under-determined inverse and is only
+    // sound for instantiation (q => inst holds for any witness), not for
+    // quantifier elimination.
+    assert(idx == 0);
+    uint64_t w  = node[0].type().bv_size();
+    uint64_t hi = node.index(0);
+    uint64_t lo = node.index(1);
+    Node res    = t;
+    if (lo > 0)
+    {
+      res = d_nm.mk_node(Kind::BV_CONCAT,
+                         {res, d_nm.mk_const(d_nm.mk_bv_type(lo))});
+    }
+    if (hi + 1 < w)
+    {
+      res = d_nm.mk_node(Kind::BV_CONCAT,
+                         {d_nm.mk_const(d_nm.mk_bv_type(w - 1 - hi)), res});
+    }
+    return res;
+  }
   const Node& s = node[1 - idx];
   if (kind == Kind::BV_ADD)
   {
@@ -372,21 +402,21 @@ BvInverter::inverse(const Node& node, size_t idx, const Node& t)
       return d_nm.mk_node(kind, {d_nm.mk_value(s_val.bvmodinv()), t});
     }
   }
-  // if (kind == Kind::BV_CONCAT)
-  // {
-  //   // Compute inverse while disregarding that invertibility depend on s,
-  //   // i.e., instead of computing the invertibility condition for this case.
-  //   // TODO evaluate if this improves performance
-  //   uint64_t bw_x = node[idx].type().bv_size();
-  //   uint64_t bw_t = t.type().bv_size();
-  //   if (idx == 0)
-  //   {
-  //     // t_x = t[bw(t) - 1: bw(t) - bw(x)]
-  //     return d_nm.mk_node(Kind::BV_EXTRACT, {t}, {bw_t - 1, bw_t - bw_x});
-  //   }
-  //   // t_x = t[bw(x) - 1: 0]
-  //   return d_nm.mk_node(Kind::BV_EXTRACT, {t}, {bw_x - 1, 0});
-  // }
+  if (d_underdet && kind == Kind::BV_CONCAT)
+  {
+    // Compute inverse while disregarding that invertibility depends on s, i.e.,
+    // instead of computing the invertibility condition for this case. This is
+    // an under-determined inverse and is only sound for instantiation.
+    uint64_t bw_x = node[idx].type().bv_size();
+    uint64_t bw_t = t.type().bv_size();
+    if (idx == 0)
+    {
+      // t_x = t[bw(t) - 1: bw(t) - bw(x)]
+      return d_nm.mk_node(Kind::BV_EXTRACT, {t}, {bw_t - 1, bw_t - bw_x});
+    }
+    // t_x = t[bw(x) - 1: 0]
+    return d_nm.mk_node(Kind::BV_EXTRACT, {t}, {bw_x - 1, 0});
+  }
   return Node();
 }
 

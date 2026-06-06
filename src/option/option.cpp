@@ -492,6 +492,12 @@ Options::Options()
           "filter lemmas from bit-vector invertibility-condition-based MBQI "
           "strategy, will add any lemma from that strategy if false",
           "quant-ic-filter"),
+      quant_ic_underdet(this,
+                        Option::QUANT_IC_UNDERDET,
+                        false,
+                        "allow computation of under-determined inverses for "
+                        "extract and concat",
+                        "quant-ic-underdet"),
       quant_ic_value_limit(
           this,
           Option::QUANT_IC_VALUE_LIMIT,
@@ -1037,6 +1043,7 @@ Options::data(Option opt)
     case Option::QUANT_IC: return &quant_ic;
     case Option::QUANT_IC_BOUNDS: return &quant_ic_bounds;
     case Option::QUANT_IC_FILTER: return &quant_ic_filter;
+    case Option::QUANT_IC_UNDERDET: return &quant_ic_underdet;
     case Option::QUANT_IC_VALUE_LIMIT: return &quant_ic_value_limit;
 
     case Option::PREPROCESS: return &preprocess;

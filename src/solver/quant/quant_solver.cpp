@@ -44,7 +44,7 @@ QuantSolver::is_theory_leaf(const Node& term)
 
 QuantSolver::QuantSolver(Env& env, SolverState& state)
     : Solver(env, state),
-      d_bv_inverter(env),
+      d_bv_inverter(env, d_env.options().quant_ic_underdet()),
       d_quantifiers(state.backtrack_mgr()),
       d_assertions(state.backtrack_mgr()),
       d_process_cache(state.backtrack_mgr()),

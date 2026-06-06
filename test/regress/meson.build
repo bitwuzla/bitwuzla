@@ -1832,6 +1832,11 @@ if get_option('b_sanitize') == 'none'
   tests_smt2 += [['solver/bv/prop/prop_bvurem.smt2', ['--bv-solver=preprop']]]
 endif
 
+tests_smt2_no_unsat_core = [
+  ## times out with produce-unsat-cores
+  ['solver/quant/quant_ic_underdet.smt2'],
+]
+
 tests_btor2_parser = [
   ['parser/btor2perr000.btor2'],
   ['parser/btor2perr001.btor2'],

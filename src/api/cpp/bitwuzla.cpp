@@ -127,6 +127,7 @@ static const std::unordered_map<Option, bzla::option::Option>
         {Option::QUANT_IC, bzla::option::Option::QUANT_IC},
         {Option::QUANT_IC_BOUNDS, bzla::option::Option::QUANT_IC_BOUNDS},
         {Option::QUANT_IC_FILTER, bzla::option::Option::QUANT_IC_FILTER},
+        {Option::QUANT_IC_UNDERDET, bzla::option::Option::QUANT_IC_UNDERDET},
         {Option::QUANT_IC_VALUE_LIMIT,
          bzla::option::Option::QUANT_IC_VALUE_LIMIT},
 
