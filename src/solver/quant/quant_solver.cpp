@@ -803,14 +803,24 @@ QuantSolver::inverse_term(const Node& q,
       && !body.is_value()
       // Also, only if we have tried d_opt_quant_ic_value_limit value
       // instantiations for this quantifier first.
-      && d_value_insts[var] >= d_opt_quant_ic_value_limit
-      // Also, only generate one per quantified variable.
-      && d_inv_cache.insert(var).second)
+      && d_value_insts[var] >= d_opt_quant_ic_value_limit)
   {
+    // Also, only generate one per quantified variable.
+    if (d_inv_cache.find(var) != d_inv_cache.end())
+    {
+      return Node();
+    }
+
     auto [bbody, path]   = project(q, body, var, model_values);
     auto [invert, conds] = d_bv_inverter.invert(bbody, var, path);
     if (!invert.is_null())
     {
+      // We only cache when we were actually able to compute an inverse.
+      // We do cache even if the inverse would be filtered, mainly because if
+      // we produced an inverse once that was already too expensive and thus
+      // filtered, subsequent inverses for this variable will be as expensive.
+      d_inv_cache.insert(var);
+
       bool filtered = false;
       if (d_opt_quant_ic_filter)
       {
