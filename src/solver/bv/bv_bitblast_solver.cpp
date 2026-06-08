@@ -394,6 +394,7 @@ BvBitblastSolver::init_sat_solver()
 void
 BvBitblastSolver::register_distinct_n(const Node& node)
 {
+#ifdef BZLA_USE_CADICAL
   std::vector<std::vector<int32_t>> bits;
   for (uint64_t i = 1, size = node.num_children(); i < size; ++i)
   {
@@ -414,11 +415,15 @@ BvBitblastSolver::register_distinct_n(const Node& node)
   std::unique_ptr<sat::DistinctNPropagator> distinct_n(
       new sat::DistinctNPropagator(card, d_cnf_encoder->cnf_var(bit), bits));
   d_sat_solver->register_propagator(std::move(distinct_n));
+#else
+  (void) node;
+#endif
 }
 
 void
 BvBitblastSolver::process_pending_eq_heuristics()
 {
+#ifdef BZLA_USE_CADICAL
   for (const auto& nodes : d_pending_eq_heuristics)
   {
     std::vector<std::vector<int32_t>> bits;
@@ -438,12 +443,14 @@ BvBitblastSolver::process_pending_eq_heuristics()
         new sat::EqDecisionHeuristic(bits));
     d_sat_solver->register_propagator(std::move(eqh));
   }
+#endif
   d_pending_eq_heuristics.clear();
 }
 
 void
 BvBitblastSolver::process_pending_distinct_heuristics()
 {
+#ifdef BZLA_USE_CADICAL
   for (const auto& nodes : d_pending_distinct_heuristics)
   {
     std::vector<std::vector<int32_t>> bits;
@@ -463,6 +470,7 @@ BvBitblastSolver::process_pending_distinct_heuristics()
         new sat::DistinctDecisionHeuristic(bits));
     d_sat_solver->register_propagator(std::move(dih));
   }
+#endif
   d_pending_distinct_heuristics.clear();
 }
 

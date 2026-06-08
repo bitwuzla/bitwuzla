@@ -8,6 +8,10 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+/*----------------------------------------------------------------------------*/
+#ifdef BZLA_USE_CADICAL
+/*----------------------------------------------------------------------------*/
+
 #include "sat/distinct_decision_heuristic.h"
 
 #include <cassert>
@@ -72,3 +76,7 @@ DistinctDecisionHeuristic::unassign(int32_t var)
 }
 
 }  // namespace bzla::sat
+
+/*----------------------------------------------------------------------------*/
+#endif
+/*----------------------------------------------------------------------------*/

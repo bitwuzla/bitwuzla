@@ -11,6 +11,10 @@
 #ifndef BZLA_SAT_PROPAGATOR_H_INCLUDED
 #define BZLA_SAT_PROPAGATOR_H_INCLUDED
 
+/*----------------------------------------------------------------------------*/
+#ifdef BZLA_USE_CADICAL
+/*----------------------------------------------------------------------------*/
+
 #include <cadical.hpp>
 #include <deque>
 #include <memory>
@@ -113,5 +117,9 @@ class Propagator : public CaDiCaL::ExternalPropagator,
 };
 
 }  // namespace bzla::sat
+
+/*----------------------------------------------------------------------------*/
+#endif
+/*----------------------------------------------------------------------------*/
 
 #endif

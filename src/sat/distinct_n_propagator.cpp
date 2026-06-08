@@ -8,6 +8,10 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+/*----------------------------------------------------------------------------*/
+#ifdef BZLA_USE_CADICAL
+/*----------------------------------------------------------------------------*/
+
 #include "sat/distinct_n_propagator.h"
 
 #include <algorithm>
@@ -282,3 +286,7 @@ DistinctNPropagator::str(std::ostream& os) const
 }
 
 }  // namespace bzla::sat
+
+/*----------------------------------------------------------------------------*/
+#endif
+/*----------------------------------------------------------------------------*/

@@ -8,6 +8,10 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+/*----------------------------------------------------------------------------*/
+#ifdef BZLA_USE_CADICAL
+/*----------------------------------------------------------------------------*/
+
 #include "sat/eq_decision_heuristic.h"
 
 #include <cassert>
@@ -88,3 +92,7 @@ EqDecisionHeuristic::unassign(int32_t var)
 }
 
 }  // namespace bzla::sat
+
+/*----------------------------------------------------------------------------*/
+#endif
+/*----------------------------------------------------------------------------*/
