@@ -86,8 +86,6 @@ class QuantSolver : public Solver
    * @param q            The active quantified formula.
    * @param var          The variable to find the instantiation for.
    * @param body         The body of the quantified formula.
-   * @param n_quants     The number of quantifiers in the quantified term. Will
-   *                     be > 1 in case of a chained quantified term.
    * @param inst         The instantiation term determined via symbolic_term().
    * @param conditions   The set of conditions for currently active conditional
    *                     inverses, i.e., inverses used for instantiation.
@@ -98,7 +96,6 @@ class QuantSolver : public Solver
   Node inverse_term(const Node& q,
                     const Node& var,
                     const Node& body,
-                    uint64_t n_quants,
                     const Node& inst,
                     const std::unordered_map<Node, Node>& model_values,
                     std::vector<Node>& conditions);

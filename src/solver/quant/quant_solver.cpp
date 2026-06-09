@@ -551,6 +551,43 @@ QuantSolver::is_expensive(const Node& node) const
   return false;
 }
 
+namespace {
+bool
+has_free_vars(const Node& node)
+{
+  std::unordered_set<Node> quants;
+  std::vector<Node> vars;
+  std::vector<Node> visit{node};
+  std::unordered_set<Node> cache;
+  do
+  {
+    auto cur = visit.back();
+    visit.pop_back();
+    auto [it, inserted] = cache.emplace(cur);
+    if (inserted)
+    {
+      if (cur.kind() == Kind::VARIABLE)
+      {
+        vars.push_back(cur);
+      }
+      else if (cur.kind() == Kind::FORALL)
+      {
+        quants.insert(cur[0]);
+      }
+      visit.insert(visit.end(), cur.begin(), cur.end());
+    }
+  } while (!visit.empty());
+  for (const auto& v : vars)
+  {
+    if (quants.find(v) == quants.end())
+    {
+      return true;
+    }
+  }
+  return false;
+}
+}  // namespace
+
 void
 QuantSolver::mbqi_lemma(
     const Node& q,
@@ -564,14 +601,12 @@ QuantSolver::mbqi_lemma(
   QuantSolver::LemmaKind lemma_kind = QuantSolver::LemmaKind::MBQI_INST;
 
   Node body = q;
-  uint64_t nquants = 1;
   if (d_opt_quant_ic)
   {
     // Determine body of quantified formula for BvInverter queries.
     while (body.kind() == Kind::FORALL)
     {
       body = body[1];
-      nquants += 1;
     }
     // We are looking for instantions that falsifies the quantifier, thus
     // the literal for the inverter query must be negated.
@@ -588,8 +623,7 @@ QuantSolver::mbqi_lemma(
     {
       // Try to find instantiation via inverse term computation. Conditional
       // logic to actually try to find this inverse is encoded in inverse_term.
-      Node inv = inverse_term(
-          q, cur[0], body, nquants, value, model_values, conditions);
+      Node inv = inverse_term(q, cur[0], body, value, model_values, conditions);
       if (!inv.is_null())
       {
         value      = inv;
@@ -617,6 +651,10 @@ QuantSolver::mbqi_lemma(
   Node inst = substitute(cur, map);
   Node lem =
       nm.mk_node(Kind::AND, {cond, nm.mk_node(Kind::IMPLIES, {q, inst})});
+  // This is mainly to document that this can never happen since we ensure
+  // in inverse_term() that we use an inverse as is only under safe conditions,
+  // and else introduce a fresh constant that the variable is mapped to.
+  assert(!has_free_vars(lem));
   lemma(lem, lemma_kind);
 }
 
@@ -792,7 +830,6 @@ Node
 QuantSolver::inverse_term(const Node& q,
                           const Node& var,
                           const Node& body,
-                          uint64_t n_quants,
                           const Node& value,
                           const std::unordered_map<Node, Node>& model_values,
                           std::vector<Node>& conditions)
@@ -839,17 +876,19 @@ QuantSolver::inverse_term(const Node& q,
       if (!filtered)
       {
         conditions.insert(conditions.end(), conds.begin(), conds.end());
-        if (n_quants == 1 || invert.is_const())
+        // We only use an inverse as-is if it does not contain free variables
+        // to ensure that instantiation in lemmas does not pull in free
+        // variables. Free variables may occur in an unconditional inverse in
+        // case of nested/chained quantifiers. In that case, we introduce a
+        // fresh constant that `var` is mapped to.
+        if (!has_free_vars(invert))
         {
           return invert;
         }
-        else
-        {
-          NodeManager& nm = d_env.nm();
-          Node a          = nm.mk_const(var.type());
-          conditions.push_back(nm.mk_node(Kind::EQUAL, {a, invert}));
-          return a;
-        }
+        NodeManager& nm = d_env.nm();
+        Node a          = nm.mk_const(var.type());
+        conditions.push_back(nm.mk_node(Kind::EQUAL, {a, invert}));
+        return a;
       }
     }
   }
