@@ -967,8 +967,8 @@ enum ENUM(Option)
    * **Preprocessing: Quantifiers.**
    *
    * *Values:*
-   *  * **true**: enable
-   *  * **false**: disable [**default**]
+   *  * **true**: enable [**default**]
+   *  * **false**: disable
    */
   EVALUE(PP_QUANT_ALPHA),
 
