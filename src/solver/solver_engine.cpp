@@ -409,6 +409,48 @@ SolverEngine::check_distinct_n()
         assert(card <= map.size());
       }
     }
+    else
+    {
+      // dc evaluates to false under the current model. With CaDiCaL an eq
+      // decision heuristic forces the phase of dc to match the actual number
+      // of distinct children; without an external propagator (e.g., with
+      // Kissat) the SAT solver may assign dc to false even though the children
+      // take at least card distinct values, i.e., dc actually evaluates to
+      // true. Detect this and add a lemma that forces dc.
+      util::Integer card(dc[0].value<BitVector>());
+      std::unordered_map<Node, std::vector<Node>> map;
+      for (size_t j = 1, nchildren = dc.num_children(); j < nchildren; ++j)
+      {
+        map[d_solver_state.value(dc[j])].push_back(dc[j]);
+      }
+      // map.size() is the number of distinct values under the current model.
+      // If it is at least card, dc must be true.
+      if (card <= map.size())
+      {
+        // Collect one representative per distinct value class until we have
+        // card pairwise distinct elements. Their pairwise disequalities are a
+        // sufficient reason for dc to hold.
+        std::vector<Node> reps;
+        for (const auto& [val, terms] : map)
+        {
+          (void) val;
+          reps.push_back(terms.front());
+          if (card <= reps.size())
+          {
+            break;
+          }
+        }
+        // The reps are pairwise distinct under the model; their distinctness
+        // is a sufficient reason for dc to hold. card <= 1 yields a single rep,
+        // in which case dc is unconditionally forced.
+        Node lem =
+            reps.size() < 2
+                ? dc
+                : nm.mk_node(Kind::IMPLIES,
+                             {utils::mk_nary(nm, Kind::DISTINCT, reps), dc});
+        d_solver_state.lemma(lem);
+      }
+    }
   }
 }
 
