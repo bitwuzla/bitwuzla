@@ -781,8 +781,8 @@ enum ENUM(Option)
    * **Quantifiers: Use invertibility-condition-based MBQI strategy.**
    *
    * *Values:*
-   *  - **true**: enable
-   *  - **false**: disable [**default**]
+   *  - **true**: enable [**default**]
+   *  - **false**: disable
    *
    * @warning This is an expert option to configure the quantifier engine.
    */
@@ -791,8 +791,8 @@ enum ENUM(Option)
    * **Quantifiers: Use bounds-based projection heuristic.**
    *
    * *Values:*
-   *  - **true**: enable
-   *  - **false**: disable [**default**]
+   *  - **true**: enable [**default**]
+   *  - **false**: disable
    */
 #ifndef BITWUZLA_API_USE_C_ENUMS
   /*! @see Option::QUANT_IC
@@ -830,8 +830,8 @@ enum ENUM(Option)
    * may contain under-determined inverses for extract/concat.
    *
    * *Values:*
-   *  - **true**: enable
-   *  - **false**: disable [**default**]
+   *  - **true**: enable [**default**]
+   *  - **false**: disable
    */
 #ifndef BITWUZLA_API_USE_C_ENUMS
   /*! @see Option::QUANT_IC

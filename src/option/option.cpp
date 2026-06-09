@@ -477,12 +477,12 @@ Options::Options()
       // Quantifiers
       quant_ic(this,
                Option::QUANT_IC,
-               false,
+               true,
                "use bit-vector invertibility-condition-based MBQI strategy",
                "quant-ic"),
       quant_ic_bounds(this,
                       Option::QUANT_IC_BOUNDS,
-                      false,
+                      true,
                       "use bounds-based projection function for predicates",
                       "quant-ic-bounds"),
       quant_ic_filter(
@@ -494,7 +494,7 @@ Options::Options()
           "quant-ic-filter"),
       quant_ic_underdet(this,
                         Option::QUANT_IC_UNDERDET,
-                        false,
+                        true,
                         "allow computation of under-determined inverses for "
                         "extract and concat",
                         "quant-ic-underdet"),
