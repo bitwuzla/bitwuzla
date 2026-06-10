@@ -33,7 +33,7 @@ enum class LemmaKind : uint32_t
   MUL_VALUE,
 
   UDIV_POW2,   // 1*: (=> (= s 2^i) (= t (bvlshr x i)))
-  UDIV_REF1,   // (=> (= s #b0001) (= t x))
+  UDIV_REF1,   //  -: (=> (= s #b0001) (= t x))
   UDIV_REF2,   // 2*: (=> (and (= s x) (distinct s #b0000)) (= t #b0001))
   UDIV_REF3,   // 3*: (=> (= s #b0000) (= t (bvnot #b0000)))
   UDIV_REF4,   // 4*: (=> (and (= x #b0000) (distinct s #b0000)) (= t #b0000))
@@ -143,8 +143,8 @@ std::ostream& operator<<(std::ostream& os, LemmaKind kind);
 class AbstractionLemma
 {
  public:
-  AbstractionLemma(NodeManager& nm, LemmaKind kind) : d_nm(nm), d_kind(kind){};
-  virtual ~AbstractionLemma() {};
+  AbstractionLemma(NodeManager& nm, LemmaKind kind) : d_nm(nm), d_kind(kind) {}
+  virtual ~AbstractionLemma() {}
 
   /** Return lemma kind. */
   LemmaKind kind() const { return d_kind; }
@@ -168,8 +168,8 @@ template <enum LemmaKind K>
 class Lemma : public AbstractionLemma
 {
  public:
-  Lemma(NodeManager& nm) : AbstractionLemma(nm, K){};
-  ~Lemma(){};
+  Lemma(NodeManager& nm) : AbstractionLemma(nm, K) {}
+  ~Lemma() {}
   Node instance(const Node& x, const Node& s, const Node& t) const override
   {
     (void) x;

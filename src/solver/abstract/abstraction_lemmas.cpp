@@ -243,6 +243,11 @@ Lemma<LemmaKind::MUL_REF1>::instance(const Node& x,
                                      const Node& s,
                                      const Node& t) const
 {
+  // Lemma is only valid with the asserted restriction. This is assertion is
+  // mainly for documentation purposes since we globally restrict the minimum
+  // abstraction size to 3 (via minimum value configuration of option
+  // abstraction_bv_size).
+  assert(x.type().bv_size() > 1);
   Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
   return d_nm.mk_node(
       Kind::NOT,
@@ -265,6 +270,11 @@ Lemma<LemmaKind::MUL_REF3>::instance(const Node& x,
                                      const Node& s,
                                      const Node& t) const
 {
+  // Lemma is only valid with the asserted restriction. This is assertion is
+  // mainly for documentation purposes since we globally restrict the minimum
+  // abstraction size to 3 (via minimum value configuration of option
+  // abstraction_bv_size).
+  assert(x.type().bv_size() > 1);
   return d_nm.mk_node(
       Kind::DISTINCT,
       {d_nm.mk_node(Kind::BV_AND, {x, t}),
@@ -277,6 +287,11 @@ Lemma<LemmaKind::MUL_REFN3>::instance(const Node& x,
                                       const Node& s,
                                       const Node& t) const
 {
+  // Lemma is only valid with the asserted restriction. This is assertion is
+  // mainly for documentation purposes since we globally restrict the minimum
+  // abstraction size to 3 (via minimum value configuration of option
+  // abstraction_bv_size).
+  assert(x.type().bv_size() > 1);
   // (not (= t (bvshl (bvor s #b0001) (bvshl t x))))
   Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
   return d_nm.mk_node(Kind::DISTINCT,
@@ -310,6 +325,11 @@ Lemma<LemmaKind::MUL_REFN5>::instance(const Node& x,
                                       const Node& s,
                                       const Node& t) const
 {
+  // Lemma is only valid with the asserted restriction. This is assertion is
+  // mainly for documentation purposes since we globally restrict the minimum
+  // abstraction size to 3 (via minimum value configuration of option
+  // abstraction_bv_size).
+  assert(x.type().bv_size() != 2);
   // (bvuge t (bvand #b0001 (bvlshr (bvand x s) #b0001)))
   Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
   return d_nm.mk_node(
@@ -428,6 +448,11 @@ Lemma<LemmaKind::MUL_REF13>::instance(const Node& x,
                                       const Node& s,
                                       const Node& t) const
 {
+  // Lemma is only valid with the asserted restriction. This is assertion is
+  // mainly for documentation purposes since we globally restrict the minimum
+  // abstraction size to 3 (via minimum value configuration of option
+  // abstraction_bv_size).
+  assert(x.type().bv_size() > 1);
   Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
   return d_nm.mk_node(
       Kind::DISTINCT,
@@ -441,6 +466,11 @@ Lemma<LemmaKind::MUL_REF14>::instance(const Node& x,
                                       const Node& s,
                                       const Node& t) const
 {
+  // Lemma is only valid with the asserted restriction. This is assertion is
+  // mainly for documentation purposes since we globally restrict the minimum
+  // abstraction size to 3 (via minimum value configuration of option
+  // abstraction_bv_size).
+  assert(x.type().bv_size() > 1);
   Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
   return d_nm.mk_node(
       Kind::DISTINCT,
@@ -457,6 +487,11 @@ Lemma<LemmaKind::MUL_REF15>::instance(const Node& x,
                                       const Node& s,
                                       const Node& t) const
 {
+  // Lemma is only valid with the asserted restriction. This is assertion is
+  // mainly for documentation purposes since we globally restrict the minimum
+  // abstraction size to 3 (via minimum value configuration of option
+  // abstraction_bv_size).
+  assert(x.type().bv_size() > 1);
   Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
   return d_nm.mk_node(Kind::DISTINCT,
                       {t,
@@ -814,6 +849,11 @@ Lemma<LemmaKind::UDIV_REF21>::instance(const Node& x,
                                        const Node& s,
                                        const Node& t) const
 {
+  // Lemma is only valid with the asserted restriction. This is assertion is
+  // mainly for documentation purposes since we globally restrict the minimum
+  // abstraction size to 3 (via minimum value configuration of option
+  // abstraction_bv_size).
+  assert(x.type().bv_size() > 1);
   (void) s;
   // (not (= x (bvnot (bvand x (bvshl t #b0001)))))
   Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
@@ -962,6 +1002,11 @@ Lemma<LemmaKind::UDIV_REF31>::instance(const Node& x,
                                        const Node& s,
                                        const Node& t) const
 {
+  // Lemma is only valid with the asserted restriction. This is assertion is
+  // mainly for documentation purposes since we globally restrict the minimum
+  // abstraction size to 3 (via minimum value configuration of option
+  // abstraction_bv_size).
+  assert(x.type().bv_size() > 2);
   (void) s;
   // (not (= x (bvadd t (bvadd #b0001 (bvshl #b0001 x)))))
   Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
@@ -993,6 +1038,11 @@ Lemma<LemmaKind::UDIV_REF33>::instance(const Node& x,
                                        const Node& s,
                                        const Node& t) const
 {
+  // Lemma is only valid with the asserted restriction. This is assertion is
+  // mainly for documentation purposes since we globally restrict the minimum
+  // abstraction size to 3 (via minimum value configuration of option
+  // abstraction_bv_size).
+  assert(x.type().bv_size() > 1);
   // (not (= x (bvadd t (bvadd t (bvor x s)))))
   return d_nm.mk_node(
       Kind::DISTINCT,
@@ -1050,6 +1100,11 @@ Lemma<LemmaKind::UDIV_REF38>::instance(const Node& x,
                                        const Node& s,
                                        const Node& t) const
 {
+  // Lemma is only valid with the asserted restriction. This is assertion is
+  // mainly for documentation purposes since we globally restrict the minimum
+  // abstraction size to 3 (via minimum value configuration of option
+  // abstraction_bv_size).
+  assert(x.type().bv_size() != 2);
   (void) s;
   // (not (= x (bvsub #b0001 (bvshl x (bvsub x t)))))
   Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
@@ -1257,6 +1312,11 @@ Lemma<LemmaKind::UREM_REF12>::instance(const Node& x,
                                        const Node& s,
                                        const Node& t) const
 {
+  // Lemma is only valid with the asserted restriction. This is assertion is
+  // mainly for documentation purposes since we globally restrict the minimum
+  // abstraction size to 3 (via minimum value configuration of option
+  // abstraction_bv_size).
+  assert(x.type().bv_size() > 2);
   (void) s;
   // (not (= x (bvor (bvneg x) (bvneg (bvnot t)))))
   return d_nm.mk_node(
