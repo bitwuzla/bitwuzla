@@ -121,6 +121,12 @@ BvInverter::invert(const Node& node,
       std::tie(icond, next) = ic(cur, idx, path, negate);
       Node _xx              = d_nm.mk_const(next.type());
       Node pred = utils::substitute(d_nm, cur, {{next, _xx}}, subst_cache);
+      if (negate)
+      {
+        // The invertibility condition is computed for the negated literal,
+        // thus the witness predicate must be negated.
+        pred = d_nm.mk_node(Kind::NOT, {pred});
+      }
       conds.push_back(d_nm.mk_node(Kind::IMPLIES, {icond, pred}));
       t = _xx;
     }

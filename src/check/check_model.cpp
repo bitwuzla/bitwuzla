@@ -37,6 +37,7 @@ CheckModel::check()
 
   option::Options opts;
   opts.dbg_check_model.set(false);
+  opts.quant_ic.set(false);
   NodeManager& nm = d_ctx.env().nm();
   SolvingContext check_ctx(
       nm, opts, d_ctx.env().sat_factory(), "chkmodel", true);

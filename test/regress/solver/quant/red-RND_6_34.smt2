@@ -1,0 +1,5 @@
+(set-info :status unsat)
+(set-option :quant-ic true)
+(set-option :quant-ic-underdet true)
+(assert (forall ((? (_ BitVec 32))) (or (exists ((? (_ BitVec 32))) false) (forall ((? (_ BitVec 32))) (and (exists ((? (_ BitVec 32))) false) (forall ((? (_ BitVec 32))) (and (exists ((? (_ BitVec 32))) false) (forall ((? (_ BitVec 32))) (and (exists ((? (_ BitVec 32))) (not (= (_ bv1 32) (bvmul ? (_ bv2 32))))) (exists ((? (_ BitVec 32))) true))))))))))
+(check-sat)
