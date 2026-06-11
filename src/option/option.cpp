@@ -501,7 +501,7 @@ Options::Options()
       quant_ic_value_limit(
           this,
           Option::QUANT_IC_VALUE_LIMIT,
-          0,
+          4,
           0,
           UINT64_MAX,
           "number of value instantiations per quantifier before trying to find "

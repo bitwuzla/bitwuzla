@@ -852,7 +852,7 @@ enum ENUM(Option)
    * based on invertibility conditions.
    *
    * *Values:*
-   *  - An unsigned 64-bit integer. [**default:** 0]
+   *  - An unsigned 64-bit integer. [**default:** 4]
    */
 #ifndef BITWUZLA_API_USE_C_ENUMS
   /*! @see Option::QUANT_IC
