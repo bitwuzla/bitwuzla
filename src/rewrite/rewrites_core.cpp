@@ -1125,7 +1125,7 @@ RewriteRule<RewriteRuleKind::DISTINCT_CARD>::_apply(Rewriter& rewriter,
   uint64_t num_children = node.num_children();
   if (num_children > 2)
   {
-    if (util::Integer(num_children) > type::compute_cardinality(node[0].type()))
+    if (type::cardinality_lt(node[0].type(), num_children))
     {
       return rewriter.nm().mk_value(false);
     }

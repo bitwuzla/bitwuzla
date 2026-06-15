@@ -95,6 +95,7 @@ unit_tests = [
 
   ['type',
     [
+      'card',
       'type_manager'
     ]
   ],

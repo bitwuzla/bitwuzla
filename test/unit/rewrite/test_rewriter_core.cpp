@@ -16,7 +16,6 @@
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
 #include "test_rewriter.h"
-#include "type/card.h"
 
 namespace bzla::test {
 
@@ -40,7 +39,7 @@ TEST_F(TestRewriterCore, core_equal_special_const)
   {
     //// applies
     Node bv4xor = d_nm.mk_node(Kind::BV_XOR, {d_bv4_a, d_bv4_b});
-    Node bv4or  = d_nm.mk_node(Kind::BV_NOT,
+    Node bv4or = d_nm.mk_node(Kind::BV_NOT,
                               {d_nm.mk_node(Kind::BV_AND, {d_bv4_a, d_bv4_b})});
     // lhs 0
     test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {d_false, d_b}));
@@ -646,9 +645,10 @@ TEST_F(TestRewriterCore, core_distinct_card)
 
   {
     Type t = d_nm.mk_fp_type(3, 8);
+    // |fp(3, 8)| = 3 + 2^8 * (2^3 - 1) = 1795
+    const uint64_t card = 1795;
     std::vector<Node> nodes;
-    for (util::Integer i = 0, card = type::compute_cardinality(t); i <= card;
-         ++i)
+    for (uint64_t i = 0; i <= card; ++i)
     {
       nodes.push_back(d_nm.mk_const(t));
     }
