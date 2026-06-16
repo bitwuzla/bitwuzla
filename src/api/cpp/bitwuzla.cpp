@@ -400,6 +400,10 @@ Options::operator=(const Options &options)
   return *this;
 }
 
+Options::Options(Options&& options) noexcept = default;
+
+Options& Options::operator=(Options&& options) noexcept = default;
+
 void
 Options::set_diagnostic_output_stream(std::ostream& out)
 {
@@ -808,6 +812,14 @@ OptionInfo::value() const
 
 Term::Term() : d_node(nullptr) {}
 
+Term::Term(const Term& other) = default;
+
+Term& Term::operator=(const Term& other) = default;
+
+Term::Term(Term&& other) noexcept = default;
+
+Term& Term::operator=(Term&& other) noexcept = default;
+
 Term::~Term() {}
 
 bool
@@ -1197,6 +1209,14 @@ operator<<(std::ostream &out, const Term &term)
 /* Sort public -------------------------------------------------------------- */
 
 Sort::Sort() : d_type(nullptr) {}
+
+Sort::Sort(const Sort& other) = default;
+
+Sort& Sort::operator=(const Sort& other) = default;
+
+Sort::Sort(Sort&& other) noexcept = default;
+
+Sort& Sort::operator=(Sort&& other) noexcept = default;
 
 Sort::~Sort() {}
 

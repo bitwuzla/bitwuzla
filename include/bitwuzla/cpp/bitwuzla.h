@@ -254,6 +254,10 @@ class Options
   Options(const Options &options);
   /** Copy assignment. */
   Options &operator=(const Options &options);
+  /** Move constructor. */
+  Options(Options&& options) noexcept;
+  /** Move assignment. */
+  Options& operator=(Options&& options) noexcept;
 
   /**
    * Set diagnostic output stream for logging purposes.
@@ -554,6 +558,14 @@ class Term
   Term();
   /** Destructor. */
   ~Term();
+  /** Copy constructor. */
+  Term(const Term& other);
+  /** Copy assignment. */
+  Term& operator=(const Term& other);
+  /** Move constructor. */
+  Term(Term&& other) noexcept;
+  /** Move assignment. */
+  Term& operator=(Term&& other) noexcept;
 
   /**
    * Determine if this term is a null term.
@@ -916,6 +928,14 @@ class Sort
   Sort();
   /** Destructor. */
   ~Sort();
+  /** Copy constructor. */
+  Sort(const Sort& other);
+  /** Copy assignment. */
+  Sort& operator=(const Sort& other);
+  /** Move constructor. */
+  Sort(Sort&& other) noexcept;
+  /** Move assignment. */
+  Sort& operator=(Sort&& other) noexcept;
 
   /**
    * Determine if this sort is a null sort.
