@@ -40,7 +40,7 @@ is_valid_real_str(const std::string &value)
   bool found_dec_point = false;
   for (size_t i = 0, size = value.size(); i < size; ++i)
   {
-    if (!isdigit(value[i]))
+    if (value[i] < '0' || value[i] > '9')
     {
       if (i == 0 && value[i] == '-')
       {

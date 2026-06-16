@@ -133,6 +133,7 @@ unit_tests = [
   ['util',
     [
       'integer',
+      'util',
     ]
   ],
 
