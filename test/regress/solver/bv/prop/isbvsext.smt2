@@ -1,0 +1,6 @@
+(set-option :bv-solver "prop")
+(declare-const x (_ BitVec 4))
+(declare-const y (_ BitVec 4))
+(assert (bvugt (concat (ite (= ((_ extract 3 3) x) #b1) #b1111 y) x) #b10100111))
+(set-info :status sat)
+(check-sat)

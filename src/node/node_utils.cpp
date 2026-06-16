@@ -29,7 +29,7 @@ _is_bv_sext_aux(const Node& ite, const Node& ext, size_t idx)
 
   if (ite[0][idx0].kind() == Kind::BV_EXTRACT && ite[0][idx1].is_value()
       && ite[0][idx0][0] == ext && ite[0][idx0].index(0) == msb
-      && ite[0][idx0].index(1) == msb && ite[1].is_value()
+      && ite[0][idx0].index(1) == msb && ite[1].is_value() && ite[2].is_value()
       && ((ite[0][idx1].value<BitVector>().is_one()
            && ite[1].value<BitVector>().is_ones()
            && ite[2].value<BitVector>().is_zero())
