@@ -111,7 +111,15 @@ Btor2Printer::print_formula(std::ostream& os,
           assert(bv_format == 16);
           os << "consth ";
         }
-        os << tid << " " << n.value<BitVector>().str(bv_format);
+        os << tid << " ";
+        if (n.type().is_bool())
+        {
+          os << (n.value<bool>() ? "1" : "0");
+        }
+        else
+        {
+          os << n.value<BitVector>().str(bv_format);
+        }
         break;
 
       case node::Kind::DISTINCT: op = "neq"; break;

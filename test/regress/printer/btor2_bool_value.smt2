@@ -1,0 +1,5 @@
+(set-logic QF_BV)
+(declare-const x Bool)
+(assert (= x true))
+(assert (= x false))
+(check-sat)

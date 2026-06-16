@@ -1,0 +1,8 @@
+1 sort bitvec 1
+2 input 1 x
+3 const 1 1
+4 eq 1 2 3
+5 const 1 0
+6 eq 1 2 5
+7 constraint 4
+8 constraint 6
