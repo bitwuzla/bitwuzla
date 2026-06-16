@@ -3706,6 +3706,28 @@ TEST_F(TestCApi, parser_smt2_string_sort)
   bitwuzla_options_delete(options);
 }
 
+TEST_F(TestCApi, parser_smt2_string_sort_empty)
+{
+  BitwuzlaOptions* options = bitwuzla_options_new();
+  BitwuzlaParser* parser =
+      bitwuzla_parser_new(d_tm, options, "smt2", 10, "<stdout>");
+  const char* error_msg = nullptr;
+
+  ASSERT_EQ(bitwuzla_parser_parse_sort(parser, "", &error_msg), nullptr);
+  ASSERT_NE(error_msg, nullptr);
+  ASSERT_NE(std::string(error_msg).find("must not be an empty string"),
+            std::string::npos);
+
+  error_msg = nullptr;
+  ASSERT_EQ(bitwuzla_parser_parse_term(parser, "", &error_msg), nullptr);
+  ASSERT_NE(error_msg, nullptr);
+  ASSERT_NE(std::string(error_msg).find("must not be an empty string"),
+            std::string::npos);
+
+  bitwuzla_parser_delete(parser);
+  bitwuzla_options_delete(options);
+}
+
 TEST_F(TestCApi, parser_smt2_print_model_sat)
 {
   const char* filename = "test_capi_parser_smt2_print_model_sat.smt2";

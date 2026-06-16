@@ -202,7 +202,7 @@ bitwuzla_parser_parse_sort(BitwuzlaParser* parser,
     res        = parser->d_tm->export_sort(parser->d_parser->parse_sort(input));
     *error_msg = nullptr;
   }
-  catch (bitwuzla::parser::Exception& e)
+  catch (bitwuzla::Exception& e)
   {
     parser->d_error_msg = e.what();
     *error_msg =
