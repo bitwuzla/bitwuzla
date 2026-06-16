@@ -10,6 +10,8 @@
 
 #include "node/node_data.h"
 
+#include <new>
+
 #include "bv/bitvector.h"
 #include "node/node.h"
 #include "node/node_manager.h"
@@ -34,9 +36,9 @@ NodeData::alloc(Kind kind, const std::optional<std::string>& symbol)
   {
     throw std::bad_alloc();
   }
-  data->d_kind     = kind;
-  auto& payload    = data->payload_symbol();
-  payload.d_symbol = symbol;
+  data->d_kind  = kind;
+  auto& payload = data->payload_symbol();
+  new (&payload.d_symbol) std::optional<std::string>(symbol);
   return data;
 }
 
@@ -80,7 +82,7 @@ NodeData::alloc(Kind kind,
     for (size_t i = 0, size = children.size(); i < size; ++i)
     {
       assert(!children[i].is_null());
-      payload.d_children[i] = children[i];
+      new (&payload.d_children[i]) Node(children[i]);
       data->d_info.set(children[i].node_info());
     }
     payload.d_num_children = children.size();

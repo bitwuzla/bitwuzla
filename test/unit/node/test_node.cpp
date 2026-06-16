@@ -143,4 +143,54 @@ TEST_F(TestNode, operator_out)
             << std::endl;
 }
 
+TEST_F(TestNode, payload_lifetime)
+{
+  // Regression test: NodeData::alloc() obtains raw, zero-initialized storage
+  // from calloc() and must placement-new each payload member to start its
+  // lifetime. Previously it assigned into the uninitialized storage, invoking
+  // the copy assignment operator on objects whose lifetime never began (the
+  // std::optional<std::string>, std::string, BitVector, FloatingPoint and Node
+  // payload members) -- undefined behavior. This test exercises all three
+  // alloc() overloads and checks that the payloads round-trip correctly.
+  NodeManager nm;
+
+  Type bool_type = nm.mk_bool_type();
+  Type bv_type   = nm.mk_bv_type(32);
+  Type un_type   = nm.mk_uninterpreted_type();
+
+  // PayloadSymbol (std::optional<std::string>): constants and variables with
+  // and without a symbol.
+  Node c_sym = nm.mk_const(bv_type, "some_symbol");
+  ASSERT_TRUE(c_sym.symbol().has_value());
+  ASSERT_EQ(c_sym.symbol()->get(), "some_symbol");
+
+  Node v_sym = nm.mk_var(bv_type, "var_symbol");
+  ASSERT_TRUE(v_sym.symbol().has_value());
+  ASSERT_EQ(v_sym.symbol()->get(), "var_symbol");
+
+  Node c_nosym = nm.mk_const(bv_type);
+  ASSERT_FALSE(c_nosym.symbol().has_value());
+
+  // PayloadValue<std::string>: uninterpreted constant value. The empty-string
+  // case is the one that writes through a null pointer on libstdc++ when
+  // assigning into zeroed std::string storage.
+  Node uval = nm.mk_value(un_type, "uval");
+  ASSERT_EQ(uval.value<std::string>(), "uval");
+  Node uval_empty = nm.mk_value(un_type, "");
+  ASSERT_EQ(uval_empty.value<std::string>(), "");
+
+  // PayloadValue<BitVector>.
+  Node bvval = nm.mk_value(BitVector::from_ui(32, 42));
+  ASSERT_EQ(bvval.value<BitVector>(), BitVector::from_ui(32, 42));
+
+  // PayloadChildren (Node): assignment would dec_ref the uninitialized
+  // previous value.
+  Node a     = nm.mk_const(bool_type, "a");
+  Node b     = nm.mk_const(bool_type, "b");
+  Node a_and = nm.mk_node(Kind::AND, {a, b});
+  ASSERT_EQ(a_and.num_children(), 2);
+  ASSERT_EQ(a_and[0], a);
+  ASSERT_EQ(a_and[1], b);
+}
+
 }  // namespace bzla::test

@@ -14,6 +14,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <new>
 #include <optional>
 
 #include "node/kind_info.h"
@@ -89,8 +90,8 @@ class NodeData
     }
     data->d_kind = Kind::VALUE;
 
-    auto& payload   = data->payload_value<T>();
-    payload.d_value = value;
+    auto& payload = data->payload_value<T>();
+    new (&payload.d_value) T(value);
     return data;
   }
 
