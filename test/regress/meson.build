@@ -450,6 +450,7 @@ tests_smt2 = [
   ['preprocess/issue51.smt2'],
   ['preprocess/issue162.smt2'],
   ['printer/nested_letify.smt2', ['-p']],
+  ['printer/bv_hex_padding.smt2', ['-p', '--preprocess=false', '--bv-output-format=16']],
   ## rewrite
   ['rewrite/array/hang_min_32.smt2'],
   ['rewrite/array/regr3vl4.btor.smt2'],

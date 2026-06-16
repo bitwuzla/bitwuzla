@@ -531,15 +531,11 @@ Smt2Printer::print(std::ostream& os,
             if (bv_format == 16 && size % 4 == 0)
             {
               os << "#x";
-              const BitVector& val = cur.value<BitVector>();
-              if (val.is_zero())
-              {
-                os << std::string(size / 4, '0');
-              }
-              else
-              {
-                os << val.str(16);
-              }
+              // BitVector::str(16) does not pad with leading zeros, so pad to
+              // size / 4 hex digits to preserve the bit-width.
+              std::string s = cur.value<BitVector>().str(16);
+              assert(s.size() <= size / 4);
+              os << std::string(size / 4 - s.size(), '0') << s;
             }
             else
             {
