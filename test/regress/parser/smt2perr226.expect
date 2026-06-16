@@ -1,0 +1,1 @@
+regress/parser/smt2perr226.smt2:1:26: invalid indexed term 'b123'

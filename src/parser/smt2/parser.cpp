@@ -1837,7 +1837,7 @@ Parser::parse_open_term_indexed()
       assert(d_lexer->has_token());
       min                    = 1;
       const std::string& val = d_lexer->token();
-      if (val.size() < 2 || (val[0] != 'b' && val[1] != 'v'))
+      if (val.size() < 2 || val[0] != 'b' || val[1] != 'v')
       {
         return error("invalid indexed term '" + val + "'");
       }
