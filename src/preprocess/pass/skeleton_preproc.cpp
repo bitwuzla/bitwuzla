@@ -16,10 +16,8 @@
 #include <memory>
 
 #include "bitblast/aig/aig_cnf.h"
-#include "bitblast/aig_bitblaster.h"
 #include "env.h"
 #include "node/node_manager.h"
-#include "node/node_ref_vector.h"
 #include "sat/cadical.h"
 #include "solver/bv/aig_bitblaster.h"
 
@@ -79,7 +77,6 @@ PassSkeletonPreproc::PassSkeletonPreproc(
     : PreprocessingPass(env, backtrack_mgr, "sp", "skeleton_preproc"),
       d_sat_solver(nullptr),
       d_assertion_lits(backtrack_mgr),
-      d_assertions(backtrack_mgr),
       d_reset(backtrack_mgr),
       d_stats(env.statistics(), "preprocess::" + name() + "::")
 {
@@ -92,11 +89,6 @@ PassSkeletonPreproc::apply(AssertionVector& assertions)
 {
   util::Timer timer(d_stats_pass.time_apply);
   (void) assertions;
-  // Disabled if unsat cores enabled.
-  if (d_env.options().produce_unsat_cores())
-  {
-    return;
-  }
   // New assertions introduced by this pass do not have a single 'parent',
   // and thus the assertion tracker does not yet support tracking this pass.
   // Both unsat cores and interpolants generation rely on the assertion tracker,
@@ -142,7 +134,6 @@ PassSkeletonPreproc::apply(AssertionVector& assertions)
     d_sat_solver.reset(new sat::Cadical());
     d_fixed_listener.reset(new FixedListener());
     d_sat_solver->solver()->connect_fixed_listener(d_fixed_listener.get());
-    d_encode_cache.clear();
     d_reset = false;
     ++d_stats.num_resets;
   }
@@ -160,7 +151,6 @@ PassSkeletonPreproc::apply(AssertionVector& assertions)
       const auto& bits = bitblaster.bits(assertion);
       cnf_encoder.encode(bits[0], true);
       d_assertion_lits.insert(bits[0].get_id());
-      d_assertions.push_back(assertion);
     }
   }
 
@@ -213,20 +203,9 @@ PassSkeletonPreproc::apply(AssertionVector& assertions)
   }
   d_done = true;
   d_sat_solver.reset(new sat::Cadical());
-  d_encode_cache.clear();
 }
 
 /* --- PassSkeletonPreproc private ------------------------------------------ */
-
-int64_t
-PassSkeletonPreproc::lit(const Node& term)
-{
-  assert(term.type().is_bool()
-         || (term.type().is_bv() && term.type().bv_size() == 1));
-  return (term.kind() == Kind::NOT || term.kind() == Kind::BV_NOT)
-             ? -term[0].id()
-             : term.id();
-}
 
 PassSkeletonPreproc::Statistics::Statistics(util::Statistics& stats,
                                             const std::string& prefix)

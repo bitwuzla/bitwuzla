@@ -14,11 +14,7 @@
 #include <memory>
 
 #include "backtrack/unordered_set.h"
-#include "backtrack/vector.h"
-#include "bitblast/aig/aig_cnf.h"
 #include "preprocess/preprocessing_pass.h"
-#include "sat/sat_solver.h"
-#include "solver/bv/aig_bitblaster.h"
 #include "util/statistics.h"
 
 namespace bzla {
@@ -61,13 +57,9 @@ class PassSkeletonPreproc : public PreprocessingPass
   void apply(AssertionVector& assertions) override;
 
  private:
-  int64_t lit(const Node& term);
-
   std::unique_ptr<sat::Cadical> d_sat_solver;
   std::unique_ptr<FixedListener> d_fixed_listener;
-  std::unordered_map<Node, bool> d_encode_cache;
   backtrack::unordered_set<int64_t> d_assertion_lits;
-  backtrack::vector<Node> d_assertions;
   ResetSkel d_reset;
   bool d_done = false;
 
