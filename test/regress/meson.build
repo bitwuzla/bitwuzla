@@ -1772,6 +1772,8 @@ tests_btor2_parser = [
   ['parser/btor2perr010.btor2'],
   ['parser/btor2perr011.btor2'],
   ['parser/btor2perr012.btor2'],
+  ['parser/btor2perr013.btor2'],
+  ['parser/btor2perr014.btor2'],
 ]
 
 tests_btor2_sat = [

@@ -496,22 +496,23 @@ Parser::parse_line(ParsedKind* pkind, int64_t* id)
     case Token::CONSTD:
     case Token::CONSTH: {
       uint8_t base = 0;
+      Token value_token;
       if (op == Token::CONST)
       {
-        base  = 2;
-        d_lexer->next_token(Token::NUMBER_BIN);
+        base        = 2;
+        value_token = d_lexer->next_token(Token::NUMBER_BIN);
       }
       else if (op == Token::CONSTD)
       {
-        base  = 10;
-        d_lexer->next_token(Token::NUMBER_DEC);
+        base        = 10;
+        value_token = d_lexer->next_token(Token::NUMBER_DEC);
       }
       else
       {
-        base  = 16;
-        d_lexer->next_token(Token::NUMBER_HEX);
+        base        = 16;
+        value_token = d_lexer->next_token(Token::NUMBER_HEX);
       }
-      if (!check_token(op))
+      if (!check_token(value_token))
       {
         return false;
       }
