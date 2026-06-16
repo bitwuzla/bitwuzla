@@ -112,7 +112,8 @@ NodeUniqueTable::erase(const NodeData* d)
 void
 NodeUniqueTable::resize()
 {
-  size_t new_size = d_buckets.capacity() * 2;
+  // Double the number of buckets, keeping it a power of two.
+  size_t new_size = d_buckets.size() * 2;
   std::vector<NodeData*> buckets(new_size, nullptr);
 
   // Rehash elements.

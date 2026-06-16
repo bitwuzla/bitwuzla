@@ -81,7 +81,7 @@ class NodeUniqueTable
       333444569u, 76891121u, 456790003u, 111130391u};
 
   /** Check whether unique table needs to be resized. */
-  bool needs_resize() const { return d_num_elements >= d_buckets.capacity(); }
+  bool needs_resize() const { return d_num_elements >= d_buckets.size(); }
 
   /** Resizes unique table and rehashes node data. */
   void resize();
@@ -106,7 +106,9 @@ class NodeUniqueTable
   {
     if (mask == 0)
     {
-      mask = d_buckets.capacity() - 1;
+      // The number of buckets is always a power of two (see resize()), so
+      // size() - 1 is an all-ones mask.
+      mask = d_buckets.size() - 1;
     }
     return hash & mask;
   }

@@ -8,6 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+#include <vector>
+
 #include "bv/bitvector.h"
 #include "node/node.h"
 #include "node/node_manager.h"
@@ -412,6 +414,40 @@ TEST_F(TestNodeManager, check_type)
       array_type);
   ASSERT_EQ(nm.mk_node(Kind::ITE, {bool_const1, l2, l2}).type(),
             nm.mk_fun_type({bv_type, fp_type, array_type}));
+}
+
+TEST_F(TestNodeManager, unique_table_resize)
+{
+  // Regression: the unique table computed bucket indices by masking the hash
+  // with d_buckets.capacity() - 1 (and the load-factor check and resize() used
+  // capacity() as well), assuming capacity() equals the power-of-two bucket
+  // count requested via resize(). std::vector only guarantees
+  // capacity() >= size(), so on an over-allocating implementation capacity()
+  // need not be a power of two and the mask could yield an out-of-bounds index.
+  // Create enough distinct nodes to force several resizes (initial bucket count
+  // is 16) and check that hash consing still returns the same node for each,
+  // exercising both find_or_insert paths (values and structural nodes) across
+  // the resizes.
+  NodeManager nm;
+
+  Type bv_type = nm.mk_bv_type(64);
+  Node x       = nm.mk_const(bv_type);
+
+  std::vector<Node> values;
+  std::vector<Node> nodes;
+  for (uint64_t i = 0; i < 500; ++i)
+  {
+    values.push_back(nm.mk_value(BitVector::from_ui(64, i)));
+    nodes.push_back(nm.mk_node(Kind::BV_ADD, {x, values.back()}));
+  }
+
+  // Every value and structural node must remain hash consed across the resizes:
+  // re-creating it returns the same node.
+  for (uint64_t i = 0; i < values.size(); ++i)
+  {
+    ASSERT_EQ(values[i], nm.mk_value(BitVector::from_ui(64, i)));
+    ASSERT_EQ(nodes[i], nm.mk_node(Kind::BV_ADD, {x, values[i]}));
+  }
 }
 
 }  // namespace bzla::test
