@@ -639,6 +639,7 @@ bitwuzla_get_interpolant(Bitwuzla* bitwuzla, uint32_t argc, BitwuzlaTerm args[])
   std::vector<bitwuzla::Term> A;
   for (uint32_t i = 0; i < argc; ++i)
   {
+    BITWUZLA_CHECK_NOT_NULL_AT_IDX(args[i], i);
     A.push_back(BitwuzlaTermManager::import_term(args[i]));
   }
   res = bitwuzla->d_tm->export_term(bitwuzla->d_bitwuzla->get_interpolant(A));
@@ -664,6 +665,7 @@ bitwuzla_get_interpolants(Bitwuzla* bitwuzla,
     A.push_back({});
     for (uint32_t j = 0; j < Ac[i]; ++j)
     {
+      BITWUZLA_CHECK_NOT_NULL_AT_IDX(As[i][j], i);
       A.back().push_back(BitwuzlaTermManager::import_term(As[i][j]));
     }
   }

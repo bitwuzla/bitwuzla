@@ -2924,9 +2924,9 @@ TEST_F(TestCApi, get_interpolant)
                         bitwuzla_mk_term2(d_tm, BITWUZLA_KIND_BV_SUB, z, one)),
       zero);
 
-  std::vector<BitwuzlaTerm> A = {a0, a1, a2, a3, a4, a5};
   {
     // produce-interpolants not enabled
+    std::vector<BitwuzlaTerm> A = {a0, a1, a2, a3, a4, a5};
     BitwuzlaOptions* options = bitwuzla_options_new();
     bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_INTERPOLANTS, 0);
     Bitwuzla* bitwuzla = bitwuzla_new(d_tm, options);
@@ -2943,7 +2943,40 @@ TEST_F(TestCApi, get_interpolant)
     bitwuzla_options_delete(options);
   }
   {
+    // null node in assertions
+    std::vector<BitwuzlaTerm> A = {a0, a1, a2, a3, a4, a5};
+    BitwuzlaOptions* options    = bitwuzla_options_new();
+    bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_INTERPOLANTS, 1);
+    Bitwuzla* bitwuzla = bitwuzla_new(d_tm, options);
+    for (const auto& t : A)
+    {
+      bitwuzla_assert(bitwuzla, t);
+    }
+    bitwuzla_assert(bitwuzla, b0);
+    bitwuzla_assert(bitwuzla, b1);
+    A.push_back(nullptr);
+    ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNSAT);
+    ASSERT_DEATH(bitwuzla_get_interpolant(bitwuzla, A.size(), A.data()),
+                 "expected non-null object at index 6");
+    BitwuzlaTerm A0[1] = {a0};
+    BitwuzlaTerm A1[1] = {a1};
+    BitwuzlaTerm A2[1] = {a2};
+    BitwuzlaTerm A3[1] = {a3};
+    BitwuzlaTerm A4[1] = {a4};
+    BitwuzlaTerm A5[1] = {a5};
+    BitwuzlaTerm A6[1] = {nullptr};
+    std::vector<BitwuzlaTerm*> As{A0, A1, A2, A3, A4, A5, A6};
+    uint32_t Asc[7] = {1, 1, 1, 1, 1, 1, 1};
+    size_t size;
+    ASSERT_DEATH(
+        bitwuzla_get_interpolants(bitwuzla, As.size(), Asc, As.data(), &size),
+        "expected non-null object at index 6");
+    bitwuzla_delete(bitwuzla);
+    bitwuzla_options_delete(options);
+  }
+  {
     // given assertion is not currently asserted
+    std::vector<BitwuzlaTerm> A = {a0, a1, a2, a3, a4, a5};
     BitwuzlaOptions* options = bitwuzla_options_new();
     bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_INTERPOLANTS, 1);
     Bitwuzla* bitwuzla = bitwuzla_new(d_tm, options);
@@ -2960,6 +2993,7 @@ TEST_F(TestCApi, get_interpolant)
     bitwuzla_delete(bitwuzla);
     bitwuzla_options_delete(options);
   }
+  std::vector<BitwuzlaTerm> A = {a0, a1, a2, a3, a4, a5};
   {
     BitwuzlaOptions* options = bitwuzla_options_new();
     bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_INTERPOLANTS, 1);

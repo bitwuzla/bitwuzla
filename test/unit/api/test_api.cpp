@@ -1814,9 +1814,9 @@ TEST_F(TestApi, get_interpolant)
                     {z, d_tm.mk_term(bitwuzla::Kind::BV_SUB, {z, one})}),
        zero});
 
-  std::vector A = {a0, a1, a2, a3, a4, a5};
   {
     // produce-interpolants not enabled
+    std::vector A = {a0, a1, a2, a3, a4, a5};
     bitwuzla::Options options;
     options.set(bitwuzla::Option::PRODUCE_INTERPOLANTS, false);
     bitwuzla::Bitwuzla bitwuzla(d_tm, options);
@@ -1830,7 +1830,26 @@ TEST_F(TestApi, get_interpolant)
     ASSERT_THROW(bitwuzla.get_interpolant(A), bitwuzla::Exception);
   }
   {
+    // null node in assertions
+    std::vector A = {a0, a1, a2, a3, a4, a5};
+    bitwuzla::Options options;
+    options.set(bitwuzla::Option::PRODUCE_INTERPOLANTS, true);
+    bitwuzla::Bitwuzla bitwuzla(d_tm, options);
+    for (const auto& t : A)
+    {
+      bitwuzla.assert_formula(t);
+    }
+    bitwuzla.assert_formula(b0);
+    bitwuzla.assert_formula(b1);
+    A.push_back(bitwuzla::Term());
+    bitwuzla.check_sat();
+    ASSERT_THROW(bitwuzla.get_interpolant(A), bitwuzla::Exception);
+    ASSERT_THROW(bitwuzla.get_interpolants({{a0}, {bitwuzla::Term()}}),
+                 bitwuzla::Exception);
+  }
+  {
     // given assertion is not currently asserted
+    std::vector A = {a0, a1, a2, a3, a4, a5};
     bitwuzla::Options options;
     options.set(bitwuzla::Option::PRODUCE_INTERPOLANTS, true);
     bitwuzla::Bitwuzla bitwuzla(d_tm, options);
@@ -1844,6 +1863,7 @@ TEST_F(TestApi, get_interpolant)
     ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNSAT);
     ASSERT_THROW(bitwuzla.get_interpolant(A), bitwuzla::Exception);
   }
+  std::vector A = {a0, a1, a2, a3, a4, a5};
   {
     bitwuzla::Options options;
     options.set(bitwuzla::Option::PRODUCE_INTERPOLANTS, true);
