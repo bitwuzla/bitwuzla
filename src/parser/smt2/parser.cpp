@@ -1791,7 +1791,10 @@ Parser::parse_open_term_indexed()
 
   switch (token)
   {
-    case Token::BV_REPEAT: kind = bitwuzla::Kind::BV_REPEAT; break;
+    case Token::BV_REPEAT:
+      kind = bitwuzla::Kind::BV_REPEAT;
+      min  = 1;
+      break;
 
     case Token::BV_ROTATE_LEFT: kind = bitwuzla::Kind::BV_ROLI; break;
 
