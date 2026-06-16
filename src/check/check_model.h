@@ -9,6 +9,7 @@
  */
 
 #ifndef BZLA_CHECK_CHECK_MODEL_H_INCLUDED
+#define BZLA_CHECK_CHECK_MODEL_H_INCLUDED
 
 #include <unordered_map>
 #include <vector>

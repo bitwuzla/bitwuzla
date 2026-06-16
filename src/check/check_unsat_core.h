@@ -9,6 +9,7 @@
  */
 
 #ifndef BZLA_CHECK_CHECK_UNSAT_CORE_H_INCLUDED
+#define BZLA_CHECK_CHECK_UNSAT_CORE_H_INCLUDED
 
 #include "solving_context.h"
 #include "util/logger.h"
