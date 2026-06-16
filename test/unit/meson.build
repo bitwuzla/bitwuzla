@@ -57,6 +57,7 @@ unit_tests = [
       'pass_contradicting_ands',
       'pass_normalize',
       'pass_flatten_and',
+      'pass_skeleton_preproc',
       'pass_variable_substitution',
       'preprocessor',
     ]
