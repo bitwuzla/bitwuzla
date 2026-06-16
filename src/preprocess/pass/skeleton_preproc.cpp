@@ -150,7 +150,6 @@ PassSkeletonPreproc::apply(AssertionVector& assertions)
   CnfSatInterface cnf_sat(*d_sat_solver);
   bv::AigBitblaster bitblaster(true);
   bitblast::AigCnfEncoder cnf_encoder(cnf_sat);
-  std::unordered_map<Node, bitblast::AigBitblaster::Bits> bb_cache;
 
   // Encode Boolean skeleton
   {
@@ -173,8 +172,8 @@ PassSkeletonPreproc::apply(AssertionVector& assertions)
     d_sat_solver->solver()->simplify();
   }
 
-  std::unordered_map<uint64_t, Node> node_map;
-  for (const auto& [n, bits] : bb_cache)
+  std::unordered_map<int64_t, Node> node_map;
+  for (const auto& [n, bits] : bitblaster.bitblaster_cache())
   {
     assert(bits.size() == 1);
     const auto& aig = bits[0];
