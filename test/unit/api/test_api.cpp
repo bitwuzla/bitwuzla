@@ -3169,6 +3169,8 @@ TEST_F(TestApi, terms)
     ASSERT_EQ(tterm, term);
   }
 
+  ASSERT_THROW(bitwuzla::Term()[0], bitwuzla::Exception);
+
   ASSERT_EQ(d_bv_const8.kind(), bitwuzla::Kind::CONSTANT);
   ASSERT_TRUE(d_bv_const8.children().empty());
 

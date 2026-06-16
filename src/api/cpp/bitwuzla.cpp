@@ -871,6 +871,7 @@ Term::children() const
 Term
 Term::operator[](size_t index) const
 {
+  BITWUZLA_CHECK_NOT_NULL(d_node);
   BITWUZLA_CHECK(index < d_node->num_children())
       << "invalid access into term children, index '" << index
       << "' is greater than number of children";
