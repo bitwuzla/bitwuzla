@@ -450,6 +450,7 @@ tests_smt2 = [
   ['preprocess/issue51.smt2'],
   ['preprocess/issue162.smt2'],
   ['printer/nested_letify.smt2', ['-p']],
+  ['printer/array_logic_bvfp.smt2', ['-p', '--preprocess=false']],
   ['printer/bv_hex_padding.smt2', ['-p', '--preprocess=false', '--bv-output-format=16']],
   ['printer/btor2_bool_value_true.smt2', ['-p', '--output-lang', 'btor2']],
   ['printer/btor2_bool_value.smt2',

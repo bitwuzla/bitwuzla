@@ -1,0 +1,5 @@
+(set-logic ALL)
+(declare-const a (Array (_ BitVec 4) (_ FloatingPoint 8 24)))
+(declare-const b (Array (_ BitVec 4) (_ FloatingPoint 8 24)))
+(assert (= a b))
+(check-sat)

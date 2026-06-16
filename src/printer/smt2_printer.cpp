@@ -13,6 +13,7 @@
 #include <iostream>
 #include <sstream>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "backtrack/assertion_stack.h"
@@ -100,6 +101,57 @@ Smt2Printer::print(std::ostream& os, const Type& type)
   }
 }
 
+namespace {
+/**
+ * Inspect a type and update the theory flags used to determine the logic
+ * string. Inspecting only the top-level type is not enough: array
+ * index/element and function domain/codomain types contribute to the logic,
+ * e.g. an (Array (_ BitVec 4) (_ FloatingPoint 8 24)) requires BV and FP.
+ *
+ * Traversal is iterative and shares a cache of already visited types across
+ * calls to avoid re-traversing types shared by many nodes.
+ */
+void
+update_logic(const Type& type,
+             std::unordered_set<Type>& cache,
+             bool& has_arrays,
+             bool& has_bv,
+             bool& has_fp,
+             bool& has_funs)
+{
+  std::vector<Type> visit{type};
+  while (!visit.empty())
+  {
+    Type cur = visit.back();
+    visit.pop_back();
+    if (!cache.insert(cur).second)
+    {
+      continue;
+    }
+    if (cur.is_array())
+    {
+      has_arrays = true;
+      visit.push_back(cur.array_index());
+      visit.push_back(cur.array_element());
+    }
+    else if (cur.is_fun())
+    {
+      has_funs                       = true;
+      const std::vector<Type>& types = cur.fun_types();
+      visit.insert(visit.end(), types.begin(), types.end());
+    }
+    else if (cur.is_bv())
+    {
+      has_bv = true;
+    }
+    else if (cur.is_fp() || cur.is_rm())
+    {
+      has_fp = true;
+    }
+  }
+}
+}  // namespace
+
 void
 Smt2Printer::print_formula(std::ostream& os,
                            const backtrack::AssertionView& assertions)
@@ -147,6 +199,7 @@ Smt2Printer::print_formula(std::ostream& os,
   }
 
   cache.clear();
+  std::unordered_set<Type> type_cache;
   for (size_t i = 0, n = assertions.size(); i < n; ++i)
   {
     visit.emplace_back(assertions[i]);
@@ -158,22 +211,8 @@ Smt2Printer::print_formula(std::ostream& os,
     auto [it, inserted] = cache.insert(cur);
     if (inserted)
     {
-      if (!has_arrays && cur.type().is_array())
-      {
-        has_arrays = true;
-      }
-      else if (!has_bv && cur.type().is_bv())
-      {
-        has_bv = true;
-      }
-      else if (!has_fp && (cur.type().is_fp() || cur.type().is_rm()))
-      {
-        has_fp = true;
-      }
-      else if (!has_funs && cur.type().is_fun())
-      {
-        has_funs = true;
-      }
+      update_logic(
+          cur.type(), type_cache, has_arrays, has_bv, has_fp, has_funs);
       Kind kind = cur.kind();
       if (!has_quants && (kind == Kind::EXISTS || kind == Kind::FORALL))
       {
