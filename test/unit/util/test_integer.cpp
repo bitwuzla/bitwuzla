@@ -82,8 +82,11 @@ TEST_F(TestInteger, conversion)
   ASSERT_EQ(Integer(INT64_MAX).to_int64(), INT64_MAX);
   ASSERT_DEATH_DEBUG(Integer(UINT64_MAX).to_int64(),
                      "value <= std::numeric_limits<int64_t>::max");
+  // -2^63 (INT64_MIN) is the most negative value still convertible.
+  ASSERT_EQ(Integer("-9223372036854775808").to_int64(), INT64_MIN);
+  // -(2^63 + 1) overflows int64_t and must trigger the negative-range assert.
   ASSERT_DEATH_DEBUG(Integer("-9223372036854775809").to_int64(),
-                     "value <= .*std::numeric_limits<int64_t>::min.*");
+                     "value <= .*std::numeric_limits<int64_t>::max.*");
   ASSERT_DEATH_DEBUG(Integer("-18446744073709551616").to_int64(),
                      "64 >= mpz_sizeinbase.*");
 

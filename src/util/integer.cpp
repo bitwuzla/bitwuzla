@@ -11,6 +11,7 @@
 #include "util/integer.h"
 
 #include <cassert>
+#include <limits>
 #include <sstream>
 
 #include "util/gmp_utils.h"
@@ -254,8 +255,8 @@ Integer::to_int64() const
   uint64_t value = mpz_get_ull(d_val_gmp);
   if (mpz_sgn(d_val_gmp) < 0)
   {
-    assert(value <= static_cast<uint64_t>(
-               std::abs(std::numeric_limits<int64_t>::min())));
+    assert(value
+           <= static_cast<uint64_t>(std::numeric_limits<int64_t>::max()) + 1);
     return -value;
   }
   assert(value <= std::numeric_limits<int64_t>::max());
