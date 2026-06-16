@@ -36,7 +36,7 @@ AigNodeUniqueTable::insert(AigNodeData* d)
     cur = cur->next;
   }
 
-  if (d_num_elements == d_buckets.capacity())
+  if (d_num_elements == d_buckets.size())
   {
     resize();
     h = hash(d->d_left, d->d_right);
@@ -95,16 +95,19 @@ AigNodeUniqueTable::hash(const AigNode& left, const AigNode& right)
   size_t lhs = static_cast<size_t>(std::abs(left.get_id()));
   size_t rhs = static_cast<size_t>(std::abs(right.get_id()));
   size_t h   = 547789289u * lhs + 786695309u * rhs;
-  return h & (d_buckets.capacity() - 1);
+  // The number of buckets is always a power of two (see resize()), so size() -
+  // 1 is an all-ones mask.
+  return h & (d_buckets.size() - 1);
 }
 
 void
 AigNodeUniqueTable::resize()
 {
-  auto buckets = d_buckets;
+  auto buckets = std::move(d_buckets);
 
   d_buckets.clear();
-  d_buckets.resize(d_buckets.capacity() * 2, nullptr);
+  // Double the number of buckets, keeping it a power of two.
+  d_buckets.resize(buckets.size() * 2, nullptr);
 
   // Rehash elements.
   for (auto cur : buckets)

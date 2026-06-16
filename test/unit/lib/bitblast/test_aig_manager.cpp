@@ -8,6 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+#include <vector>
+
 #include "bitblast/aig/aig_manager.h"
 #include "bitblast/aig_bitblaster.h"
 #include "test_lib.h"
@@ -498,6 +500,52 @@ TEST_F(TestAigMgr, copy_assign_null)
   bitblast::AigNode null_node;
   a = null_node;
   ASSERT_TRUE(a.is_null());
+}
+
+TEST_F(TestAigMgr, unique_table_resize)
+{
+  // Regression: the unique table computed the bucket index by masking the hash
+  // with d_buckets.capacity() - 1 (and the load-factor check and resize used
+  // capacity() as well), assuming capacity() is exactly the power-of-two bucket
+  // count requested via resize(). std::vector only guarantees
+  // capacity() >= size(), so on an over-allocating implementation capacity()
+  // need not be a power of two and the mask could yield an index in
+  // [size(), capacity()), an out-of-bounds access. Create enough distinct AND
+  // gates to force several resizes (initial bucket count is 16) and check that
+  // hash consing still returns the same node for each, exercising insert and
+  // lookup across the resize path.
+  bitblast::AigManager mgr;
+
+  std::vector<bitblast::AigNode> consts;
+  for (size_t i = 0; i < 40; ++i)
+  {
+    consts.push_back(mgr.mk_const());
+  }
+
+  // Build distinct AND gates over all pairs of independent constants. None of
+  // these are simplified by the AIG rewriter, so each creates a fresh AND node,
+  // growing the unique table far past its initial 16 buckets.
+  std::vector<bitblast::AigNode> ands;
+  for (size_t i = 0; i < consts.size(); ++i)
+  {
+    for (size_t j = i + 1; j < consts.size(); ++j)
+    {
+      ands.push_back(mgr.mk_and(consts[i], consts[j]));
+    }
+  }
+
+  // Every AND gate must remain hash consed across the resizes: re-creating it
+  // (in either argument order) returns the same node.
+  size_t k = 0;
+  for (size_t i = 0; i < consts.size(); ++i)
+  {
+    for (size_t j = i + 1; j < consts.size(); ++j)
+    {
+      ASSERT_EQ(ands[k], mgr.mk_and(consts[i], consts[j]));
+      ASSERT_EQ(ands[k], mgr.mk_and(consts[j], consts[i]));
+      ++k;
+    }
+  }
 }
 
 TEST_F(TestAigMgr, copy_assign_self)
