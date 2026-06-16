@@ -5498,6 +5498,24 @@ TEST_F(TestCApi, substitute2)
   {
     ASSERT_EQ(terms[i], expected[i]);
   }
+  // null term in terms or in substitution map
+  std::vector<BitwuzlaTerm> terms2 = {nullptr, addxx, addxy};
+  ASSERT_DEATH(bitwuzla_substitute_terms(terms2.size(),
+                                         terms2.data(),
+                                         keys.size(),
+                                         keys.data(),
+                                         values.data()),
+               "invalid term at index 0");
+  keys = {nullptr, y}, values = {y, btrue};
+  ASSERT_DEATH(
+      bitwuzla_substitute_terms(
+          terms.size(), terms.data(), keys.size(), keys.data(), values.data()),
+      "invalid term at index 0");
+  keys = {x, y}, values = {y, nullptr};
+  ASSERT_DEATH(
+      bitwuzla_substitute_terms(
+          terms.size(), terms.data(), keys.size(), keys.data(), values.data()),
+      "invalid term at index 1");
 }
 
 TEST_F(TestCApi, term_copy_release)

@@ -1446,19 +1446,21 @@ bitwuzla_substitute_terms(size_t terms_size,
   BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(terms);
   BITWUZLA_CHECK_NOT_ZERO(terms_size);
-  BITWUZLA_CHECK_NOT_NULL(terms);
   BITWUZLA_CHECK_NOT_ZERO(map_size);
   BITWUZLA_CHECK_NOT_NULL(map_keys);
   BITWUZLA_CHECK_NOT_NULL(map_values);
-  auto tm = terms[0]->d_tm;
   std::vector<bitwuzla::Term> ts;
   for (size_t i = 0; i < terms_size; ++i)
   {
+    BITWUZLA_CHECK_TERM_AT_IDX(terms, i);
     ts.push_back(BitwuzlaTermManager::import_term(terms[i]));
   }
+  auto tm = terms[0]->d_tm;
   std::unordered_map<bitwuzla::Term, bitwuzla::Term> map;
   for (size_t i = 0; i < map_size; ++i)
   {
+    BITWUZLA_CHECK_TERM_AT_IDX(map_keys, i);
+    BITWUZLA_CHECK_TERM_AT_IDX(map_values, i);
     map.emplace(BitwuzlaTermManager::import_term(map_keys[i]),
                 BitwuzlaTermManager::import_term(map_values[i]));
   }

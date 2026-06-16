@@ -3237,6 +3237,16 @@ TEST_F(TestApi, substitute)
   bitwuzla::Term bv_const = d_tm.mk_const(d_bv_sort16);
   bitwuzla::Term bv_value = d_tm.mk_bv_value(d_bv_sort16, "143", 10);
 
+  // null term as term or in substitution map
+  {
+    ASSERT_THROW(d_tm.substitute_term(bv_const, {{bitwuzla::Term(), bv_value}}),
+                 bitwuzla::Exception);
+    ASSERT_THROW(d_tm.substitute_term(bv_const, {{bv_const, bitwuzla::Term()}}),
+                 bitwuzla::Exception);
+    ASSERT_THROW(d_tm.substitute_term(bitwuzla::Term(), {{bv_const, bv_value}}),
+                 bitwuzla::Exception);
+  }
+
   // simple substitution const -> value
   {
     std::unordered_map<bitwuzla::Term, bitwuzla::Term> map{
@@ -3331,6 +3341,15 @@ TEST_F(TestApi, substitute2)
       d_tm.mk_term(bitwuzla::Kind::BV_ADD, {y, x})};
   d_tm.substitute_terms(terms, {{x, y}, {y, x}});
   ASSERT_EQ(terms, expected);
+
+  // null term in terms or in substitution map
+  std::vector<bitwuzla::Term> terms2 = {bitwuzla::Term(), addxx, addxy};
+  ASSERT_THROW(d_tm.substitute_terms(terms2, {{x, y}, {y, x}}),
+               bitwuzla::Exception);
+  ASSERT_THROW(d_tm.substitute_terms(terms, {{x, bitwuzla::Term()}, {y, x}}),
+               bitwuzla::Exception);
+  ASSERT_THROW(d_tm.substitute_terms(terms, {{x, y}, {bitwuzla::Term(), x}}),
+               bitwuzla::Exception);
 }
 
 TEST_F(TestApi, term_print1)
