@@ -1638,6 +1638,8 @@ TEST_F(TestApi, get_unsat_core)
 TEST_F(TestApi, simplify)
 {
   bitwuzla::Bitwuzla bitwuzla(d_tm);
+  ASSERT_THROW(bitwuzla.simplify(bitwuzla::Term()), bitwuzla::Exception);
+  ASSERT_NE(bitwuzla.simplify(d_and_bv_const1), d_and_bv_const1);
   bitwuzla.assert_formula(d_bool_const);
   bitwuzla.assert_formula(d_and_bv_const1);
   bitwuzla.simplify();

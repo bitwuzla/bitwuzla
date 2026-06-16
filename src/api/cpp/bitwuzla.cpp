@@ -1616,6 +1616,8 @@ Bitwuzla::simplify()
 Term
 Bitwuzla::simplify(const Term &term)
 {
+  BITWUZLA_CHECK_TERM_NOT_NULL(term);
+  BITWUZLA_CHECK_TERM_TERM_MGR_BITWUZLA(term, "term");
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
   Term res;
   BITWUZLA_TRY_CATCH_BEGIN;
