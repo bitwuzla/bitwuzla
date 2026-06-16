@@ -235,11 +235,12 @@ AigBitblaster::bitblast(const Node& t)
 const bitblast::AigBitblaster::Bits&
 AigBitblaster::bits(const Node& term) const
 {
-  if (d_bitblaster_cache.find(term) == d_bitblaster_cache.end())
+  auto it = d_bitblaster_cache.find(term);
+  if (it == d_bitblaster_cache.end())
   {
     return d_empty;
   }
-  return d_bitblaster_cache.at(term);
+  return it->second;
 }
 
 uint64_t
