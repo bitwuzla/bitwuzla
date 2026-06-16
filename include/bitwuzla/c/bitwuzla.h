@@ -713,7 +713,7 @@ BitwuzlaSort bitwuzla_term_array_get_element_sort(BitwuzlaTerm term);
  * array store term, or an ite term over function terms.
  *
  * @param term The term.
- * @param size The size of the returned array. Optional, NULL is allowed.
+ * @param size Output parameter, stores the size of the returned array.
  *
  * @return The domain sorts of the function term.
  */
