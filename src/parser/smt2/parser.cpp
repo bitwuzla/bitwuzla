@@ -3721,13 +3721,13 @@ Parser::pop_args(const ParsedItem& item, std::vector<bitwuzla::Term>& args)
       }
       const std::vector<bitwuzla::Sort>& domain = args[0].sort().fun_domain();
       assert(domain.size() == arity);
-      for (size_t i = 1; i < arity; ++i)
+      for (size_t i = 0; i < arity; ++i)
       {
-        if (domain[i - 1] != args[i].sort())
+        if (domain[i] != args[i + 1].sort())
         {
           return error("expected term of sort '" + domain[i].str() + "', got "
-                           + args[i].sort().str(),
-                       arg_coo(idx + i));
+                           + args[i + 1].sort().str(),
+                       arg_coo(idx + i + 1));
         }
       }
     }

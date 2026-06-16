@@ -1,0 +1,1 @@
+regress/parser/smt2perr228.smt2:5:17: expected term of sort '(_ BitVec 8)', got (_ BitVec 4)
