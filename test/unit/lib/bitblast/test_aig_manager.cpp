@@ -483,4 +483,35 @@ TEST_F(TestAigMgr, idempotence4_3)
   }
 }
 
+TEST_F(TestAigMgr, copy_assign_null)
+{
+  // Regression: the copy assignment operator unconditionally incremented the
+  // assigned data's reference count. Copy-assigning a null
+  // (default-constructed) AigNode dereferenced a nullptr. The source must be a
+  // named lvalue: an rvalue (e.g. `a = AigNode()`) binds to the move assignment
+  // operator instead, which already handled null correctly.
+  bitblast::AigManager mgr;
+
+  auto a = mgr.mk_const();
+  ASSERT_FALSE(a.is_null());
+
+  bitblast::AigNode null_node;
+  a = null_node;
+  ASSERT_TRUE(a.is_null());
+}
+
+TEST_F(TestAigMgr, copy_assign_self)
+{
+  // Regression: on self-assignment where *this holds the last reference, the
+  // copy assignment operator decremented first, garbage collecting the data,
+  // then accessed it again (use-after-free). Use a pointer to avoid
+  // -Wself-assign-overloaded.
+  bitblast::AigManager mgr;
+
+  auto a               = mgr.mk_const();
+  bitblast::AigNode* p = &a;
+  a                    = *p;
+  ASSERT_FALSE(a.is_null());
+}
+
 }  // namespace bzla::test

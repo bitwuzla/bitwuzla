@@ -37,21 +37,25 @@ AigNode::AigNode(const AigNode& other) : d_data(other.d_data)
 AigNode&
 AigNode::operator=(const AigNode& other)
 {
+  // Increment other's reference count before decrementing our own. This guards
+  // against (1) other being a null (default-constructed) AigNode, in which case
+  // there is no reference to increment, and (2) self-assignment where we hold
+  // the last reference, in which case decrementing first would garbage collect
+  // the data and turn the subsequent access into a use-after-free.
+  if (!other.is_null())
+  {
+    other.data()->inc_refs();
+  }
   if (!is_null())
   {
     data()->dec_refs();
   }
   d_data = other.d_data;
-  data()->inc_refs();
   return *this;
 }
 
 AigNode::AigNode(AigNode&& other)
 {
-  if (!is_null())
-  {
-    data()->dec_refs();
-  }
   d_data       = other.d_data;
   other.d_data = 0;
 }
