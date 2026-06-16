@@ -44,7 +44,7 @@ struct BitwuzlaParser
     d_parser.reset(new bitwuzla::parser::Parser(
         tm->d_tm, options->d_options, language, out));
 #else
-    throw bzla::Unsupported(
+    throw bitwuzla::Unsupported(
         "C bindings for external SAT solver factory not supported");
 #endif
   }
@@ -61,7 +61,7 @@ struct BitwuzlaParser
     (void) language;
     (void) base;
     (void) outfile_name;
-    throw bzla::Unsupported(
+    throw bitwuzla::Unsupported(
         "C bindings for external SAT solver factory not supported");
   }
   /** The associated bitwuzla instance. */

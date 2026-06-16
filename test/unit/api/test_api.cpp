@@ -4356,6 +4356,76 @@ TEST_F(TestApi, terminate_timeout_wrap)
 #endif
 }
 
+#if defined(BZLA_USE_CMS) || defined(BZLA_USE_GIMSATUL) \
+    || defined(BZLA_USE_KISSAT)
+TEST_F(TestApi, configure_terminator_unsupported)
+{
+  class TestTerminator : public bitwuzla::Terminator
+  {
+   public:
+    bool terminate() override { return true; }
+  };
+  TestTerminator tt;
+#if defined(BZLA_USE_CMS)
+  {
+    bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
+    opts.set(bitwuzla::Option::SAT_SOLVER, "cms");
+    bitwuzla::Bitwuzla bitwuzla(d_tm, opts);
+    try
+    {
+      bitwuzla.configure_terminator(&tt);
+      FAIL() << "expected bitwuzla::Unsupported";
+    }
+    catch (const bitwuzla::Unsupported& e)
+    {
+      ASSERT_NE(std::string(e.msg()).find(
+                    "terminator not supported in configured SAT solver"),
+                std::string::npos);
+    }
+  }
+#endif
+#if defined(BZLA_USE_GIMSATUL)
+  {
+    bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
+    opts.set(bitwuzla::Option::SAT_SOLVER, "gimsatul");
+    bitwuzla::Bitwuzla bitwuzla(d_tm, opts);
+    try
+    {
+      bitwuzla.configure_terminator(&tt);
+      FAIL() << "expected bitwuzla::Unsupported";
+    }
+    catch (const bitwuzla::Unsupported& e)
+    {
+      ASSERT_NE(std::string(e.msg()).find(
+                    "terminator not supported in configured SAT solver"),
+                std::string::npos);
+    }
+  }
+#endif
+#if defined(BZLA_USE_KISSAT)
+  {
+    bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
+    opts.set(bitwuzla::Option::SAT_SOLVER, "kissat");
+    bitwuzla::Bitwuzla bitwuzla(d_tm, opts);
+    try
+    {
+      bitwuzla.configure_terminator(&tt);
+      FAIL() << "expected bitwuzla::Unsupported";
+    }
+    catch (const bitwuzla::Unsupported& e)
+    {
+      ASSERT_NE(std::string(e.msg()).find(
+                    "terminator not supported in configured SAT solver"),
+                std::string::npos);
+    }
+  }
+#endif
+}
+#endif
+
 /* -------------------------------------------------------------------------- */
 /* External SAT solver factory                                                */
 /* -------------------------------------------------------------------------- */

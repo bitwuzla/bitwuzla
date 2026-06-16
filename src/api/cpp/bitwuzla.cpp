@@ -1448,7 +1448,7 @@ Bitwuzla::Bitwuzla(TermManager &tm, const Options &options) : d_tm(tm)
 #if !defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
   (void) tm;
   (void) options;
-  throw Exception("no SAT solver configured");
+  throw Unsupported("no SAT solver configured");
 #else
   BITWUZLA_TRY_CATCH_BEGIN;
   d_sat_factory.reset(new bzla::sat::SatSolverFactory(*options.d_options));

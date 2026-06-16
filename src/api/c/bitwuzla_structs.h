@@ -179,7 +179,7 @@ struct Bitwuzla
     d_tm                    = tm;
     d_bitwuzla_needs_delete = true;
 #else
-    throw bzla::Unsupported(
+    throw bitwuzla::Unsupported(
         "C bindings for external SAT solver factory not supported");
 #endif
   }

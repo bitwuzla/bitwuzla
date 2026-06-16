@@ -147,6 +147,22 @@ protected:
 std::string d_msg;
 };
 
+/**
+ * Exception thrown when an execution runs into an unsupported case.
+ *
+ * This happens mainly due to running into unsupported features that are hard to
+ * or cannot be caught upfront. An example is trying to configure a terminator
+ * while using a SAT back end that does not support terminators.
+ *
+ * @note Exceptions of these type are in general non-recoverable. It is not safe
+ *       to continue using the associated object after they are thrown.
+ */
+class Unsupported : public bitwuzla::Exception
+{
+ public:
+  Unsupported(const std::string& msg) : Exception(msg) {}
+};
+
 namespace option {
 /**
  * Exception thrown when errors occur while configuring options.

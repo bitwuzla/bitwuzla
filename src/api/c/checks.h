@@ -70,6 +70,8 @@ class BitwuzlaAbortStream
 #define BITWUZLA_C_TRY_CATCH_BEGIN \
   try                              \
   {
+// We explicitly only catch bitwuzla::Exception on the C API level as nothing
+// else should be threaded through the C++ API.
 #define BITWUZLA_C_TRY_CATCH_END \
   }                              \
   catch (bitwuzla::Exception & e) { BITWUZLA_ABORT << e.msg(); }
