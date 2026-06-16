@@ -3426,6 +3426,8 @@ TEST_F(TestCApi, parser_smt2)
 
   const char *error_msg;
   BitwuzlaOptions *options = bitwuzla_options_new();
+  ASSERT_DEATH(bitwuzla_parser_new(nullptr, options, "smt2", 2, "<stdout>"),
+               d_error_not_null);
   ASSERT_DEATH(bitwuzla_parser_new(d_tm, nullptr, "smt2", 2, "<stdout>"),
                d_error_not_null);
   ASSERT_DEATH(bitwuzla_parser_new(d_tm, options, nullptr, 2, "<stdout>"),

@@ -86,6 +86,7 @@ bitwuzla_parser_new(BitwuzlaTermManager* tm,
 {
   BitwuzlaParser* res = nullptr;
   BITWUZLA_C_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(tm);
   BITWUZLA_CHECK_NOT_NULL(options);
   BITWUZLA_CHECK_NOT_NULL(language);
   BITWUZLA_CHECK_NOT_NULL(outfile_name);
