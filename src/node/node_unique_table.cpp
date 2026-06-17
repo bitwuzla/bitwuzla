@@ -40,7 +40,7 @@ std::pair<bool, NodeData*>
 NodeUniqueTable::find_or_insert(Kind kind,
                                 const Type& type,
                                 const std::vector<Node>& children,
-                                const std::vector<uint64_t>& indices)
+                                std::span<const uint64_t> indices)
 {
   assert(kind != Kind::VALUE);
 
@@ -190,7 +190,7 @@ NodeUniqueTable::hash(const NodeData* d) const
 size_t
 NodeUniqueTable::hash(Kind kind,
                       const std::vector<Node>& children,
-                      const std::vector<uint64_t>& indices) const
+                      std::span<const uint64_t> indices) const
 {
   assert(!children.empty());
 
@@ -210,7 +210,7 @@ NodeUniqueTable::equals(const NodeData& data,
                         Kind kind,
                         const Type& type,
                         const std::vector<Node>& children,
-                        const std::vector<uint64_t>& indices) const
+                        std::span<const uint64_t> indices) const
 {
   assert(kind != Kind::VALUE);
 

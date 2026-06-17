@@ -1429,7 +1429,7 @@ Node
 Interpolator::mk_node(Rewriter& rw,
                       node::Kind k,
                       const std::vector<Node>& children,
-                      const std::vector<uint64_t>& indices)
+                      std::span<const uint64_t> indices)
 {
   return rw.rewrite(d_env.nm().mk_node(k, children, indices));
 }

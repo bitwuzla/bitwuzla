@@ -21,7 +21,7 @@ Node
 Evaluator::evaluate(NodeManager& nm,
                     Kind kind,
                     const std::vector<Node>& values,
-                    const std::vector<uint64_t>& indices)
+                    std::span<const uint64_t> indices)
 {
   switch (kind)
   {

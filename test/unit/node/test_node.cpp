@@ -193,4 +193,24 @@ TEST_F(TestNode, payload_lifetime)
   ASSERT_EQ(a_and[1], b);
 }
 
+TEST_F(TestNode, indices)
+{
+  NodeManager nm;
+  Type bv_type = nm.mk_bv_type(8);
+  Node bv      = nm.mk_const(bv_type);
+
+  // Indexed node: indices() returns a non-owning view of the stored indices.
+  Node extract = nm.mk_node(Kind::BV_EXTRACT, {bv}, {5, 2});
+  ASSERT_EQ(extract.num_indices(), 2);
+  std::span<const uint64_t> indices = extract.indices();
+  ASSERT_EQ(indices.size(), 2);
+  ASSERT_EQ(indices[0], 5);
+  ASSERT_EQ(indices[1], 2);
+
+  // Non-indexed node: empty view.
+  Node bvnot = nm.mk_node(Kind::BV_NOT, {bv});
+  ASSERT_EQ(bvnot.num_indices(), 0);
+  ASSERT_TRUE(bvnot.indices().empty());
+}
+
 }  // namespace bzla::test

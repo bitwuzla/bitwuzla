@@ -13,6 +13,7 @@
 
 #include <cstdint>
 #include <optional>
+#include <span>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -122,7 +123,23 @@ class NodeManager
    */
   Node mk_node(node::Kind kind,
                const std::vector<Node>& children,
-               const std::vector<uint64_t>& indices = {});
+               std::span<const uint64_t> indices = {});
+
+  /**
+   * Create node of kind `kind` with given children and indices.
+   *
+   * Overload for callers passing the indices as a (temporary) vector, e.g. via
+   * a braced-init-list `{u, l}`. Forwards to the span-based overload without
+   * copying the indices.
+   *
+   * @param kind Node kind.
+   * @param children The children of the node.
+   * @param indices The indices if kind is indexed.
+   * @return Node of kind `kind`.
+   */
+  Node mk_node(node::Kind kind,
+               const std::vector<Node>& children,
+               const std::vector<uint64_t>& indices);
 
   /**
    * Helper to create an inverted Boolean or bit-vector node.
@@ -190,7 +207,7 @@ class NodeManager
   std::pair<bool, std::string> check_type(
       node::Kind kind,
       const std::vector<Node>& children,
-      const std::vector<uint64_t>& indices = {});
+      std::span<const uint64_t> indices = {});
 
 #ifndef NDEBUG
   /** @return Current maximum node id. */
@@ -222,12 +239,12 @@ class NodeManager
   node::NodeData* find_or_insert_node(node::Kind kind,
                                       const Type& type,
                                       const std::vector<Node>& children,
-                                      const std::vector<uint64_t>& indices);
+                                      std::span<const uint64_t> indices);
 
   /** Compute type for a node. */
   Type compute_type(node::Kind kind,
                     const std::vector<Node>& children,
-                    const std::vector<uint64_t>& indices = {});
+                    std::span<const uint64_t> indices = {});
 
   /**
    * Garbage collect node data.

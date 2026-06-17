@@ -8,6 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+#include <span>
+
 #include "node/node.h"
 
 namespace bzla {
@@ -18,7 +20,7 @@ class Evaluator
   static Node evaluate(NodeManager& nm,
                        node::Kind kind,
                        const std::vector<Node>& values,
-                       const std::vector<uint64_t>& indices = {});
+                       std::span<const uint64_t> indices = {});
 };
 
 }  // namespace bzla

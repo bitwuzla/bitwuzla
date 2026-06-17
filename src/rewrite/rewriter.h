@@ -11,6 +11,7 @@
 #ifndef BZLA_REWRITE_REWRITER_H_INCLUDED
 #define BZLA_REWRITE_REWRITER_H_INCLUDED
 
+#include <span>
 #include <unordered_map>
 #ifndef NDEBUG
 #include <unordered_set>
@@ -94,7 +95,22 @@ class Rewriter
    */
   const Node& mk_node(node::Kind kind,
                       const std::vector<Node>& children,
-                      const std::vector<uint64_t>& indices = {});
+                      std::span<const uint64_t> indices = {});
+
+  /**
+   * Create node and apply rewriting to current node.
+   *
+   * Overload for callers passing the indices as a (temporary) vector, e.g. via
+   * a braced-init-list `{u, l}`. Forwards to the span-based overload.
+   *
+   * @param kind     The kind of the node to create.
+   * @param children The children of the node to create.
+   * @param indices  The indices of the node to create.
+   * @return The created, rewritten node.
+   */
+  const Node& mk_node(node::Kind kind,
+                      const std::vector<Node>& children,
+                      const std::vector<uint64_t>& indices);
 
   /**
    * Helper to create an inverted Boolean or bit-vector node.

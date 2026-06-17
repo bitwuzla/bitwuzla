@@ -16,6 +16,7 @@
 #include <cstdint>
 #include <new>
 #include <optional>
+#include <span>
 
 #include "node/kind_info.h"
 #include "node/node.h"
@@ -69,7 +70,7 @@ class NodeData
   /** Allocate node data for nodes with children. */
   static NodeData* alloc(Kind kind,
                          const std::vector<Node>& children,
-                         const std::vector<uint64_t>& indices);
+                         std::span<const uint64_t> indices);
 
   /** Allocate node data for values. */
   template <class T>
@@ -160,6 +161,15 @@ class NodeData
    * @return The index.
    */
   uint64_t get_index(size_t index) const;
+
+  /**
+   * Get a pointer to the contiguously stored indices.
+   *
+   * @note Only valid to call for indexed operators; returns nullptr otherwise.
+   *
+   * @return Pointer to the first index, or nullptr if not indexed.
+   */
+  const uint64_t* get_indices() const;
 
   /**
    * @return The number of stored indices.

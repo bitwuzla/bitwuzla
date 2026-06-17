@@ -11,6 +11,8 @@
 #ifndef BZLA_INTERPOLATOR_H_INCLUDED
 #define BZLA_INTERPOLATOR_H_INCLUDED
 
+#include <span>
+
 #include "backtrack/assertion_stack.h"
 #include "backtrack/vector.h"
 #include "env.h"
@@ -101,7 +103,7 @@ class Interpolator
   Node mk_node(Rewriter& rw,
                node::Kind k,
                const std::vector<Node>& children,
-               const std::vector<uint64_t>& indices = {});
+               std::span<const uint64_t> indices = {});
 
   Node simplify(const Node& node);
 

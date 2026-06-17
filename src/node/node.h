@@ -16,6 +16,7 @@
 #include <cstdint>
 #include <functional>
 #include <optional>
+#include <span>
 
 #include "bv/bitvector.h"
 #include "node/node_kind.h"
@@ -144,15 +145,16 @@ class Node
   uint64_t index(size_t index) const;
 
   /**
-   * Return the indices as a vector.
+   * Return a non-owning view of the indices.
    *
-   * @note This does not return a reference since internally we store an
-   *       std::array for the indices and we have to explicitly create a vector
-   *       from it.
+   * The returned span points directly at the indices stored inline in this
+   * node, i.e. no copy is made, and it can be passed directly to
+   * NodeManager::mk_node() without allocating a temporary. The span must not
+   * outlive this node.
    *
-   * @return The indices.
+   * @return A view of the indices stored by this node.
    */
-  std::vector<uint64_t> indices() const;
+  std::span<const uint64_t> indices() const;
 
   /**
    * Get the value represented by this node.

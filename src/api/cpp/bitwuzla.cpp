@@ -868,7 +868,8 @@ std::vector<uint64_t>
 Term::indices() const
 {
   BITWUZLA_CHECK_NOT_NULL(d_node);
-  return d_node->indices();
+  auto indices = d_node->indices();
+  return std::vector<uint64_t>(indices.begin(), indices.end());
 }
 
 std::optional<std::reference_wrapper<const std::string>>

@@ -45,7 +45,7 @@ NodeData::alloc(Kind kind, const std::optional<std::string>& symbol)
 NodeData*
 NodeData::alloc(Kind kind,
                 const std::vector<Node>& children,
-                const std::vector<uint64_t>& indices)
+                std::span<const uint64_t> indices)
 {
   size_t size         = sizeof(NodeData);
   size_t payload_size = 0;
@@ -213,6 +213,16 @@ NodeData::get_index(size_t index) const
   assert(index < get_num_indices());
   const auto& payload = payload_indexed();
   return payload.d_indices[index];
+}
+
+const uint64_t*
+NodeData::get_indices() const
+{
+  if (is_indexed())
+  {
+    return payload_indexed().d_indices;
+  }
+  return nullptr;
 }
 
 std::optional<std::reference_wrapper<const std::string>>

@@ -5,7 +5,7 @@ project('bitwuzla',
   license: 'mit',
   default_options: [
     'c_std=c17',
-    'cpp_std=c++17',
+    'cpp_std=c++20',
     'buildtype=release',
     'b_ndebug=if-release',
     'default_library=static',

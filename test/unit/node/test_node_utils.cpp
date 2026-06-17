@@ -131,4 +131,40 @@ TEST_F(TestNodeUtils, is_bv_sext)
       d_nm.mk_node(Kind::BV_ZERO_EXTEND, {d_a4}, {3}), child));
 }
 
+// Regression test for the zero-copy indices() span on the indexed-node rebuild
+// hot path: rebuild_node() must preserve the kind and indices of indexed
+// operators (extracts, extends) and the unique table must dedup the result
+// identically regardless of whether the indices are passed as a std::span
+// (indices()) or as a std::vector (braced-init-list).
+TEST_F(TestNodeUtils, rebuild_indexed)
+{
+  Node extract = d_nm.mk_node(Kind::BV_EXTRACT, {d_a4}, {2, 1});
+  Node sext    = d_nm.mk_node(Kind::BV_SIGN_EXTEND, {d_a4}, {3});
+
+  // Rebuilding with the same children yields the identical (deduplicated) node.
+  ASSERT_EQ(utils::rebuild_node(d_nm, extract, {d_a4}), extract);
+  ASSERT_EQ(utils::rebuild_node(d_nm, sext, {d_a4}), sext);
+
+  // Rebuilding with new children preserves kind and indices, and matches the
+  // node built directly via the braced-init-list (std::vector) overload.
+  Node extract_b = utils::rebuild_node(d_nm, extract, {d_b4});
+  ASSERT_EQ(extract_b.kind(), Kind::BV_EXTRACT);
+  ASSERT_EQ(extract_b.num_indices(), 2);
+  ASSERT_EQ(extract_b.index(0), 2);
+  ASSERT_EQ(extract_b.index(1), 1);
+  ASSERT_EQ(extract_b, d_nm.mk_node(Kind::BV_EXTRACT, {d_b4}, {2, 1}));
+
+  Node sext_b = utils::rebuild_node(d_nm, sext, {d_b4});
+  ASSERT_EQ(sext_b.kind(), Kind::BV_SIGN_EXTEND);
+  ASSERT_EQ(sext_b.num_indices(), 1);
+  ASSERT_EQ(sext_b.index(0), 3);
+  ASSERT_EQ(sext_b, d_nm.mk_node(Kind::BV_SIGN_EXTEND, {d_b4}, {3}));
+
+  // The std::span (indices()) and std::vector mk_node overloads must converge
+  // on the same node.
+  std::vector<uint64_t> idx{2, 1};
+  ASSERT_EQ(d_nm.mk_node(Kind::BV_EXTRACT, {d_c4}, extract.indices()),
+            d_nm.mk_node(Kind::BV_EXTRACT, {d_c4}, idx));
+}
+
 }  // namespace bzla::test

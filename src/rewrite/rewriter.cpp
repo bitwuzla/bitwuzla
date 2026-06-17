@@ -173,6 +173,14 @@ Rewriter::mk_node(node::Kind kind,
                   const std::vector<Node>& children,
                   const std::vector<uint64_t>& indices)
 {
+  return mk_node(kind, children, std::span<const uint64_t>(indices));
+}
+
+const Node&
+Rewriter::mk_node(node::Kind kind,
+                  const std::vector<Node>& children,
+                  std::span<const uint64_t> indices)
+{
 #ifndef NDEBUG
   uint64_t max_id = d_env.nm().max_node_id();
 #endif

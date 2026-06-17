@@ -150,7 +150,7 @@ NodeManager::mk_value(const Type& t, const std::string& value)
 Node
 NodeManager::mk_node(Kind kind,
                      const std::vector<Node>& children,
-                     const std::vector<uint64_t>& indices)
+                     std::span<const uint64_t> indices)
 {
   assert(kind != Kind::CONSTANT);
   assert(kind != Kind::CONST_ARRAY);
@@ -162,6 +162,14 @@ NodeManager::mk_node(Kind kind,
 
   NodeData* data = find_or_insert_node(kind, Type(), children, indices);
   return Node(data);
+}
+
+Node
+NodeManager::mk_node(Kind kind,
+                     const std::vector<Node>& children,
+                     const std::vector<uint64_t>& indices)
+{
+  return mk_node(kind, children, std::span<const uint64_t>(indices));
 }
 
 Node
@@ -221,7 +229,7 @@ NodeManager::mk_uninterpreted_type(const std::optional<std::string>& symbol)
 Type
 NodeManager::compute_type(Kind kind,
                           const std::vector<Node>& children,
-                          const std::vector<uint64_t>& indices)
+                          std::span<const uint64_t> indices)
 {
   assert(check_type(kind, children, indices).first);
 
@@ -397,7 +405,7 @@ NodeManager::compute_type(Kind kind,
 std::pair<bool, std::string>
 NodeManager::check_type(Kind kind,
                         const std::vector<Node>& children,
-                        const std::vector<uint64_t>& indices)
+                        std::span<const uint64_t> indices)
 {
   std::stringstream ss;
 
@@ -857,7 +865,7 @@ NodeData*
 NodeManager::find_or_insert_node(node::Kind kind,
                                  const Type& type,
                                  const std::vector<Node>& children,
-                                 const std::vector<uint64_t>& indices)
+                                 std::span<const uint64_t> indices)
 {
   auto [inserted, data] =
       d_unique_table.find_or_insert(kind, type, children, indices);

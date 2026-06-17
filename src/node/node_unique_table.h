@@ -11,6 +11,7 @@
 #ifndef BZLA_NODE_NODE_UNIQUE_TABLE_H_INCLUDED
 #define BZLA_NODE_NODE_UNIQUE_TABLE_H_INCLUDED
 
+#include <span>
 #include <vector>
 
 #include "node/node_data.h"
@@ -27,11 +28,10 @@ class NodeUniqueTable
    * Find node with specified criteria. If node does not exist yet, allocates
    * new node data.
    */
-  std::pair<bool, NodeData*> find_or_insert(
-      Kind kind,
-      const Type& type,
-      const std::vector<Node>& children,
-      const std::vector<uint64_t>& indices);
+  std::pair<bool, NodeData*> find_or_insert(Kind kind,
+                                            const Type& type,
+                                            const std::vector<Node>& children,
+                                            std::span<const uint64_t> indices);
 
   /**
    * Find value with specified criteria. If node does not exist yet, allocates
@@ -92,14 +92,14 @@ class NodeUniqueTable
   /** Compute hash value of node lookup data. */
   size_t hash(Kind kind,
               const std::vector<Node>& children,
-              const std::vector<uint64_t>& indices) const;
+              std::span<const uint64_t> indices) const;
 
   /** Compare node data against node lookup data. */
   bool equals(const NodeData& data,
               Kind kind,
               const Type& type,
               const std::vector<Node>& children,
-              const std::vector<uint64_t>& indices) const;
+              std::span<const uint64_t> indices) const;
 
   /** Compute position in d_buckets based on hash value. */
   size_t bucket_hash(size_t hash, size_t mask = 0) const
