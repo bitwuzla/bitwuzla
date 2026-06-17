@@ -24,11 +24,18 @@ struct BitwuzlaAbortCallback
 };
 
 /* Callback function to be executed on abort. Primarily intended to be used for
- * plugging in custom exception handling. */
-static thread_local void (*bitwuzla_abort_callback)(const char *msg) = nullptr;
+ * plugging in custom exception handling.
+ *
+ * Note: Declared 'inline' (rather than 'static') so that all C API translation
+ *       units share a single callback. Otherwise, bitwuzla_set_abort_callback()
+ *       (in api/c/bitwuzla.cpp) would only set that unit's copy and aborts
+ *       raised in other units (e.g., api/c/parser.cpp) would ignore the
+ *       registered callback and exit() instead.
+ */
+inline thread_local void (*bitwuzla_abort_callback)(const char* msg) = nullptr;
 
-static void
-bitwuzla_abort(const char *msg)
+inline void
+bitwuzla_abort(const char* msg)
 {
   if (!bitwuzla_abort_callback)
   {

@@ -742,7 +742,7 @@ Options::set(const std::string& name,
   }
   else if (is_numeric(it->second))
   {
-    set<uint64_t>(it->second, std::stoll(value), is_user_set);
+    set<uint64_t>(it->second, std::stoull(value), is_user_set);
   }
   else
   {

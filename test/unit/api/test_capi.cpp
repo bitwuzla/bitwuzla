@@ -6064,6 +6064,39 @@ TEST_F(TestCApi, abort_callback)
   }
 }
 
+namespace {
+void
+test_abort_exit(const char* msg)
+{
+  std::cerr << "custom abort callback: " << msg << std::endl;
+  exit(42);
+}
+}  // namespace
+
+TEST_F(TestCApi, abort_callback_parser)
+{
+  // The abort callback registered via bitwuzla_set_abort_callback() must be
+  // honored for aborts raised in *any* C API translation unit, not just
+  // api/c/bitwuzla.cpp (where the setter lives).
+  //
+  // Here we trigger an abort from the parser C API (api/c/parser.cpp) and
+  // verify it goes through the custom callback (exit code 42) rather than the
+  // default exit(EXIT_FAILURE) path. This guards the contract that all C API
+  // translation units share a single callback (see api/c/checks.h). When the
+  // callback had internal linkage (previously, when bitwuzla_abort_callback()
+  // was declared static rather than inline), it could happen (depending on
+  // the linking order) that api/c/parser.cpp sees a null callback and exits
+  // with EXIT_FAILURE instead.
+  struct Resetter
+  {
+    ~Resetter() { bitwuzla_set_abort_callback(nullptr); }
+  } resetter;
+  bitwuzla_set_abort_callback(test_abort_exit);
+  ASSERT_EXIT(bitwuzla_parser_parse_term(nullptr, "x", nullptr),
+              ::testing::ExitedWithCode(42),
+              "custom abort callback");
+}
+
 /* -------------------------------------------------------------------------- */
 
 }  // namespace bzla::test
