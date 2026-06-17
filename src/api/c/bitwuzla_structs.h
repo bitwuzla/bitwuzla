@@ -31,7 +31,7 @@ class CTerminator : public bitwuzla::Terminator
    * @param fun The associated termination function.
    * @param state The associated state.
    */
-  CTerminator(int32_t (*fun)(void *), void *state) : f_fun(fun), d_state(state)
+  CTerminator(int32_t (*fun)(void*), void* state) : f_fun(fun), d_state(state)
   {
   }
 
@@ -44,19 +44,19 @@ class CTerminator : public bitwuzla::Terminator
     return f_fun(d_state);
   }
 
-  void *get_state() { return d_state; }
+  void* get_state() { return d_state; }
 
  private:
   /** The associated termination function. */
-  int32_t (*f_fun)(void *);
+  int32_t (*f_fun)(void*);
   /** The associated state. */
-  void *d_state;
+  void* d_state;
 };
 
 struct BitwuzlaOptions
 {
   BitwuzlaOptions() : d_options(bitwuzla::Options()) {}
-  BitwuzlaOptions(bitwuzla::Options &options) : d_options(options) {}
+  BitwuzlaOptions(bitwuzla::Options& options) : d_options(options) {}
 
   void set_diagnostic_output_stream(const char* output_filename);
 
@@ -72,16 +72,16 @@ struct bitwuzla_term_t
    * @param term The wrapped C++ term.
    * @param tm   The associated term manager.
    */
-  bitwuzla_term_t(const bitwuzla::Term &term, BitwuzlaTermManager *tm)
+  bitwuzla_term_t(const bitwuzla::Term& term, BitwuzlaTermManager* tm)
       : d_term(term), d_tm(tm)
   {
   }
   /** The wrapped C++ term. */
   bitwuzla::Term d_term;
   /** External refs count. */
-  uint32_t d_refs           = 1;
+  uint32_t d_refs = 1;
   /** The associated term manager. */
-  BitwuzlaTermManager *d_tm = nullptr;
+  BitwuzlaTermManager* d_tm = nullptr;
 };
 
 struct bitwuzla_sort_t
@@ -91,33 +91,33 @@ struct bitwuzla_sort_t
    * @param sort The wrapped C++ sort.
    * @param tm   The associated term manager.
    */
-  bitwuzla_sort_t(const bitwuzla::Sort &sort, BitwuzlaTermManager *tm)
+  bitwuzla_sort_t(const bitwuzla::Sort& sort, BitwuzlaTermManager* tm)
       : d_sort(sort), d_tm(tm)
   {
   }
   /** The wrapped C++ sort. */
   bitwuzla::Sort d_sort;
   /** External refs count. */
-  uint32_t d_refs           = 1;
+  uint32_t d_refs = 1;
   /** The associated term manager. */
-  BitwuzlaTermManager *d_tm = nullptr;
+  BitwuzlaTermManager* d_tm = nullptr;
 };
 
 struct BitwuzlaTermManager
 {
-  static const bitwuzla::Sort &import_sort(BitwuzlaSort sort);
-  static const bitwuzla::Term &import_term(BitwuzlaTerm term);
+  static const bitwuzla::Sort& import_sort(BitwuzlaSort sort);
+  static const bitwuzla::Term& import_term(BitwuzlaTerm term);
 
   /**
    * Export C++ sort to C API.
    * @param sort The sort to export.
    */
-  BitwuzlaSort export_sort(const bitwuzla::Sort &sort);
+  BitwuzlaSort export_sort(const bitwuzla::Sort& sort);
   /**
    * Export C++ term to C API.
    * @param term The term to export.
    */
-  BitwuzlaTerm export_term(const bitwuzla::Term &term);
+  BitwuzlaTerm export_term(const bitwuzla::Term& term);
 
   /* Manual memory management for sorts and terms. ------------------- */
 
@@ -126,25 +126,25 @@ struct BitwuzlaTermManager
    * the term is released (freed).
    * @param term The term to release.
    */
-  void release(bitwuzla_term_t *term);
+  void release(bitwuzla_term_t* term);
   /**
    * Increment the external ref count of a term.
    * @param term The term to copy.
    * @return The copied term.
    */
-  bitwuzla_term_t *copy(bitwuzla_term_t *term);
+  bitwuzla_term_t* copy(bitwuzla_term_t* term);
   /**
    * Decrement the external ref count of a sort. If the ref count reaches zero,
    * the sort is released (freed).
    * @param sort The sort to release.
    */
-  void release(bitwuzla_sort_t *sort);
+  void release(bitwuzla_sort_t* sort);
   /**
    * Increment the external ref count of a sort.
    * @param sort The sort to copy.
    * @return The copied sort.
    */
-  bitwuzla_sort_t *copy(bitwuzla_sort_t *sort);
+  bitwuzla_sort_t* copy(bitwuzla_sort_t* sort);
 
   /** Release all sorts and terms. */
   void release();
@@ -163,7 +163,7 @@ struct BitwuzlaTermManager
 
 struct Bitwuzla
 {
-  Bitwuzla(BitwuzlaTermManager *tm, const BitwuzlaOptions *options)
+  Bitwuzla(BitwuzlaTermManager* tm, const BitwuzlaOptions* options)
   {
     (void) tm;
     (void) options;
@@ -184,7 +184,7 @@ struct Bitwuzla
 #endif
   }
 
-  Bitwuzla(BitwuzlaTermManager *tm, bitwuzla::Bitwuzla *bitwuzla)
+  Bitwuzla(BitwuzlaTermManager* tm, bitwuzla::Bitwuzla* bitwuzla)
   {
     d_bitwuzla = bitwuzla;
     d_tm       = tm;
@@ -204,13 +204,13 @@ struct Bitwuzla
   }
 
   /** The associated bitwuzla instance. */
-  bitwuzla::Bitwuzla *d_bitwuzla = nullptr;
+  bitwuzla::Bitwuzla* d_bitwuzla = nullptr;
   /** True if d_bitwuzla must be deleted on destruction. */
   bool d_bitwuzla_needs_delete = false;
   /** The currently configured terminator. */
   std::unique_ptr<CTerminator> d_terminator;
   /** The associated term manager. */
-  BitwuzlaTermManager *d_tm = nullptr;
+  BitwuzlaTermManager* d_tm = nullptr;
 };
 
 /* -------------------------------------------------------------------------- */

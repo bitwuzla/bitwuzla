@@ -41,10 +41,10 @@ namespace {
 // Helper to initialize reversed map.
 template <typename K, typename V>
 constexpr std::unordered_map<V, K>
-_init_reverse(const std::unordered_map<K, V> &map)
+_init_reverse(const std::unordered_map<K, V>& map)
 {
   std::unordered_map<V, K> reversed;
-  for (const auto &[k, v] : map)
+  for (const auto& [k, v] : map)
   {
     auto [it, inserted] = reversed.emplace(v, k);
     (void) it;
@@ -303,8 +303,8 @@ git_id()
 
 /* -------------------------------------------------------------------------- */
 
-std::ostream &
-operator<<(std::ostream &out, Kind kind)
+std::ostream&
+operator<<(std::ostream& out, Kind kind)
 {
   try
   {
@@ -324,8 +324,8 @@ operator<<(std::ostream &out, Kind kind)
   }
 }
 
-std::ostream &
-operator<<(std::ostream &out, RoundingMode rm)
+std::ostream&
+operator<<(std::ostream& out, RoundingMode rm)
 {
   try
   {
@@ -340,17 +340,17 @@ operator<<(std::ostream &out, RoundingMode rm)
 
 /* Exception public --------------------------------------------------------- */
 
-Exception::Exception(const std::string &msg) : d_msg(msg) {}
+Exception::Exception(const std::string& msg) : d_msg(msg) {}
 
-Exception::Exception(const std::stringstream &stream) : d_msg(stream.str()) {}
+Exception::Exception(const std::stringstream& stream) : d_msg(stream.str()) {}
 
-const std::string &
+const std::string&
 Exception::msg() const
 {
   return d_msg;
 }
 
-const char *
+const char*
 Exception::what() const noexcept
 {
   return d_msg.c_str();
@@ -364,8 +364,8 @@ set_bv_format::set_bv_format(uint8_t format) : d_format(format)
       << "invalid bit-vector output number format, expected '2', '10' or '16'";
 }
 
-std::ostream &
-operator<<(std::ostream &out, const set_bv_format &f)
+std::ostream&
+operator<<(std::ostream& out, const set_bv_format& f)
 {
   out.iword(bzla::util::set_bv_format::s_stream_index_bv_format) = f.format();
   return out;
@@ -375,8 +375,8 @@ operator<<(std::ostream &out, const set_bv_format &f)
 
 set_letify::set_letify(bool value) : d_letify(value) {}
 
-std::ostream &
-operator<<(std::ostream &out, const set_letify &l)
+std::ostream&
+operator<<(std::ostream& out, const set_letify& l)
 {
   out.iword(bzla::util::set_letify::s_stream_index_no_letify) = !l.letify();
   return out;
@@ -388,13 +388,13 @@ Options::Options() : d_options(new bzla::option::Options()) {}
 
 Options::~Options() {}
 
-Options::Options(const Options &options)
+Options::Options(const Options& options)
     : d_options(new bzla::option::Options(*options.d_options))
 {
 }
 
-Options &
-Options::operator=(const Options &options)
+Options&
+Options::operator=(const Options& options)
 {
   d_options.reset(new bzla::option::Options(*options.d_options));
   return *this;
@@ -411,7 +411,7 @@ Options::set_diagnostic_output_stream(std::ostream& out)
 }
 
 bool
-Options::is_valid(const std::string &name) const
+Options::is_valid(const std::string& name) const
 {
   return d_options->is_valid(name);
 }
@@ -440,19 +440,19 @@ Options::is_str(Option option) const
   return d_options->is_str(s_internal_options.at(option));
 }
 
-const char *
+const char*
 Options::shrt(Option option) const
 {
   return d_options->shrt(s_internal_options.at(option));
 }
 
-const char *
+const char*
 Options::lng(Option option) const
 {
   return d_options->lng(s_internal_options.at(option));
 }
 
-const char *
+const char*
 Options::description(Option option) const
 {
   return d_options->description(s_internal_options.at(option));
@@ -465,7 +465,7 @@ Options::modes(Option option) const
 }
 
 Option
-Options::option(const char *name) const
+Options::option(const char* name) const
 {
   BITWUZLA_CHECK(d_options->is_valid(name))
       << "invalid option '" << name << "'";
@@ -498,7 +498,7 @@ Options::set(Option option, uint64_t value)
 }
 
 void
-Options::set(Option option, const std::string &value)
+Options::set(Option option, const std::string& value)
 {
   BITWUZLA_CHECK_NOT_NULL(d_options);
   bzla::option::Option opt = s_internal_options.at(option);
@@ -513,7 +513,7 @@ Options::set(Option option, const std::string &value)
 }
 
 void
-Options::set(Option option, const char *value)
+Options::set(Option option, const char* value)
 {
   BITWUZLA_CHECK_NOT_NULL(d_options);
   bzla::option::Option opt = s_internal_options.at(option);
@@ -528,7 +528,7 @@ Options::set(Option option, const char *value)
 }
 
 void
-Options::set(const std::string &lng, const std::string &value)
+Options::set(const std::string& lng, const std::string& value)
 {
   BITWUZLA_CHECK_STR_NOT_EMPTY(lng);
   BITWUZLA_CHECK_STR_NOT_EMPTY(value);
@@ -554,13 +554,13 @@ Options::set(const std::string &lng, const std::string &value)
 }
 
 void
-Options::set(const std::vector<std::string> &args)
+Options::set(const std::vector<std::string>& args)
 {
   BITWUZLA_OPT_TRY_CATCH_BEGIN;
   size_t i = 0, size = args.size();
   while (i < size)
   {
-    const std::string &arg = args[i++];
+    const std::string& arg = args[i++];
 
     // -o=v, --option=value
     std::string opt, value;
@@ -630,8 +630,8 @@ Options::set(const std::vector<std::string> &args)
         {
           BITWUZLA_CHECK(false)
               << "invalid option value for Boolean option '" << opt
-              << "', expected '1', '0', 'true' or 'false'; got '"
-              << value << "'";
+              << "', expected '1', '0', 'true' or 'false'; got '" << value
+              << "'";
         }
       }
       if (is_no)
@@ -669,7 +669,7 @@ Options::set(const std::vector<std::string> &args)
               << "invalid value '" << value << "' for numeric option '" << opt
               << "', minimum is " << min;
         }
-        catch (const std::invalid_argument &e)
+        catch (const std::invalid_argument& e)
         {
           BITWUZLA_CHECK(false) << "invalid value '" << value
                                 << "' for numeric option '" << opt << "'";
@@ -709,7 +709,7 @@ Options::get(Option option) const
   return d_options->get<uint64_t>(opt);
 }
 
-const std::string &
+const std::string&
 Options::get_mode(Option option) const
 {
   BITWUZLA_CHECK_NOT_NULL(d_options);
@@ -720,7 +720,7 @@ Options::get_mode(Option option) const
   return d_options->get<std::string>(opt);
 }
 
-const std::string &
+const std::string&
 Options::get_str(Option option) const
 {
   BITWUZLA_CHECK_NOT_NULL(d_options);
@@ -732,7 +732,7 @@ Options::get_str(Option option) const
 
 /* OptionInfo public -------------------------------------------------------- */
 
-OptionInfo::OptionInfo(const Options &options, Option option) : opt(option)
+OptionInfo::OptionInfo(const Options& options, Option option) : opt(option)
 {
   try
   {
@@ -770,7 +770,7 @@ OptionInfo::OptionInfo(const Options &options, Option option) : opt(option)
                       options.d_options->dflt<std::string>(opt)};
     }
   }
-  catch (std::out_of_range &e)
+  catch (std::out_of_range& e)
   {
     throw Exception("invalid option");
   }
@@ -861,7 +861,7 @@ Term::children() const
 {
   BITWUZLA_CHECK_NOT_NULL(d_node);
   std::vector<Term> res;
-  for (const bzla::Node &node : *d_node)
+  for (const bzla::Node& node : *d_node)
   {
     res.push_back(node);
   }
@@ -978,7 +978,7 @@ Term::is_fp_value_pos_zero() const
   {
     return false;
   }
-  const bzla::FloatingPoint &fp = d_node->value<bzla::FloatingPoint>();
+  const bzla::FloatingPoint& fp = d_node->value<bzla::FloatingPoint>();
   return fp.fpispos() && fp.fpiszero();
 }
 
@@ -990,7 +990,7 @@ Term::is_fp_value_neg_zero() const
   {
     return false;
   }
-  const bzla::FloatingPoint &fp = d_node->value<bzla::FloatingPoint>();
+  const bzla::FloatingPoint& fp = d_node->value<bzla::FloatingPoint>();
   return fp.fpisneg() && fp.fpiszero();
 }
 
@@ -1002,7 +1002,7 @@ Term::is_fp_value_pos_inf() const
   {
     return false;
   }
-  const bzla::FloatingPoint &fp = d_node->value<bzla::FloatingPoint>();
+  const bzla::FloatingPoint& fp = d_node->value<bzla::FloatingPoint>();
   return fp.fpispos() && fp.fpisinf();
 }
 
@@ -1014,7 +1014,7 @@ Term::is_fp_value_neg_inf() const
   {
     return false;
   }
-  const bzla::FloatingPoint &fp = d_node->value<bzla::FloatingPoint>();
+  const bzla::FloatingPoint& fp = d_node->value<bzla::FloatingPoint>();
   return fp.fpisneg() && fp.fpisinf();
 }
 
@@ -1084,8 +1084,8 @@ Term::fp_value_to_real_str() const
   BITWUZLA_CHECK(d_node->type().is_fp() && d_node->is_value())
       << "expected floating-point value term";
   const bzla::FloatingPoint& fpval = d_node->value<bzla::FloatingPoint>();
-  uint64_t size_exp         = fpval.exp_size();
-  uint64_t size_sig         = fpval.sig_size();
+  uint64_t size_exp                = fpval.exp_size();
+  uint64_t size_sig                = fpval.sig_size();
   BITWUZLA_CHECK(size_exp < 64 && size_sig < 64)
       << "unsupported floating-point format for to_real string conversion";
   return fpval.to_real_str();
@@ -1118,7 +1118,7 @@ Term::value(uint8_t base) const
 {
   BITWUZLA_CHECK_NOT_NULL(d_node);
   BITWUZLA_CHECK(d_node->is_value()) << "expected value term";
-  const auto &type = d_node->type();
+  const auto& type = d_node->type();
   if (type.is_bool())
   {
     return d_node->value<bool>() ? "true" : "false";
@@ -1130,7 +1130,7 @@ Term::value(uint8_t base) const
   }
   else if (type.is_fp())
   {
-    const bzla::FloatingPoint &fp_value = d_node->value<bzla::FloatingPoint>();
+    const bzla::FloatingPoint& fp_value = d_node->value<bzla::FloatingPoint>();
     return fp_value.as_bv().str(2);
   }
   else if (type.is_rm())
@@ -1153,7 +1153,7 @@ Term::value(uint8_t base) const
   BITWUZLA_CHECK_NOT_NULL(d_node);
   BITWUZLA_CHECK_TERM_IS_FP(*this);
   BITWUZLA_CHECK_VALUE_BASE(base);
-  const bzla::FloatingPoint &fp_value = d_node->value<bzla::FloatingPoint>();
+  const bzla::FloatingPoint& fp_value = d_node->value<bzla::FloatingPoint>();
   bzla::BitVector sign, exp, sig;
   bzla::FloatingPoint::ieee_bv_as_bvs(d_node->type().fp_exp_size(),
                                       d_node->type().fp_sig_size(),
@@ -1165,7 +1165,7 @@ Term::value(uint8_t base) const
 }
 
 bool
-operator==(const Term &a, const Term &b)
+operator==(const Term& a, const Term& b)
 {
   if (a.d_node == nullptr)
   {
@@ -1179,7 +1179,7 @@ operator==(const Term &a, const Term &b)
 }
 
 bool
-operator!=(const Term &a, const Term &b)
+operator!=(const Term& a, const Term& b)
 {
   if (a.d_node == nullptr)
   {
@@ -1193,8 +1193,8 @@ operator!=(const Term &a, const Term &b)
   return *a.d_node != *b.d_node;
 }
 
-std::ostream &
-operator<<(std::ostream &out, const Term &term)
+std::ostream&
+operator<<(std::ostream& out, const Term& term)
 {
   if (term.d_node)
   {
@@ -1369,7 +1369,7 @@ Sort::str() const
 }
 
 bool
-operator==(const Sort &a, const Sort &b)
+operator==(const Sort& a, const Sort& b)
 {
   if (a.d_type == nullptr)
   {
@@ -1384,7 +1384,7 @@ operator==(const Sort &a, const Sort &b)
 }
 
 bool
-operator!=(const Sort &a, const Sort &b)
+operator!=(const Sort& a, const Sort& b)
 {
   if (a.d_type == nullptr)
   {
@@ -1398,8 +1398,8 @@ operator!=(const Sort &a, const Sort &b)
   return *a.d_type != *b.d_type;
 }
 
-std::ostream &
-operator<<(std::ostream &out, const Sort &sort)
+std::ostream&
+operator<<(std::ostream& out, const Sort& sort)
 {
   if (sort.d_type)
   {
@@ -1443,7 +1443,7 @@ class SatSolverFactoryInternal : public bzla::sat::SatSolverFactory
 
 /* Bitwuzla public ---------------------------------------------------------- */
 
-Bitwuzla::Bitwuzla(TermManager &tm, const Options &options) : d_tm(tm)
+Bitwuzla::Bitwuzla(TermManager& tm, const Options& options) : d_tm(tm)
 {
 #if !defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
   (void) tm;
@@ -1474,7 +1474,7 @@ Bitwuzla::Bitwuzla(TermManager& tm,
 Bitwuzla::~Bitwuzla() {}
 
 void
-Bitwuzla::configure_terminator(Terminator *terminator)
+Bitwuzla::configure_terminator(Terminator* terminator)
 {
   BITWUZLA_TRY_CATCH_BEGIN;
   d_ctx->env().configure_terminator(terminator);
@@ -1514,7 +1514,7 @@ Bitwuzla::pop(uint32_t nlevels)
 }
 
 void
-Bitwuzla::assert_formula(const Term &term)
+Bitwuzla::assert_formula(const Term& term)
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
   BITWUZLA_CHECK_TERM_NOT_NULL(term);
@@ -1533,7 +1533,7 @@ Bitwuzla::get_assertions()
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
   std::vector<Term> res;
   BITWUZLA_TRY_CATCH_BEGIN;
-  const bzla::backtrack::AssertionView &assertions = d_ctx->assertions();
+  const bzla::backtrack::AssertionView& assertions = d_ctx->assertions();
   for (size_t i = 0, n = assertions.size(); i < n; ++i)
   {
     res.push_back(assertions[i]);
@@ -1543,7 +1543,7 @@ Bitwuzla::get_assertions()
 }
 
 bool
-Bitwuzla::is_unsat_assumption(const Term &term)
+Bitwuzla::is_unsat_assumption(const Term& term)
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
   BITWUZLA_CHECK_OPT_PRODUCE_UNSAT_ASSUMPTIONS(d_ctx->options());
@@ -1578,7 +1578,7 @@ Bitwuzla::get_unsat_assumptions()
     d_uc_is_valid = true;
   }
   std::vector<Term> res;
-  for (const auto &t : d_unsat_core)
+  for (const auto& t : d_unsat_core)
   {
     if (d_assumptions.find(t) != d_assumptions.end())
     {
@@ -1614,7 +1614,7 @@ Bitwuzla::simplify()
 }
 
 Term
-Bitwuzla::simplify(const Term &term)
+Bitwuzla::simplify(const Term& term)
 {
   BITWUZLA_CHECK_TERM_NOT_NULL(term);
   BITWUZLA_CHECK_TERM_TERM_MGR_BITWUZLA(term, "term");
@@ -1628,7 +1628,7 @@ Bitwuzla::simplify(const Term &term)
 }
 
 Result
-Bitwuzla::check_sat(const std::vector<Term> &assumptions)
+Bitwuzla::check_sat(const std::vector<Term>& assumptions)
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
   BITWUZLA_TRY_CATCH_BEGIN;
@@ -1642,7 +1642,7 @@ Bitwuzla::check_sat(const std::vector<Term> &assumptions)
     d_ctx->push();
     for (size_t i = 0, size = assumptions.size(); i < size; ++i)
     {
-      const Term &term = assumptions[i];
+      const Term& term = assumptions[i];
       BITWUZLA_CHECK_NOT_NULL_AT_IDX(term.d_node, i);
       BITWUZLA_CHECK_TERM_TERM_MGR_BITWUZLA(
           term, "assumption at position " + std::to_string(i));
@@ -1664,7 +1664,7 @@ Bitwuzla::check_sat(const std::vector<Term> &assumptions)
 }
 
 Term
-Bitwuzla::get_value(const Term &term)
+Bitwuzla::get_value(const Term& term)
 {
   BITWUZLA_CHECK_NOT_NULL(d_ctx);
   BITWUZLA_CHECK_TERM_NOT_NULL(term);
@@ -1773,7 +1773,7 @@ Bitwuzla::get_interpolants(const std::vector<std::vector<Term>>& A)
 }
 
 void
-Bitwuzla::print_formula(std::ostream &out, const std::string &format) const
+Bitwuzla::print_formula(std::ostream& out, const std::string& format) const
 {
   BITWUZLA_CHECK_STR_NOT_EMPTY(format);
   BITWUZLA_CHECK(format == "smt2" || format == "btor2")
@@ -1789,18 +1789,18 @@ Bitwuzla::print_formula(std::ostream &out, const std::string &format) const
       bzla::Btor2Printer::print_formula(out, d_ctx->assertions());
     }
   }
-  catch (bzla::Error &e)
+  catch (bzla::Error& e)
   {
     throw Exception(e.msg());
   }
-  catch (bzla::printer::Exception &e)
+  catch (bzla::printer::Exception& e)
   {
     throw Exception(e.msg());
   }
 }
 
 void
-Bitwuzla::print_unsat_core(std::ostream &out, const std::string &format) const
+Bitwuzla::print_unsat_core(std::ostream& out, const std::string& format) const
 {
   BITWUZLA_CHECK_STR_NOT_EMPTY(format);
   BITWUZLA_CHECK(format == "smt2") << "invalid format, expected 'smt2'";
@@ -1819,7 +1819,7 @@ Bitwuzla::statistics() const
   return d_ctx->env().statistics().get();
 }
 
-TermManager &
+TermManager&
 Bitwuzla::term_mgr()
 {
   return d_tm;
@@ -1845,7 +1845,7 @@ TermManager::TermManager() : d_nm(new bzla::NodeManager()) {}
 TermManager::~TermManager() {}
 
 Sort
-TermManager::mk_array_sort(const Sort &index, const Sort &element)
+TermManager::mk_array_sort(const Sort& index, const Sort& element)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(index);
   BITWUZLA_CHECK_SORT_NOT_NULL(element);
@@ -1882,7 +1882,7 @@ TermManager::mk_fp_sort(uint64_t exp_size, uint64_t sig_size)
 }
 
 Sort
-TermManager::mk_fun_sort(const std::vector<Sort> &domain, const Sort &codomain)
+TermManager::mk_fun_sort(const std::vector<Sort>& domain, const Sort& codomain)
 {
   BITWUZLA_CHECK(domain.size() > 0) << "function arity must be > 0";
   BITWUZLA_CHECK_SORT_NOT_NULL(codomain);
@@ -1901,7 +1901,7 @@ TermManager::mk_rm_sort()
 }
 
 Sort
-TermManager::mk_uninterpreted_sort(const std::optional<std::string> &symbol)
+TermManager::mk_uninterpreted_sort(const std::optional<std::string>& symbol)
 {
   return d_nm->mk_uninterpreted_type(symbol);
 }
@@ -1919,7 +1919,7 @@ TermManager::mk_false()
 }
 
 Term
-TermManager::mk_bv_zero(const Sort &sort)
+TermManager::mk_bv_zero(const Sort& sort)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_SORT_IS_BV(sort);
@@ -1928,7 +1928,7 @@ TermManager::mk_bv_zero(const Sort &sort)
 }
 
 Term
-TermManager::mk_bv_one(const Sort &sort)
+TermManager::mk_bv_one(const Sort& sort)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_SORT_IS_BV(sort);
@@ -1937,7 +1937,7 @@ TermManager::mk_bv_one(const Sort &sort)
 }
 
 Term
-TermManager::mk_bv_ones(const Sort &sort)
+TermManager::mk_bv_ones(const Sort& sort)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_SORT_IS_BV(sort);
@@ -1946,7 +1946,7 @@ TermManager::mk_bv_ones(const Sort &sort)
 }
 
 Term
-TermManager::mk_bv_min_signed(const Sort &sort)
+TermManager::mk_bv_min_signed(const Sort& sort)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_SORT_IS_BV(sort);
@@ -1955,7 +1955,7 @@ TermManager::mk_bv_min_signed(const Sort &sort)
 }
 
 Term
-TermManager::mk_bv_max_signed(const Sort &sort)
+TermManager::mk_bv_max_signed(const Sort& sort)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_SORT_IS_BV(sort);
@@ -1964,8 +1964,8 @@ TermManager::mk_bv_max_signed(const Sort &sort)
 }
 
 Term
-TermManager::mk_bv_value(const Sort &sort,
-                         const std::string &value,
+TermManager::mk_bv_value(const Sort& sort,
+                         const std::string& value,
                          uint8_t base)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
@@ -1985,7 +1985,7 @@ TermManager::mk_bv_value(const Sort &sort,
 }
 
 Term
-TermManager::mk_bv_value_uint64(const Sort &sort, uint64_t value)
+TermManager::mk_bv_value_uint64(const Sort& sort, uint64_t value)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_SORT_IS_BV(sort);
@@ -1999,7 +1999,7 @@ TermManager::mk_bv_value_uint64(const Sort &sort, uint64_t value)
 }
 
 Term
-TermManager::mk_bv_value_int64(const Sort &sort, int64_t value)
+TermManager::mk_bv_value_int64(const Sort& sort, int64_t value)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_SORT_IS_BV(sort);
@@ -2013,7 +2013,7 @@ TermManager::mk_bv_value_int64(const Sort &sort, int64_t value)
 }
 
 Term
-TermManager::mk_fp_pos_zero(const Sort &sort)
+TermManager::mk_fp_pos_zero(const Sort& sort)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_SORT_IS_FP(sort);
@@ -2024,7 +2024,7 @@ TermManager::mk_fp_pos_zero(const Sort &sort)
 }
 
 Term
-TermManager::mk_fp_neg_zero(const Sort &sort)
+TermManager::mk_fp_neg_zero(const Sort& sort)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_SORT_IS_FP(sort);
@@ -2035,7 +2035,7 @@ TermManager::mk_fp_neg_zero(const Sort &sort)
 }
 
 Term
-TermManager::mk_fp_pos_inf(const Sort &sort)
+TermManager::mk_fp_pos_inf(const Sort& sort)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_SORT_IS_FP(sort);
@@ -2046,7 +2046,7 @@ TermManager::mk_fp_pos_inf(const Sort &sort)
 }
 
 Term
-TermManager::mk_fp_neg_inf(const Sort &sort)
+TermManager::mk_fp_neg_inf(const Sort& sort)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_SORT_IS_FP(sort);
@@ -2057,7 +2057,7 @@ TermManager::mk_fp_neg_inf(const Sort &sort)
 }
 
 Term
-TermManager::mk_fp_nan(const Sort &sort)
+TermManager::mk_fp_nan(const Sort& sort)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_SORT_IS_FP(sort);
@@ -2068,9 +2068,9 @@ TermManager::mk_fp_nan(const Sort &sort)
 }
 
 Term
-TermManager::mk_fp_value(const Term &bv_sign,
-                         const Term &bv_exponent,
-                         const Term &bv_significand)
+TermManager::mk_fp_value(const Term& bv_sign,
+                         const Term& bv_exponent,
+                         const Term& bv_significand)
 {
   BITWUZLA_CHECK_TERM_NOT_NULL(bv_sign);
   BITWUZLA_CHECK_TERM_NOT_NULL(bv_exponent);
@@ -2100,9 +2100,9 @@ TermManager::mk_fp_value(const Term &bv_sign,
 }
 
 Term
-TermManager::mk_fp_value(const Sort &sort,
-                         const Term &rm,
-                         const std::string &real)
+TermManager::mk_fp_value(const Sort& sort,
+                         const Term& rm,
+                         const std::string& real)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_TERM_NOT_NULL(rm);
@@ -2170,10 +2170,10 @@ TermManager::mk_fp_value(const Sort &sort,
 }
 
 Term
-TermManager::mk_fp_value(const Sort &sort,
-                         const Term &rm,
-                         const std::string &num,
-                         const std::string &den)
+TermManager::mk_fp_value(const Sort& sort,
+                         const Term& rm,
+                         const std::string& num,
+                         const std::string& den)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_TERM_NOT_NULL(rm);
@@ -2197,7 +2197,7 @@ TermManager::mk_fp_value(const Sort &sort,
         den));
   }
 
-  bzla::NodeManager &nm = *d_nm;
+  bzla::NodeManager& nm = *d_nm;
 
   bzla::Node rna = nm.mk_value(bzla::RoundingMode::RNA);
   bzla::Node rne = nm.mk_value(bzla::RoundingMode::RNE);
@@ -2258,7 +2258,7 @@ TermManager::mk_rm_value(RoundingMode rm)
 }
 
 Term
-TermManager::mk_const_array(const Sort &sort, const Term &term)
+TermManager::mk_const_array(const Sort& sort, const Term& term)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_TERM_NOT_NULL(term);
@@ -2273,8 +2273,8 @@ TermManager::mk_const_array(const Sort &sort, const Term &term)
 
 Term
 TermManager::mk_term(Kind kind,
-                     const std::vector<Term> &args,
-                     const std::vector<uint64_t> &indices)
+                     const std::vector<Term>& args,
+                     const std::vector<uint64_t>& indices)
 {
   switch (kind)
   {
@@ -2507,7 +2507,7 @@ TermManager::mk_term(Kind kind,
     case Kind::APPLY: {
       BITWUZLA_CHECK(args.size() > 1) << "expected at least two arguments";
       BITWUZLA_CHECK_TERM_IS_FUN_AT_IDX(args, 0);
-      const bzla::Type &type_fun = args[0].d_node->type();
+      const bzla::Type& type_fun = args[0].d_node->type();
       size_t arity               = type_fun.fun_arity();
       BITWUZLA_CHECK_MK_TERM_ARGC(kind, true, arity + 1, args.size());
       BITWUZLA_CHECK_MK_TERM_IDXC(kind, 0, indices.size());
@@ -2516,7 +2516,7 @@ TermManager::mk_term(Kind kind,
           << "number of function arguments does not match function arity, "
              "expected '"
           << arity << "' but got '" << paramc << "'";
-      const auto &types = type_fun.fun_types();
+      const auto& types = type_fun.fun_types();
       for (size_t i = 1; i <= paramc; ++i)
       {
         BITWUZLA_CHECK_NOT_NULL_AT_IDX(args[i].d_node, i);
@@ -2618,8 +2618,8 @@ TermManager::mk_term(Kind kind,
 }
 
 Term
-TermManager::mk_const(const Sort &sort,
-                      const std::optional<std::string> &symbol)
+TermManager::mk_const(const Sort& sort,
+                      const std::optional<std::string>& symbol)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_SORT_TERM_MGR(sort, "sort");
@@ -2627,7 +2627,7 @@ TermManager::mk_const(const Sort &sort,
 }
 
 Term
-TermManager::mk_var(const Sort &sort, const std::optional<std::string> &symbol)
+TermManager::mk_var(const Sort& sort, const std::optional<std::string>& symbol)
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   BITWUZLA_CHECK_SORT_NOT_IS_FUN(sort);
@@ -2636,8 +2636,8 @@ TermManager::mk_var(const Sort &sort, const std::optional<std::string> &symbol)
 }
 
 Term
-TermManager::substitute_term(const Term &term,
-                             const std::unordered_map<Term, Term> &map)
+TermManager::substitute_term(const Term& term,
+                             const std::unordered_map<Term, Term>& map)
 {
   BITWUZLA_CHECK_TERM_NOT_NULL(term);
   std::vector<Term> terms = {term};
@@ -2647,9 +2647,9 @@ TermManager::substitute_term(const Term &term,
 
 namespace {
 Term
-rebuild_term(TermManager &tm,
-             const Term &term,
-             const std::vector<Term> &children)
+rebuild_term(TermManager& tm,
+             const Term& term,
+             const std::vector<Term>& children)
 {
   if (children.size()) assert(term.num_children() == children.size());
   if (term.num_children() == 0)
@@ -2677,15 +2677,15 @@ rebuild_term(TermManager &tm,
 }  // namespace
 
 void
-TermManager::substitute_terms(std::vector<Term> &terms,
-                              const std::unordered_map<Term, Term> &map)
+TermManager::substitute_terms(std::vector<Term>& terms,
+                              const std::unordered_map<Term, Term>& map)
 {
   if (terms.empty() || map.empty())
   {
     return;
   }
 
-  for (const auto &[k, v] : map)
+  for (const auto& [k, v] : map)
   {
     BITWUZLA_CHECK_TERM_NOT_NULL(k);
     BITWUZLA_CHECK_TERM_NOT_NULL(v);
@@ -2748,13 +2748,13 @@ TermManager::substitute_terms(std::vector<Term> &terms,
 
 /* Term private ------------------------------------------------------------- */
 
-Term::Term(const bzla::Node &node) : d_node(new bzla::Node(node)) {}
+Term::Term(const bzla::Node& node) : d_node(new bzla::Node(node)) {}
 
 std::vector<bzla::Node>
-Term::term_vector_to_nodes(const std::vector<Term> &terms)
+Term::term_vector_to_nodes(const std::vector<Term>& terms)
 {
   std::vector<bzla::Node> res;
-  for (const auto &term : terms)
+  for (const auto& term : terms)
   {
     res.emplace_back(*term.d_node);
   }
@@ -2762,10 +2762,10 @@ Term::term_vector_to_nodes(const std::vector<Term> &terms)
 }
 
 std::vector<bitwuzla::Term>
-Term::node_vector_to_terms(const std::vector<bzla::Node> &nodes)
+Term::node_vector_to_terms(const std::vector<bzla::Node>& nodes)
 {
   std::vector<bitwuzla::Term> res;
-  for (const auto &node : nodes)
+  for (const auto& node : nodes)
   {
     res.push_back(node);
   }
@@ -2774,13 +2774,13 @@ Term::node_vector_to_terms(const std::vector<bzla::Node> &nodes)
 
 /* Sort private ------------------------------------------------------------- */
 
-Sort::Sort(const bzla::Type &type) : d_type(new bzla::Type(type)) {}
+Sort::Sort(const bzla::Type& type) : d_type(new bzla::Type(type)) {}
 
 std::vector<bzla::Type>
-Sort::sort_vector_to_types(const std::vector<Sort> &sorts)
+Sort::sort_vector_to_types(const std::vector<Sort>& sorts)
 {
   std::vector<bzla::Type> res;
-  for (const auto &sort : sorts)
+  for (const auto& sort : sorts)
   {
     BITWUZLA_CHECK_SORT_NOT_NULL(sort);
     res.push_back(*sort.d_type);
@@ -2832,14 +2832,14 @@ to_string(bitwuzla::Kind kind)
 }
 
 size_t
-std::hash<bitwuzla::Sort>::operator()(const bitwuzla::Sort &sort) const
+std::hash<bitwuzla::Sort>::operator()(const bitwuzla::Sort& sort) const
 {
   BITWUZLA_CHECK_SORT_NOT_NULL(sort);
   return std::hash<bzla::Type>{}(*sort.d_type);
 }
 
 size_t
-std::hash<bitwuzla::Term>::operator()(const bitwuzla::Term &term) const
+std::hash<bitwuzla::Term>::operator()(const bitwuzla::Term& term) const
 {
   BITWUZLA_CHECK_TERM_NOT_NULL(term);
   return std::hash<bzla::Node>{}(*term.d_node);

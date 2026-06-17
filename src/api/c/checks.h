@@ -19,8 +19,8 @@
 
 struct BitwuzlaAbortCallback
 {
-  void (*abort_fun)(const char *msg);
-  void *cb_fun; /* abort callback function */
+  void (*abort_fun)(const char* msg);
+  void* cb_fun; /* abort callback function */
 };
 
 /* Callback function to be executed on abort. Primarily intended to be used for
@@ -50,7 +50,7 @@ bitwuzla_abort(const char* msg)
 class BitwuzlaAbortStream
 {
  public:
-  BitwuzlaAbortStream(const std::string &msg_prefix)
+  BitwuzlaAbortStream(const std::string& msg_prefix)
   {
     stream() << msg_prefix << " ";
   }
@@ -59,7 +59,7 @@ class BitwuzlaAbortStream
     flush();
     bitwuzla_abort(d_stream.str().c_str());
   }
-  std::ostream &stream() { return d_stream; }
+  std::ostream& stream() { return d_stream; }
 
  private:
   void flush()

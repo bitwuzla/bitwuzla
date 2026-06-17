@@ -62,7 +62,7 @@ struct hash<bitwuzla::Sort>
    * @param sort The sort.
    * @return The hash value of the sort.
    */
-  size_t operator()(const bitwuzla::Sort &sort) const;
+  size_t operator()(const bitwuzla::Sort& sort) const;
 };
 
 template <>
@@ -73,7 +73,7 @@ struct hash<bitwuzla::Term>
    * @param term The term.
    * @return The hash value of the term.
    */
-  size_t operator()(const bitwuzla::Term &term) const;
+  size_t operator()(const bitwuzla::Term& term) const;
 };
 
 }  // namespace std
@@ -128,23 +128,23 @@ class Exception : public std::exception
    * Constructor.
    * @param msg The exception message.
    */
-Exception(const std::string &msg);
-/**
- * Constructor.
- * @param stream The exception message given as a std::stringstream.
- */
-Exception(const std::stringstream &stream);
-/**
- * Get the exception message.
- * @return The exception message.
- */
-const std::string &msg() const;
+  Exception(const std::string& msg);
+  /**
+   * Constructor.
+   * @param stream The exception message given as a std::stringstream.
+   */
+  Exception(const std::stringstream& stream);
+  /**
+   * Get the exception message.
+   * @return The exception message.
+   */
+  const std::string& msg() const;
 
-const char *what() const noexcept override;
+  const char* what() const noexcept override;
 
-protected:
-/** The exception message. */
-std::string d_msg;
+ protected:
+  /** The exception message. */
+  std::string d_msg;
 };
 
 /**
@@ -177,12 +177,12 @@ class Exception : public bitwuzla::Exception
    * Constructor.
    * @param msg The exception message.
    */
-  Exception(const std::string &msg) : bitwuzla::Exception(msg) {}
+  Exception(const std::string& msg) : bitwuzla::Exception(msg) {}
   /**
    * Constructor.
    * @param stream The exception message given as a std::stringstream.
    */
-  Exception(const std::stringstream &stream) : bitwuzla::Exception(stream) {}
+  Exception(const std::stringstream& stream) : bitwuzla::Exception(stream) {}
 };
 }  // namespace option
 
@@ -219,7 +219,7 @@ struct set_bv_format
  * @param f   The bit-vector format.
  * @return The output stream.
  */
-std::ostream &operator<<(std::ostream &out, const set_bv_format &f);
+std::ostream& operator<<(std::ostream& out, const set_bv_format& f);
 
 /** Struct to configure if expressions should be letified when printing. */
 struct set_letify
@@ -244,7 +244,7 @@ struct set_letify
  * @param l   The letification configuration.
  * @return The output stream.
  */
-std::ostream &operator<<(std::ostream &out, const set_letify &l);
+std::ostream& operator<<(std::ostream& out, const set_letify& l);
 
 /* -------------------------------------------------------------------------- */
 /* Options                                                                    */
@@ -267,9 +267,9 @@ class Options
   /** Destructor. */
   ~Options();
   /** Copy constructor. */
-  Options(const Options &options);
+  Options(const Options& options);
   /** Copy assignment. */
-  Options &operator=(const Options &options);
+  Options& operator=(const Options& options);
   /** Move constructor. */
   Options(Options&& options) noexcept;
   /** Move assignment. */
@@ -287,7 +287,7 @@ class Options
    * @param name The name.
    * @return True if given string is a option name.
    */
-  bool is_valid(const std::string &name) const;
+  bool is_valid(const std::string& name) const;
   /**
    * Determine if given option is a Boolean option.
    * @param option The option to query.
@@ -314,17 +314,17 @@ class Options
   bool is_str(Option option) const;
 
   /** @return The short name of this option. */
-  const char *shrt(Option option) const;
+  const char* shrt(Option option) const;
   /** @return The long name of this option. */
-  const char *lng(Option option) const;
+  const char* lng(Option option) const;
   /** @return The description of this option. */
-  const char *description(Option option) const;
+  const char* description(Option option) const;
 
   /** @return The modes of this option. */
   std::vector<std::string> modes(Option option) const;
 
   /** @return The option associated to the given short or long option name. */
-  Option option(const char *name) const;
+  Option option(const char* name) const;
 
   /**
    * Set Boolean or numeric option.
@@ -339,21 +339,21 @@ class Options
    * @param option The option.
    * @param mode The option mode.
    */
-  void set(Option option, const std::string &mode);
+  void set(Option option, const std::string& mode);
   /**
    * Set option value for options with different modes.
    *
    * @param option The option.
    * @param mode The option mode.
    */
-  void set(Option option, const char *mode);
+  void set(Option option, const char* mode);
   /**
    * Set current value of option, configured via the long option name and
    * its value in string representation.
    * @param lng The long name of the option to set.
    * @param value The string representation of the value to set.
    */
-  void set(const std::string &lng, const std::string &value);
+  void set(const std::string& lng, const std::string& value);
 
   /**
    * Set options via command line arguments.
@@ -371,7 +371,7 @@ class Options
    *
    * @param args List of command line options.
    */
-  void set(const std::vector<std::string> &args);
+  void set(const std::vector<std::string>& args);
 
   /**
    * Get the current value of a Boolean or numeric option.
@@ -386,14 +386,14 @@ class Options
    * @param option The option.
    * @return The option value.
    */
-  const std::string &get_mode(Option option) const;
+  const std::string& get_mode(Option option) const;
   /**
    * Get the current value of a string option.
    *
    * @param option The option.
    * @return The option value.
    */
-  const std::string &get_str(Option option) const;
+  const std::string& get_str(Option option) const;
 
  private:
   /** The wrapped internal options. */
@@ -462,7 +462,7 @@ struct OptionInfo
    * @param options The option configuration to query for the given option.
    * @param option The option to query.
    */
-  OptionInfo(const Options &options, Option option);
+  OptionInfo(const Options& options, Option option);
   /** Default constructor. */
   OptionInfo() {}
   /** Destructor. */
@@ -473,11 +473,11 @@ struct OptionInfo
   /** The kind of the option. */
   Kind kind;
   /** Short option name. */
-  const char *shrt;
+  const char* shrt;
   /** Long option name. */
-  const char *lng;
+  const char* lng;
   /** Option description. */
-  const char *description;
+  const char* description;
 
   /** The values. */
   std::variant<Bool, Numeric, Mode, String> values;
@@ -538,7 +538,7 @@ OptionInfo::String OptionInfo::value() const;
  * @param kind The kind.
  * @return The output stream.
  */
-std::ostream &operator<<(std::ostream &out, Kind kind);
+std::ostream& operator<<(std::ostream& out, Kind kind);
 
 /* -------------------------------------------------------------------------- */
 /* RoundingMode                                                               */
@@ -552,7 +552,7 @@ std::ostream &operator<<(std::ostream &out, Kind kind);
  * @param rm The rounding mode.
  * @return The output stream.
  */
-std::ostream &operator<<(std::ostream &out, RoundingMode rm);
+std::ostream& operator<<(std::ostream& out, RoundingMode rm);
 
 /* -------------------------------------------------------------------------- */
 /* Term                                                                       */
@@ -564,9 +564,9 @@ class Term
 {
   friend Bitwuzla;
   friend TermManager;
-  friend bool operator==(const Term &, const Term &);
-  friend bool operator!=(const Term &, const Term &);
-  friend std::ostream &operator<<(std::ostream &, const Term &);
+  friend bool operator==(const Term&, const Term&);
+  friend bool operator!=(const Term&, const Term&);
+  friend std::ostream& operator<<(std::ostream&, const Term&);
   friend std::hash<bitwuzla::Term>;
 
  public:
@@ -845,12 +845,12 @@ class Term
  private:
   /** Convert vector of terms to internal nodes. */
   static std::vector<bzla::Node> term_vector_to_nodes(
-      const std::vector<Term> &terms);
+      const std::vector<Term>& terms);
   /** Convert vector of internal nodes to terms. */
   static std::vector<bitwuzla::Term> node_vector_to_terms(
-      const std::vector<bzla::Node> &nodes);
+      const std::vector<bzla::Node>& nodes);
   /** Constructor from internal node. */
-  Term(const bzla::Node &node);
+  Term(const bzla::Node& node);
   /** The internal node wrapped by this term. */
   std::shared_ptr<bzla::Node> d_node;
 };
@@ -906,7 +906,7 @@ std::tuple<std::string, std::string, std::string> Term::value(
  * @param b The second term.
  * @return True if the given terms are equal.
  */
-bool operator==(const Term &a, const Term &b);
+bool operator==(const Term& a, const Term& b);
 
 /**
  * Syntactical disequality operator.
@@ -915,7 +915,7 @@ bool operator==(const Term &a, const Term &b);
  * @param b The second term.
  * @return True if the given terms are disequal.
  */
-bool operator!=(const Term &a, const Term &b);
+bool operator!=(const Term& a, const Term& b);
 
 /**
  * Print term to output stream.
@@ -923,7 +923,7 @@ bool operator!=(const Term &a, const Term &b);
  * @param term The term.
  * @return The output stream.
  */
-std::ostream &operator<<(std::ostream &out, const Term &term);
+std::ostream& operator<<(std::ostream& out, const Term& term);
 
 /* -------------------------------------------------------------------------- */
 /* Sort                                                                       */
@@ -934,9 +934,9 @@ class Sort
   friend Bitwuzla;
   friend TermManager;
   friend Term;
-  friend bool operator==(const Sort &a, const Sort &b);
-  friend bool operator!=(const Sort &a, const Sort &b);
-  friend std::ostream &operator<<(std::ostream &out, const Sort &sort);
+  friend bool operator==(const Sort& a, const Sort& b);
+  friend bool operator!=(const Sort& a, const Sort& b);
+  friend std::ostream& operator<<(std::ostream& out, const Sort& sort);
   friend std::hash<bitwuzla::Sort>;
 
  public:
@@ -1088,9 +1088,9 @@ class Sort
  private:
   /** Convert vector of sorts to internal types. */
   static std::vector<bzla::Type> sort_vector_to_types(
-      const std::vector<Sort> &sorts);
+      const std::vector<Sort>& sorts);
   /** Constructor from internal type. */
-  Sort(const bzla::Type &type);
+  Sort(const bzla::Type& type);
   /** The internal type wrapped by this sort. */
   std::shared_ptr<bzla::Type> d_type;
 };
@@ -1102,7 +1102,7 @@ class Sort
  * @param b The second sort.
  * @return True if the given sorts are equal.
  */
-bool operator==(const Sort &a, const Sort &b);
+bool operator==(const Sort& a, const Sort& b);
 
 /**
  * Syntactical disequality operator.
@@ -1111,7 +1111,7 @@ bool operator==(const Sort &a, const Sort &b);
  * @param b The second sort.
  * @return True if the given sorts are disequal.
  */
-bool operator!=(const Sort &a, const Sort &b);
+bool operator!=(const Sort& a, const Sort& b);
 
 /**
  * Print sort to output stream.
@@ -1119,7 +1119,7 @@ bool operator!=(const Sort &a, const Sort &b);
  * @param sort The sort.
  * @return The output stream.
  */
-std::ostream &operator<<(std::ostream &out, const Sort &sort);
+std::ostream& operator<<(std::ostream& out, const Sort& sort);
 
 /* -------------------------------------------------------------------------- */
 /* Terminator                                                                 */
@@ -1139,9 +1139,9 @@ class TermManager
   ~TermManager();
 
   /** Disallow copy construction. */
-  TermManager(const TermManager &tm) = delete;
+  TermManager(const TermManager& tm) = delete;
   /** Disallow copy assignment. */
-  TermManager &operator=(const TermManager &tm) = delete;
+  TermManager& operator=(const TermManager& tm) = delete;
 
   /* ------------------------------------------------------------------------ */
   /* Sort creation                                                            */
@@ -1162,7 +1162,7 @@ class TermManager
    *   * `Sort::array_get_index()`
    *   * `Sort::array_get_element()`
    */
-  Sort mk_array_sort(const Sort &index, const Sort &element);
+  Sort mk_array_sort(const Sort& index, const Sort& element);
 
   /**
    * Create a Boolean sort.
@@ -1207,7 +1207,7 @@ class TermManager
    *   * `Sort::fun_domain_sorts()`
    *   * `Sort::fun_codomain()`
    */
-  Sort mk_fun_sort(const std::vector<Sort> &domain, const Sort &codomain);
+  Sort mk_fun_sort(const std::vector<Sort>& domain, const Sort& codomain);
 
   /**
    * Create a Roundingmode sort.
@@ -1229,7 +1229,7 @@ class TermManager
    *   * `Sort::is_uninterpreted()`
    */
   Sort mk_uninterpreted_sort(
-      const std::optional<std::string> &symbol = std::nullopt);
+      const std::optional<std::string>& symbol = std::nullopt);
 
   /** @} */
 
@@ -1257,7 +1257,7 @@ class TermManager
    * @see
    *   * `TermManager::mk_bv_sort()`
    */
-  Term mk_bv_zero(const Sort &sort);
+  Term mk_bv_zero(const Sort& sort);
 
   /**
    * Create a bit-vector value one.
@@ -1267,7 +1267,7 @@ class TermManager
    * @see
    *   * `TermManager::mk_bv_sort()`
    */
-  Term mk_bv_one(const Sort &sort);
+  Term mk_bv_one(const Sort& sort);
 
   /**
    * Create a bit-vector value where all bits are set to 1.
@@ -1277,7 +1277,7 @@ class TermManager
    * @see
    *   * `TermManager::mk_bv_sort()`
    */
-  Term mk_bv_ones(const Sort &sort);
+  Term mk_bv_ones(const Sort& sort);
 
   /**
    * Create a bit-vector minimum signed value.
@@ -1287,7 +1287,7 @@ class TermManager
    * @see
    *   * `TermManager::mk_bv_sort()`
    */
-  Term mk_bv_min_signed(const Sort &sort);
+  Term mk_bv_min_signed(const Sort& sort);
 
   /**
    * Create a bit-vector maximum signed value.
@@ -1297,7 +1297,7 @@ class TermManager
    * @see
    *   * `TermManager::mk_bv_sort()`
    */
-  Term mk_bv_max_signed(const Sort &sort);
+  Term mk_bv_max_signed(const Sort& sort);
 
   /**
    * Create a bit-vector value from its string representation.
@@ -1316,8 +1316,8 @@ class TermManager
    * @see
    *   * `TermManager::mk_bv_sort()`
    */
-  Term mk_bv_value(const Sort &sort,
-                   const std::string &value,
+  Term mk_bv_value(const Sort& sort,
+                   const std::string& value,
                    uint8_t base = 2);
 
   /**
@@ -1334,7 +1334,7 @@ class TermManager
    * @see
    *   * `TermManager::mk_bv_sort()`
    */
-  Term mk_bv_value_uint64(const Sort &sort, uint64_t value);
+  Term mk_bv_value_uint64(const Sort& sort, uint64_t value);
 
   /**
    * Create a bit-vector value from its signed integer representation.
@@ -1350,7 +1350,7 @@ class TermManager
    * @see
    *   * `TermManager::mk_bv_sort()`
    */
-  Term mk_bv_value_int64(const Sort &sort, int64_t value);
+  Term mk_bv_value_int64(const Sort& sort, int64_t value);
 
   /**
    * Create a floating-point positive zero value (SMT-LIB: `+zero`).
@@ -1360,7 +1360,7 @@ class TermManager
    * @see
    *  * `TermManager::mk_fp_sort()`
    */
-  Term mk_fp_pos_zero(const Sort &sort);
+  Term mk_fp_pos_zero(const Sort& sort);
 
   /**
    * Create a floating-point negative zero value (SMT-LIB: `-zero`).
@@ -1370,7 +1370,7 @@ class TermManager
    * @see
    *   * `TermManager::mk_fp_sort()`
    */
-  Term mk_fp_neg_zero(const Sort &sort);
+  Term mk_fp_neg_zero(const Sort& sort);
 
   /**
    * Create a floating-point positive infinity value (SMT-LIB: `+oo`).
@@ -1380,7 +1380,7 @@ class TermManager
    * @see
    *   * `TermManager::mk_fp_sort()`
    */
-  Term mk_fp_pos_inf(const Sort &sort);
+  Term mk_fp_pos_inf(const Sort& sort);
 
   /**
    * Create a floating-point negative infinity value (SMT-LIB: `-oo`).
@@ -1390,7 +1390,7 @@ class TermManager
    * @see
    *   * `TermManager::mk_fp_sort()`
    */
-  Term mk_fp_neg_inf(const Sort &sort);
+  Term mk_fp_neg_inf(const Sort& sort);
 
   /**
    * Create a floating-point NaN value.
@@ -1400,7 +1400,7 @@ class TermManager
    * @see
    *   * `TermManager::mk_fp_sort()`
    */
-  Term mk_fp_nan(const Sort &sort);
+  Term mk_fp_nan(const Sort& sort);
 
   /**
    * Create a floating-point value from its IEEE 754 standard representation
@@ -1413,9 +1413,9 @@ class TermManager
    *
    * @return A term of kind Kind::VALUE, representing the floating-point value.
    */
-  Term mk_fp_value(const Term &bv_sign,
-                   const Term &bv_exponent,
-                   const Term &bv_significand);
+  Term mk_fp_value(const Term& bv_sign,
+                   const Term& bv_exponent,
+                   const Term& bv_significand);
 
   /**
    * Create a floating-point value from its real representation, given as a
@@ -1436,7 +1436,7 @@ class TermManager
    * @see
    *   * `TermManager::mk_fp_sort()`
    */
-  Term mk_fp_value(const Sort &sort, const Term &rm, const std::string &real);
+  Term mk_fp_value(const Sort& sort, const Term& rm, const std::string& real);
 
   /**
    * Create a floating-point value from its rational representation, given as a
@@ -1459,10 +1459,10 @@ class TermManager
    * @see
    *   * `TermManager::mk_fp_sort()`
    */
-  Term mk_fp_value(const Sort &sort,
-                   const Term &rm,
-                   const std::string &num,
-                   const std::string &den);
+  Term mk_fp_value(const Sort& sort,
+                   const Term& rm,
+                   const std::string& num,
+                   const std::string& den);
 
   /**
    * Create a one-dimensional constant array of given sort, initialized with
@@ -1477,7 +1477,7 @@ class TermManager
    * @see
    *   * `TermManager::mk_array_sort()`
    */
-  Term mk_const_array(const Sort &sort, const Term &term);
+  Term mk_const_array(const Sort& sort, const Term& term);
 
   /**
    * Create a rounding mode value.
@@ -1502,8 +1502,8 @@ class TermManager
    *   * `Kind`
    */
   Term mk_term(Kind kind,
-               const std::vector<Term> &args,
-               const std::vector<uint64_t> &indices = {});
+               const std::vector<Term>& args,
+               const std::vector<uint64_t>& indices = {});
 
   /**
    * Create a (first-order) constant of given sort with given symbol.
@@ -1521,8 +1521,8 @@ class TermManager
    *   * `TermManager::mk_fun_sort()`
    *   * `TermManager::mk_rm_sort()`
    */
-  Term mk_const(const Sort &sort,
-                const std::optional<std::string> &symbol = std::nullopt);
+  Term mk_const(const Sort& sort,
+                const std::optional<std::string>& symbol = std::nullopt);
 
   /**
    * Create a variable of given sort with given symbol.
@@ -1541,9 +1541,8 @@ class TermManager
    *   * `TermManager::mk_fun_sort()`
    *   * `TermManager::mk_rm_sort()`
    */
-  Term mk_var(const Sort &sort,
-              const std::optional<std::string> &symbol = std::nullopt);
-
+  Term mk_var(const Sort& sort,
+              const std::optional<std::string>& symbol = std::nullopt);
 
   /* ------------------------------------------------------------------------ */
   /* Term substitution                                                        */
@@ -1558,8 +1557,8 @@ class TermManager
    * @param map  The substitution map.
    * @return The resulting term from this substitution.
    */
-  Term substitute_term(const Term &term,
-                       const std::unordered_map<Term, Term> &map);
+  Term substitute_term(const Term& term,
+                       const std::unordered_map<Term, Term>& map);
 
   /**
    * Substitute a set of terms in a set of given terms. The substitutions to
@@ -1572,9 +1571,8 @@ class TermManager
    * @param terms The terms in which the terms are to be substituted.
    * @param map  The substitution map.
    */
-  void substitute_terms(std::vector<Term> &terms,
-                        const std::unordered_map<Term, Term> &map);
-
+  void substitute_terms(std::vector<Term>& terms,
+                        const std::unordered_map<Term, Term>& map);
 
  private:
   std::unique_ptr<bzla::NodeManager> d_nm;
@@ -1635,9 +1633,9 @@ class Bitwuzla
   ~Bitwuzla();
 
   /** Disallow copy construction. */
-  Bitwuzla(const Bitwuzla &bitwuzla) = delete;
+  Bitwuzla(const Bitwuzla& bitwuzla) = delete;
   /** Disallow copy assignment. */
-  Bitwuzla &operator=(const Bitwuzla &bitwuzla) = delete;
+  Bitwuzla& operator=(const Bitwuzla& bitwuzla) = delete;
 
   /**
    * Connect or disconnect associated termination configuration instance.
@@ -1646,7 +1644,7 @@ class Bitwuzla
    * @param terminator The terminator instance. Nullptr disconnects the
    *                   currently associated terminator.
    */
-  void configure_terminator(Terminator *terminator);
+  void configure_terminator(Terminator* terminator);
 
   /**
    * Push context levels.
@@ -1672,7 +1670,7 @@ class Bitwuzla
    *
    * @param term The formula to assert.
    */
-  void assert_formula(const Term &term);
+  void assert_formula(const Term& term);
 
   /**
    * Get the set of currently asserted formulas.
@@ -1697,7 +1695,7 @@ class Bitwuzla
    *   * `Options::set()`
    *   * `check_sat()`
    */
-  bool is_unsat_assumption(const Term &term);
+  bool is_unsat_assumption(const Term& term);
   /**
    * Get the set of unsat assumptions.
    *
@@ -1754,7 +1752,7 @@ class Bitwuzla
    *   * `simplify()`
    *   * `assert_formula()`
    */
-  Term simplify(const Term &term);
+  Term simplify(const Term& term);
 
   /**
    * Check satisfiability of current input formula.
@@ -1776,7 +1774,7 @@ class Bitwuzla
    *   * `Options::set()`
    *   * `Result`
    */
-  Result check_sat(const std::vector<Term> &assumptions = {});
+  Result check_sat(const std::vector<Term>& assumptions = {});
 
   /**
    * Get a term representing the model value of a given term.
@@ -1787,7 +1785,7 @@ class Bitwuzla
    * @return A term representing the model value of term `term`.
    * @see `check_sat()`
    */
-  Term get_value(const Term &term);
+  Term get_value(const Term& term);
 
   /**
    * Get a term representing the interpolant I given the current set of
@@ -1867,8 +1865,8 @@ class Bitwuzla
    * @param format The output format for printing the formula. Currently, only
    *               `"smt2"` for the SMT-LIB v2 format is supported.
    */
-  void print_formula(std::ostream &out,
-                     const std::string &format = "smt2") const;
+  void print_formula(std::ostream& out,
+                     const std::string& format = "smt2") const;
 
   /**
    * Print the current unsat core as benchmark to the given output stream.
@@ -1880,8 +1878,8 @@ class Bitwuzla
    * @param format The output format for printing the formula. Currently, only
    *               `"smt2"` for the SMT-LIB v2 format is supported.
    */
-  void print_unsat_core(std::ostream &out,
-                        const std::string &format = "smt2") const;
+  void print_unsat_core(std::ostream& out,
+                        const std::string& format = "smt2") const;
 
   /**
    * Get current statistics.
@@ -1891,7 +1889,7 @@ class Bitwuzla
   std::map<std::string, std::string> statistics() const;
 
   /** @return The associated term manager instance. */
-  TermManager &term_mgr();
+  TermManager& term_mgr();
 
  private:
   /** Helper called when solver state changes. */
@@ -1914,7 +1912,7 @@ class Bitwuzla
   /** Indicates a pending pop from check-sat with assumptions. */
   bool d_pending_pop = false;
   /** The associated term manager instance. */
-  TermManager &d_tm;
+  TermManager& d_tm;
   /** The associated SAT solver factory. */
   std::unique_ptr<bzla::sat::SatSolverFactory> d_sat_factory;
 };

@@ -36,12 +36,12 @@ class Exception : public bitwuzla::Exception
    * Constructor.
    * @param msg The exception message.
    */
-  Exception(const std::string &msg);
+  Exception(const std::string& msg);
   /**
    * Constructor.
    * @param stream The exception message given as a std::stringstream.
    */
-  Exception(const std::stringstream &stream);
+  Exception(const std::stringstream& stream);
 };
 
 /* -------------------------------------------------------------------------- */
@@ -93,7 +93,7 @@ class Parser
    * @param terminator The terminator instance. Nullptr disconnects the
    *                   currently associated terminator.
    */
-  void configure_terminator(Terminator *terminator);
+  void configure_terminator(Terminator* terminator);
 
   /**
    * Enable or disable the automatic printing of the model after each
@@ -122,7 +122,7 @@ class Parser
    *       available mode for BTOR2 (due to the language not supporting
    *       "commands" as in SMT2).
    */
-  void parse(const std::string &input,
+  void parse(const std::string& input,
              bool parse_only = false,
              bool parse_file = true);
   /**
@@ -138,8 +138,8 @@ class Parser
    *       available mode for BTOR2 (due to the language not supporting
    *       "commands" as in SMT2).
    */
-  void parse(const std::string &infile_name,
-             std::istream &input,
+  void parse(const std::string& infile_name,
+             std::istream& input,
              bool parse_only = false);
 
   /**
@@ -148,14 +148,14 @@ class Parser
    * @return The parsed term.
    * @throws Exception on parse error.
    */
-  Term parse_term(const std::string &input);
+  Term parse_term(const std::string& input);
   /**
    * Parse sort from string.
    * @param input The input string.
    * @return The parsed sort.
    * @throws Exception on parse error.
    */
-  Sort parse_sort(const std::string &input);
+  Sort parse_sort(const std::string& input);
 
   /**
    * Get the current set of (user-)declared sort symbols.

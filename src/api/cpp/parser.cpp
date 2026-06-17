@@ -19,7 +19,7 @@ namespace bitwuzla::parser {
 
 /* Exception public --------------------------------------------------------- */
 
-Exception::Exception(const std::string &msg) : bitwuzla::Exception(msg) {}
+Exception::Exception(const std::string& msg) : bitwuzla::Exception(msg) {}
 
 Exception::Exception(const std::stringstream& stream)
     : bitwuzla::Exception(stream.str())
@@ -78,7 +78,7 @@ Parser::Parser(TermManager& tm,
 }
 
 void
-Parser::parse(const std::string &input, bool parse_only, bool parse_file)
+Parser::parse(const std::string& input, bool parse_only, bool parse_file)
 {
   BITWUZLA_CHECK_STR_NOT_EMPTY(input);
   assert(d_parser);
@@ -89,7 +89,7 @@ Parser::parse(const std::string &input, bool parse_only, bool parse_file)
 }
 
 void
-Parser::configure_terminator(Terminator *terminator)
+Parser::configure_terminator(Terminator* terminator)
 {
   assert(d_parser);
   d_parser->configure_terminator(terminator);
@@ -103,8 +103,8 @@ Parser::configure_auto_print_model(bool value)
 }
 
 void
-Parser::parse(const std::string &infile_name,
-              std::istream &input,
+Parser::parse(const std::string& infile_name,
+              std::istream& input,
               bool parse_only)
 {
   BITWUZLA_CHECK_STR_NOT_EMPTY(infile_name);
@@ -117,7 +117,7 @@ Parser::parse(const std::string &infile_name,
 }
 
 bitwuzla::Term
-Parser::parse_term(const std::string &input)
+Parser::parse_term(const std::string& input)
 {
   BITWUZLA_CHECK_STR_NOT_EMPTY(input);
   assert(d_parser);
@@ -130,7 +130,7 @@ Parser::parse_term(const std::string &input)
 }
 
 bitwuzla::Sort
-Parser::parse_sort(const std::string &input)
+Parser::parse_sort(const std::string& input)
 {
   BITWUZLA_CHECK_STR_NOT_EMPTY(input);
   assert(d_parser);
