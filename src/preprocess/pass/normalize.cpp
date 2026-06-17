@@ -1271,6 +1271,7 @@ PassNormalize::apply(AssertionVector& assertions)
       to_process = true;
       if (processed.is_value() && !processed.value<bool>())
       {
+        Log(1) << "Pass 1 inconsistent";
         inconsistent = true;
       }
     }
@@ -1290,7 +1291,6 @@ PassNormalize::apply(AssertionVector& assertions)
 
     util::Timer timer(d_stats.time_score);
     AigScore score_before, score_pass1, score_pass2;
-    bool pass2_inconsistent = false;
     for (size_t i = 0, size = assertions.size(); i < size; ++i)
     {
       // Only compute score if assertions differ
@@ -1304,20 +1304,20 @@ PassNormalize::apply(AssertionVector& assertions)
         if (assertions_pass2[i].is_value()
             && !assertions_pass2[i].value<bool>())
         {
-          pass2_inconsistent = true;
+          inconsistent = true;
           break;
         }
       }
     }
 
-    uint64_t size_before = 0, size_pass1 = 0, size_pass2 = 0;
-    if (pass2_inconsistent)
+    if (inconsistent)
     {
-      size_pass1 = 1;
-      size_pass2 = 0;
+      Log(1) << "Pass 2 inconsistent";
+      processed_assertions = &assertions_pass2;
     }
     else
     {
+      uint64_t size_before = 0, size_pass1 = 0, size_pass2 = 0;
       // Incrementally compute AIG score until we know if pass1 or pass2 has
       // a better score than the original assertions.
       while (!score_before.done() || !score_pass1.done() || !score_pass2.done())
@@ -1347,19 +1347,19 @@ PassNormalize::apply(AssertionVector& assertions)
       size_before = score_before.score();
       size_pass1  = score_pass1.score();
       size_pass2  = score_pass2.score();
+
+      Log(1) << "AIG size initial: " << size_before;
+      Log(1) << "AIG size pass 1:  " << size_pass1;
+      Log(1) << "AIG size pass 2:  " << size_pass2;
+
+      if (size_pass2 < size_pass1)
+      {
+        processed_assertions = &assertions_pass2;
+      }
+
+      size_t size_after  = std::min(size_pass1, size_pass2);
+      replace_assertions = size_after < size_before;
     }
-
-    if (size_pass2 < size_pass1)
-    {
-      processed_assertions = &assertions_pass2;
-    }
-
-    size_t size_after  = std::min(size_pass1, size_pass2);
-    replace_assertions = size_after < size_before;
-
-    Log(1) << "AIG size initial: " << size_before;
-    Log(1) << "AIG size pass 1:  " << size_pass1;
-    Log(1) << "AIG size pass 2:  " << size_pass2;
   }
 
   if (replace_assertions || inconsistent)

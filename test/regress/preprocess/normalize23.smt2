@@ -1,0 +1,7 @@
+(set-logic QF_BV)
+(set-info :status unsat)
+(declare-const x (_ BitVec 8))
+(declare-const y (_ BitVec 8))
+(assert (= (bvnot y) (bvadd x x (bvneg (bvadd x (_ bv2 8))))))
+(assert (= (bvsub y (bvneg x)) (bvsub (_ bv0 8) (bvsub x (bvneg y)))))
+(check-sat)

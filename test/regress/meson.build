@@ -1523,6 +1523,10 @@ tests_smt2 = [
   ['solver/murxla-61282565da842d10.min.smt2'],
 ]
 
+tests_smt2_no_unsat_core = [
+  ['preprocess/normalize23.smt2', ['--pp-only', '-p']],
+]
+
 tests_smt2_get_interpolant = [
   ## get-interpolant
   # different configs
@@ -2361,6 +2365,7 @@ tests_btor2_unsat = [
 
 regress_tests = [
   [tests_smt2],
+  [tests_smt2_no_unsat_core],
   [tests_btor2_parser],
   [tests_btor2_sat, '--check-sat'],
   [tests_btor2_unsat, '--check-unsat'],
