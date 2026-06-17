@@ -352,6 +352,11 @@ parse_arg_uint64_t(int32_t argc, int32_t& i, char* argv[])
     Error() << "expected numeric value for option `" << opt << "` but got `"
             << value << "`";
   }
+  catch (std::out_of_range& e)
+  {
+    Error() << "numeric value for option `" << opt << "` is out of range: `"
+            << value << "`";
+  }
 }
 
 bool
