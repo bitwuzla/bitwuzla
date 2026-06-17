@@ -50,7 +50,14 @@ Integer::Integer(const Integer& other)
   mpz_init_set(d_val_gmp, other.d_val_gmp);
 }
 
-Integer::Integer(Integer&& other) { mpz_init_set(d_val_gmp, other.d_val_gmp); }
+Integer::Integer(Integer&& other) noexcept
+{
+  // Move by swapping limb pointers instead of copying the limb array.
+  // mpz_init only allocates a single-limb 0, which 'other' keeps and frees in
+  // its destructor.
+  mpz_init(d_val_gmp);
+  mpz_swap(d_val_gmp, other.d_val_gmp);
+}
 
 Integer::~Integer()
 {
@@ -68,11 +75,13 @@ Integer::operator=(const Integer& other)
 }
 
 Integer&
-Integer::operator=(Integer&& other)
+Integer::operator=(Integer&& other) noexcept
 {
   if (&other != this)
   {
-    mpz_set(d_val_gmp, other.d_val_gmp);
+    // Move by swapping limb pointers; 'other' takes over this object's old
+    // value and frees it in its destructor.
+    mpz_swap(d_val_gmp, other.d_val_gmp);
   }
   return *this;
 }

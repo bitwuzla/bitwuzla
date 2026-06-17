@@ -36,7 +36,7 @@ class Integer
   /** Copy constructor. */
   Integer(const Integer& other);
   /** Move constructor. */
-  Integer(Integer&& other);
+  Integer(Integer&& other) noexcept;
 
   /** Destructor. */
   ~Integer();
@@ -44,7 +44,7 @@ class Integer
   // Copy assignment
   Integer& operator=(const Integer& other);
   // Move assignment
-  Integer& operator=(Integer&& other);
+  Integer& operator=(Integer&& other) noexcept;
 
   // Comparisons
   bool operator==(const Integer& other) const;

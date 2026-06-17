@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
 #include <cstdint>
+#include <type_traits>
+#include <utility>
 
 #include "test.h"
 #include "util/integer.h"
@@ -105,4 +107,48 @@ TEST_F(TestInteger, hash)
 
   ASSERT_NE(std::hash<Integer>{}(a), std::hash<Integer>{}(b));
   ASSERT_EQ(std::hash<Integer>{}(a), std::hash<Integer>{}(c));
+}
+
+TEST_F(TestInteger, move)
+{
+  // Moves must transfer ownership via swap, not copy the limb array. The
+  // moved-from value is the only observable difference: a swap-based move
+  // leaves the source holding the destination's previous value, whereas a
+  // copy-based move would leave the source unchanged.
+
+  // Move construction: source is left as the default-initialized 0. A
+  // copy-based move would instead leave src == 42.
+  {
+    Integer src(42);
+    Integer dst(std::move(src));
+    ASSERT_EQ(dst, 42);
+    ASSERT_EQ(src, 0);
+    // Moved-from source remains a valid, reusable Integer.
+    src = 7;
+    ASSERT_EQ(src, 7);
+  }
+
+  // Move assignment: source is left holding the destination's previous value.
+  // A copy-based move would instead leave src == 42.
+  {
+    Integer src(42);
+    Integer dst(7);
+    dst = std::move(src);
+    ASSERT_EQ(dst, 42);
+    ASSERT_EQ(src, 7);
+  }
+
+  // Self move assignment is a guarded no-op and preserves the value. Route
+  // through a reference to avoid a -Wself-move diagnostic on the direct form.
+  {
+    Integer a(99);
+    Integer& ref = a;
+    a            = std::move(ref);
+    ASSERT_EQ(a, 99);
+  }
+
+  // Moves are noexcept, so containers actually move rather than copy on
+  // reallocation.
+  static_assert(std::is_nothrow_move_constructible_v<Integer>);
+  static_assert(std::is_nothrow_move_assignable_v<Integer>);
 }
