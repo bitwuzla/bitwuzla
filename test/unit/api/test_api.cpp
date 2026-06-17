@@ -978,6 +978,7 @@ TEST_F(TestApi, mk_term_check_args)
   std::vector<uint64_t> bv_extract_idxs2_invalid_1 = {0, 2};
   std::vector<uint64_t> bv_extract_idxs2_invalid_2 = {9, 0};
   std::vector<uint64_t> bv_repeat_idxs_invalid_1   = {2305843009213693953};
+  std::vector<uint64_t> bv_repeat_idxs_invalid_2   = {0};
   std::vector<uint64_t> bv_extend_idxs_invalid_1   = {UINT64_MAX};
   std::vector<uint64_t> fp_idxs2                   = {5, 8};
   std::vector<uint64_t> fp_idxs2_invalid_1         = {1, 8};
@@ -1330,6 +1331,10 @@ TEST_F(TestApi, mk_term_check_args)
   ASSERT_THROW(
       d_tm.mk_term(
           bitwuzla::Kind::BV_REPEAT, bv_args1, bv_repeat_idxs_invalid_1),
+      bitwuzla::Exception);
+  ASSERT_THROW(
+      d_tm.mk_term(
+          bitwuzla::Kind::BV_REPEAT, bv_args1, bv_repeat_idxs_invalid_2),
       bitwuzla::Exception);
   ASSERT_THROW(
       d_tm.mk_term(bitwuzla::Kind::BV_ROLI, bv_args1_invalid, bv_idxs1),

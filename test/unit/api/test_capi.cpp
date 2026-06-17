@@ -1453,6 +1453,7 @@ TEST_F(TestCApi, mk_term_check_args)
   std::vector<uint64_t> bv_extract_death_idxs2_1 = {0, 2};
   std::vector<uint64_t> bv_extract_death_idxs2_2 = {9, 0};
   std::vector<uint64_t> bv_repeat_idxs_invalid_1 = {2305843009213693953};
+  std::vector<uint64_t> bv_repeat_idxs_invalid_2 = {0};
   std::vector<uint64_t> bv_extend_idxs_invalid_1 = {UINT64_MAX};
   std::vector<uint64_t> fp_idxs1                 = {5, 8};
   std::vector<uint64_t> fp_idxs2                 = {1, 8};
@@ -2268,6 +2269,13 @@ TEST_F(TestCApi, mk_term_check_args)
                                         bv_repeat_idxs_invalid_1.size(),
                                         bv_repeat_idxs_invalid_1.data()),
                "resulting bit-vector size exceeds maximum bit-vector size");
+  ASSERT_DEATH(bitwuzla_mk_term_indexed(d_tm,
+                                        BITWUZLA_KIND_BV_REPEAT,
+                                        bv_args1.size(),
+                                        bv_args1.data(),
+                                        bv_repeat_idxs_invalid_2.size(),
+                                        bv_repeat_idxs_invalid_2.data()),
+               "repeat index must be greater than zero");
   ASSERT_DEATH(bitwuzla_mk_term_indexed(d_tm,
                                         BITWUZLA_KIND_BV_ROLI,
                                         bv_args1_invalid.size(),

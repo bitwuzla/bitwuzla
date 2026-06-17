@@ -2539,6 +2539,8 @@ TermManager::mk_term(Kind kind,
       BITWUZLA_CHECK_MK_TERM_ARGS(args, 0, is_bv, true);
       if (kind == Kind::BV_REPEAT)
       {
+        BITWUZLA_CHECK(indices[0] >= 1)
+            << "repeat index must be greater than zero";
         BITWUZLA_CHECK(((uint64_t) (UINT64_MAX / indices[0]))
                        >= args[0].d_node->type().bv_size())
             << "resulting bit-vector size exceeds maximum "
