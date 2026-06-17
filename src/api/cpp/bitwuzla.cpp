@@ -1643,6 +1643,7 @@ Bitwuzla::check_sat(const std::vector<Term> &assumptions)
     for (size_t i = 0, size = assumptions.size(); i < size; ++i)
     {
       const Term &term = assumptions[i];
+      BITWUZLA_CHECK_NOT_NULL_AT_IDX(term.d_node, i);
       BITWUZLA_CHECK_TERM_TERM_MGR_BITWUZLA(
           term, "assumption at position " + std::to_string(i));
       d_ctx->assert_formula(*term.d_node);

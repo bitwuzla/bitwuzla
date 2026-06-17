@@ -1666,6 +1666,7 @@ TEST_F(TestApi, check_sat)
   bitwuzla::Bitwuzla bitwuzla(d_tm);
   ASSERT_NO_THROW(bitwuzla.check_sat());
   ASSERT_NO_THROW(bitwuzla.check_sat());
+  ASSERT_THROW(bitwuzla.check_sat({bitwuzla::Term()}), bitwuzla::Exception);
 }
 
 TEST_F(TestApi, get_value)
