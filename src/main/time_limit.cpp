@@ -5,6 +5,7 @@
 #include <condition_variable>
 #include <cstdlib>
 #include <iostream>
+#include <mutex>
 #include <thread>
 
 #include "bitwuzla/cpp/parser.h"
@@ -32,6 +33,10 @@ using namespace std::chrono_literals;
 std::condition_variable cv;
 std::mutex cv_m;
 bool time_limit_set = false;
+// Predicate guarded by cv_m: set to true by reset_time_limit() once solving has
+// finished so that the timeout thread can distinguish a genuine timeout from a
+// notification or a spurious wakeup.
+bool done = false;
 
 bitwuzla::parser::Parser* g_parser = nullptr;
 
@@ -59,7 +64,11 @@ void
 timeout(uint64_t time_limit)
 {
   std::unique_lock<std::mutex> lock(cv_m);
-  if (cv.wait_for(lock, time_limit * 1ms) == std::cv_status::timeout)
+  // Use the predicate overload so that (1) a spurious wakeup does not silently
+  // cancel the time limit and (2) a notify_all() issued by reset_time_limit()
+  // before we start waiting is not lost. wait_for() returns false only if the
+  // timeout expired while 'done' is still false, i.e., on a genuine timeout.
+  if (!cv.wait_for(lock, time_limit * 1ms, [] { return done; }))
   {
     timeout_reached();
   }
@@ -70,6 +79,10 @@ set_time_limit(uint64_t time_limit)
 {
   if (time_limit > 0)
   {
+    {
+      std::lock_guard<std::mutex> lock(cv_m);
+      done = false;
+    }
     time_limit_set = true;
     std::thread t(timeout, time_limit);
     t.detach();
@@ -81,6 +94,10 @@ reset_time_limit()
 {
   if (time_limit_set)
   {
+    {
+      std::lock_guard<std::mutex> lock(cv_m);
+      done = true;
+    }
     cv.notify_all();
   }
 }

@@ -19,8 +19,13 @@ class Parser;
 
 namespace bzla::main {
 
+// Sets a time limit of `time_limit` milliseconds by starting a detached thread
+// that terminates the process once the limit is reached. A value of 0 disables
+// the time limit.
 void set_time_limit(uint64_t time_limit);
 
+// Cancels a time limit previously set via set_time_limit(), e.g., once
+// solving has finished. Has no effect if no time limit was set.
 void reset_time_limit();
 
 // Sets parser instance to print Bitwuzla statistics when time limit is reached.

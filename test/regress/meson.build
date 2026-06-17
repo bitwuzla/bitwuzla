@@ -1739,6 +1739,7 @@ endif
 # Tests that set a time limit (which requires terminator support in the SAT
 # solver). Only CaDiCaL has terminator support.
 tests_smt2_time_limit = [
+  ['solver/time_limit.smt2', ['-t', '200']],
   ['solver/time_limit_per1.smt2'],
   ['solver/time_limit_per2.smt2'],
   ['solver/abstract/bv_udiv_pow2.smt2'],
