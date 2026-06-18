@@ -370,7 +370,7 @@ RewriteRule<RewriteRuleKind::AND_RESOL1>::_apply(Rewriter& rewriter,
 }
 
 /**
- * match:  (and (and a b) (not (and a c)))
+ * match:  (and (and a b) (or a c))
  * result: (and a b)
  */
 namespace {

@@ -166,7 +166,7 @@ class Rewriter
    */
   bool is_bv_or(const Node& node, Node& child0, Node& child1);
   /**
-   * @return True if given node corresponds to a (rewritten) BV_OR node.
+   * @return True if given node corresponds to a (rewritten) BV_SUB node.
    * @param node   The node to check.
    * @param child0 The (resulting) first child of the extracted bvsub node.
    * @param child1 The (resulting) second child of the extracted bvsub node.

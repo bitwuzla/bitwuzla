@@ -73,9 +73,11 @@ RewriteRule<RewriteRuleKind::NORM_BV_CONCAT_BV_NOT>::_apply(Rewriter& rewriter,
 
 
 /**
- * match:  (bvadd (bvnot (bvmul a (bvnot b))) (_ bv1 N))
- *         (is the rewritten form of (bvneg (bvmul a (bvnot b))))
- * result: (bvadd a (bvmul a b))
+ * match:  (bvadd (concat (_ bv0 M) a) (concat b (_ bv0 M)))
+ * result: (concat b a)
+ *
+ * match:  (bvadd (concat a (_ bv0 M)) (concat (_ bv0 M) b))
+ * result: (concat a b)
  */
 namespace {
 Node
@@ -87,7 +89,7 @@ _rw_norm_bv_add_concat(Rewriter& rewriter, const Node& node, size_t idx)
   if (node[idx0].kind() == Kind::BV_CONCAT
       && node[idx1].kind() == Kind::BV_CONCAT)
   {
-    // (concat 0 a) + (concat b 0) ==> (concat a b)
+    // (concat 0 a) + (concat b 0) ==> (concat b a)
     if (node[idx0][0].is_value() && node[idx0][0].value<BitVector>().is_zero()
         && node[idx1][1].is_value()
         && node[idx1][1].value<BitVector>().is_zero()
