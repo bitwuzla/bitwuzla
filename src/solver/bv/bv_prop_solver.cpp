@@ -450,7 +450,7 @@ BvPropSolver::mk_node(const Node& node)
 void
 BvPropSolver::print_progress() const
 {
-  if (d_logger.is_msg_enabled(2))
+  if (d_logger.is_msg_enabled(1))
   {
     size_t nroots_sat   = d_ls->get_num_roots_sat();
     size_t nroots_total = d_ls->get_num_roots();

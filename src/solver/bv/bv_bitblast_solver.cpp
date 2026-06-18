@@ -77,7 +77,7 @@ class BvBitblastSolver::InterpolationSatSolver : public bitblast::SatInterface
     {
       Log(3) << "CNF encoder: add clause";
       size_t size = d_clause.size();
-      if (d_logger.is_log_enabled(2))
+      if (d_logger.is_log_enabled(3))
       {
         std::stringstream ss;
         ss << "  clause: ";
