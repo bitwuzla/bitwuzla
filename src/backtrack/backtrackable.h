@@ -55,6 +55,18 @@ class Backtrackable
   Backtrackable(BacktrackManager* mgr);
   virtual ~Backtrackable();
 
+  /**
+   * Copying or moving is disabled: the constructor registers `this` with the
+   * manager and the destructor deregisters it. The implicitly generated copy
+   * and move operations would duplicate d_mgr/d_control without registering the
+   * new object, silently desynchronizing its control stack from the scope
+   * level.
+   */
+  Backtrackable(const Backtrackable&)            = delete;
+  Backtrackable& operator=(const Backtrackable&) = delete;
+  Backtrackable(Backtrackable&&)                 = delete;
+  Backtrackable& operator=(Backtrackable&&)      = delete;
+
   /** Create new scope. */
   virtual void push() = 0;
   /** Pop last scope. */

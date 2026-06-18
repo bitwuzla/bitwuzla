@@ -10,10 +10,20 @@
 
 #include <gtest/gtest.h>
 
+#include <type_traits>
+
 #include "backtrack/unordered_set.h"
 #include "test.h"
 
 namespace bzla::test {
+
+// Backtrackable objects register themselves with the BacktrackManager on
+// construction. Copying or moving would not register the new object and
+// silently desynchronize its control stack, so these operations are deleted.
+static_assert(!std::is_copy_constructible_v<backtrack::unordered_set<int>>);
+static_assert(!std::is_copy_assignable_v<backtrack::unordered_set<int>>);
+static_assert(!std::is_move_constructible_v<backtrack::unordered_set<int>>);
+static_assert(!std::is_move_assignable_v<backtrack::unordered_set<int>>);
 
 class TestUnorderedSet : public ::testing::Test
 {

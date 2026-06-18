@@ -17,6 +17,14 @@
 
 namespace bzla::test {
 
+// Backtrackable objects register themselves with the BacktrackManager on
+// construction. Copying or moving would not register the new object and
+// silently desynchronize its control stack, so these operations are deleted.
+static_assert(!std::is_copy_constructible_v<backtrack::vector<int>>);
+static_assert(!std::is_copy_assignable_v<backtrack::vector<int>>);
+static_assert(!std::is_move_constructible_v<backtrack::vector<int>>);
+static_assert(!std::is_move_assignable_v<backtrack::vector<int>>);
+
 class TestVector : public ::testing::Test
 {
 };
