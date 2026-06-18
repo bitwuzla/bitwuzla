@@ -298,7 +298,6 @@ Rewriter::is_xnor(const Node& node, Node& child0, Node& child1)
 bool
 Rewriter::is_bv_neg(const Node& node, Node& child)
 {
-  Node one = d_env.nm().mk_value(BitVector::mk_one(node.type().bv_size()));
   if (node.kind() == Kind::BV_NEG)
   {
     child = node[0];
@@ -306,12 +305,12 @@ Rewriter::is_bv_neg(const Node& node, Node& child)
   }
   if (node.kind() == Kind::BV_ADD)
   {
-    if (node[0] == one)
+    if (node[0].is_value() && node[0].value<BitVector>().is_one())
     {
       child = invert_node(node[1]);
       return true;
     }
-    if (node[1] == one)
+    if (node[1].is_value() && node[1].value<BitVector>().is_one())
     {
       child = invert_node(node[0]);
       return true;
