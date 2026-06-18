@@ -114,7 +114,12 @@ Rewriter::rewrite(const Node& node)
         // Save current maximum node id
         int64_t max_id = d_env.nm().max_node_id();
 #endif
-        it->second = _rewrite(node::utils::rebuild_node(nm(), cur, d_cache));
+        Node res = _rewrite(node::utils::rebuild_node(nm(), cur, d_cache));
+        // Get iterator again in case a recursive call changed the size of
+        // d_cache and invalidated the iterator.
+        it = d_cache.find(cur);
+        assert(it != d_cache.end());
+        it->second = res;
 #ifndef NDEBUG
         uint64_t thresh = d_env.options().dbg_rw_node_thresh();
         if (thresh > 0 && d_num_nodes > 0)
@@ -155,7 +160,12 @@ Rewriter::eval(const Node& node)
     {
       if (cur.num_children())
       {
-        it->second = _eval(node::utils::rebuild_node(nm(), cur, d_eval_cache));
+        Node res = _eval(node::utils::rebuild_node(nm(), cur, d_eval_cache));
+        // Get iterator again in case a recursive call changed the size of
+        // d_eval_cache and invalidated the iterator.
+        it = d_eval_cache.find(cur);
+        assert(it != d_eval_cache.end());
+        it->second = res;
       }
       else
       {

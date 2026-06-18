@@ -1229,6 +1229,29 @@ TEST_F(TestRewriterCore, core_ite_eval)
       {d_nm.mk_node(Kind::EQUAL, {d_bv4_a, d_bv4_b}), d_bv4_a, d_bv4_b}));
 }
 
+/* -------------------------------------------------------------------------- */
+
+TEST_F(TestRewriterCore, rewrite_cache_growth)
+{
+  // Rewriting a large nested expression grows the rewrite cache, triggering
+  // rehashes of the underlying unordered_map during the recursive _rewrite()
+  // call. This exercises the path where rewrite() must re-fetch its cache
+  // iterator before assigning the result (writing through a stale iterator is
+  // UB; see rewriter.cpp). Verify the cached result is correct.
+  const uint64_t n = 1000;
+  Node one         = d_nm.mk_value(BitVector::mk_one(4));
+  Node acc         = d_nm.mk_value(BitVector::mk_zero(4));
+  for (uint64_t i = 0; i < n; ++i)
+  {
+    acc = d_nm.mk_node(Kind::BV_ADD, {one, acc});
+  }
+  Node res = d_rewriter.rewrite(acc);
+  ASSERT_TRUE(res.is_value());
+  ASSERT_EQ(res.value<BitVector>(), BitVector::from_ui(4, n % 16));
+  // Re-rewriting the cached value is stable.
+  ASSERT_EQ(d_rewriter.rewrite(res), res);
+}
+
 /* --- Elimination Rules ---------------------------------------------------- */
 
 TEST_F(TestRewriterCore, core_distinct_elim)
