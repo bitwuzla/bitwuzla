@@ -31,4 +31,22 @@ BitwuzlaExceptionStream::ostream()
   return d_stream;
 }
 
+/* --- BitwuzlaOptionExceptionStream public --------------------------------- */
+
+BitwuzlaOptionExceptionStream::BitwuzlaOptionExceptionStream() {}
+
+BitwuzlaOptionExceptionStream::~BitwuzlaOptionExceptionStream() noexcept(false)
+{
+  if (std::uncaught_exceptions() == 0)
+  {
+    throw option::Exception(d_stream.str());
+  }
+}
+std::ostream&
+BitwuzlaOptionExceptionStream::ostream()
+{
+  return d_stream;
+}
+
+/* -------------------------------------------------------------------------- */
 }  // namespace bitwuzla

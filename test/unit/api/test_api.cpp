@@ -308,47 +308,11 @@ TEST_F(TestApi, options_set)
 {
   {
     bitwuzla::Options opts;
-    ASSERT_THROW(opts.set("incrremental", "true"), bitwuzla::Exception);
-    ASSERT_THROW(opts.set(bitwuzla::Option::VERBOSITY, 5), bitwuzla::Exception);
-    ASSERT_THROW(opts.set("VERBOSITY", "5"), bitwuzla::Exception);
-    //  ASSERT_THROW(
-    //      opts.set(bitwuzla::Option::PP_UNCONSTRAINED_OPTIMIZATION, true),
-    //      Exception);
+    ASSERT_THROW(opts.set("incrremental", "true"), bitwuzla::option::Exception);
+    ASSERT_THROW(opts.set(bitwuzla::Option::VERBOSITY, 5),
+                 bitwuzla::option::Exception);
+    ASSERT_THROW(opts.set("VERBOSITY", "5"), bitwuzla::option::Exception);
   }
-  //{
-  //  bitwuzla::Options opts;
-  //  opts.set(bitwuzla::Option::FUN_DUAL_PROP, true);
-  //  ASSERT_THROW(opts.set(bitwuzla::Option::FUN_JUST, true),
-  //               "enabling multiple optimization techniques is not allowed");
-  //  ASSERT_THROW(opts.set(bitwuzla::Option::PP_NONDESTR_SUBST, true),
-  //  Exception);
-  //}
-  //{
-  //  bitwuzla::Options opts;
-  //  opts.set(bitwuzla::Option::FUN_JUST, true);
-  //  ASSERT_THROW(opts.set(bitwuzla::Option::FUN_DUAL_PROP, true),
-  //  Exception);
-  //}
-  {
-    bitwuzla::Options opts;
-    opts.set(bitwuzla::Option::PRODUCE_MODELS, true);
-    // ASSERT_THROW(
-    //     opts.set(bitwuzla::Option::PP_UNCONSTRAINED_OPTIMIZATION, true),
-    //     Exception);
-  }
-  //{
-  //  bitwuzla::Options opts;
-  //  opts.set(bitwuzla::Option::PP_NONDESTR_SUBST, true);
-  //  ASSERT_THROW(
-  //      opts.set(bitwuzla::Option::FUN_DUAL_PROP, true),
-  //    Exception);
-  //}
-  //{
-  //  bitwuzla::Options opts;
-  //  opts.set(bitwuzla::Option::PP_UNCONSTRAINED_OPTIMIZATION, true);
-  //  ASSERT_THROW(opts.set(bitwuzla::Option::PRODUCE_MODELS, true),
-  //  Exception);
-  //}
   {
     bitwuzla::Options opts;
     ASSERT_EQ(opts.get(bitwuzla::Option::PRODUCE_UNSAT_CORES), 0);
@@ -381,7 +345,52 @@ TEST_F(TestApi, options_set)
 #endif
     ASSERT_THROW(opts.set("sat--solver", "kissat"), bitwuzla::Exception);
     ASSERT_THROW(opts.set(bitwuzla::Option::BV_SOLVER, "asdf"),
-                 bitwuzla::Exception);
+                 bitwuzla::option::Exception);
+  }
+  {
+    bitwuzla::Options opts;
+    opts.set("prop-nprops", "18446744073709551615");  // UINT64_MAX
+    ASSERT_EQ(opts.get(bitwuzla::Option::PROP_NPROPS), UINT64_MAX);
+    ASSERT_THROW(opts.set("prop-nprops", "99999999999999999999999999"),
+                 bitwuzla::option::Exception);
+    ASSERT_THROW(opts.set("prop-nprops", "foo"), bitwuzla::option::Exception);
+    ASSERT_THROW(opts.set("prop-nprops", "123abc"),
+                 bitwuzla::option::Exception);
+  }
+  {
+    // Error checking of the typed set/get overloads.
+    bitwuzla::Options opts;
+    // numeric value on a non-numeric (mode) option
+    ASSERT_THROW(
+        opts.set(bitwuzla::Option::BV_SOLVER, static_cast<uint64_t>(1)),
+        bitwuzla::option::Exception);
+    // numeric value below the option minimum (nthreads minimum is 1)
+    ASSERT_THROW(opts.set(bitwuzla::Option::NTHREADS, static_cast<uint64_t>(0)),
+                 bitwuzla::option::Exception);
+    // string value on a numeric option
+    ASSERT_THROW(opts.set(bitwuzla::Option::VERBOSITY, std::string("x")),
+                 bitwuzla::option::Exception);
+    // get (numeric) on a mode option
+    ASSERT_THROW(opts.get(bitwuzla::Option::BV_SOLVER),
+                 bitwuzla::option::Exception);
+    // get_mode on a non-mode (numeric) option
+    ASSERT_THROW(opts.get_mode(bitwuzla::Option::VERBOSITY),
+                 bitwuzla::option::Exception);
+    // get_str on a non-string (mode) option
+    ASSERT_THROW(opts.get_str(bitwuzla::Option::BV_SOLVER),
+                 bitwuzla::option::Exception);
+    // invalid option name lookup
+    ASSERT_THROW(opts.option("nonsense"), bitwuzla::option::Exception);
+  }
+  {
+    // Error checking of the string (long name) set interface.
+    bitwuzla::Options opts;
+    // invalid value for a Boolean option
+    ASSERT_THROW(opts.set("produce-models", "yes"),
+                 bitwuzla::option::Exception);
+    // empty option name and empty value
+    ASSERT_THROW(opts.set("", "1"), bitwuzla::option::Exception);
+    ASSERT_THROW(opts.set("verbosity", ""), bitwuzla::option::Exception);
   }
 }
 
@@ -401,7 +410,14 @@ TEST_F(TestApi, option_set_args)
   options.set({"-S=cadical"});
   ASSERT_EQ(options.get_mode(bitwuzla::Option::SAT_SOLVER), "cadical");
 #endif
-  ASSERT_THROW(options.set({"--no-verbosity"}), bitwuzla::Exception);
+  ASSERT_THROW(options.set({"--no-verbosity"}), bitwuzla::option::Exception);
+  // invalid mode value
+  ASSERT_THROW(options.set({"-S=foo"}), bitwuzla::option::Exception);
+  // invalid Boolean value
+  ASSERT_THROW(options.set({"--produce-models=yes"}),
+               bitwuzla::option::Exception);
+  // invalid numeric value
+  ASSERT_THROW(options.set({"--prop-nprops=foo"}), bitwuzla::option::Exception);
 }
 
 TEST_F(TestApi, option_info)

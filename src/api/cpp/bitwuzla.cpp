@@ -467,7 +467,7 @@ Options::modes(Option option) const
 Option
 Options::option(const char* name) const
 {
-  BITWUZLA_CHECK(d_options->is_valid(name))
+  BITWUZLA_CHECK_OPT(d_options->is_valid(name))
       << "invalid option '" << name << "'";
   return s_options.at(d_options->option(name));
 }
@@ -484,12 +484,12 @@ Options::set(Option option, uint64_t value)
   }
   else
   {
-    BITWUZLA_CHECK(d_options->is_numeric(opt))
+    BITWUZLA_CHECK_OPT(d_options->is_numeric(opt))
         << "expected Boolean or numeric option";
-    BITWUZLA_CHECK(value >= d_options->min<uint64_t>(opt))
+    BITWUZLA_CHECK_OPT(value >= d_options->min<uint64_t>(opt))
         << "invalid option value, expected value >= "
         << d_options->min<uint64_t>(opt);
-    BITWUZLA_CHECK(value <= d_options->max<uint64_t>(opt))
+    BITWUZLA_CHECK_OPT(value <= d_options->max<uint64_t>(opt))
         << "invalid option value, expected value <= "
         << d_options->max<uint64_t>(opt);
     d_options->set<uint64_t>(opt, value, true);
@@ -502,11 +502,8 @@ Options::set(Option option, const std::string& value)
 {
   BITWUZLA_CHECK_NOT_NULL(d_options);
   bzla::option::Option opt = s_internal_options.at(option);
-  BITWUZLA_CHECK(d_options->is_mode(opt) || d_options->is_str(opt))
+  BITWUZLA_CHECK_OPT(d_options->is_mode(opt) || d_options->is_str(opt))
       << "expected option with option modes or strings";
-  BITWUZLA_CHECK(!d_options->is_mode(opt)
-                 || d_options->is_valid_mode(opt, value))
-      << "invalid mode for option";
   BITWUZLA_OPT_TRY_CATCH_BEGIN;
   d_options->set<std::string>(s_internal_options.at(option), value, true);
   BITWUZLA_OPT_TRY_CATCH_END;
@@ -517,11 +514,8 @@ Options::set(Option option, const char* value)
 {
   BITWUZLA_CHECK_NOT_NULL(d_options);
   bzla::option::Option opt = s_internal_options.at(option);
-  BITWUZLA_CHECK(d_options->is_mode(opt) || d_options->is_str(opt))
+  BITWUZLA_CHECK_OPT(d_options->is_mode(opt) || d_options->is_str(opt))
       << "expected option with option modes or strings";
-  BITWUZLA_CHECK(!d_options->is_mode(opt)
-                 || d_options->is_valid_mode(opt, value))
-      << "invalid mode for option";
   BITWUZLA_OPT_TRY_CATCH_BEGIN;
   d_options->set<std::string>(s_internal_options.at(option), value, true);
   BITWUZLA_OPT_TRY_CATCH_END;
@@ -530,24 +524,10 @@ Options::set(Option option, const char* value)
 void
 Options::set(const std::string& lng, const std::string& value)
 {
-  BITWUZLA_CHECK_STR_NOT_EMPTY(lng);
-  BITWUZLA_CHECK_STR_NOT_EMPTY(value);
-  BITWUZLA_CHECK(d_options->is_valid(lng)) << "invalid option '" << lng << "'";
-  bzla::option::Option opt = d_options->option(lng);
-  std::string v            = value;
-  v.erase(std::remove_if(v.begin(), v.end(), ::isspace), v.end());
-  std::transform(v.begin(), v.end(), v.begin(), ::tolower);
-  BITWUZLA_CHECK(!d_options->is_bool(opt) || v == "0" || v == "1" || v == "true"
-                 || v == "false")
-      << "invalid option value for Boolean option, expected '1', '0', 'true' "
-         "or 'false'; got '"
-      << value << "'";
-  BITWUZLA_CHECK(!d_options->is_numeric(opt)
-                 || bzla::util::is_valid_bv_str(value, 10))
-      << "invalid option value for numeric option";
-  BITWUZLA_CHECK(!d_options->is_mode(opt)
-                 || d_options->is_valid_mode(opt, value))
-      << "invalid option value for option with modes";
+  BITWUZLA_CHECK_OPT_STR_NOT_EMPTY(lng);
+  BITWUZLA_CHECK_OPT_STR_NOT_EMPTY(value);
+  BITWUZLA_CHECK_OPT(d_options->is_valid(lng))
+      << "invalid option '" << lng << "'";
   BITWUZLA_OPT_TRY_CATCH_BEGIN;
   d_options->set(lng, value, true);
   BITWUZLA_OPT_TRY_CATCH_END;
@@ -610,7 +590,7 @@ Options::set(const std::vector<std::string>& args)
       }
     }
 
-    BITWUZLA_CHECK(option != bzla::option::Option::NUM_OPTIONS)
+    BITWUZLA_CHECK_OPT(option != bzla::option::Option::NUM_OPTIONS)
         << "invalid option '" << opt << "'";
 
     if (d_options->is_bool(option))
@@ -628,7 +608,7 @@ Options::set(const std::vector<std::string>& args)
         }
         else
         {
-          BITWUZLA_CHECK(false)
+          BITWUZLA_CHECK_OPT(false)
               << "invalid option value for Boolean option '" << opt
               << "', expected '1', '0', 'true' or 'false'; got '" << value
               << "'";
@@ -639,13 +619,14 @@ Options::set(const std::vector<std::string>& args)
         val = !val;
       }
       auto it = s_options.find(option);
-      BITWUZLA_CHECK(it != s_options.end()) << "invalid option '" << opt << "'";
+      BITWUZLA_CHECK_OPT(it != s_options.end())
+          << "invalid option '" << opt << "'";
       set(s_options.at(option), val);
       continue;
     }
 
-    BITWUZLA_CHECK(!is_no) << "invalid --no- prefix for non-Boolean option: '"
-                           << opt << "'";
+    BITWUZLA_CHECK_OPT(!is_no)
+        << "invalid --no- prefix for non-Boolean option: '" << opt << "'";
 
     if (d_options->is_numeric(option))
     {
@@ -661,33 +642,33 @@ Options::set(const std::vector<std::string>& args)
         {
           val          = std::stoull(value);
           uint64_t max = d_options->max<uint64_t>(option);
-          BITWUZLA_CHECK(val <= max)
+          BITWUZLA_CHECK_OPT(val <= max)
               << "invalid value '" << value << "' for numeric option '" << opt
               << "', maximum is " << max;
           uint64_t min = d_options->min<uint64_t>(option);
-          BITWUZLA_CHECK(val >= min)
+          BITWUZLA_CHECK_OPT(val >= min)
               << "invalid value '" << value << "' for numeric option '" << opt
               << "', minimum is " << min;
         }
         catch (const std::invalid_argument& e)
         {
-          BITWUZLA_CHECK(false) << "invalid value '" << value
-                                << "' for numeric option '" << opt << "'";
+          BITWUZLA_CHECK_OPT(false) << "invalid value '" << value
+                                    << "' for numeric option '" << opt << "'";
         }
       }
       set(s_options.at(option), val);
     }
     else if (d_options->is_str(option))
     {
-      BITWUZLA_CHECK(!value.empty())
+      BITWUZLA_CHECK_OPT(!value.empty())
           << "expected value for option '" << opt << "'";
       set(s_options.at(option), value);
     }
     else
     {
-      BITWUZLA_CHECK(!value.empty())
+      BITWUZLA_CHECK_OPT(!value.empty())
           << "expected value for option '" << opt << "'";
-      BITWUZLA_CHECK(d_options->is_valid_mode(option, value))
+      BITWUZLA_CHECK_OPT(d_options->is_valid_mode(option, value))
           << "invalid mode '" << value << "' for option '" << opt << "'";
       set(s_options.at(option), value);
     }
@@ -704,7 +685,7 @@ Options::get(Option option) const
   {
     return d_options->get<bool>(opt);
   }
-  BITWUZLA_CHECK(d_options->is_numeric(opt))
+  BITWUZLA_CHECK_OPT(d_options->is_numeric(opt))
       << "expected Boolean or numeric option";
   return d_options->get<uint64_t>(opt);
 }
@@ -714,8 +695,7 @@ Options::get_mode(Option option) const
 {
   BITWUZLA_CHECK_NOT_NULL(d_options);
   bzla::option::Option opt = s_internal_options.at(option);
-  assert(d_options->is_mode(opt));
-  BITWUZLA_CHECK(d_options->is_mode(opt))
+  BITWUZLA_CHECK_OPT(d_options->is_mode(opt))
       << "expected option with option modes";
   return d_options->get<std::string>(opt);
 }
@@ -725,8 +705,7 @@ Options::get_str(Option option) const
 {
   BITWUZLA_CHECK_NOT_NULL(d_options);
   bzla::option::Option opt = s_internal_options.at(option);
-  assert(d_options->is_str(opt));
-  BITWUZLA_CHECK(d_options->is_str(opt)) << "expected string option";
+  BITWUZLA_CHECK_OPT(d_options->is_str(opt)) << "expected string option";
   return d_options->get<std::string>(opt);
 }
 

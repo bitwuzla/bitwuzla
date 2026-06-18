@@ -41,6 +41,27 @@ class BitwuzlaExceptionStream
   std::stringstream d_stream;
 };
 
+class BitwuzlaOptionExceptionStream
+{
+ public:
+  /** Constructor. */
+  BitwuzlaOptionExceptionStream();
+  /**
+   * Destructor.
+   * @note This needs to be explicitly set to 'noexcept(false)' since it is
+   *       a destructor that throws an exception and in C++11 all destructors
+   *       default to noexcept(true) (else this triggers a call to
+   *       `std::terminate)`.
+   */
+  ~BitwuzlaOptionExceptionStream() noexcept(false);
+  /** @return The associated stream. */
+  std::ostream& ostream();
+
+ private:
+  /** The stream for the expection message. */
+  std::stringstream d_stream;
+};
+
 #ifdef __has_builtin
 #if __has_builtin(__builtin_expect)
 #define BITWUZLA_PREDICT_TRUE(arg) (__builtin_expect(arg, true))
@@ -58,13 +79,6 @@ class BitwuzlaExceptionStream
   }                                                     \
   catch (bzla::Error & e) { throw Exception(e.msg()); } \
   catch (bzla::Unsupported & e) { throw Unsupported(e.msg()); }
-
-#define BITWUZLA_OPT_TRY_CATCH_BEGIN \
-  try                                \
-  {
-#define BITWUZLA_OPT_TRY_CATCH_END \
-  }                                \
-  catch (bzla::option::Exception & e) { throw option::Exception(e.msg()); }
 
 #define BITWUZLA_CHECK(cond)                              \
   BITWUZLA_PREDICT_TRUE(cond)                             \
@@ -357,6 +371,28 @@ class BitwuzlaExceptionStream
            "'"                                                 \
         << exp_size << "'";                                    \
   }
+
+/* -------------------------------------------------------------------------- */
+
+#define BITWUZLA_OPT_TRY_CATCH_BEGIN \
+  try                                \
+  {
+#define BITWUZLA_OPT_TRY_CATCH_END \
+  }                                \
+  catch (bzla::option::Exception & e) { throw option::Exception(e.msg()); }
+
+#define BITWUZLA_CHECK_OPT(cond)                                \
+  BITWUZLA_PREDICT_TRUE(cond)                                   \
+  ? (void) 0                                                    \
+  : bzla::util::OstreamVoider()                                 \
+          & bitwuzla::BitwuzlaOptionExceptionStream().ostream() \
+                << "invalid call to '" << __PRETTY_FUNCTION__ << "', "
+
+#define BITWUZLA_CHECK_OPT_STR_NOT_EMPTY(arg) \
+  BITWUZLA_CHECK_OPT(!(arg).empty())          \
+      << "argument '" << #arg << "' must not be an empty string"
+
+/* -------------------------------------------------------------------------- */
 
 }  // namespace bitwuzla
 #endif

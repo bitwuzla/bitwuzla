@@ -13,10 +13,12 @@
 #include <algorithm>
 #include <cassert>
 #include <iostream>
+#include <stdexcept>
 
 #include "config.h"
 #include "rewrite/rewriter.h"
 #include "util/exceptions.h"
+#include "util/util.h"
 
 namespace bzla::option {
 
@@ -674,6 +676,10 @@ Options::set(Option opt, const std::string& value, bool is_user_set)
   assert(is_user_set || !data(opt)->d_is_user_set);
   if (data(opt)->is_mode())
   {
+    if (!is_valid_mode(opt, value))
+    {
+      throw Exception("invalid mode for option");
+    }
 #ifndef BZLA_USE_CADICAL
     if (opt == Option::SAT_SOLVER
         && value == sat_solver.mode_to_string(SatSolver::CADICAL))
@@ -730,6 +736,13 @@ Options::set(const std::string& name,
     std::string v = value;
     v.erase(std::remove_if(v.begin(), v.end(), ::isspace), v.end());
     std::transform(v.begin(), v.end(), v.begin(), ::tolower);
+    if (v != "0" && v != "1" && v != "true" && v != "false")
+    {
+      throw Exception(
+          "invalid option value for Boolean option, expected '1', '0', 'true' "
+          "or 'false'; got '"
+          + value + "'");
+    }
     if (v == "0" || v == "false")
     {
       set<bool>(it->second, false, is_user_set);
@@ -742,7 +755,28 @@ Options::set(const std::string& name,
   }
   else if (is_numeric(it->second))
   {
-    set<uint64_t>(it->second, std::stoull(value), is_user_set);
+    uint64_t v;
+    size_t pos;
+    try
+    {
+      v = std::stoull(value, &pos);
+    }
+    catch (const std::invalid_argument&)
+    {
+      throw Exception("expected a numeric value for option '" + name
+                      + "', got '" + value + "'");
+    }
+    catch (const std::out_of_range&)
+    {
+      throw Exception("value '" + value + "' for option '" + name
+                      + "' is out of range");
+    }
+    if (pos != value.size())
+    {
+      throw Exception("expected a numeric value for option '" + name
+                      + "', got '" + value + "'");
+    }
+    set<uint64_t>(it->second, v, is_user_set);
   }
   else
   {
