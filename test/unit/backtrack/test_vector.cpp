@@ -10,6 +10,8 @@
 
 #include <gtest/gtest.h>
 
+#include <type_traits>
+
 #include "backtrack/vector.h"
 #include "test.h"
 
@@ -115,6 +117,17 @@ TEST_F(TestVector, insert_at_level)
   ASSERT_EQ(vec[1], 0);
   ASSERT_EQ(vec[2], 0);
   ASSERT_EQ(vec[3], 0);
+}
+
+TEST_F(TestVector, access_returns_reference)
+{
+  backtrack::BacktrackManager mgr;
+  backtrack::vector<int> vec(&mgr);
+  vec.push_back(42);
+  // operator[] must return a reference into the container, not a copy.
+  static_assert(std::is_reference_v<decltype(vec[0])>);
+  const int& ref = vec[0];
+  ASSERT_EQ(&ref, &*vec.begin());
 }
 
 TEST_F(TestVector, stress)

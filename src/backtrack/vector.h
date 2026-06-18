@@ -31,7 +31,7 @@ class vector : public Backtrackable
 
   bool empty() const { return d_data.empty(); }
 
-  auto operator[](std::size_t pos) const { return d_data[pos]; }
+  const auto& operator[](std::size_t pos) const { return d_data[pos]; }
 
   void push_back(const T& value) { d_data.push_back(value); }
 

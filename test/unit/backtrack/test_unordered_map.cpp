@@ -10,6 +10,8 @@
 
 #include <gtest/gtest.h>
 
+#include <type_traits>
+
 #include "backtrack/unordered_map.h"
 #include "test.h"
 
@@ -72,6 +74,17 @@ TEST_F(TestUnorderedMap, push_pop_mgr)
   ASSERT_NE(map.find(1), map.end());
   ASSERT_NE(map.find(2), map.end());
   ASSERT_DEATH_DEBUG(mgr.pop(), "d_scope_levels > 0");
+}
+
+TEST_F(TestUnorderedMap, access_returns_reference)
+{
+  backtrack::BacktrackManager mgr;
+  backtrack::unordered_map<int, int> map(&mgr);
+  map.emplace(0, 42);
+  // at() must return a reference into the container, not a copy.
+  static_assert(std::is_reference_v<decltype(map.at(0))>);
+  const int& ref = map.at(0);
+  ASSERT_EQ(&ref, &map.find(0)->second);
 }
 
 TEST_F(TestUnorderedMap, stress)

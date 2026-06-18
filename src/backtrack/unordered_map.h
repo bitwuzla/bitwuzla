@@ -45,7 +45,7 @@ class unordered_map : public Backtrackable
     return std::make_pair(it, inserted);
   }
 
-  auto at(const K& key) const { return d_data.at(key); }
+  const auto& at(const K& key) const { return d_data.at(key); }
 
   auto begin() const { return d_data.begin(); }
 
