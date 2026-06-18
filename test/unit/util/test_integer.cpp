@@ -25,6 +25,28 @@ TEST_F(TestInteger, constructors)
   ASSERT_EQ(cc, ui);
 }
 
+TEST_F(TestInteger, move_traits_and_self_assignment)
+{
+  // Integer must provide cheap (mpz_swap-based), noexcept move operations. If
+  // they were removed, move would fall back to the (non-noexcept) copy
+  // operations and these checks would fail.
+  static_assert(std::is_nothrow_move_constructible_v<Integer>,
+                "Integer must be nothrow move constructible");
+  static_assert(std::is_nothrow_move_assignable_v<Integer>,
+                "Integer must be nothrow move assignable");
+
+  // Self-assignment (copy and move) must be guarded and leave the value intact.
+  const Integer expected(std::string("123456789012345678901234567890"));
+  Integer i(expected);
+  Integer* alias = &i;
+
+  i = *alias;  // copy self-assignment
+  ASSERT_EQ(i, expected);
+
+  i = std::move(*alias);  // move self-assignment
+  ASSERT_EQ(i, expected);
+}
+
 TEST_F(TestInteger, comparisons)
 {
   Integer a(0), b(1), c(2), d;

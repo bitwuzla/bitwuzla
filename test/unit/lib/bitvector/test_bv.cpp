@@ -11,6 +11,7 @@
 #include <bitset>
 #include <cmath>
 #include <cstdint>
+#include <type_traits>
 
 #include "bv/bitvector.h"
 #include "test_lib.h"
@@ -4672,6 +4673,35 @@ TestBitVector::test_udivurem(uint64_t size)
 }
 
 /* -------------------------------------------------------------------------- */
+
+TEST_F(TestBitVector, move_traits_and_self_assignment)
+{
+  // BitVector must provide cheap (mpz_swap-based), noexcept move operations.
+  // If they were removed, move would fall back to the (non-noexcept) copy
+  // operations and these checks would fail.
+  static_assert(std::is_nothrow_move_constructible_v<BitVector>,
+                "BitVector must be nothrow move constructible");
+  static_assert(std::is_nothrow_move_assignable_v<BitVector>,
+                "BitVector must be nothrow move assignable");
+
+  // Self-assignment (copy and move) must be guarded (&other == this) and leave
+  // the value intact, for both the uint64-backed (size <= 64) and the
+  // GMP-backed (size > 64) representation.
+  for (const BitVector& orig : {BitVector(64, "ffffffff00000000", 16),
+                                BitVector(128,
+                                          "deadbeefcafebabe0123456789abcdef",
+                                          16)})
+  {
+    BitVector bv(orig);
+    BitVector* alias = &bv;
+
+    bv = *alias;  // copy self-assignment
+    ASSERT_EQ(bv, orig);
+
+    bv = std::move(*alias);  // move self-assignment
+    ASSERT_EQ(bv, orig);
+  }
+}
 
 TEST_F(TestBitVector, ctor_dtor)
 {

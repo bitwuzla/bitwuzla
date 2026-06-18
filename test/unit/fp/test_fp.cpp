@@ -8,6 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+#include <type_traits>
+
 #include "test/unit/fp/test_fp.h"
 
 namespace bzla::test {
@@ -37,6 +39,36 @@ TEST_F(TestFp, move)
   ASSERT_EQ(fp4.as_bv(), bv2);
   ASSERT_EQ(fp4.exp_size(), d_fp128.first);
   ASSERT_EQ(fp4.sig_size(), d_fp128.second);
+}
+
+TEST_F(TestFp, move_traits_and_self_assignment)
+{
+  // FloatingPoint must provide cheap (mpfr_swap-based), noexcept move
+  // operations. If they were removed, move would fall back to the copy
+  // operations, which are not noexcept, and these checks would fail.
+  static_assert(std::is_nothrow_move_constructible_v<FloatingPoint>,
+                "FloatingPoint must be nothrow move constructible");
+  static_assert(std::is_nothrow_move_assignable_v<FloatingPoint>,
+                "FloatingPoint must be nothrow move assignable");
+
+  // Self-assignment (copy and move) must be guarded (&other == this) and leave
+  // the value intact. Go through a pointer to avoid -Wself-assign/-Wself-move.
+  BitVector bv(d_fp16.first + d_fp16.second, *d_rng);
+  FloatingPoint fp(d_fp16.first, d_fp16.second, bv);
+  // Compare against the floating-point's own (canonical) value rather than bv,
+  // which may be a non-canonical NaN payload that does not round-trip.
+  BitVector expected = fp.as_bv();
+  FloatingPoint* alias = &fp;
+
+  fp = *alias;  // copy self-assignment
+  ASSERT_EQ(fp.as_bv(), expected);
+  ASSERT_EQ(fp.exp_size(), d_fp16.first);
+  ASSERT_EQ(fp.sig_size(), d_fp16.second);
+
+  fp = std::move(*alias);  // move self-assignment
+  ASSERT_EQ(fp.as_bv(), expected);
+  ASSERT_EQ(fp.exp_size(), d_fp16.first);
+  ASSERT_EQ(fp.sig_size(), d_fp16.second);
 }
 
 TEST_F(TestFp, hash)
