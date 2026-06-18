@@ -34,8 +34,8 @@ class Type
   ~Type();
   Type(const Type& other);
   Type& operator=(const Type& other);
-  Type(Type&& other);
-  Type& operator=(Type&& other);
+  Type(Type&& other) noexcept;
+  Type& operator=(Type&& other) noexcept;
 
   /**
    * @return True if this type is a Boolean type.

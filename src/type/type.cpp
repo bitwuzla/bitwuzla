@@ -50,7 +50,7 @@ Type::operator=(const Type& other)
   return *this;
 }
 
-Type::Type(Type&& other)
+Type::Type(Type&& other) noexcept
 {
   if (d_data)
   {
@@ -61,7 +61,7 @@ Type::Type(Type&& other)
 }
 
 Type&
-Type::operator=(Type&& other)
+Type::operator=(Type&& other) noexcept
 {
   if (d_data)
   {

@@ -34,8 +34,8 @@ class AigNode
   ~AigNode();
   AigNode(const AigNode& other);
   AigNode& operator=(const AigNode& other);
-  AigNode(AigNode&& other);
-  AigNode& operator=(AigNode&& other);
+  AigNode(AigNode&& other) noexcept;
+  AigNode& operator=(AigNode&& other) noexcept;
 
   bool is_true() const;
 

@@ -54,14 +54,14 @@ AigNode::operator=(const AigNode& other)
   return *this;
 }
 
-AigNode::AigNode(AigNode&& other)
+AigNode::AigNode(AigNode&& other) noexcept
 {
   d_data       = other.d_data;
   other.d_data = 0;
 }
 
 AigNode&
-AigNode::operator=(AigNode&& other)
+AigNode::operator=(AigNode&& other) noexcept
 {
   if (!is_null())
   {

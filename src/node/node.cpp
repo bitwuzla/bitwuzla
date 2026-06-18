@@ -55,7 +55,7 @@ Node::operator=(const Node& other)
   return *this;
 }
 
-Node::Node(Node&& other)
+Node::Node(Node&& other) noexcept
 {
   if (d_data)
   {
@@ -66,7 +66,7 @@ Node::Node(Node&& other)
 }
 
 Node&
-Node::operator=(Node&& other)
+Node::operator=(Node&& other) noexcept
 {
   if (d_data)
   {
