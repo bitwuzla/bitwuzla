@@ -71,63 +71,63 @@ class SymFpuBV
 
  public:
   SymFpuBV(const uint32_t bw, const uint32_t val);
-  SymFpuBV(const bool &val);
-  SymFpuBV(const SymFpuBV<is_signed> &other);
-  SymFpuBV(const SymFpuBV<!is_signed> &other);
-  SymFpuBV(const BitVector &bv);
+  SymFpuBV(const bool& val);
+  SymFpuBV(const SymFpuBV<is_signed>& other);
+  SymFpuBV(const SymFpuBV<!is_signed>& other);
+  SymFpuBV(const BitVector& bv);
   ~SymFpuBV();
 
   std::string str() const;
 
   uint32_t getWidth(void) const;
-  const BitVector &getBv(void) const { return d_bv; }
+  const BitVector& getBv(void) const { return d_bv; }
 
-  static SymFpuBV<is_signed> one(const uint32_t &bw);
-  static SymFpuBV<is_signed> zero(const uint32_t &bw);
-  static SymFpuBV<is_signed> allOnes(const uint32_t &bw);
+  static SymFpuBV<is_signed> one(const uint32_t& bw);
+  static SymFpuBV<is_signed> zero(const uint32_t& bw);
+  static SymFpuBV<is_signed> allOnes(const uint32_t& bw);
 
   bool isAllOnes() const;
   bool isAllZeros() const;
 
-  static SymFpuBV<is_signed> maxValue(const uint32_t &bw);
-  static SymFpuBV<is_signed> minValue(const uint32_t &bw);
+  static SymFpuBV<is_signed> maxValue(const uint32_t& bw);
+  static SymFpuBV<is_signed> minValue(const uint32_t& bw);
 
-  SymFpuBV<is_signed> operator=(const SymFpuBV<is_signed> &other);
+  SymFpuBV<is_signed> operator=(const SymFpuBV<is_signed>& other);
 
   /*** Operators ***/
-  SymFpuBV<is_signed> operator<<(const SymFpuBV<is_signed> &op) const;
-  SymFpuBV<is_signed> operator>>(const SymFpuBV<is_signed> &op) const;
+  SymFpuBV<is_signed> operator<<(const SymFpuBV<is_signed>& op) const;
+  SymFpuBV<is_signed> operator>>(const SymFpuBV<is_signed>& op) const;
 
-  SymFpuBV<is_signed> operator|(const SymFpuBV<is_signed> &op) const;
-  SymFpuBV<is_signed> operator&(const SymFpuBV<is_signed> &op) const;
-  SymFpuBV<is_signed> operator+(const SymFpuBV<is_signed> &op) const;
-  SymFpuBV<is_signed> operator-(const SymFpuBV<is_signed> &op) const;
-  SymFpuBV<is_signed> operator*(const SymFpuBV<is_signed> &op) const;
-  SymFpuBV<is_signed> operator/(const SymFpuBV<is_signed> &op) const;
-  SymFpuBV<is_signed> operator%(const SymFpuBV<is_signed> &op) const;
+  SymFpuBV<is_signed> operator|(const SymFpuBV<is_signed>& op) const;
+  SymFpuBV<is_signed> operator&(const SymFpuBV<is_signed>& op) const;
+  SymFpuBV<is_signed> operator+(const SymFpuBV<is_signed>& op) const;
+  SymFpuBV<is_signed> operator-(const SymFpuBV<is_signed>& op) const;
+  SymFpuBV<is_signed> operator*(const SymFpuBV<is_signed>& op) const;
+  SymFpuBV<is_signed> operator/(const SymFpuBV<is_signed>& op) const;
+  SymFpuBV<is_signed> operator%(const SymFpuBV<is_signed>& op) const;
   SymFpuBV<is_signed> operator-(void) const;
   SymFpuBV<is_signed> operator~(void) const;
 
   SymFpuBV<is_signed> increment() const;
   SymFpuBV<is_signed> decrement() const;
-  SymFpuBV<is_signed> signExtendRightShift(const SymFpuBV<is_signed> &op) const;
+  SymFpuBV<is_signed> signExtendRightShift(const SymFpuBV<is_signed>& op) const;
 
   /*** Modular operations ***/
   // No overflow checking so these are the same as other operations
-  SymFpuBV<is_signed> modularLeftShift(const SymFpuBV<is_signed> &op) const;
-  SymFpuBV<is_signed> modularRightShift(const SymFpuBV<is_signed> &op) const;
+  SymFpuBV<is_signed> modularLeftShift(const SymFpuBV<is_signed>& op) const;
+  SymFpuBV<is_signed> modularRightShift(const SymFpuBV<is_signed>& op) const;
   SymFpuBV<is_signed> modularIncrement() const;
   SymFpuBV<is_signed> modularDecrement() const;
-  SymFpuBV<is_signed> modularAdd(const SymFpuBV<is_signed> &op) const;
-  SymFpuBV<is_signed> modularSubtract(const SymFpuBV<is_signed> &op) const;
+  SymFpuBV<is_signed> modularAdd(const SymFpuBV<is_signed>& op) const;
+  SymFpuBV<is_signed> modularSubtract(const SymFpuBV<is_signed>& op) const;
   SymFpuBV<is_signed> modularNegate() const;
 
   /*** Comparisons ***/
-  bool operator==(const SymFpuBV<is_signed> &op) const;
-  bool operator<=(const SymFpuBV<is_signed> &op) const;
-  bool operator>=(const SymFpuBV<is_signed> &op) const;
-  bool operator<(const SymFpuBV<is_signed> &op) const;
-  bool operator>(const SymFpuBV<is_signed> &op) const;
+  bool operator==(const SymFpuBV<is_signed>& op) const;
+  bool operator<=(const SymFpuBV<is_signed>& op) const;
+  bool operator>=(const SymFpuBV<is_signed>& op) const;
+  bool operator<(const SymFpuBV<is_signed>& op) const;
+  bool operator>(const SymFpuBV<is_signed>& op) const;
 
   /*** Type conversion ***/
   SymFpuBV<true> toSigned(void) const;
@@ -137,16 +137,16 @@ class SymFpuBV
   SymFpuBV<is_signed> extend(uint32_t extension) const;
   SymFpuBV<is_signed> contract(uint32_t reduction) const;
   SymFpuBV<is_signed> resize(uint32_t newSize) const;
-  SymFpuBV<is_signed> matchWidth(const SymFpuBV<is_signed> &op) const;
-  SymFpuBV<is_signed> append(const SymFpuBV<is_signed> &op) const;
+  SymFpuBV<is_signed> matchWidth(const SymFpuBV<is_signed>& op) const;
+  SymFpuBV<is_signed> append(const SymFpuBV<is_signed>& op) const;
   SymFpuBV<is_signed> extract(uint32_t upper, uint32_t lower) const;
 
  private:
   BitVector d_bv;
 };
 
-std::ostream &operator<<(std::ostream &out, const SymFpuBV<true> &bv);
-std::ostream &operator<<(std::ostream &out, const SymFpuBV<false> &bv);
+std::ostream& operator<<(std::ostream& out, const SymFpuBV<true>& bv);
+std::ostream& operator<<(std::ostream& out, const SymFpuBV<false>& bv);
 
 /* -------------------------------------------------------------------------- */
 /* Template parameter for SymFPU templates.                                   */
@@ -171,9 +171,9 @@ class SymFpuTraits
   static RoundingMode RTZ(void);
 
   /* Properties used by Symfpu. */
-  static void precondition(const bool &p);
-  static void postcondition(const bool &p);
-  static void invariant(const bool &p);
+  static void precondition(const bool& p);
+  static void postcondition(const bool& p);
+  static void invariant(const bool& p);
 };
 
 /* ========================================================================== */
@@ -211,31 +211,31 @@ class SymFpuSymProp
   friend ::symfpu::ite<SymFpuSymProp, SymFpuSymProp>;
 
  public:
-  SymFpuSymProp(const Node &node);
+  SymFpuSymProp(const Node& node);
   SymFpuSymProp(bool v);
-  SymFpuSymProp(const SymFpuSymProp &other);
+  SymFpuSymProp(const SymFpuSymProp& other);
   ~SymFpuSymProp();
 
   std::string str() const;
 
-  const Node &getNode() const { return d_node; }
+  const Node& getNode() const { return d_node; }
 
-  SymFpuSymProp &operator=(const SymFpuSymProp &other);
+  SymFpuSymProp& operator=(const SymFpuSymProp& other);
 
   SymFpuSymProp operator!(void) const;
-  SymFpuSymProp operator&&(const SymFpuSymProp &op) const;
-  SymFpuSymProp operator||(const SymFpuSymProp &op) const;
-  SymFpuSymProp operator==(const SymFpuSymProp &op) const;
-  SymFpuSymProp operator^(const SymFpuSymProp &op) const;
+  SymFpuSymProp operator&&(const SymFpuSymProp& op) const;
+  SymFpuSymProp operator||(const SymFpuSymProp& op) const;
+  SymFpuSymProp operator==(const SymFpuSymProp& op) const;
+  SymFpuSymProp operator^(const SymFpuSymProp& op) const;
 
  protected:
-  bool check_node(const Node &node) const;
+  bool check_node(const Node& node) const;
 
  private:
   Node d_node;
 };
 
-std::ostream &operator<<(std::ostream &out, const SymFpuSymProp &prop);
+std::ostream& operator<<(std::ostream& out, const SymFpuSymProp& prop);
 
 /* -------------------------------------------------------------------------- */
 /* Wrapper for bit-vector terms.                                              */
@@ -253,13 +253,13 @@ class SymFpuSymBV
 
  public:
   /** Constructors for bit-vector nodes. */
-  SymFpuSymBV(const Node &node);
+  SymFpuSymBV(const Node& node);
   SymFpuSymBV(const uint32_t w, const uint32_t val);
-  SymFpuSymBV(const SymFpuSymProp &p);
-  SymFpuSymBV(const SymFpuSymBV<is_signed> &other);
-  SymFpuSymBV(const SymFpuSymBV<!is_signed> &other);
-  SymFpuSymBV(const BitVector &bv);
-  SymFpuSymBV(const SymFpuBV<is_signed> &bv);
+  SymFpuSymBV(const SymFpuSymProp& p);
+  SymFpuSymBV(const SymFpuSymBV<is_signed>& other);
+  SymFpuSymBV(const SymFpuSymBV<!is_signed>& other);
+  SymFpuSymBV(const BitVector& bv);
+  SymFpuSymBV(const SymFpuBV<is_signed>& bv);
   /** Construrs for Boolean nodes. */
   SymFpuSymBV(bool v);
   /** Destructor. */
@@ -267,65 +267,65 @@ class SymFpuSymBV
 
   std::string str() const;
 
-  SymFpuSymBV<is_signed> &operator=(const SymFpuSymBV<is_signed> &other);
+  SymFpuSymBV<is_signed>& operator=(const SymFpuSymBV<is_signed>& other);
 
   uint32_t getWidth(void) const;
-  const Node &getNode(void) const { return d_node; }
+  const Node& getNode(void) const { return d_node; }
 
   /** Constant creation and test */
-  static SymFpuSymBV<is_signed> one(const uint32_t &w);
-  static SymFpuSymBV<is_signed> zero(const uint32_t &w);
-  static SymFpuSymBV<is_signed> allOnes(const uint32_t &w);
+  static SymFpuSymBV<is_signed> one(const uint32_t& w);
+  static SymFpuSymBV<is_signed> zero(const uint32_t& w);
+  static SymFpuSymBV<is_signed> allOnes(const uint32_t& w);
 
   SymFpuSymProp isAllOnes() const;
   SymFpuSymProp isAllZeros() const;
 
-  static SymFpuSymBV<is_signed> maxValue(const uint32_t &w);
-  static SymFpuSymBV<is_signed> minValue(const uint32_t &w);
+  static SymFpuSymBV<is_signed> maxValue(const uint32_t& w);
+  static SymFpuSymBV<is_signed> minValue(const uint32_t& w);
 
   /** Operators */
-  SymFpuSymBV<is_signed> operator<<(const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymBV<is_signed> operator>>(const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymBV<is_signed> operator|(const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymBV<is_signed> operator&(const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymBV<is_signed> operator+(const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymBV<is_signed> operator-(const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymBV<is_signed> operator*(const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymBV<is_signed> operator/(const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymBV<is_signed> operator%(const SymFpuSymBV<is_signed> &op) const;
+  SymFpuSymBV<is_signed> operator<<(const SymFpuSymBV<is_signed>& op) const;
+  SymFpuSymBV<is_signed> operator>>(const SymFpuSymBV<is_signed>& op) const;
+  SymFpuSymBV<is_signed> operator|(const SymFpuSymBV<is_signed>& op) const;
+  SymFpuSymBV<is_signed> operator&(const SymFpuSymBV<is_signed>& op) const;
+  SymFpuSymBV<is_signed> operator+(const SymFpuSymBV<is_signed>& op) const;
+  SymFpuSymBV<is_signed> operator-(const SymFpuSymBV<is_signed>& op) const;
+  SymFpuSymBV<is_signed> operator*(const SymFpuSymBV<is_signed>& op) const;
+  SymFpuSymBV<is_signed> operator/(const SymFpuSymBV<is_signed>& op) const;
+  SymFpuSymBV<is_signed> operator%(const SymFpuSymBV<is_signed>& op) const;
   SymFpuSymBV<is_signed> operator-(void) const;
   SymFpuSymBV<is_signed> operator~(void) const;
   SymFpuSymBV<is_signed> increment() const;
   SymFpuSymBV<is_signed> decrement() const;
   SymFpuSymBV<is_signed> signExtendRightShift(
-      const SymFpuSymBV<is_signed> &op) const;
+      const SymFpuSymBV<is_signed>& op) const;
 
   /** Modular operations */
   // This back-end doesn't do any overflow checking so these are the same as
   // other operations
   SymFpuSymBV<is_signed> modularLeftShift(
-      const SymFpuSymBV<is_signed> &op) const;
+      const SymFpuSymBV<is_signed>& op) const;
   SymFpuSymBV<is_signed> modularRightShift(
-      const SymFpuSymBV<is_signed> &op) const;
+      const SymFpuSymBV<is_signed>& op) const;
   SymFpuSymBV<is_signed> modularIncrement() const;
   SymFpuSymBV<is_signed> modularDecrement() const;
-  SymFpuSymBV<is_signed> modularAdd(const SymFpuSymBV<is_signed> &op) const;
+  SymFpuSymBV<is_signed> modularAdd(const SymFpuSymBV<is_signed>& op) const;
   SymFpuSymBV<is_signed> modularSubtract(
-      const SymFpuSymBV<is_signed> &op) const;
+      const SymFpuSymBV<is_signed>& op) const;
   SymFpuSymBV<is_signed> modularNegate() const;
 
   /** Operators for Boolean nodes */
   SymFpuSymProp operator!(void) const;
-  SymFpuSymProp operator&&(const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymProp operator||(const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymProp operator^(const SymFpuSymBV<is_signed> &op) const;
+  SymFpuSymProp operator&&(const SymFpuSymBV<is_signed>& op) const;
+  SymFpuSymProp operator||(const SymFpuSymBV<is_signed>& op) const;
+  SymFpuSymProp operator^(const SymFpuSymBV<is_signed>& op) const;
 
   /** Comparisons */
-  SymFpuSymProp operator==(const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymProp operator<=(const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymProp operator>=(const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymProp operator<(const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymProp operator>(const SymFpuSymBV<is_signed> &op) const;
+  SymFpuSymProp operator==(const SymFpuSymBV<is_signed>& op) const;
+  SymFpuSymProp operator<=(const SymFpuSymBV<is_signed>& op) const;
+  SymFpuSymProp operator>=(const SymFpuSymBV<is_signed>& op) const;
+  SymFpuSymProp operator<(const SymFpuSymBV<is_signed>& op) const;
+  SymFpuSymProp operator>(const SymFpuSymBV<is_signed>& op) const;
 
   /** Type conversion */
   // Bitwuzla nodes make no distinction between signed and unsigned, thus these
@@ -337,8 +337,8 @@ class SymFpuSymBV
   SymFpuSymBV<is_signed> extend(uint32_t extension) const;
   SymFpuSymBV<is_signed> contract(uint32_t reduction) const;
   SymFpuSymBV<is_signed> resize(uint32_t newSize) const;
-  SymFpuSymBV<is_signed> matchWidth(const SymFpuSymBV<is_signed> &op) const;
-  SymFpuSymBV<is_signed> append(const SymFpuSymBV<is_signed> &op) const;
+  SymFpuSymBV<is_signed> matchWidth(const SymFpuSymBV<is_signed>& op) const;
+  SymFpuSymBV<is_signed> append(const SymFpuSymBV<is_signed>& op) const;
   SymFpuSymBV<is_signed> extract(uint32_t upper, uint32_t lower) const;
 
  protected:
@@ -347,8 +347,8 @@ class SymFpuSymBV
   // BzlaNode* boolNodeToBV(BzlaNode* node) const;
   // BzlaNode* BVToBoolNode(BzlaNode* node) const;
 
-  bool check_node(const Node &node) const;
-  bool check_bool_node(const Node &node) const;
+  bool check_node(const Node& node) const;
+  bool check_bool_node(const Node& node) const;
   // BzlaNode *fromProposition (BzlaNode *node) const;
   // BzlaNode *toProposition (BzlaNode *node) const;
 
@@ -356,8 +356,8 @@ class SymFpuSymBV
   Node d_node;
 };
 
-std::ostream &operator<<(std::ostream &out, const SymFpuSymBV<true> &bv);
-std::ostream &operator<<(std::ostream &out, const SymFpuSymBV<false> &bv);
+std::ostream& operator<<(std::ostream& out, const SymFpuSymBV<true>& bv);
+std::ostream& operator<<(std::ostream& out, const SymFpuSymBV<false>& bv);
 
 /* -------------------------------------------------------------------------- */
 /* Wrapper for rounding modes.                                                */
@@ -370,28 +370,28 @@ class SymFpuSymRM
 
  public:
   /* Constructors. */
-  SymFpuSymRM(const Node &node);
+  SymFpuSymRM(const Node& node);
   SymFpuSymRM(const RoundingMode rm);
-  SymFpuSymRM(const SymFpuSymRM &other);
+  SymFpuSymRM(const SymFpuSymRM& other);
   /* Destructor. */
   ~SymFpuSymRM();
 
   std::string str() const;
 
-  const Node &getNode() const { return d_node; }
+  const Node& getNode() const { return d_node; }
 
   SymFpuSymProp valid(void) const;
-  SymFpuSymProp operator==(const SymFpuSymRM &other) const;
+  SymFpuSymProp operator==(const SymFpuSymRM& other) const;
 
  protected:
-  bool check_node(const Node &node) const;
+  bool check_node(const Node& node) const;
 
  private:
   Node mk_value(const RoundingMode rm);
   Node d_node;
 };
 
-std::ostream &operator<<(std::ostream &out, const SymFpuSymRM &rm);
+std::ostream& operator<<(std::ostream& out, const SymFpuSymRM& rm);
 
 /* -------------------------------------------------------------------------- */
 /* Template parameter for SymFPU templates.                                   */
@@ -419,9 +419,9 @@ class SymFpuSymTraits
   static void precondition(const bool b);
   static void postcondition(const bool b);
   static void invariant(const bool b);
-  static void precondition(const prop &p);
-  static void postcondition(const prop &p);
-  static void invariant(const prop &p);
+  static void precondition(const prop& p);
+  static void postcondition(const prop& p);
+  static void invariant(const prop& p);
 };
 
 /* -------------------------------------------------------------------------- */
@@ -439,7 +439,7 @@ namespace symfpu {
   template <>                                                       \
   struct ite<bool, T>                                               \
   {                                                                 \
-    static const T &iteOp(const bool &_c, const T &_t, const T &_e) \
+    static const T& iteOp(const bool& _c, const T& _t, const T& _e) \
     {                                                               \
       return _c ? _t : _e;                                          \
     }                                                               \
@@ -455,14 +455,14 @@ BZLA_FP_ITE(bzla::fp::SymFpuSymTraits::sbv);
   template <>                                                            \
   struct ite<bzla::fp::SymFpuSymProp, T>                                 \
   {                                                                      \
-    static const T iteOp(const bzla::fp::SymFpuSymProp &_c,              \
-                         const T &_t,                                    \
-                         const T &_e)                                    \
+    static const T iteOp(const bzla::fp::SymFpuSymProp& _c,              \
+                         const T& _t,                                    \
+                         const T& _e)                                    \
     {                                                                    \
       assert(!_c.getNode().is_null());                                   \
       assert(!_t.getNode().is_null());                                   \
       assert(!_e.getNode().is_null());                                   \
-      bzla::NodeManager &nm = bzla::fp::SymFpuNM::get();                 \
+      bzla::NodeManager& nm = bzla::fp::SymFpuNM::get();                 \
       return nm.mk_node(                                                 \
           bzla::node::Kind::ITE,                                         \
           {nm.mk_node(                                                   \
