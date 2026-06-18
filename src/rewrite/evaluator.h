@@ -8,6 +8,9 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+#ifndef BZLA_REWRITE_EVALUATOR_H_INCLUDED
+#define BZLA_REWRITE_EVALUATOR_H_INCLUDED
+
 #include <span>
 
 #include "node/node.h"
@@ -24,3 +27,5 @@ class Evaluator
 };
 
 }  // namespace bzla
+
+#endif
