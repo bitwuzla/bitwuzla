@@ -809,6 +809,8 @@ WordBlaster::min_max_uf(const Node& node)
 const Node&
 WordBlaster::sbv_ubv_uf(const Node& node)
 {
+  assert(node.kind() == node::Kind::FP_TO_SBV
+         || node.kind() == node::Kind::FP_TO_UBV);
   assert(node[0].type().is_rm());
   assert(node[1].type().is_fp());
 
@@ -817,13 +819,15 @@ WordBlaster::sbv_ubv_uf(const Node& node)
   Type type_fp    = node[1].type();
   Type type_fun   = nm.mk_fun_type({node[0].type(), type_fp, type_bv});
 
-  auto it = d_sbv_ubv_uf_map.find(type_fun);
-  if (it != d_sbv_ubv_uf_map.end())
+  auto& ufmap =
+      node.kind() == node::Kind::FP_TO_SBV ? d_sbv_uf_map : d_ubv_uf_map;
+  auto it = ufmap.find(type_fun);
+  if (it != ufmap.end())
   {
     return it->second;
   }
 
-  auto [iit, inserted] = d_sbv_ubv_uf_map.emplace(
+  auto [iit, inserted] = ufmap.emplace(
       type_fun,
       nm.mk_const(
           type_fun,

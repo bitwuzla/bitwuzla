@@ -1476,6 +1476,7 @@ tests_smt2 = [
   ['solver/fp/uf_fpmin.smt2'],
   ['solver/fp/uf_tosbv.smt2'],
   ['solver/fp/uf_toubv.smt2'],
+  ['solver/fp/uf_to_sbv_ubv.smt2'],
   ['solver/fun/fun1.smt2'],
   ['solver/fun/nestedfun1.smt2', ['-rwl=2']],
   ['solver/fun/regrencparamapps.smt2'],

@@ -154,8 +154,10 @@ class WordBlaster
   std::unordered_map<Type, Node> d_min_uf_map;
   /** Map floating-point type of FP_MAX to introduced UF. */
   std::unordered_map<Type, Node> d_max_uf_map;
-  /** Map function type of UF introduced for FP_TO_SBV and FP_TO_UBV to UF. */
-  std::unordered_map<Type, Node> d_sbv_ubv_uf_map;
+  /** Map function type of UF introduced for FP_TO_SBV to UF. */
+  std::unordered_map<Type, Node> d_sbv_uf_map;
+  /** Map function type of UF introduced for FP_TO_UBV to UF. */
+  std::unordered_map<Type, Node> d_ubv_uf_map;
 
   std::vector<Node> d_additional_assertions;
 
