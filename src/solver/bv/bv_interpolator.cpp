@@ -242,36 +242,43 @@ BvInterpolator::label_lemma(
       else if (it->second)
       {
         it->second          = false;
-        auto [it, inserted] = term_labels.emplace(cur, VariableKind::GLOBAL);
-        if (!inserted)
-        {
-          continue;
-        }
+        VariableKind k      = VariableKind::GLOBAL;
+        auto [it, inserted] = term_labels.emplace(cur, k);
+        // Consts that are not yet labeled are fresh, unseen consts, which
+        // we do not allow. These can be introduced, e.g., when introducing
+        // fresh UFs for fp.to_sbv/fp.to_ubv.
         if (cur.is_const())
         {
-          throw Unsupported(
-              "interpolation queries with lemmas that use fresh variables not "
-              "supported");
+          if (inserted)
+          {
+            throw Unsupported(
+                "interpolation queries with lemmas that use fresh variables "
+                "not supported");
+          }
+          continue;
         }
-        VariableKind k = VariableKind::GLOBAL;
         for (const auto& c : cur)
         {
-          auto it = term_labels.find(c);
-          assert(it != term_labels.end());
-          if (it->second != VariableKind::GLOBAL)
+          auto cit = term_labels.find(c);
+          assert(cit != term_labels.end());
+          if (cit->second != VariableKind::GLOBAL)
           {
-            if (k != VariableKind::GLOBAL && k != it->second)
+            if (k != VariableKind::GLOBAL && k != cit->second)
             {
               throw Unsupported(
                   "interpolation queries with mixed lemmas not supported");
             }
-            k = it->second;
+            k = cit->second;
 #ifdef NDEBUG
             break;
 #endif
           }
         }
-        if (!inserted && it->second != VariableKind::GLOBAL && it->second != k)
+        if (inserted)
+        {
+          it->second = k;
+        }
+        else if (it->second != VariableKind::GLOBAL && it->second != k)
         {
           it->second = VariableKind::GLOBAL;
         }
