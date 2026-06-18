@@ -435,12 +435,13 @@ parse_options(int32_t argc, char* argv[], std::vector<std::string>& args)
     }
     else if (check_opt_value(arg, "", "--bv-output-format"))
     {
-      opts.bv_format = parse_arg_uint64_t(argc, i, argv);
-      if (opts.bv_format != 2 && opts.bv_format != 10 && opts.bv_format != 16)
+      uint64_t bv_format = parse_arg_uint64_t(argc, i, argv);
+      if (bv_format != 2 && bv_format != 10 && bv_format != 16)
       {
         Error() << "invalid bit-vector output number format, "
                    "expected '2', '10', or '16'";
       }
+      opts.bv_format = bv_format;
     }
     else if (check_opt_value(arg, "-t", "--time-limit"))
     {
