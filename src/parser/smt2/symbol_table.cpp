@@ -127,7 +127,7 @@ SymbolTable::pop_level(uint64_t assertion_level)
 }
 
 SymbolTable::Node*
-SymbolTable::find(const std::string& symbol) const
+SymbolTable::find(std::string_view symbol) const
 {
   auto it = d_table.find(symbol);
   if (it == d_table.end())
@@ -141,7 +141,7 @@ SymbolTable::find(const std::string& symbol) const
 /* SymbolTable private ------------------------------------------------------ */
 
 std::size_t
-SymbolTable::SymbolHash::operator()(const std::string& s) const
+SymbolTable::SymbolHash::operator()(std::string_view s) const
 {
   size_t res  = 0;
   size_t pos  = 0;
@@ -164,8 +164,8 @@ SymbolTable::SymbolHash::operator()(const std::string& s) const
 }
 
 bool
-SymbolTable::SymbolEqual::operator()(const std::string& lhs,
-                                     const std::string& rhs) const
+SymbolTable::SymbolEqual::operator()(std::string_view lhs,
+                                     std::string_view rhs) const
 {
   size_t lhs_max = lhs.size() - 1;
   if (lhs[0] == '|' && lhs[lhs_max] == '|' && rhs[0] != '|')

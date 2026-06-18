@@ -8,6 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+#include <string_view>
+
 #include "parser/smt2/symbol_table.h"
 #include "test/unit/test.h"
 
@@ -159,5 +161,34 @@ TEST_F(TestSmt2SymbolTable, insert_quoted2)
   ASSERT_EQ(y_quoted->d_assertion_level, 0);
   table.remove(x_new);
   ASSERT_EQ(table.find(" x"), nullptr);
+}
+
+// Lookups must be possible without constructing a heap std::string for the
+// key (transparent/heterogeneous find). This guards the string_view-based
+// find against accidentally reintroducing a per-token std::string temporary
+// and against relying on null-termination at the symbol boundary.
+TEST_F(TestSmt2SymbolTable, find_transparent)
+{
+  SymbolTable table;
+  table.insert(Token::SYMBOL, "foo", false, 0);
+  table.insert(Token::SYMBOL, "bar", false, 0);
+  SymbolTable::Node* foo = table.find("foo");
+  ASSERT_NE(foo, nullptr);
+
+  // Look up via a string_view into a larger buffer: the view ends at the
+  // symbol boundary even though the underlying buffer continues, so the
+  // lookup must not read past the view (no null-termination assumption) and
+  // must not allocate a std::string.
+  std::string buf = "fooBAR";
+  ASSERT_EQ(table.find(std::string_view(buf.data(), 3)), foo);
+
+  // const char* lookups resolve without an intermediate std::string.
+  ASSERT_EQ(table.find("bar")->d_symbol, "bar");
+  ASSERT_EQ(table.find(std::string_view("baz")), nullptr);
+
+  // Quoted/unquoted equivalence still holds through the transparent
+  // comparator, again with a non-null-terminated string_view ("|foo|").
+  std::string qbuf = "|foo|baz";
+  ASSERT_EQ(table.find(std::string_view(qbuf.data(), 5)), foo);
 }
 }  // namespace bzla::test

@@ -147,11 +147,14 @@ class Parser : public bzla::parser::Parser
     if (token == Token::SYMBOL || token == Token::ATTRIBUTE)
     {
       assert(d_lexer->has_token());
-      std::string symbol      = d_lexer->token();
+      // Look up the symbol via a string_view to avoid a heap-allocated
+      // temporary std::string on every symbol/attribute token.
+      std::string_view symbol = d_lexer->token();
       SymbolTable::Node* node = d_table.find(symbol);
       if (!node || is_pending)
       {
-        node = d_table.insert(token, symbol, is_pending, d_assertion_level);
+        node = d_table.insert(
+            token, std::string(symbol), is_pending, d_assertion_level);
       }
       d_last_node = node;
       token       = d_last_node->d_token;

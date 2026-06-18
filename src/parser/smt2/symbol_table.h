@@ -12,6 +12,7 @@
 #define BZLA_PARSER_SMT2_SYMBOL_TABLE_H_INCLUDED
 
 #include <array>
+#include <string_view>
 
 #include "bitwuzla/cpp/bitwuzla.h"
 #include "parser/smt2/lexer.h"
@@ -80,7 +81,7 @@ class SymbolTable
    * @return The symbol node, if found, else nullptr. If symbol is shadowed,
    *         the most recent declaration of the symbol is returned.
    */
-  Node* find(const std::string& symbol) const;
+  Node* find(std::string_view symbol) const;
   /**
    * Insert a new symbol.
    * If the symbol already exists, it will shadow a previous declaration.
@@ -154,7 +155,8 @@ class SymbolTable
    */
   struct SymbolHash
   {
-    std::size_t operator()(const std::string& s) const;
+    using is_transparent = void;
+    std::size_t operator()(std::string_view s) const;
   };
   /**
    * The comparator for symbol strings.
@@ -162,7 +164,8 @@ class SymbolTable
    */
   struct SymbolEqual
   {
-    bool operator()(const std::string& lhs, const std::string& rhs) const;
+    using is_transparent = void;
+    bool operator()(std::string_view lhs, std::string_view rhs) const;
   };
 
   /** Initialize symbol table (insert reserved symbols). */
