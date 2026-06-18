@@ -147,13 +147,16 @@ BvInterpolator::interpolant(const std::vector<Node>& ppA,
     {
       const Node& cur = visit.back();
       visit.pop_back();
-      cache.insert(cur);
-      // We label the lemma processed by the abstraction module, since this is
-      // the one bit-blasted, not the original one.
-      assert(term_labels.find(d_am && d_am->is_processed(cur)
-                                  ? d_am->get_processed(cur)
-                                  : cur)
-             != term_labels.end());
+      if (cache.insert(cur).second)
+      {
+        visit.insert(visit.end(), cur.begin(), cur.end());
+        // We label the lemma processed by the abstraction module, since this is
+        // the one bit-blasted, not the original one.
+        assert(term_labels.find(d_am && d_am->is_processed(cur)
+                                    ? d_am->get_processed(cur)
+                                    : cur)
+               != term_labels.end());
+      }
     } while (!visit.empty());
   }
 #endif
