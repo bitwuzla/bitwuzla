@@ -544,7 +544,7 @@ FloatingPoint::operator==(const FloatingPoint &other) const
   {
     return other.is_null();
   }
-  if (d_exp_size != other.d_exp_size && d_sig_size != other.d_sig_size)
+  if (d_exp_size != other.d_exp_size || d_sig_size != other.d_sig_size)
   {
     return false;
   }
