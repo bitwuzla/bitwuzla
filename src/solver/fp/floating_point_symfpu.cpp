@@ -723,7 +723,7 @@ FloatingPointSymFPU::convert_from_rational_aux(NodeManager& nm,
 #ifndef NDEBUG
   mpq_t tmp01;
   util::mpq_from_ui(tmp01, 0, 1);
-  assert(mpq_cmp(tmp01, remainder) <= 1);
+  assert(mpq_cmp(tmp01, remainder) <= 0);
   mpq_clear(tmp01);
 #endif
   if (mpq_sgn(remainder) != 0)
