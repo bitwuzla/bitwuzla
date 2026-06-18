@@ -47,7 +47,7 @@ TypeManager::~TypeManager()
 Type
 TypeManager::mk_bool_type()
 {
-  return Type(find_or_create_type(TypeData::Kind::BOOL));
+  return Type(find_or_create_type(TypeData::Kind::BOOL, {}));
 }
 
 Type
@@ -65,7 +65,7 @@ TypeManager::mk_fp_type(uint64_t exp_size, uint64_t sig_size)
 Type
 TypeManager::mk_rm_type()
 {
-  return Type(find_or_create_type(TypeData::Kind::RM));
+  return Type(find_or_create_type(TypeData::Kind::RM, {}));
 }
 
 Type

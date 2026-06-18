@@ -101,7 +101,7 @@ class TypeData
 
  private:
   /** Constructor. */
-  TypeData(TypeManager* mgr, Kind kind, const std::vector<Type>& types = {});
+  TypeData(TypeManager* mgr, Kind kind, const std::vector<Type>& types);
   /** Constructor for creating bit-vector type data. */
   TypeData(TypeManager* mgr, uint64_t size);
   /** Constructor for creating floating-point type data. */

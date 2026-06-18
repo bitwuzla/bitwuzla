@@ -93,7 +93,7 @@ class TypeManager
 
   /** Find or create new boolean, rounding mode, array, or function type. */
   TypeData* find_or_create_type(TypeData::Kind kind,
-                                const std::vector<Type>& types = {});
+                                const std::vector<Type>& types);
 
   /** Find or create new bit-vector type. */
   TypeData* find_or_create_bv_type(uint64_t size);
