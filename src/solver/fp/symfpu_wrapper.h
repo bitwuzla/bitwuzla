@@ -92,7 +92,7 @@ class SymFpuBV
   static SymFpuBV<is_signed> maxValue(const uint32_t& bw);
   static SymFpuBV<is_signed> minValue(const uint32_t& bw);
 
-  SymFpuBV<is_signed> operator=(const SymFpuBV<is_signed>& other);
+  SymFpuBV<is_signed>& operator=(const SymFpuBV<is_signed>& other);
 
   /*** Operators ***/
   SymFpuBV<is_signed> operator<<(const SymFpuBV<is_signed>& op) const;

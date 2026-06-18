@@ -133,7 +133,7 @@ SymFpuBV<is_signed>::minValue(const uint32_t& bw)
 }
 
 template <bool is_signed>
-SymFpuBV<is_signed>
+SymFpuBV<is_signed>&
 SymFpuBV<is_signed>::operator=(const SymFpuBV<is_signed>& other)
 {
   assert(!d_bv.is_null());
