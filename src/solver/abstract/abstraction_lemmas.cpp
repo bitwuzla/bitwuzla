@@ -123,11 +123,6 @@ operator<<(std::ostream& os, LemmaKind kind)
     case LemmaKind::ADD_OVFL: os << "ADD_OVFL1"; break;
     case LemmaKind::ADD_NOOVFL: os << "ADD_OVFL2"; break;
     case LemmaKind::ADD_OR: os << "ADD_OR"; break;
-    case LemmaKind::ADD_REF1: os << "ADD_REF1"; break;
-    case LemmaKind::ADD_REF2: os << "ADD_REF2"; break;
-    case LemmaKind::ADD_REF3: os << "ADD_REF3"; break;
-    case LemmaKind::ADD_REF4: os << "ADD_REF4"; break;
-    case LemmaKind::ADD_REF5: os << "ADD_REF5"; break;
     case LemmaKind::ADD_REF6: os << "ADD_REF6"; break;
     case LemmaKind::ADD_REF7: os << "ADD_REF7"; break;
     case LemmaKind::ADD_REF8: os << "ADD_REF8"; break;
@@ -1373,7 +1368,7 @@ Lemma<LemmaKind::ADD_SAME>::instance(const Node& x,
                                      const Node& s,
                                      const Node& t) const
 {
-  // (=> (= x s) (= t[0] #b0))
+  // (=> (= x s) (= ((_ extract 0 0) t) #b0))
   Node zero = d_nm.mk_value(BitVector::mk_zero(1));
   return d_nm.mk_node(
       Kind::IMPLIES,
@@ -1446,100 +1441,6 @@ Lemma<LemmaKind::ADD_OR>::instance(const Node& x,
       Kind::IMPLIES,
       {d_nm.mk_node(Kind::EQUAL, {d_nm.mk_node(Kind::BV_AND, {x, s}), zero}),
        d_nm.mk_node(Kind::EQUAL, {t, d_nm.mk_node(Kind::BV_OR, {x, s})})});
-}
-
-template <>
-Node
-Lemma<LemmaKind::ADD_REF1>::instance(const Node& x,
-                                     const Node& s,
-                                     const Node& t) const
-{
-  // (=> (= s x) (= ((_ extract 0 0) t) #b0))
-  return d_nm.mk_node(
-      Kind::IMPLIES,
-      {d_nm.mk_node(Kind::EQUAL, {s, x}),
-       d_nm.mk_node(Kind::EQUAL,
-                    {d_nm.mk_node(Kind::BV_EXTRACT, {t}, {0, 0}),
-                     d_nm.mk_value(BitVector::mk_zero(1))})});
-}
-
-template <>
-Node
-Lemma<LemmaKind::ADD_REF2>::instance(const Node& x,
-                                     const Node& s,
-                                     const Node& t) const
-{
-  // (=> (= s (bvnot x)) (= t (bvnot #b0000)))
-  return d_nm.mk_node(
-      Kind::IMPLIES,
-      {d_nm.mk_node(Kind::EQUAL, {s, d_nm.mk_node(Kind::BV_NOT, {x})}),
-       d_nm.mk_node(
-           Kind::EQUAL,
-           {t, d_nm.mk_value(BitVector::mk_ones(x.type().bv_size()))})});
-}
-
-template <>
-Node
-Lemma<LemmaKind::ADD_REF3>::instance(const Node& x,
-                                     const Node& s,
-                                     const Node& t) const
-{
-  // (=> (= (bvand x s) #b0000) (= t (bvor x s)))
-  return d_nm.mk_node(
-      Kind::IMPLIES,
-      {d_nm.mk_node(Kind::EQUAL,
-                    {d_nm.mk_node(Kind::BV_AND, {x, s}),
-                     d_nm.mk_value(BitVector::mk_zero(x.type().bv_size()))}),
-       d_nm.mk_node(Kind::EQUAL, {t, d_nm.mk_node(Kind::BV_OR, {x, s})})});
-}
-
-template <>
-Node
-Lemma<LemmaKind::ADD_REF4>::instance(const Node& x,
-                                     const Node& s,
-                                     const Node& t) const
-{
-  // (=>
-  //   (and
-  //     (= ((_ extract msb msb) x) #b0) (= ((_ extract msb msb) s) #b0))
-  //     (bvuge t (bvor x s)))
-  uint64_t msb    = x.type().bv_size() - 1;
-  Node bvfalse    = d_nm.mk_value(BitVector::mk_false());
-  return d_nm.mk_node(
-      Kind::IMPLIES,
-      {d_nm.mk_node(
-           Kind::AND,
-           {d_nm.mk_node(
-                Kind::EQUAL,
-                {d_nm.mk_node(Kind::BV_EXTRACT, {x}, {msb, msb}), bvfalse}),
-            d_nm.mk_node(
-                Kind::EQUAL,
-                {d_nm.mk_node(Kind::BV_EXTRACT, {s}, {msb, msb}), bvfalse})}),
-       d_nm.mk_node(Kind::BV_UGE, {t, d_nm.mk_node(Kind::BV_OR, {x, s})})});
-}
-
-template <>
-Node
-Lemma<LemmaKind::ADD_REF5>::instance(const Node& x,
-                                     const Node& s,
-                                     const Node& t) const
-{
-  // (=>
-  //   (and (= ((_ extract msb msb) x) #b1) (= ((_ extract msb msb) s) #b1))
-  //   (bvult t (bvand x s)))
-  uint64_t msb    = x.type().bv_size() - 1;
-  Node bvtrue     = d_nm.mk_value(BitVector::mk_true());
-  return d_nm.mk_node(
-      Kind::IMPLIES,
-      {d_nm.mk_node(
-           Kind::AND,
-           {d_nm.mk_node(
-                Kind::EQUAL,
-                {d_nm.mk_node(Kind::BV_EXTRACT, {x}, {msb, msb}), bvtrue}),
-            d_nm.mk_node(
-                Kind::EQUAL,
-                {d_nm.mk_node(Kind::BV_EXTRACT, {s}, {msb, msb}), bvtrue})}),
-       d_nm.mk_node(Kind::BV_ULT, {t, d_nm.mk_node(Kind::BV_AND, {x, s})})});
 }
 
 template <>

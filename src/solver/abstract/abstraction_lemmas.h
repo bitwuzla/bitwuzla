@@ -90,7 +90,7 @@ enum class LemmaKind : uint32_t
   UREM_REF14,  // 15: (not (bvult (bvxor (bvneg s) (bvor x s)) t))
   UREM_VALUE,
 
-  ADD_ZERO,    // (=> (= s #b000) (= t x))
+  ADD_ZERO,    // (=> (= s #b0000) (= t x))
   ADD_SAME,    // (=> (= s x) (= ((_ extract 0 0) t) #b0))
   ADD_INV,     // (=> (= s (bvnot x)) (= t #b1111))
   ADD_OVFL,    // (=>
@@ -100,18 +100,6 @@ enum class LemmaKind : uint32_t
                //   (and (= (msb x) #b0) (= (msb s) #b0))
                //   (bvuge t (bvor x s)))
   ADD_OR,      // (=> (= (bvand x s) #b000) (= t (bvor x s)))
-               // (=> (= (bvadd x s) t) (=> (= s #b0000) (= t x)))
-  ADD_REF1,    // (=> (= s x) (= ((_ extract 0 0) t) #b0)))
-  ADD_REF2,    // (=> (= s (bvnot x)) (= t (bvnot #b0000))))
-  ADD_REF3,    // (=> (= (bvand x s) #b0000) (= t (bvor x s))))
-  ADD_REF4,    // (=>
-               //   (and
-               //     (= ((_ extract 3 3) x) #b0)
-               //     (= ((_ extract 3 3) s) #b0)) (bvuge t (bvor x s))))
-  ADD_REF5,    // (=>
-               //   (and
-               //     (= ((_ extract 3 3) x) #b1)
-               //     (= ((_ extract 3 3) s) #b1)) (bvult t (bvand x s))))
   ADD_REF6,    // (not (distinct #b0000 (bvand x (bvand s (bvand t #b0001))))))
   ADD_REF7,    // (not (bvult (bvand #b0001 (bvor s t)) (bvand x #b0001))))
   ADD_REF8,    // (not (bvult (bvand #b0001 (bvor x t)) (bvand s #b0001))))
@@ -296,11 +284,6 @@ LEMMA(ADD_INV);
 LEMMA(ADD_OVFL);
 LEMMA(ADD_NOOVFL);
 LEMMA(ADD_OR);
-LEMMA(ADD_REF1);
-LEMMA(ADD_REF2);
-LEMMA(ADD_REF3);
-LEMMA(ADD_REF4);
-LEMMA(ADD_REF5);
 LEMMA(ADD_REF6);
 LEMMA(ADD_REF7);
 LEMMA(ADD_REF8);
