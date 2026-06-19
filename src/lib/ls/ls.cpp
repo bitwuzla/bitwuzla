@@ -199,7 +199,14 @@ LocalSearch<VALUE>::pop()
       if (it->second == 1)
       {
         d_roots_unsat.erase(id);
-        d_roots_ineq.erase(root);
+        if (root->is_inequality())
+        {
+          d_roots_ineq.erase(root);
+        }
+        if (root->is_not() && (*root)[0]->is_inequality())
+        {
+          d_roots_ineq.erase((*root)[0]);
+        }
         root->set_is_root(false);
         d_roots_cnt.erase(it);
       }
