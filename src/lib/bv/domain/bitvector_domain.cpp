@@ -28,14 +28,14 @@ BitVectorDomain::BitVectorDomain(uint64_t size)
 {
 }
 
-BitVectorDomain::BitVectorDomain(const BitVector &lo, const BitVector &hi)
+BitVectorDomain::BitVectorDomain(const BitVector& lo, const BitVector& hi)
     : d_lo(lo), d_hi(hi)
 {
   assert(lo.size() == hi.size());
   d_has_fixed_bits = !d_lo.is_zero() || !d_hi.is_ones();
 }
 
-BitVectorDomain::BitVectorDomain(const std::string &value)
+BitVectorDomain::BitVectorDomain(const std::string& value)
 {
   uint64_t size = value.size();
   assert(size > 0);
@@ -48,7 +48,7 @@ BitVectorDomain::BitVectorDomain(const std::string &value)
   d_has_fixed_bits = !d_lo.is_zero() || !d_hi.is_ones();
 }
 
-BitVectorDomain::BitVectorDomain(const BitVector &bv) : d_lo(bv), d_hi(bv)
+BitVectorDomain::BitVectorDomain(const BitVector& bv) : d_lo(bv), d_hi(bv)
 {
   d_has_fixed_bits = true;
 }
@@ -58,7 +58,7 @@ BitVectorDomain::BitVectorDomain(uint64_t size, uint64_t value)
 {
 }
 
-BitVectorDomain::BitVectorDomain(const BitVectorDomain &other)
+BitVectorDomain::BitVectorDomain(const BitVectorDomain& other)
 {
   if (!other.is_null())
   {
@@ -176,7 +176,7 @@ BitVectorDomain::fix_bit(uint64_t idx, bool value)
 }
 
 void
-BitVectorDomain::fix(const BitVector &val)
+BitVectorDomain::fix(const BitVector& val)
 {
   assert(!is_null());
   assert(val.size() == size());
@@ -186,21 +186,21 @@ BitVectorDomain::fix(const BitVector &val)
 }
 
 bool
-BitVectorDomain::match_fixed_bits(const BitVector &bv) const
+BitVectorDomain::match_fixed_bits(const BitVector& bv) const
 {
   assert(!is_null());
   return bv.bvand(d_hi).ibvor(d_lo).compare(bv) == 0;
 }
 
 BitVector
-BitVectorDomain::get_copy_with_fixed_bits(const BitVector &bv) const
+BitVectorDomain::get_copy_with_fixed_bits(const BitVector& bv) const
 {
   assert(!is_null());
   return bv.bvand(d_hi).ibvor(d_lo);
 }
 
-BitVectorDomain &
-BitVectorDomain::operator=(const BitVectorDomain &other)
+BitVectorDomain&
+BitVectorDomain::operator=(const BitVectorDomain& other)
 {
   if (&other == this) return *this;
   assert(!other.is_null());
@@ -211,7 +211,7 @@ BitVectorDomain::operator=(const BitVectorDomain &other)
 }
 
 bool
-BitVectorDomain::operator==(const BitVectorDomain &other) const
+BitVectorDomain::operator==(const BitVectorDomain& other) const
 {
   if (is_null())
   {
@@ -228,7 +228,7 @@ BitVectorDomain::bvnot() const
 }
 
 BitVectorDomain
-BitVectorDomain::bvshl(const BitVector &shift) const
+BitVectorDomain::bvshl(const BitVector& shift) const
 {
   assert(!is_null());
   assert(shift.size() == size());
@@ -236,7 +236,7 @@ BitVectorDomain::bvshl(const BitVector &shift) const
 }
 
 BitVectorDomain
-BitVectorDomain::bvshr(const BitVector &shift) const
+BitVectorDomain::bvshr(const BitVector& shift) const
 {
   assert(!is_null());
   assert(shift.size() == size());
@@ -244,7 +244,7 @@ BitVectorDomain::bvshr(const BitVector &shift) const
 }
 
 BitVectorDomain
-BitVectorDomain::bvashr(const BitVector &shift) const
+BitVectorDomain::bvashr(const BitVector& shift) const
 {
   assert(!is_null());
   assert(shift.size() == size());
@@ -252,14 +252,14 @@ BitVectorDomain::bvashr(const BitVector &shift) const
 }
 
 BitVectorDomain
-BitVectorDomain::bvconcat(const BitVector &bv) const
+BitVectorDomain::bvconcat(const BitVector& bv) const
 {
   assert(!is_null());
   return BitVectorDomain(d_lo.bvconcat(bv), d_hi.bvconcat(bv));
 }
 
 BitVectorDomain
-BitVectorDomain::bvconcat(const BitVectorDomain &d) const
+BitVectorDomain::bvconcat(const BitVectorDomain& d) const
 {
   assert(!is_null());
   return BitVectorDomain(d_lo.bvconcat(d.lo()), d_hi.bvconcat(d.hi()));
@@ -275,9 +275,9 @@ BitVectorDomain::bvextract(uint64_t idx_hi, uint64_t idx_lo) const
 }
 
 BitVector
-BitVectorDomain::get_factor(RNG *rng,
-                            const BitVector &num,
-                            const BitVectorBounds &bounds,
+BitVectorDomain::get_factor(RNG* rng,
+                            const BitVector& num,
+                            const BitVectorBounds& bounds,
                             uint64_t limit) const
 {
   WheelFactorizer wf(num, limit);
@@ -285,7 +285,7 @@ BitVectorDomain::get_factor(RNG *rng,
 
   while (true)
   {
-    const BitVector *fact = wf.next();
+    const BitVector* fact = wf.next();
     if (!fact) break;
     factors.emplace_back(*fact);
     if (rng == nullptr) break;
@@ -378,32 +378,32 @@ BitVectorDomain::str() const
 /* --- BitVectorDomainGenerator --------------------------------------------- */
 
 BitVectorDomainGenerator::BitVectorDomainGenerator(
-    const BitVectorDomain &domain)
+    const BitVectorDomain& domain)
     : BitVectorDomainGenerator(domain, nullptr, BitVectorRange(domain))
 {
 }
 
 BitVectorDomainGenerator::BitVectorDomainGenerator(
-    const BitVectorDomain &domain, const BitVectorRange &range)
+    const BitVectorDomain& domain, const BitVectorRange& range)
     : BitVectorDomainGenerator(domain, nullptr, range)
 {
 }
 
 BitVectorDomainGenerator::BitVectorDomainGenerator(
-    const BitVectorDomain &domain, RNG *rng)
+    const BitVectorDomain& domain, RNG* rng)
     : BitVectorDomainGenerator(domain, rng, BitVectorRange(domain))
 {
 }
 
 BitVectorDomainGenerator::BitVectorDomainGenerator(
-    const BitVectorDomain &domain, RNG *rng, const BitVectorRange &range)
+    const BitVectorDomain& domain, RNG* rng, const BitVectorRange& range)
     : d_domain(domain), d_rng(rng)
 {
   assert(!range.empty());
 
-  uint64_t size         = domain.size();
-  const BitVector &hi   = d_domain.d_hi;
-  const BitVector &lo   = d_domain.d_lo;
+  uint64_t size       = domain.size();
+  const BitVector& hi = d_domain.d_hi;
+  const BitVector& lo = d_domain.d_lo;
 
   if (d_domain.is_fixed())
   {
@@ -422,8 +422,8 @@ BitVectorDomainGenerator::BitVectorDomainGenerator(
   }
 
   uint64_t cnt          = 0;  // the number of bits that are not fixed
-  const BitVector &mmin = lo.compare(range.d_min) <= 0 ? range.d_min : lo;
-  const BitVector &mmax = hi.compare(range.d_max) >= 0 ? range.d_max : hi;
+  const BitVector& mmin = lo.compare(range.d_min) <= 0 ? range.d_min : lo;
+  const BitVector& mmax = hi.compare(range.d_max) >= 0 ? range.d_max : hi;
 #ifndef NDEBUG
   d_min = mmin;
   d_max = mmax;
@@ -646,7 +646,7 @@ BitVectorDomainGenerator::generate_next(bool random)
 /* --- BitVectorDomainDualGenerator ----------------------------------------- */
 
 BitVectorDomainDualGenerator::BitVectorDomainDualGenerator(
-    const BitVectorDomain &domain, const BitVectorBounds &bounds, RNG *rng)
+    const BitVectorDomain& domain, const BitVectorBounds& bounds, RNG* rng)
     : d_rng(rng)
 {
   assert(bounds.valid());
@@ -726,7 +726,7 @@ BitVectorDomainDualGenerator::random()
 
 /* --- BitVectorDomainSignedGenerator --------------------------------------- */
 BitVectorDomainSignedGenerator::BitVectorDomainSignedGenerator(
-    const BitVectorDomain &domain)
+    const BitVectorDomain& domain)
     : BitVectorDomainSignedGenerator(
           domain,
           nullptr,
@@ -736,13 +736,13 @@ BitVectorDomainSignedGenerator::BitVectorDomainSignedGenerator(
 }
 
 BitVectorDomainSignedGenerator::BitVectorDomainSignedGenerator(
-    const BitVectorDomain &domain, const BitVectorRange &range)
+    const BitVectorDomain& domain, const BitVectorRange& range)
     : BitVectorDomainSignedGenerator(domain, nullptr, range)
 {
 }
 
 BitVectorDomainSignedGenerator::BitVectorDomainSignedGenerator(
-    const BitVectorDomain &domain, RNG *rng)
+    const BitVectorDomain& domain, RNG* rng)
     : BitVectorDomainSignedGenerator(
           domain,
           rng,
@@ -752,7 +752,7 @@ BitVectorDomainSignedGenerator::BitVectorDomainSignedGenerator(
 }
 
 BitVectorDomainSignedGenerator::BitVectorDomainSignedGenerator(
-    const BitVectorDomain &domain, RNG *rng, const BitVectorRange &range)
+    const BitVectorDomain& domain, RNG* rng, const BitVectorRange& range)
     : d_rng(rng)
 {
   uint64_t size          = domain.size();
@@ -840,8 +840,8 @@ BitVectorDomainSignedGenerator::random()
   return d_gen_hi->random();
 }
 
-std::ostream &
-operator<<(std::ostream &out, const BitVectorDomain &d)
+std::ostream&
+operator<<(std::ostream& out, const BitVectorDomain& d)
 {
   out << d.str();
   return out;

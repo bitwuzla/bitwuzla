@@ -11,8 +11,9 @@
 #ifndef BZLA__BV_BITVECTOR_DOMAIN_H
 #define BZLA__BV_BITVECTOR_DOMAIN_H
 
-#include "bv/bitvector.h"
 #include <memory>
+
+#include "bv/bitvector.h"
 
 namespace bzla {
 
@@ -35,15 +36,15 @@ class BitVectorDomain
   /** Construct a bit-vector domain of given size. */
   BitVectorDomain(uint64_t size);
   /** Construct a bit-vector domain ranging from 'lo' to 'hi'. */
-  BitVectorDomain(const BitVector &lo, const BitVector &hi);
+  BitVectorDomain(const BitVector& lo, const BitVector& hi);
   /** Construct a bit-vector domain from a 3-valued string representation. */
-  BitVectorDomain(const std::string &value);
+  BitVectorDomain(const std::string& value);
   /** Construct a fixed bit-vector domain with lo = 'bv' and hi = 'bv'. */
-  BitVectorDomain(const BitVector &bv);
+  BitVectorDomain(const BitVector& bv);
   /** Construct a fixed bit-vector domain of given size from a uint value. */
   BitVectorDomain(uint64_t size, uint64_t value);
   /** Copy constructor. */
-  BitVectorDomain(const BitVectorDomain &other);
+  BitVectorDomain(const BitVectorDomain& other);
   /** Move constructor. */
   BitVectorDomain(BitVectorDomain&& other) = default;
   /** Destructor. */
@@ -65,12 +66,12 @@ class BitVectorDomain
    * Get the lower bound of this domain.
    * @return The lower bound of this domain.
    */
-  const BitVector &lo() const { return d_lo; }
+  const BitVector& lo() const { return d_lo; }
   /**
    * Get the upper bound of this domain.
    * @return The upper bound of this domain.
    */
-  const BitVector &hi() const { return d_hi; }
+  const BitVector& hi() const { return d_hi; }
 
   /**
    * Determine if this bit-vector domain is valid, i.e., `~lo | hi == ones`.
@@ -144,7 +145,7 @@ class BitVectorDomain
    * Fix domain to given value.
    * @param val The value this domain is to be fixed to.
    */
-  void fix(const BitVector &val);
+  void fix(const BitVector& val);
 
   /**
    * Determine if the fixed bits of this bit-vector domain are consistent with
@@ -153,7 +154,7 @@ class BitVectorDomain
    * @param bv The bit-vector to check for consistency against.
    * @return True if the fixed bits of this domain are consistent with `bv`.
    */
-  bool match_fixed_bits(const BitVector &bv) const;
+  bool match_fixed_bits(const BitVector& bv) const;
 
   /**
    * Return a copy of the given bit-vector with all bits that are fixed in
@@ -163,14 +164,14 @@ class BitVectorDomain
    * @return A copy of the given bit-vector, except that all fixed bits of this
    *         domain are set to their fixed value.
    */
-  BitVector get_copy_with_fixed_bits(const BitVector &bv) const;
+  BitVector get_copy_with_fixed_bits(const BitVector& bv) const;
 
   /** Copy assignment operator. */
-  BitVectorDomain &operator=(const BitVectorDomain &other);
+  BitVectorDomain& operator=(const BitVectorDomain& other);
   /** Move assignment operator. */
   BitVectorDomain& operator=(BitVectorDomain&& other) = default;
   /** Equality comparison operator. */
-  bool operator==(const BitVectorDomain &other) const;
+  bool operator==(const BitVectorDomain& other) const;
 
   /**
    * Create a bit-vector domain that represents a bit-wise not of this domain.
@@ -184,7 +185,7 @@ class BitVectorDomain
    * @return A domain representing the logical left shift by `bv` of this
    *         domain.
    */
-  BitVectorDomain bvshl(const BitVector &shift) const;
+  BitVectorDomain bvshl(const BitVector& shift) const;
   /**
    * Create a bit-vector domain that represents a logical right shift of this
    * domain by the shift value represented as bit-vector `bv`.
@@ -192,7 +193,7 @@ class BitVectorDomain
    * @return A domain representing the logical right shift by `bv` of this
    *         domain.
    */
-  BitVectorDomain bvshr(const BitVector &shift) const;
+  BitVectorDomain bvshr(const BitVector& shift) const;
   /**
    * Create a bit-vector domain that represents an arithmetic right shift of
    * this domain by the shift value represented as bit-vector `bv`.
@@ -200,21 +201,21 @@ class BitVectorDomain
    * @return A domain representing the arithmetic right shift by `bv` of this
    *         domain.
    */
-  BitVectorDomain bvashr(const BitVector &shift) const;
+  BitVectorDomain bvashr(const BitVector& shift) const;
   /**
    * Create a bit-vector domain that represents a concatenation of this domain
    * with bit-vector `bv`.
    * @param bv The bit-vector to concatenate this domain with.
    * @return A domain representing a concatenation of this domain with `bv`.
    */
-  BitVectorDomain bvconcat(const BitVector &bv) const;
+  BitVectorDomain bvconcat(const BitVector& bv) const;
   /**
    * Create a bit-vector domain that represents a concatenation of this domain
    * with domain `d`.
    * @param d The bit-vector domain to concatenate this domain with.
    * @return A domain representing a concatenation of this domain with `d`.
    */
-  BitVectorDomain bvconcat(const BitVectorDomain &d) const;
+  BitVectorDomain bvconcat(const BitVectorDomain& d) const;
 
   /**
    * Extract a bit range from this bit-vector domain.
@@ -233,9 +234,9 @@ class BitVectorDomain
    * @return A null bit-vector if no such factor exists, or if computation
    *         exceeds `limit` iterations in the wheel factorizer.
    */
-  BitVector get_factor(RNG *rng,
-                       const BitVector &num,
-                       const BitVectorBounds &bounds,
+  BitVector get_factor(RNG* rng,
+                       const BitVector& num,
+                       const BitVectorBounds& bounds,
                        uint64_t limit) const;
 
   /**
@@ -262,7 +263,7 @@ class BitVectorDomain
   bool d_has_fixed_bits = false;
 };
 
-std::ostream &operator<<(std::ostream &out, const BitVectorDomain &d);
+std::ostream& operator<<(std::ostream& out, const BitVectorDomain& d);
 
 /*----------------------------------------------------------------------------*/
 
@@ -274,22 +275,22 @@ class BitVectorDomainGenerator
    * bit-vector domain, interpreted as unsigned.
    * @param domain The domain to enumerate values for.
    */
-  BitVectorDomainGenerator(const BitVectorDomain &domain);
+  BitVectorDomainGenerator(const BitVectorDomain& domain);
   /**
    * Construct generator for values within given range (inclusive),
    * interpreted as unsigned.
    * @param domain The domain to enumerate values for.
    * @param range  The inclusive value range for generated values.
    */
-  BitVectorDomainGenerator(const BitVectorDomain &domain,
-                           const BitVectorRange &range);
+  BitVectorDomainGenerator(const BitVectorDomain& domain,
+                           const BitVectorRange& range);
   /**
    * Construct generator for values within the range defined by the given
    * bit-vector domain, interpreted as unsigned.
    * @param domain The domain to enumerate values for.
    * @param rng    The associated random number generator.
    */
-  BitVectorDomainGenerator(const BitVectorDomain &domain, RNG *rng);
+  BitVectorDomainGenerator(const BitVectorDomain& domain, RNG* rng);
   /**
    * Construct generator for values within given range (inclusive),
    * interpreted as unsigned.
@@ -297,9 +298,9 @@ class BitVectorDomainGenerator
    * @param rng    The associated random number generator.
    * @param range  The inclusive value range for generated values.
    */
-  BitVectorDomainGenerator(const BitVectorDomain &domain,
-                           RNG *rng,
-                           const BitVectorRange &range);
+  BitVectorDomainGenerator(const BitVectorDomain& domain,
+                           RNG* rng,
+                           const BitVectorRange& range);
   /** Destructor. */
   ~BitVectorDomainGenerator();
 
@@ -336,7 +337,7 @@ class BitVectorDomainGenerator
   /* The domain to enumerate values for. */
   BitVectorDomain d_domain;
   /* The associated RNG (may be 0). */
-  RNG *d_rng = nullptr;
+  RNG* d_rng = nullptr;
 #ifndef NDEBUG
   /* We only need to cache these for debugging purposes. */
   BitVector d_min; /* the min value (in case of ranged init) */
@@ -352,18 +353,18 @@ class BitVectorDomainGenerator
    * @note In the case of fixed domains, this does not represent the current
    *       value of the unconstrained bits, but the value of the fixed domain.
    */
-  BitVector *d_bits = nullptr;
+  BitVector* d_bits = nullptr;
   /*
    * Min value of unconstrained bits.
    * @note In the case of fixed domains, this does not represent the current
    *       value of the unconstrained bits, but the value of the fixed domain.
    */
-  BitVector *d_bits_min = nullptr;
+  BitVector* d_bits_min = nullptr;
   /* Max value of unconstrained bits.
    * @note In the case of fixed domains, this does not represent the current
    *       value of the unconstrained bits, but the value of the fixed domain.
    */
-  BitVector *d_bits_max = nullptr;
+  BitVector* d_bits_max = nullptr;
   /* Value cache for current value, most LSB is farthest right. */
   BitVector d__bits;
   /* Value cache for min value of unconstrained bits. */
@@ -383,9 +384,9 @@ class BitVectorDomainDualGenerator
    * @param rng    The associated random number generator. Nullptr if no
    *               random generation required.
    */
-  BitVectorDomainDualGenerator(const BitVectorDomain &domain,
-                               const BitVectorBounds &bounds,
-                               RNG *rng = nullptr);
+  BitVectorDomainDualGenerator(const BitVectorDomain& domain,
+                               const BitVectorBounds& bounds,
+                               RNG* rng = nullptr);
   /** Destructor. */
   ~BitVectorDomainDualGenerator();
 
@@ -416,13 +417,13 @@ class BitVectorDomainDualGenerator
 
  protected:
   /* The associated RNG (may be 0). */
-  RNG *d_rng = nullptr;
+  RNG* d_rng = nullptr;
   /** The generator covering the lower range < 0. */
   std::unique_ptr<BitVectorDomainGenerator> d_gen_lo;
   /** The generator covering the upper range >= 0. */
   std::unique_ptr<BitVectorDomainGenerator> d_gen_hi;
   /** The currently active generator. */
-  BitVectorDomainGenerator *d_gen_cur = nullptr;
+  BitVectorDomainGenerator* d_gen_cur = nullptr;
 };
 
 class BitVectorDomainSignedGenerator
@@ -433,22 +434,22 @@ class BitVectorDomainSignedGenerator
    * bit-vector domain, interpreted as signed.
    * @param domain The domain to enumerate values for.
    */
-  BitVectorDomainSignedGenerator(const BitVectorDomain &domain);
+  BitVectorDomainSignedGenerator(const BitVectorDomain& domain);
   /**
    * Construct generator for values within given range (inclusive),
    * interpreted as signed.
    * @param domain The domain to enumerate values for.
    * @param range  The inclusive value range for generated values.
    */
-  BitVectorDomainSignedGenerator(const BitVectorDomain &domain,
-                                 const BitVectorRange &range);
+  BitVectorDomainSignedGenerator(const BitVectorDomain& domain,
+                                 const BitVectorRange& range);
   /**
    * Construct generator for values within the range defined by the given
    * bit-vector domain, interpreted as signed.
    * @param domain The domain to enumerate values for.
    * @param rng    The associated random number generator.
    */
-  BitVectorDomainSignedGenerator(const BitVectorDomain &domain, RNG *rng);
+  BitVectorDomainSignedGenerator(const BitVectorDomain& domain, RNG* rng);
   /**
    * Construct generator for values within given range (inclusive),
    * interpreted as signed.
@@ -456,9 +457,9 @@ class BitVectorDomainSignedGenerator
    * @param rng    The associated random number generator.
    * @param range  The inclusive value range for generated values.
    */
-  BitVectorDomainSignedGenerator(const BitVectorDomain &domain,
-                                 RNG *rng,
-                                 const BitVectorRange &range);
+  BitVectorDomainSignedGenerator(const BitVectorDomain& domain,
+                                 RNG* rng,
+                                 const BitVectorRange& range);
   /** Destructor. */
   ~BitVectorDomainSignedGenerator();
 
@@ -485,13 +486,13 @@ class BitVectorDomainSignedGenerator
 
  private:
   /* The associated RNG (may be 0). */
-  RNG *d_rng = nullptr;
+  RNG* d_rng = nullptr;
   /** The generator covering the lower range < 0. */
   std::unique_ptr<BitVectorDomainGenerator> d_gen_lo;
   /** The generator covering the upper range >= 0. */
   std::unique_ptr<BitVectorDomainGenerator> d_gen_hi;
   /** The currently active generator. */
-  BitVectorDomainGenerator *d_gen_cur = nullptr;
+  BitVectorDomainGenerator* d_gen_cur = nullptr;
 };
 
 /*----------------------------------------------------------------------------*/
