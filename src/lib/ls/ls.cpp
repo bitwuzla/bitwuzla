@@ -41,11 +41,11 @@ struct LocalSearchMove
   LocalSearchMove(uint64_t nprops,
                   uint64_t nupdates,
                   Node<VALUE>* input,
-                  VALUE assignment)
+                  VALUE&& assignment)
       : d_nprops(nprops),
         d_nupdates(nupdates),
         d_input(input),
-        d_assignment(assignment)
+        d_assignment(std::move(assignment))
   {
   }
 
@@ -339,7 +339,7 @@ LocalSearch<VALUE>::select_move(Node<VALUE>* root, const VALUE& t_root)
     if (arity == 0)
     {
       Log(1) << "    *> target value: " << t;
-      return LocalSearchMove(nprops, nupdates, cur, t);
+      return LocalSearchMove(nprops, nupdates, cur, std::move(t));
     }
     if (cur->is_value() || cur->all_value())
     {
