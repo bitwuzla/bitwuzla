@@ -24,15 +24,6 @@ namespace ls {
 
 /* -------------------------------------------------------------------------- */
 
-class OstreamVoider
-{
- public:
-  OstreamVoider() = default;
-  void operator&(std::ostream& ostream) { (void) ostream; }
-};
-
-/* -------------------------------------------------------------------------- */
-
 std::ostream&
 operator<<(std::ostream& out, const NodeKind& kind)
 {
