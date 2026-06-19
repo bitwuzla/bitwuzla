@@ -529,7 +529,7 @@ LocalSearch<VALUE>::compute_initial_assignment()
     }
     else if (it->second)
     {
-      it->second = true;
+      it->second = false;
       cur->evaluate();
     }
     visit.pop_back();
