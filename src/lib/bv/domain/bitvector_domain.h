@@ -44,6 +44,8 @@ class BitVectorDomain
   BitVectorDomain(uint64_t size, uint64_t value);
   /** Copy constructor. */
   BitVectorDomain(const BitVectorDomain &other);
+  /** Move constructor. */
+  BitVectorDomain(BitVectorDomain&& other) = default;
   /** Destructor. */
   ~BitVectorDomain();
 
@@ -165,6 +167,8 @@ class BitVectorDomain
 
   /** Copy assignment operator. */
   BitVectorDomain &operator=(const BitVectorDomain &other);
+  /** Move assignment operator. */
+  BitVectorDomain& operator=(BitVectorDomain&& other) = default;
   /** Equality comparison operator. */
   bool operator==(const BitVectorDomain &other) const;
 
