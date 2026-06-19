@@ -833,6 +833,33 @@ TEST_F(TestLsBv, update_cone)
   }
 }
 
+TEST_F(TestLsBv, pop_negated_inequality_root)
+{
+  LocalSearchBV ls(100, 100);
+  uint64_t a    = ls.mk_node(NodeKind::CONST, 4);
+  uint64_t b    = ls.mk_node(NodeKind::CONST, 4);
+  uint64_t ult  = ls.mk_node(NodeKind::BV_ULT, 1, {a, b});
+  uint64_t nult = ls.mk_node(NodeKind::BV_NOT, 1, {ult});
+
+  ASSERT_TRUE(ls.d_roots_ineq.empty());
+
+  // Register negated inequality on a fresh assertion level.
+  ls.push();
+  ls.register_root(nult);
+
+  // The *child* inequality (the ULT node) is registered as an inequality root,
+  // not the BV_NOT node itself.
+  ASSERT_EQ(ls.d_roots_ineq.size(), 1u);
+  ASSERT_TRUE(ls.is_ineq_root(ls.get_node(ult)));
+  ASSERT_FALSE(ls.is_ineq_root(ls.get_node(nult)));
+
+  // Popping the assertion level must erase the negated inequality root, i.e.,
+  // remove the child's entry from d_roots_ineq.
+  ls.pop();
+  ASSERT_FALSE(ls.is_ineq_root(ls.get_node(ult)));
+  ASSERT_TRUE(ls.d_roots_ineq.empty());
+}
+
 TEST_F(TestLsBv, move_add)
 {
   test_move_binary(NodeKind::BV_ADD, 0);
