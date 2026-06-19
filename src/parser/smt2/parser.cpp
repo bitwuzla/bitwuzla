@@ -1083,7 +1083,7 @@ Parser::parse_command_pop()
   if (nlevels > d_assertion_level)
   {
     return error_arg("attempting to pop '" + std::to_string(nlevels)
-                     + "' but only '" + std::to_string(nlevels)
+                     + "' but only '" + std::to_string(d_assertion_level)
                      + "' have been pushed previously");
   }
 
