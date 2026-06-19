@@ -645,7 +645,10 @@ Parser::parse_command_define_fun()
     {
       return false;
     }
-    parse_rpar();
+    if (!parse_rpar())
+    {
+      return false;
+    }
     var_symbol->d_term = d_tm.mk_var(sort, var_symbol->d_symbol);
     args.emplace_back(var_symbol->d_term);
   }
