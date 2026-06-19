@@ -1942,7 +1942,10 @@ BitVectorShl::is_consistent(const BitVector& t, uint64_t pos_x)
   {
     // CC: pos_x = 1: t = 0 \/ \exists y. (y <= ctz(t) /\ mcb(x, y))
     // Consistent value: pos_x = 1: random value <= ctz(t)
-    uint64_t max = ctz_t < size ? ctz_t : ((1u << size) - 1);
+    uint64_t max =
+        ctz_t < size ? ctz_t
+                     : (size >= 64 ? UINT64_MAX
+                                   : ((static_cast<uint64_t>(1) << size) - 1));
     if (x_has_fixed_bits)
     {
       if (x.is_fixed())
@@ -2254,7 +2257,10 @@ BitVectorShr::is_consistent(const BitVector& t, uint64_t pos_x)
   else
   {
     // CC: pos_x = 1: t = 0 \/ \exists y. (y <= clz(t) /\ mcb(x, y))
-    uint64_t max = clz_t < size ? clz_t : ((1u << size) - 1);
+    uint64_t max =
+        clz_t < size ? clz_t
+                     : (size >= 64 ? UINT64_MAX
+                                   : ((static_cast<uint64_t>(1) << size) - 1));
     if (x_has_fixed_bits)
     {
       if (x.is_fixed())
@@ -2732,7 +2738,10 @@ BitVectorAshr::is_consistent(const BitVector& t, uint64_t pos_x)
   // Consistent value:
   //   pos_x = 1: t = 0: random value
   //              t > 0: random value < cnt(t)
-  uint64_t max = cnt_t < size ? cnt_t - 1 : ((1u << size) - 1);
+  uint64_t max = cnt_t < size
+                     ? cnt_t - 1
+                     : (size >= 64 ? UINT64_MAX
+                                   : ((static_cast<uint64_t>(1) << size) - 1));
   if (x.has_fixed_bits())
   {
     BitVectorDomainGenerator gen(

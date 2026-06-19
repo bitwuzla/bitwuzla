@@ -14,6 +14,39 @@ namespace bzla::ls::test {
 
 class TestBvNodeIsCons : public TestBvNode
 {
+ protected:
+  /**
+   * Exercise the consistent-value fallback of the shift operators for target
+   * value t = 0 (pos_x = 1, i.e., x is the shift amount).
+   */
+  template <class T>
+  void test_cons_shift_zero_target(uint64_t bw)
+  {
+    BitVector t = BitVector::mk_zero(bw);
+    BitVector first;
+    bool not_all_equal = false;
+    for (uint32_t i = 0; i < 100; ++i)
+    {
+      // s = value to be shifted (pos_s = 0), x = shift amount (pos_x = 1) with
+      // an unconstrained domain.
+      std::unique_ptr<BitVectorNode> op_s(new BitVectorNode(d_rng.get(), bw));
+      std::unique_ptr<BitVectorNode> op_x(new BitVectorNode(d_rng.get(), bw));
+      T op(d_rng.get(), bw, op_s.get(), op_x.get());
+      // t = 0 is always consistent for the shift amount.
+      ASSERT_TRUE(op.is_consistent(t, 1));
+      BitVector cons = op.consistent_value(t, 1);
+      ASSERT_EQ(cons.size(), bw);
+      if (i == 0)
+      {
+        first = cons;
+      }
+      else if (cons.compare(first) != 0)
+      {
+        not_all_equal = true;
+      }
+    }
+    ASSERT_TRUE(not_all_equal);
+  }
 };
 
 TEST_F(TestBvNodeIsCons, add)
@@ -62,6 +95,18 @@ TEST_F(TestBvNodeIsCons, ashr)
 {
   test_binary<BitVectorAshr>(IS_CONS, NodeKind::BV_ASHR, 0);
   test_binary<BitVectorAshr>(IS_CONS, NodeKind::BV_ASHR, 1);
+}
+
+TEST_F(TestBvNodeIsCons, shift_cons_zero_target)
+{
+  // Bit-widths around and beyond the 32/64-bit literal boundaries that the
+  // full-range max computation in the consistent-value fallback must handle.
+  for (uint64_t bw : {31, 32, 33, 63, 64, 65, 128})
+  {
+    test_cons_shift_zero_target<BitVectorShl>(bw);
+    test_cons_shift_zero_target<BitVectorShr>(bw);
+    test_cons_shift_zero_target<BitVectorAshr>(bw);
+  }
 }
 
 TEST_F(TestBvNodeIsCons, udiv)
