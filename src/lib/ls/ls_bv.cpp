@@ -11,11 +11,8 @@
 #include "ls/ls_bv.h"
 
 #include <cassert>
-#include <functional>
-#include <iostream>
 #include <unordered_set>
 
-#include "../util/hash.h"
 #include "bv/bitvector.h"
 #include "bv/domain/bitvector_domain.h"
 #include "ls/bv/bitvector_node.h"
@@ -266,7 +263,7 @@ LocalSearchBV::_mk_node(NodeKind kind,
 BitVectorNode*
 LocalSearchBV::get_node(uint64_t id) const
 {
-  return reinterpret_cast<BitVectorNode*>(LocalSearch<BitVector>::get_node(id));
+  return static_cast<BitVectorNode*>(LocalSearch<BitVector>::get_node(id));
 }
 
 void
@@ -371,7 +368,7 @@ LocalSearchBV::compute_bounds(Node<BitVector>* node)
 #ifndef NDEBUG
   StatisticsInternal& stats = d_internal->d_stats;
 #endif
-  BitVectorNode* n = reinterpret_cast<BitVectorNode*>(node);
+  BitVectorNode* n = static_cast<BitVectorNode*>(node);
   for (uint32_t i = 0, arity = node->arity(); i < arity; ++i)
   {
     n->child(i)->reset_bounds();

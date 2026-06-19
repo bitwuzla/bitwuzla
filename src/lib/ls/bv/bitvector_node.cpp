@@ -189,7 +189,7 @@ BitVectorNode*
 BitVectorNode::child(uint64_t pos) const
 {
   assert(dynamic_cast<BitVectorNode*>(d_children[pos]) != nullptr);
-  return reinterpret_cast<BitVectorNode*>(d_children[pos]);
+  return static_cast<BitVectorNode*>(d_children[pos]);
 }
 
 void
