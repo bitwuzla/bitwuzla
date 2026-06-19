@@ -22,6 +22,7 @@ AssertionVector::AssertionVector(backtrack::AssertionView& view,
       d_level(view.level(view.begin())),
       d_begin(view.begin()),
       d_modified(0),
+      d_simplified(0),
       d_tracker(tracker)
 {
 #ifndef NDEBUG
