@@ -199,13 +199,16 @@ LocalSearch<VALUE>::pop()
       if (it->second == 1)
       {
         d_roots_unsat.erase(id);
+        // Clear the polarity flag this root contributed to d_roots_ineq,
+        // mirroring register_root(); drop the entry only once no polarity
+        // remains (the same inequality node may be asserted both ways).
         if (root->is_inequality())
         {
-          d_roots_ineq.erase(root);
+          unregister_ineq_root(root, s_ineq_pos);
         }
         if (root->is_not() && (*root)[0]->is_inequality())
         {
-          d_roots_ineq.erase((*root)[0]);
+          unregister_ineq_root((*root)[0], s_ineq_neg);
         }
         root->set_is_root(false);
         d_roots_cnt.erase(it);
@@ -268,11 +271,11 @@ LocalSearch<VALUE>::register_root(uint64_t id, bool fixed)
   // register inequality root
   if (root->is_inequality())
   {
-    d_roots_ineq.insert({root, true});
+    d_roots_ineq[root] |= s_ineq_pos;
   }
   if (root->is_not() && (*root)[0]->is_inequality())
   {
-    d_roots_ineq.insert({(*root)[0], false});
+    d_roots_ineq[(*root)[0]] |= s_ineq_neg;
   }
   // update set of unsat roots
   update_unsat_roots(root);
@@ -319,6 +322,20 @@ bool
 LocalSearch<VALUE>::is_ineq_root(const Node<VALUE>* node) const
 {
   return d_roots_ineq.find(node) != d_roots_ineq.end();
+}
+
+template <class VALUE>
+void
+LocalSearch<VALUE>::unregister_ineq_root(const Node<VALUE>* node, uint8_t flag)
+{
+  auto it = d_roots_ineq.find(node);
+  assert(it != d_roots_ineq.end());
+  assert(it->second & flag);
+  it->second &= ~flag;
+  if (it->second == 0)
+  {
+    d_roots_ineq.erase(it);
+  }
 }
 
 template <class VALUE>

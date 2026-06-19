@@ -272,6 +272,16 @@ class LocalSearch
    */
   void register_root(uint64_t root, bool fixed = false);
   /**
+   * Unregister node as inequality root.
+   *
+   * Clears the given polarity flag (s_ineq_pos = 1u or s_ineq_neg = 2u) from
+   * the d_roots_ineq entry for `node`. Removes the entry when polarity is 0u.
+   *
+   * @param node The inequality node whose entry to update.
+   * @param flag The polarity flag to clear.
+   */
+  void unregister_ineq_root(const Node<VALUE>* node, uint8_t flag);
+  /**
    * Get the number of unsat roots.
    * @return The number of unsat roots.
    */
@@ -420,15 +430,24 @@ class LocalSearch
   /** Root responsible for unsat result. */
   uint64_t d_false_root;
 
+  /** Flag in d_roots_ineq indicating inequality asserted as a positive root. */
+  static constexpr uint8_t s_ineq_pos = 1u;
+  /** Flag in d_roots_ineq indicating inequality asserted as a negated root. */
+  static constexpr uint8_t s_ineq_neg = 2u;
+
   /**
-   * The set of (to be considered) top-level inequalities. Maps inequality
-   * roots to their sat assignment (true for top-level inequalities, false for
-   * negated inequality roots).
+   * The set of (to be considered) top-level inequalities. Maps an inequality
+   * root to a bitmask of the polarities it is asserted with: s_ineq_pos if it
+   * occurs as a positive top-level inequality root, s_ineq_neg if it occurs as
+   * the child of a top-level negated inequality root (bvnot over inequality).
+   *
+   * @note The same inequality node `n` asserted with both polarities (both as
+   *       `n` and (not `n`)) translates to polarity 3u.
    *
    * @note This includes top-level inequalities and negated inequalities that
    *       are not roots but whose parents are a top-level NOT.
    */
-  std::unordered_map<const Node<VALUE>*, bool> d_roots_ineq;
+  std::unordered_map<const Node<VALUE>*, uint8_t> d_roots_ineq;
 
   /** Map nodes to their parent nodes. */
   ParentsMap d_parents;

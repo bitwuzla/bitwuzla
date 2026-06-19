@@ -148,11 +148,13 @@ class LocalSearchBV : public LocalSearch<BitVector>
   BitVectorNode* get_node(uint64_t id) const;
   /**
    * Helper for computing bounds of children of root inequalities.
-   * @param root The root node.
-   * @param pos The position of the child to update, -1 for updating all
-   *            children.
+   * @param root  The root node.
+   * @param is_lt True to compute bounds for a positive inequality (x < s),
+   *              false for a negated inequality (x >= s).
+   * @param pos   The position of the child to update, -1 for updating all
+   *              children.
    */
-  void update_bounds_aux(BitVectorNode* root, int32_t pos);
+  void update_bounds_aux(BitVectorNode* root, bool is_lt, int32_t pos);
 };
 
 }  // namespace ls

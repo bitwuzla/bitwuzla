@@ -860,6 +860,113 @@ TEST_F(TestLsBv, pop_negated_inequality_root)
   ASSERT_TRUE(ls.d_roots_ineq.empty());
 }
 
+TEST_F(TestLsBv, pop_shared_inequality_child)
+{
+  // Edge case: the same inequality node is BOTH a directly-registered
+  // top-level inequality root AND the child of a negated-inequality root
+  // bvnot(bvult ...) registered at a deeper assertion level.
+  //
+  // register_root() keys both polarities on the same (ULT) node: the positive
+  // root sets s_ineq_pos, the negated root sets s_ineq_neg. Popping the
+  // negated-inequality level must clear only s_ineq_neg and keep the entry
+  // alive (s_ineq_pos still set) because the directly-registered inequality
+  // root is still active on the lower level.
+  LocalSearchBV ls(100, 100);
+  uint64_t a    = ls.mk_node(NodeKind::CONST, 4);
+  uint64_t b    = ls.mk_node(NodeKind::CONST, 4);
+  uint64_t ult  = ls.mk_node(NodeKind::BV_ULT, 1, {a, b});
+  uint64_t nult = ls.mk_node(NodeKind::BV_NOT, 1, {ult});
+
+  // Level 0: register the inequality directly as a top-level root.
+  ls.register_root(ult);
+  ASSERT_TRUE(ls.is_ineq_root(ls.get_node(ult)));
+  ASSERT_EQ(ls.d_roots_ineq.at(ls.get_node(ult)),
+            LocalSearchBV::s_ineq_pos);
+
+  // Level 1: register the negated inequality, whose child is the same ULT node.
+  ls.push();
+  ls.register_root(nult);
+  // A single entry keyed on the ULT node, now carrying both polarity flags.
+  ASSERT_EQ(ls.d_roots_ineq.size(), 1u);
+  ASSERT_EQ(ls.d_roots_ineq.at(ls.get_node(ult)),
+            LocalSearchBV::s_ineq_pos | LocalSearchBV::s_ineq_neg);
+
+  // Pop level 1: removes nult, clearing only the negated polarity flag.
+  ls.pop();
+
+  // The directly-registered inequality root ult is still active...
+  ASSERT_TRUE(ls.get_node(ult)->is_root());
+  ASSERT_NE(ls.d_roots_cnt.find(ult), ls.d_roots_cnt.end());
+  // ...so it must still be recognized as an inequality root, with only the
+  // positive polarity flag remaining.
+  ASSERT_TRUE(ls.is_ineq_root(ls.get_node(ult)));
+  ASSERT_EQ(ls.d_roots_ineq.at(ls.get_node(ult)),
+            LocalSearchBV::s_ineq_pos);
+}
+
+TEST_F(TestLsBv, compute_bounds_negated_inequality_root)
+{
+  // A negated inequality root bvnot(bvult(x, s)) must drive compute_bounds()
+  // and produce the *reversed* bound direction (x >= s) compared to a positive
+  // inequality root (x < s).
+
+  // Negated root: bvnot(bvult(x, s)), with x >= s.
+  {
+    LocalSearchBV ls(100, 100);
+    uint64_t x    = ls.mk_node(NodeKind::CONST, 4);
+    uint64_t s    = ls.mk_node(NodeKind::CONST, 4);
+    uint64_t ult  = ls.mk_node(NodeKind::BV_ULT, 1, {x, s});
+    uint64_t nult = ls.mk_node(NodeKind::BV_NOT, 1, {ult});
+
+    ls.set_assignment(x, d_fiv4);  // x = 5
+    ls.set_assignment(s, d_two4);  // s = 2  => x >= s, so bvult is false
+    ls.register_root(nult);
+    ls.compute_initial_assignment();
+
+    // The inner ULT node is registered as a negated inequality root.
+    ASSERT_TRUE(ls.is_ineq_root(ls.get_node(ult)));
+    ASSERT_EQ(ls.d_roots_ineq.at(ls.get_node(ult)),
+              LocalSearchBV::s_ineq_neg);
+    ASSERT_TRUE(ls.get_assignment(ult).is_false());
+
+    ls.compute_bounds(ls.get_node(ult));
+
+    // x >= s, thus x is lower-bounded by value of s, up to ones.
+    const BitVectorRange& bx = ls.get_node(x)->bounds_u();
+    ASSERT_FALSE(bx.empty());
+    ASSERT_EQ(bx.d_min.compare(d_two4), 0);
+    ASSERT_EQ(bx.d_max.compare(d_ones4), 0);
+  }
+
+  // Positive root: bvult(x, s), with x < s.
+  {
+    LocalSearchBV ls(100, 100);
+    uint64_t x   = ls.mk_node(NodeKind::CONST, 4);
+    uint64_t s   = ls.mk_node(NodeKind::CONST, 4);
+    uint64_t ult = ls.mk_node(NodeKind::BV_ULT, 1, {x, s});
+
+    ls.set_assignment(x, d_two4);
+    ls.set_assignment(s, d_fiv4);
+    ls.register_root(ult);
+    ls.compute_initial_assignment();
+
+    ASSERT_TRUE(ls.is_ineq_root(ls.get_node(ult)));
+    ASSERT_EQ(ls.d_roots_ineq.at(ls.get_node(ult)),
+              LocalSearchBV::s_ineq_pos);
+    ASSERT_TRUE(ls.get_assignment(ult).is_true());
+
+    ls.compute_bounds(ls.get_node(ult));
+
+    // x < s, thus x is upper-bounded by value of s (excl.), from 0.
+    const BitVectorRange& bx = ls.get_node(x)->bounds_u();
+    ASSERT_FALSE(bx.empty());
+    ASSERT_EQ(bx.d_min.compare(d_zero4), 0);
+    ASSERT_EQ(bx.d_max.compare(d_for4), 0);
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+
 TEST_F(TestLsBv, move_add)
 {
   test_move_binary(NodeKind::BV_ADD, 0);
@@ -945,10 +1052,12 @@ TEST_F(TestLsBv, ite)
   test_move_ite(2);
 }
 
-TEST_F(TestLsBv, not ) { test_move_not(); }
+TEST_F(TestLsBv, not) { test_move_not(); }
 
 TEST_F(TestLsBv, extract) { test_move_extract(); }
 
 TEST_F(TestLsBv, sext) { test_move_sext(); }
+
+/* -------------------------------------------------------------------------- */
 
 }  // namespace bzla::ls::test

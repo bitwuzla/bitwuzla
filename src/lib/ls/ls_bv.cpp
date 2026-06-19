@@ -267,7 +267,7 @@ LocalSearchBV::get_node(uint64_t id) const
 }
 
 void
-LocalSearchBV::update_bounds_aux(BitVectorNode* root, int32_t pos)
+LocalSearchBV::update_bounds_aux(BitVectorNode* root, bool is_lt, int32_t pos)
 {
   assert(root->is_inequality());
   assert(root->arity() == 2);
@@ -289,10 +289,11 @@ LocalSearchBV::update_bounds_aux(BitVectorNode* root, int32_t pos)
     max_value = BitVector::mk_ones(size);
   }
 
-  bool is_ult = d_roots_ineq.at(root);
-  assert((is_ult && root->assignment().is_true())
-         || (!is_ult && root->assignment().is_false()));
-  if (is_ult)
+  // is_lt: treat as a positive inequality (x < s) when the inequality
+  // currently holds, else as a negated inequality (x >= s).
+  assert((is_lt && root->assignment().is_true())
+         || (!is_lt && root->assignment().is_false()));
+  if (is_lt)
   {
     // x < s
     if (!child0->all_value() && (pos < 0 || pos == 0))
@@ -395,7 +396,14 @@ LocalSearchBV::compute_bounds(Node<BitVector>* node)
       }
 #endif
       if (!is_ineq_root(p)) continue;
-      if (p->assignment().is_true() != d_roots_ineq.at(p)) continue;
+      // Apply bounds for the polarity matching p's current assignment, but only
+      // if p is actually asserted with that polarity (positive when currently
+      // true, negated when currently false).
+      bool is_lt = p->assignment().is_true();
+      if (!(d_roots_ineq.at(p) & (is_lt ? s_ineq_pos : s_ineq_neg)))
+      {
+        continue;
+      }
 #ifndef NDEBUG
       if (p->kind() == NodeKind::BV_SLT)
       {
@@ -408,7 +416,7 @@ LocalSearchBV::compute_bounds(Node<BitVector>* node)
       }
 #endif
       update_bounds_aux(
-          p, child == p->child(0) ? (child == p->child(1) ? -1 : 0) : 1);
+          p, is_lt, child == p->child(0) ? (child == p->child(1) ? -1 : 0) : 1);
     }
   }
 }
