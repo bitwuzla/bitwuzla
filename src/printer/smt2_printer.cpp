@@ -733,7 +733,7 @@ Smt2Printer::letify(std::ostream& os,
         depth.push_back(cur_depth + 1);
         ++refs[cur[i]];
         if (refs[cur[i]] == 2 && cur[i].num_children() > 0
-            && def_map.find(cur[i]) == let_map.end())
+            && def_map.find(cur[i]) == def_map.end())
         {
           lets.push_back(cur[i]);
         }
