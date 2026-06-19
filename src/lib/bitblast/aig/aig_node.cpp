@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <sstream>
+#include <utility>
 
 #include "bitblast/aig/aig_manager.h"
 
@@ -55,20 +56,22 @@ AigNode::operator=(const AigNode& other)
 }
 
 AigNode::AigNode(AigNode&& other) noexcept
+    : d_data(std::exchange(other.d_data, 0))
 {
-  d_data       = other.d_data;
-  other.d_data = 0;
 }
 
 AigNode&
 AigNode::operator=(AigNode&& other) noexcept
 {
+  if (this == &other)
+  {
+    return *this;
+  }
   if (!is_null())
   {
     data()->dec_refs();
   }
-  d_data       = other.d_data;
-  other.d_data = 0;
+  d_data = std::exchange(other.d_data, 0);
   return *this;
 }
 

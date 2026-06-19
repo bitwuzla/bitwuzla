@@ -11,6 +11,7 @@
 #include "node/node.h"
 
 #include <cassert>
+#include <utility>
 
 #include "node/node_data.h"
 #include "node/node_manager.h"
@@ -55,25 +56,22 @@ Node::operator=(const Node& other)
   return *this;
 }
 
-Node::Node(Node&& other) noexcept
+Node::Node(Node&& other) noexcept : d_data(std::exchange(other.d_data, nullptr))
 {
-  if (d_data)
-  {
-    d_data->dec_ref();
-  }
-  d_data       = other.d_data;
-  other.d_data = nullptr;
 }
 
 Node&
 Node::operator=(Node&& other) noexcept
 {
+  if (this == &other)
+  {
+    return *this;
+  }
   if (d_data)
   {
     d_data->dec_ref();
   }
-  d_data       = other.d_data;
-  other.d_data = nullptr;
+  d_data = std::exchange(other.d_data, nullptr);
   return *this;
 }
 

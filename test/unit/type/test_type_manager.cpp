@@ -9,6 +9,7 @@
  */
 
 #include <unordered_set>
+#include <utility>
 
 #include "test/unit/test.h"
 #include "type/type.h"
@@ -23,6 +24,30 @@ class TestTypeManager : public TestCommon
 };
 
 TEST_F(TestTypeManager, ctor_dtor) { TypeManager tm; }
+
+TEST_F(TestTypeManager, move)
+{
+  TypeManager tm;
+  Type a = tm.mk_bv_type(32);
+
+  // Move construction transfers ownership and nulls the source.
+  Type b(std::move(a));
+  ASSERT_TRUE(a.is_null());
+  ASSERT_TRUE(b.is_bv());
+
+  // Move assignment transfers ownership and nulls the source.
+  Type c;
+  c = std::move(b);
+  ASSERT_TRUE(b.is_null());
+  ASSERT_TRUE(c.is_bv());
+
+  // Self-move assignment must leave the type intact (no use-after-free, not
+  // nulled). The reference indirection avoids a -Wself-move warning.
+  Type& ref = c;
+  c         = std::move(ref);
+  ASSERT_TRUE(c.is_bv());
+  ASSERT_EQ(c, tm.mk_bv_type(32));
+}
 
 TEST_F(TestTypeManager, bool_type)
 {

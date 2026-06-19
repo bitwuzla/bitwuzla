@@ -11,6 +11,7 @@
 #include "type/type.h"
 
 #include <cassert>
+#include <utility>
 
 #include "printer/smt2_printer.h"
 #include "type/type_data.h"
@@ -50,25 +51,22 @@ Type::operator=(const Type& other)
   return *this;
 }
 
-Type::Type(Type&& other) noexcept
+Type::Type(Type&& other) noexcept : d_data(std::exchange(other.d_data, nullptr))
 {
-  if (d_data)
-  {
-    d_data->dec_ref();
-  }
-  d_data       = other.d_data;
-  other.d_data = nullptr;
 }
 
 Type&
 Type::operator=(Type&& other) noexcept
 {
+  if (this == &other)
+  {
+    return *this;
+  }
   if (d_data)
   {
     d_data->dec_ref();
   }
-  d_data       = other.d_data;
-  other.d_data = nullptr;
+  d_data = std::exchange(other.d_data, nullptr);
   return *this;
 }
 

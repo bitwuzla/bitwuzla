@@ -10,6 +10,8 @@
 
 #include <gtest/gtest.h>
 
+#include <utility>
+
 #include "node/node.h"
 #include "node/node_manager.h"
 #include "solver/fp/floating_point.h"
@@ -31,6 +33,33 @@ TEST_F(TestNode, node_ctor_dtor)
   ASSERT_EQ(n.id(), 0);
   ASSERT_EQ(n.num_children(), 0);
   ASSERT_EQ(n.begin(), n.end());
+}
+
+TEST_F(TestNode, node_move)
+{
+  NodeManager nm;
+  Node a      = nm.mk_const(nm.mk_bool_type(), "a");
+  uint64_t id = a.id();
+
+  // Move construction transfers ownership and nulls the source.
+  Node b(std::move(a));
+  ASSERT_TRUE(a.is_null());
+  ASSERT_FALSE(b.is_null());
+  ASSERT_EQ(b.id(), id);
+
+  // Move assignment transfers ownership and nulls the source.
+  Node c;
+  c = std::move(b);
+  ASSERT_TRUE(b.is_null());
+  ASSERT_FALSE(c.is_null());
+  ASSERT_EQ(c.id(), id);
+
+  // Self-move assignment must leave the node intact (no use-after-free, not
+  // nulled). The reference indirection avoids a -Wself-move warning.
+  Node& ref = c;
+  c         = std::move(ref);
+  ASSERT_FALSE(c.is_null());
+  ASSERT_EQ(c.id(), id);
 }
 
 TEST_F(TestNode, node_is_value)

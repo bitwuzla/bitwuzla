@@ -8,6 +8,7 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+#include <utility>
 #include <vector>
 
 #include "bitblast/aig/aig_manager.h"
@@ -21,6 +22,33 @@ class TestAigMgr : public TestCommon
 };
 
 TEST_F(TestAigMgr, ctor_dtor) { bitblast::AigManager aigmgr; }
+
+TEST_F(TestAigMgr, move)
+{
+  bitblast::AigManager aigmgr;
+  auto a     = aigmgr.mk_const();
+  int64_t id = a.get_id();
+
+  // Move construction transfers ownership and nulls the source.
+  bitblast::AigNode b(std::move(a));
+  ASSERT_TRUE(a.is_null());
+  ASSERT_FALSE(b.is_null());
+  ASSERT_EQ(b.get_id(), id);
+
+  // Move assignment transfers ownership and nulls the source.
+  bitblast::AigNode c;
+  c = std::move(b);
+  ASSERT_TRUE(b.is_null());
+  ASSERT_FALSE(c.is_null());
+  ASSERT_EQ(c.get_id(), id);
+
+  // Self-move assignment must leave the node intact (no use-after-free, not
+  // nulled). The reference indirection avoids a -Wself-move warning.
+  bitblast::AigNode& ref = c;
+  c                      = std::move(ref);
+  ASSERT_FALSE(c.is_null());
+  ASSERT_EQ(c.get_id(), id);
+}
 
 TEST_F(TestAigMgr, false_true_aig)
 {
