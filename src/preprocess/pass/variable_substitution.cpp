@@ -184,13 +184,9 @@ PassVariableSubstitution::normalize_substitution_eq(const Node& node)
     // no substitution found
     return {};
   }
+  assert(var.is_const());
   d_stats.num_norm_eq_gauss_elim += 1;
   subst = nm.mk_node(Kind::BV_MUL, {subst, nm.mk_value(factor.ibvmodinv())});
-  if (var.is_inverted())
-  {
-    var   = nm.invert_node(var);
-    subst = nm.invert_node(subst);
-  }
   return std::make_pair(var, subst);
 }
 
@@ -238,16 +234,9 @@ PassVariableSubstitution::normalize_substitution_bv_ineq(const Node& node)
   {
     return {};
   }
+  assert(var.is_const());
 
   NodeManager& nm = d_env.nm();
-
-  // (<ineq_kind> (bvnot a) b) is equal to (<inv_ineq_kind> (a bvnot b))
-  if (var.is_inverted())
-  {
-    var   = var[0];
-    right = nm.invert_node(right);
-    kind  = get_subst_inv_ineq_kind(n.kind());
-  }
 
   BitVector value;
   if (right.is_value())
