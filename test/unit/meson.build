@@ -117,6 +117,12 @@ unit_tests = [
     ]
   ],
 
+  ['lib/rng',
+    [
+      'rng',
+    ]
+  ],
+
   ['lib/ls/bv',
     [
       'bvnode',

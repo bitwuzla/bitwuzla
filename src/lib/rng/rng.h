@@ -38,7 +38,10 @@ class RNG
 
   /** Constructor. */
   explicit RNG(uint32_t seed = 0);
+  /** Copy constructor. */
   RNG(const RNG& other);
+  /** Copy assignment. */
+  RNG& operator=(const RNG& other);
   /** Destructor. */
   ~RNG();
 
