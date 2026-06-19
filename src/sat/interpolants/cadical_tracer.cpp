@@ -650,8 +650,8 @@ CadicalTracer::get_interpolant(
           {
             lits.push_back(d_amgr.get_node(lit));
           }
-          res = mk_or(lits);
         }
+        res = mk_or(lits);
       }
       break;
       case option::InterpolantsAlgo::PUDLAK: res = d_amgr.mk_false(); break;
