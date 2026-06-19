@@ -563,10 +563,16 @@ NodeManager::check_type(Kind kind,
 
     case Kind::DISTINCT:
     case Kind::EQUAL:
-      if (children[0].type() != children[1].type())
+      // DISTINCT is n-ary, so check all children against the first one (EQUAL
+      // is binary and thus only compares children[0] and children[1]).
+      for (size_t i = 1, size = children.size(); i < size; ++i)
       {
-        ss << kind << ": Expected terms with same type.";
-        return std::make_pair(false, ss.str());
+        if (children[i].type() != children[0].type())
+        {
+          ss << kind << ": Expected terms at position 0 and " << i
+             << " to have the same type.";
+          return std::make_pair(false, ss.str());
+        }
       }
       break;
 

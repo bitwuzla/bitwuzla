@@ -416,6 +416,28 @@ TEST_F(TestNodeManager, check_type)
             nm.mk_fun_type({bv_type, fp_type, array_type}));
 }
 
+TEST_F(TestNodeManager, check_type_distinct_nary)
+{
+  // Regression: DISTINCT is n-ary, but check_type used to compare only the
+  // first two children, so an ill-typed distinct(a, b, c) with c of a
+  // different sort was silently accepted.
+  NodeManager nm;
+
+  Type bv_type   = nm.mk_bv_type(32);
+  Type fp_type   = nm.mk_fp_type(5, 11);
+  Node bv_const1 = nm.mk_const(bv_type);
+  Node bv_const2 = nm.mk_const(bv_type);
+  Node fp_const  = nm.mk_const(fp_type);
+
+  // Well-typed n-ary distinct is accepted.
+  ASSERT_TRUE(
+      nm.check_type(Kind::DISTINCT, {bv_const1, bv_const2, bv_const1}).first);
+
+  // Mismatching type at position 2 (beyond the first two children) is rejected.
+  ASSERT_FALSE(
+      nm.check_type(Kind::DISTINCT, {bv_const1, bv_const2, fp_const}).first);
+}
+
 TEST_F(TestNodeManager, unique_table_resize)
 {
   // Regression: the unique table computed bucket indices by masking the hash
