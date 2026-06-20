@@ -537,7 +537,7 @@ bool
 BitVectorDomainGenerator::has_random() const
 {
   assert(d_bits == nullptr
-         || (d_bits_min && d_bits_min->compare(*d_bits_min) >= 0));
+         || (d_bits_min && d_bits->compare(*d_bits_min) >= 0));
   assert(!d_bits_min || d_bits_max);
   return d_bits_min && (d_is_fixed || d_bits_min->compare(*d_bits_max) <= 0);
 }
