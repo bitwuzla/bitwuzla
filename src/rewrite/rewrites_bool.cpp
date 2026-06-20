@@ -88,7 +88,6 @@ _rw_and_const(Rewriter& rewriter, const Node& node, size_t idx)
   size_t idx1 = 1 - idx;
   if (node[idx0].is_value() && node[idx1].kind() == Kind::AND)
   {
-    BitVector z;
     if (node[idx1][0].is_value())
     {
       bool z = node[idx0].value<bool>() && node[idx1][0].value<bool>();
