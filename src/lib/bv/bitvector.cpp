@@ -385,10 +385,7 @@ BitVector::BitVector(const BitVector& other)
   }
   else
   {
-    if (d_size != other.d_size)
-    {
-      d_size = other.d_size;
-    }
+    d_size = other.d_size;
     if (is_gmp())
     {
       mpz_init_set(d_val_gmp, other.d_val_gmp);
