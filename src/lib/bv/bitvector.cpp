@@ -3307,7 +3307,7 @@ BitVector::ibvmodinv(const BitVector& bv)
 
   uint64_t size = pb->d_size;
 
-  if (d_size == 1)
+  if (size == 1)
   {
     if (pb->is_gmp())
     {
