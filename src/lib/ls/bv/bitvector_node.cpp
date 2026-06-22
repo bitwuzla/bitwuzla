@@ -4248,6 +4248,7 @@ BitVectorSlt::is_invertible(const BitVector& t,
             bool _res = _is_invertible(dx, t, pos_x, is_essential_check, false);
             return !res ? _res : res;
           }
+          return res;
         }
       }
     }
