@@ -2926,7 +2926,7 @@ BitVectorUdiv::is_invertible(const BitVector& t,
           }
 
           BitVectorDomainGenerator gen(x, d_rng, {min, max});
-          if (gen.has_next())
+          if (gen.has_random())
           {
             BV_NODE_CACHE_INVERSE_IF(gen.random());
             return true;
