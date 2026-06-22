@@ -132,7 +132,10 @@ AigManager::AigManager()
   assert(d_false.get_id() == -AigNode::s_true_id);
 }
 
-AigManager::~AigManager() {}
+AigManager::~AigManager() {
+  d_true = AigNode();
+  d_false = AigNode();
+}
 
 const AigManager::Statistics&
 AigManager::statistics() const
