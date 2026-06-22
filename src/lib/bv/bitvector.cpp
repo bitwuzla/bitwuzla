@@ -933,21 +933,22 @@ BitVector::is_uadd_overflow(const BitVector& bv) const
 {
   assert(!is_null());
   assert(d_size == bv.d_size);
-  mpz_t add;
   if (is_gmp())
   {
+    mpz_t add;
     mpz_init(add);
     mpz_add(add, d_val_gmp, bv.d_val_gmp);
+    mpz_fdiv_q_2exp_ull(add, add, d_size);
+    bool res = mpz_cmp_ui(add, 0) != 0;
+    mpz_clear(add);
+    return res;
   }
-  else
-  {
-    mpz_init_set_ui(add, d_val_uint64);
-    mpz_add_ui(add, add, bv.d_val_uint64);
-  }
-  mpz_fdiv_q_2exp_ull(add, add, d_size);
-  bool res = mpz_cmp_ui(add, 0) != 0;
-  mpz_clear(add);
-  return res;
+  // Overflow occurs iff the sum has a carry out of bit at d_size.
+  // For d_size == 64, we detect the native uint64 carry (sum wraps below an
+  // operand). Otherwise, the sum fits in uint64 and we check for any bit set
+  // at position d_size or above.
+  uint64_t sum = d_val_uint64 + bv.d_val_uint64;
+  return d_size == 64 ? sum < d_val_uint64 : (sum >> d_size) != 0;
 }
 
 bool
@@ -995,21 +996,27 @@ BitVector::is_umul_overflow(const BitVector& bv) const
   assert(d_size == bv.d_size);
   if (d_size > 1)
   {
-    mpz_t mul;
     if (is_gmp())
     {
+      mpz_t mul;
       mpz_init(mul);
       mpz_mul(mul, d_val_gmp, bv.d_val_gmp);
+      mpz_fdiv_q_2exp_ull(mul, mul, d_size);
+      bool res = mpz_cmp_ui(mul, 0) != 0;
+      mpz_clear(mul);
+      return res;
     }
-    else
-    {
-      mpz_init_set_ui(mul, d_val_uint64);
-      mpz_mul_ui(mul, mul, bv.d_val_uint64);
-    }
-    mpz_fdiv_q_2exp_ull(mul, mul, d_size);
-    bool res = mpz_cmp_ui(mul, 0) != 0;
-    mpz_clear(mul);
-    return res;
+#if defined(__SIZEOF_INT128__)
+    // The full product of two bit values of d_size fits in 128 bits. Overflow
+    // occurs iff any bit at position d_size or above is set.
+    __uint128_t mul = (__uint128_t) d_val_uint64 * bv.d_val_uint64;
+    return (mul >> d_size) != 0;
+#else
+    // Portable fallback without a 128-bit type: a * b overflows d_size bits iff
+    // b != 0 && a > floor(max / b), where max = 2^d_size - 1.
+    uint64_t b = bv.d_val_uint64;
+    return b != 0 && d_val_uint64 > uint64_fdiv_r_2exp(d_size, UINT64_MAX) / b;
+#endif
   }
   return false;
 }
