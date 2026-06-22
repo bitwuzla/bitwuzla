@@ -738,10 +738,10 @@ class BitVectorUlt : public BitVectorNode
  public:
   /**
    * Constructor.
-   * @param rng The associated random number generator.
-   * @param size The bit-width of this node.
-   * @param child0 The operand at index 0.
-   * @param child1 The operand at index 1.
+   * @param rng             The associated random number generator.
+   * @param size            The bit-width of this node.
+   * @param child0          The operand at index 0.
+   * @param child1          The operand at index 1.
    * @param opt_concat_sext True to enable optimization for inverse_value
    *                        computation of concat and sign extension operands.
    */
@@ -752,10 +752,10 @@ class BitVectorUlt : public BitVectorNode
                bool opt_concat_sext = false);
   /**
    * Constructor.
-   * @param rng The associated random number generator.
-   * @param domain The underlying bit-vector domain.
-   * @param child0 The operand at index 0.
-   * @param child1 The operand at index 1.
+   * @param rng             The associated random number generator.
+   * @param domain          The underlying bit-vector domain.
+   * @param child0          The operand at index 0.
+   * @param child1          The operand at index 1.
    * @param opt_concat_sext True to enable optimization for inverse_value
    *                        computation of concat and sign extension operands.
    */
@@ -805,13 +805,10 @@ class BitVectorUlt : public BitVectorNode
    *
    * @note Does not and (must not) reset cached inverse.
    *
-   * @param d The domain representing operand 'x'.
-   * @param t The target value of this node.
-   * @param pos_x The index of operand `x`.
-   * @param is_essential_check True if called to determine is_essential(). For
-   *                           is_essential() checks, we don't consider bounds
-   *                           derived from top-level inequalities since this
-   *                           may trap us in a cycle (see is_essential()).
+   * @param d                  The domain representing operand 'x'.
+   * @param t                  The target value of this node.
+   * @param pos_x              The index of operand `x`.
+   * @param is_essential_check True if called to determine is_essential().
    * @param opt_concat         True to enable optimization for inverse_value
    *                           computation of concat operand.
    */
@@ -825,7 +822,7 @@ class BitVectorUlt : public BitVectorNode
    * Helper for concat-specific (when x is a concat) inverse value computation.
    * Attempts to find an inverse value by only changing the value of one of
    * the children of the concat.
-   * @param t The target value of this node.
+   * @param t     The target value of this node.
    * @param pos_x The index of operand `x`, which is a concat node.
    * @return The inverse value.
    */
@@ -833,7 +830,7 @@ class BitVectorUlt : public BitVectorNode
   /**
    * Helper for inverse_value_concat()  to generate a new random value with
    * respect to the given domain and within given min/max range.
-   * @param d The domain.
+   * @param d   The domain.
    * @param min The lower bound of the range.
    * @param max The upper bound of the range.
    * @return A random value within the given range, if there is one, else
@@ -914,13 +911,10 @@ class BitVectorSlt : public BitVectorNode
    *
    * @note Does not and (must not) reset cached inverse.
    *
-   * @param d The domain representing operand 'x'.
-   * @param t The target value of this node.
-   * @param pos_x The index of operand `x`.
-   * @param is_essential_check True if called to determine is_essential(). For
-   *                           is_essential() checks, we don't consider bounds
-   *                           derived from top-level inequalities since this
-   *                           may trap us in a cycle (see is_essential()).
+   * @param d                  The domain representing operand 'x'.
+   * @param t                  The target value of this node.
+   * @param pos_x              The index of operand `x`.
+   * @param is_essential_check True if called to determine is_essential().
    */
   bool _is_invertible(const BitVectorDomain* d,
                       const BitVector& t,

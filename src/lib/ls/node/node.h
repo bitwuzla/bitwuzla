@@ -122,12 +122,7 @@ class Node
    *
    * @param t The target value.
    * @param pos_x The index of `x`.
-   * @param is_essential_check True if called to determine is_essential(). For
-   *                           is_essential() checks, we don't consider bounds
-   *                           derived from top-level inequalities since this
-   *                           may trap us in a cycle (see is_essential()).
-   *                           We further do not cache inverse values computed
-   *                           while checking for essential checks.
+   * @param is_essential_check True if called to determine is_essential().
    * @return True if there exists an inverse value for `x`.
    */
   virtual bool is_invertible(const VALUE& t,
