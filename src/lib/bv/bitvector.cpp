@@ -1044,56 +1044,24 @@ BitVector::is_sdiv_overflow(const BitVector& bv) const
 uint64_t
 BitVector::count_trailing_zeros() const
 {
-  assert(!is_null());
-  uint64_t res = 0;
-  if (is_gmp())
-  {
-    res = mpz_scan1(d_val_gmp, 0);
-    if (res > d_size) res = d_size;
-  }
-  else
-  {
-    for (uint64_t i = 0; i < d_size; ++i)
-    {
-      if (bit(i)) break;
-      res += 1;
-    }
-  }
-  return res;
+  return count_trailing(true);
 }
 
 uint64_t
 BitVector::count_trailing_ones() const
 {
-  assert(!is_null());
-  uint64_t res = 0;
-  if (is_gmp())
-  {
-    res = mpz_scan0(d_val_gmp, 0);
-    if (res > d_size) res = d_size;
-  }
-  else
-  {
-    for (uint64_t i = 0; i < d_size; ++i)
-    {
-      if (!bit(i)) break;
-      res += 1;
-    }
-  }
-  return res;
+  return count_trailing(false);
 }
 
 uint64_t
 BitVector::count_leading_zeros() const
 {
-  assert(!is_null());
   return count_leading(true);
 }
 
 uint64_t
 BitVector::count_leading_ones() const
 {
-  assert(!is_null());
   return count_leading(false);
 }
 
@@ -3995,6 +3963,53 @@ BitVector::count_leading(bool zeros) const
   uint64_t n_limbs_total = d_size / n_bits_per_limb + 1;
   uint64_t n_bits_pad    = n_bits_per_limb - n_bits_rem;
   res += (n_limbs_total - n_limbs) * n_bits_per_limb - n_bits_pad;
+  return res;
+}
+
+uint64_t
+BitVector::count_trailing(bool zeros) const
+{
+  assert(!is_null());
+  uint64_t res = 0;
+  if (is_gmp())
+  {
+    res = zeros ? mpz_scan1(d_val_gmp, 0) : mpz_scan0(d_val_gmp, 0);
+    if (res > d_size)
+    {
+      res = d_size;
+    }
+  }
+  else
+  {
+#if defined(__GNUC__) || defined(__clang__)
+    if (zeros)
+    {
+      // Upper bits beyond d_size are zero, so the lowest set bit (if any) is
+      // always within [0, d_size).
+      res = d_val_uint64 == 0
+                ? d_size
+                : static_cast<uint64_t>(__builtin_ctzll(d_val_uint64));
+    }
+    else
+    {
+      // Bits beyond d_size are zero in d_val_uint64, hence set in the
+      // complement. ctzll then yields the first zero bit, capped at d_size when
+      // all d_size low bits are ones (inv == 0 only when d_size == 64).
+      uint64_t inv = ~d_val_uint64;
+      res = inv == 0 ? d_size : static_cast<uint64_t>(__builtin_ctzll(inv));
+      if (res > d_size)
+      {
+        res = d_size;
+      }
+    }
+#else
+    for (uint64_t i = 0; i < d_size; ++i)
+    {
+      if (bit(i) == zeros) break;
+      res += 1;
+    }
+#endif
+  }
   return res;
 }
 

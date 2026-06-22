@@ -2232,6 +2232,13 @@ class BitVector
    */
   uint64_t count_leading(bool zeros) const;
   /**
+   * Count trailing zeros or ones.
+   * @param zeros True to determine number of trailing zeros, false to count
+   *              number of trailing ones.
+   * @return The number of trailing zeros/ones.
+   */
+  uint64_t count_trailing(bool zeros) const;
+  /**
    * Determine if this bit-vector can be represented with a uint64_t.
    * @param res If true, uint64_t representation is stored in `res`.
    * @return True if it can.

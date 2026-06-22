@@ -760,8 +760,14 @@ TestBitVector::test_count_aux(const std::string& val, bool leading, bool zeros)
     for (expected = 0; expected < size && val[size - 1 - expected] == c;
          ++expected)
       ;
-    assert(zeros);
-    ASSERT_EQ(bv.count_trailing_zeros(), expected);
+    if (zeros)
+    {
+      ASSERT_EQ(bv.count_trailing_zeros(), expected);
+    }
+    else
+    {
+      ASSERT_EQ(bv.count_trailing_ones(), expected);
+    }
   }
 }
 
@@ -5692,6 +5698,15 @@ TEST_F(TestBitVector, count_trailing_zeros)
   test_count(76, false, true);
   test_count(128, false, true);
   test_count(176, false, true);
+}
+
+TEST_F(TestBitVector, count_trailing_ones)
+{
+  test_count(8, false, false);
+  test_count(64, false, false);
+  test_count(76, false, false);
+  test_count(128, false, false);
+  test_count(176, false, false);
 }
 
 TEST_F(TestBitVector, count_leading_zeros)
