@@ -6468,4 +6468,40 @@ TEST_F(TestBitVector, udivurem)
 
 /* -------------------------------------------------------------------------- */
 
+TEST_F(TestBitVector, rotate_inplace_repr_transition)
+{
+  // Exercise in-place rotate where the destination already holds a non-zero
+  // value whose representation (native vs. gmp) differs from the result's.
+  for (uint64_t bw : {65, 100, 128})
+  {
+    BitVector ones_big = BitVector::mk_ones(bw);       // gmp, non-zero
+    BitVector nat      = BitVector::from_ui(8, 0xAB);  // native, non-zero
+
+    for (uint64_t rot : {(uint64_t) 0, (uint64_t) 3, bw - 1})
+    {
+      // native (non-zero) *this -> gmp result  (must mpz_init)
+      BitVector d1 = BitVector::from_ui(64, 0xdeadbeefULL);
+      (void) d1.ibvroli(ones_big, rot);
+      ASSERT_EQ(d1.size(), bw);
+      ASSERT_EQ(d1.compare(ones_big.bvroli(rot)), 0);
+
+      BitVector d2 = BitVector::from_ui(64, 0xdeadbeefULL);
+      (void) d2.ibvrori(ones_big, rot);
+      ASSERT_EQ(d2.compare(ones_big.bvrori(rot)), 0);
+
+      // gmp (non-zero) *this -> native result  (must mpz_clear, no leak)
+      BitVector d3 = BitVector::mk_ones(bw);
+      (void) d3.ibvroli(nat, rot % 8);
+      ASSERT_EQ(d3.size(), 8u);
+      ASSERT_EQ(d3.compare(nat.bvroli(rot % 8)), 0);
+
+      BitVector d4 = BitVector::mk_ones(bw);
+      (void) d4.ibvrori(nat, rot % 8);
+      ASSERT_EQ(d4.compare(nat.bvrori(rot % 8)), 0);
+    }
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+
 }  // namespace bzla::test
