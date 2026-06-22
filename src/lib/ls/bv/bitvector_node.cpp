@@ -721,10 +721,15 @@ BitVectorAnd::is_invertible(const BitVector& t,
    * IC_wo: (t & s) = t
    * IC:    IC_wo && ((s & hi_x) & m) = (t & m)
    *        with m = ~(lo_x ^ hi_x)  ... mask out all non-const bits
-   * TODO: document +bounds
+   * +bounds: If x carries propagated (un)signed bounds from top-level
+   *          inequalities, IC is additionally constrained to values within
+   *          these bounds. That is, the domain [lo_x | t, hi_x & ~(s ^ t)]
+   *          must have a non-empty intersection with these bounds.
    *
    * Inverse value: (t & s) | (~s & rand)
-   * TODO: document +bounds
+   * +bounds: With bounds present, the inverse value is instead drawn from the
+   *          domain [lo_x | t, hi_x & ~(s ^ t)], restricted to the normalized
+   *          bounds.
    */
 
   uint64_t pos_s           = 1 - pos_x;
@@ -1246,7 +1251,11 @@ BitVectorMul::is_invertible(const BitVector& t,
    *        (s = 0 || ((odd(s) => mcb(x, t * s^-1)) &&
    *                  (!odd(s) => mcb (x << c, y << c))))
    *        with c = ctz(s) and y = (t >> c) * (s >> c)^-1
-   * TODO: document +bounds
+   * +bounds: If x carries propagated (un)signed bounds from top-level
+   *          inequalities, IC is additionally constrained to values within
+   *          these bounds. For BV_MUL, which does not constrain the bounds
+   *          x by itself, compute_normalized_bounds() yields the x's current
+   *          bounds, or the full range if x has none.
    *
    * Inverse value:
    *   s = 0 (=> t = 0): random bit-vector
@@ -1254,7 +1263,8 @@ BitVectorMul::is_invertible(const BitVector& t,
    *   s even          : random value in domain
    *                     x[size - 1:size - ctz] o y[size - ctz(s) - 1:0]
    *                     with y = (t >> ctz(s)) * (s >> ctz(s))^-1
-   * TODO: document +bounds
+   * +bounds: Each candidate value is accepted only if contained in the
+   *          normalized bounds.
    */
   uint64_t pos_s           = 1 - pos_x;
   const BitVector& s       = child(pos_s)->assignment();
@@ -3553,11 +3563,23 @@ BitVectorUlt::is_invertible(const BitVector& t,
   /**
    * IC_wo: pos_x = 0: t = 0 || s != 0
    *        pos_x = 1: t = 0 || s != ones
-   * TODO: document +bounds
+   * +bounds: x may also carry propagated unsigned bounds from other top-level
+   *          inequalities over x (bounds_u()), which IC_wo does not capture.
+   *          They are folded together with the IC range below by
+   *          compute_normalized_bounds(); invertibility additionally requires
+   *          the resulting normalized bounds to be non-empty.
    *
    * IC:    pos_x = 0: t = 1 => (s != 0 && lo_x < s) && t = 0 => (hi_x >= s)
    *        pos_x = 1: t = 1 => (s != ones && hi_x > s) && t = 0 => (lo_x <= s)
-   * TODO: document +bounds
+   * +bounds: The relation induces an unsigned range on x (pos_x = 0: [0, s - 1]
+   *          if t = 1, [s, ones] if t = 0; pos_x = 1: [s + 1, ones] if t = 1,
+   *          [0, s] if t = 0). compute_normalized_bounds() intersects this with
+   *          x's current unsigned bounds (bounds_u()) and splits the result
+   *          into a lower ([0, max_signed]) and upper ([min_signed, ones])
+   *          range. x is invertible iff this intersection contains a value
+   *          matching x's fixed bits; the inverse value is then taken from it
+   *          (via the dual domain/bounds generator, or drawn at random from the
+   *          range when x has no fixed bits).
    */
 
   if (d_opt_concat_sext && child(pos_x)->kind() == NodeKind::BV_SEXT)
@@ -4163,7 +4185,11 @@ BitVectorSlt::is_invertible(const BitVector& t,
   /**
    * IC_wo: pos_x = 0: t = 0 || s != min_signed_value
    *        pos_x = 1: t = 0 || s != max_signed_value
-   * TODO: document +bounds
+   * +bounds: x may also carry propagated signed bounds from other top-level
+   *          inequalities over x (bounds_s()), which IC_wo does not capture.
+   *          They are folded together with the IC range below by
+   *          compute_normalized_bounds(); invertibility additionally requires
+   *          the resulting normalized bounds to be non-empty.
    *
    * IC: pos_x = 0: t = 1 => (s != min_signed_value &&
    *                 ((MSB(x) = 0 && lo_x < s) ||
@@ -4175,7 +4201,16 @@ BitVectorSlt::is_invertible(const BitVector& t,
    *                           (MSB(x) != 1 && s < 0 o hi_x[size-2:0])))
    *                t = 0 => ((MSB(x) = 0 && s >= lo_x) ||
    *                          (MSB(x) != 0 && s >= 1 o lo_x[size-2:0])))
-   * TODO: document +bounds
+   * +bounds: The relation induces a signed range on x (pos_x = 0:
+   *          [min_signed, s - 1] if t = 1, [s, max_signed] if t = 0; pos_x = 1:
+   *          [s + 1, max_signed] if t = 1, [min_signed, s] if t = 0).
+   *          compute_normalized_bounds() intersects this with x's current
+   *          signed bounds (bounds_s()) and splits the result into a lower
+   *          ([0, max_signed]) and upper ([min_signed, ones]) range. x is
+   *          invertible iff this intersection contains a value matching x's
+   *          fixed bits; the inverse value is then taken from it (via the dual
+   *          domain/bounds generator, or drawn at random from the range when x
+   *          has no fixed bits).
    */
 
   if (d_opt_concat_sext && child(pos_x)->kind() == NodeKind::BV_SEXT)
@@ -4282,19 +4317,25 @@ BitVectorSlt::_is_invertible(const BitVectorDomain* d,
     return false;
   }
 
-  // IC: pos_x = 0: IC_wo &&
-  //                t = 1 => (s != min_signed_value &&
-  //                 ((MSB(x) = 0 && lo_x < s) ||
-  //                  (MSB(x) != 0 && 1 o lo_x[size-2:0] < s))) &&
-  //                t = 0 => ((MSB(x) = 1 && hi_x >= s) ||
-  //                          (MSB(x) != 1 && 0 o hi_x[size-2:0] >= s))))
-  //     pos_x = 1: IC_wo &&
-  //                t = 1 => (s != max_signed_value &&
-  //                          ((MSB(x) = 1 && s < hi_x) ||
-  //                           (MSB(x) != 1 && s < 0 o hi_x[size-2:0])))
-  //                t = 0 => ((MSB(x) = 0 && s >= lo_x) ||
-  //                          (MSB(x) != 0 && s >= 1 o lo_x[size-2:0])))
-  // TODO: document +bounds
+  /**
+   * IC: pos_x = 0: IC_wo &&
+   *                t = 1 => (s != min_signed_value &&
+   *                 ((MSB(x) = 0 && lo_x < s) ||
+   *                  (MSB(x) != 0 && 1 o lo_x[size-2:0] < s))) &&
+   *                t = 0 => ((MSB(x) = 1 && hi_x >= s) ||
+   *                          (MSB(x) != 1 && 0 o hi_x[size-2:0] >= s))))
+   *     pos_x = 1: IC_wo &&
+   *                t = 1 => (s != max_signed_value &&
+   *                          ((MSB(x) = 1 && s < hi_x) ||
+   *                           (MSB(x) != 1 && s < 0 o hi_x[size-2:0])))
+   *                t = 0 => ((MSB(x) = 0 && s >= lo_x) ||
+   *                          (MSB(x) != 0 && s >= 1 o lo_x[size-2:0])))
+   * +bounds: compute_normalized_bounds() (above) folds the IC-induced signed
+   *          range together with x's propagated signed bounds (bounds_s()); the
+   *          inverse value must lie within the resulting normalized lower/upper
+   *          ranges, checked here via bounds.contains() / the dual
+   *          domain/bounds generator.
+   */
   if (d->is_fixed())
   {
     const BitVector& xval = d->lo();
