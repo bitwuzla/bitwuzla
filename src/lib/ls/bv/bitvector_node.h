@@ -915,21 +915,23 @@ class BitVectorSlt : public BitVectorNode
    * @param t                  The target value of this node.
    * @param pos_x              The index of operand `x`.
    * @param is_essential_check True if called to determine is_essential().
+   * @param opt_concat         True to enable optimization for inverse_value
+   *                           computation of concat operand.
    */
   bool _is_invertible(const BitVectorDomain* d,
                       const BitVector& t,
                       uint64_t pos_x,
-                      bool is_essential_check);
+                      bool is_essential_check,
+                      bool opt_concat);
   /**
    * Helper for concat-specific (when x is a concat) inverse value computation.
    * Attempts to find an inverse value by only changing the value of one of
    * the children of the concat.
-   * @param s The value of the other operand.
    * @param t The target value of this node.
    * @param pos_x The index of operand `x`, which is a concat node.
    * @return The inverse value.
    */
-  BitVector* inverse_value_concat(bool t, uint64_t pos_x, uint64_t pos_s);
+  BitVector inverse_value_concat(bool t, uint64_t pos_x);
   /**
    * Helper for inverse_value_concat()  to generate a new random value with
    * respect to the given domain and within given min/max range.
