@@ -428,7 +428,6 @@ Lemma<LemmaKind::MUL_REF12>::instance(const Node& x,
                                       const Node& s,
                                       const Node& t) const
 {
-  Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
   return d_nm.mk_node(
       Kind::DISTINCT,
       {x,
