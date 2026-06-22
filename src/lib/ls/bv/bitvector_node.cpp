@@ -6120,12 +6120,12 @@ BitVectorSignExtend::normalize_bounds(const BitVectorRange& bounds_u,
   {
     // Now, determine the disjunct bounds imposed from the extension.
     const BitVectorDomain& dx = child(0)->domain();
-    BitVectorDomain dxn       = d_domain.bvextract(this->size() - 1, d_n - 1);
+    BitVectorDomain dn        = d_domain.bvextract(this->size() - 1, d_n - 1);
     uint64_t dx_size          = dx.size();
-    bool has_fixed_bits       = dxn.has_fixed_bits();
+    bool has_fixed_bits       = dn.has_fixed_bits();
     BitVector min_0, max_0, min_1, max_1;
 
-    if (!has_fixed_bits || dxn.has_fixed_bits_false())
+    if (!has_fixed_bits || dn.has_fixed_bits_false())
     {
       min_0 = BitVector::mk_zero(d_n + 1);
       max_0 = BitVector::mk_zero(d_n + 1);
@@ -6135,14 +6135,14 @@ BitVectorSignExtend::normalize_bounds(const BitVectorRange& bounds_u,
         max_0.ibvconcat(dx.hi().bvextract(dx_size - 2, 0));
       }
     }
-    if (!has_fixed_bits || dxn.has_fixed_bits_true())
+    if (!has_fixed_bits || dn.has_fixed_bits_true())
     {
       min_1 = BitVector::mk_ones(d_n + 1);
       max_1 = BitVector::mk_ones(d_n + 1);
       if (dx_size > 1)
       {
-        min_1.ibvconcat(d_domain.lo().bvextract(dx_size - 2, 0));
-        max_1.ibvconcat(d_domain.hi().bvextract(dx_size - 2, 0));
+        min_1.ibvconcat(dx.lo().bvextract(dx_size - 2, 0));
+        max_1.ibvconcat(dx.hi().bvextract(dx_size - 2, 0));
       }
     }
     if (bounds.has_lo())
