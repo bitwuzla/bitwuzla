@@ -1011,7 +1011,10 @@ Rewriter::_eval(const Node& node)
     // case node::Kind::FORALL:
     // case node::Kind::EXISTS:
 
-    default: assert(false);
+    default:
+      // Unhandled kind: nothing to evaluate, return node unchanged.
+      it->second = node;
+      return it->second;
   }
   d_stats.evals << kind;
   ++d_stats.num_evals;
