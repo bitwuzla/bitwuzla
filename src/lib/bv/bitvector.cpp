@@ -3104,12 +3104,12 @@ BitVector::ibvroli(const BitVector& bv, uint64_t n)
     {
       mpz_set_ui(d_val_gmp, b->d_val_uint64);
     }
+    d_size = size;
     if (rot)
     {
       // shl by number of bits to rotate left
       mpz_mul_2exp_ull(d_val_gmp, d_val_gmp, rot);
       // add bits that were rotated out
-      d_size = size;
       ibvadd(b->bvshr(size - rot));
     }
   }
@@ -3147,7 +3147,6 @@ BitVector::ibvrol(const BitVector& bv, const BitVector& n)
     assert(isuint);
   }
   ibvroli(bv, in);
-  d_size = size;
   return *this;
 }
 
@@ -3186,12 +3185,12 @@ BitVector::ibvrori(const BitVector& bv, uint64_t n)
     {
       mpz_set_ui(d_val_gmp, b->d_val_uint64);
     }
+    d_size = size;
     if (rot)
     {
       // shr by number of bits to rotate left
       mpz_fdiv_q_2exp_ull(d_val_gmp, d_val_gmp, rot);
       // add bits that were rotated out
-      d_size = size;
       ibvadd(b->bvshl(size - rot));
     }
   }
@@ -3229,7 +3228,6 @@ BitVector::ibvror(const BitVector& bv, const BitVector& n)
     assert(isuint);
   }
   ibvrori(bv, in);
-  d_size = size;
   return *this;
 }
 
