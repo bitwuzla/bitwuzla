@@ -281,7 +281,7 @@ BitVector::BitVector(uint64_t size, RNG& rng, uint64_t idx_hi, uint64_t idx_lo)
   {
     set_bit(i, false);
   }
-  for (uint64_t i = idx_hi; i < d_size; ++i)
+  for (uint64_t i = idx_hi + 1; i < d_size; ++i)
   {
     set_bit(i, false);
   }

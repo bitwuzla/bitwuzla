@@ -571,13 +571,13 @@ TestBitVector::_shr(uint64_t x, uint64_t y, uint64_t size)
 uint64_t
 TestBitVector::_ashr(uint64_t x, uint64_t y, uint64_t size)
 {
-  size = size > 64 ? 64 : size;
-  if ((x >> (size - 1)) & 1)
+  if (size <= 64 && ((x >> (size - 1)) & 1))
   {
-    if (y > size) return normalize_uint64(size, ~0ull);
+    if (y >= size) return normalize_uint64(size, ~0ull);
     return normalize_uint64(size, ~(normalize_uint64(size, ~x) >> y));
   }
-  if (y > size) return 0;
+  size = size > 64 ? 64 : size;
+  if (y >= size) return 0;
   return normalize_uint64(size, x >> y);
 }
 
