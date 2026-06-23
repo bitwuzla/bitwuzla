@@ -305,6 +305,16 @@ class BitVectorDomainGenerator
   ~BitVectorDomainGenerator();
 
   /**
+   * BitVectorDomainGenerator has a members that point to its own members. We
+   * don't need to copy/move an instance of a BitVectorDomainGenerator, thus
+   * copy/move assignment and construction is explicitly disabled.
+   */
+  BitVectorDomainGenerator(const BitVectorDomainGenerator&)            = delete;
+  BitVectorDomainGenerator& operator=(const BitVectorDomainGenerator&) = delete;
+  BitVectorDomainGenerator(BitVectorDomainGenerator&&)                 = delete;
+  BitVectorDomainGenerator& operator=(BitVectorDomainGenerator&&)      = delete;
+
+  /**
    * Determine if there is a next element in the sequence.
    * @return True if not all possible values have been generated yet.
    */

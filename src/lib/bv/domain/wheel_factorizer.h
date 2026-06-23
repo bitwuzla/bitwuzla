@@ -27,6 +27,17 @@ class WheelFactorizer
    * limit: The limit for max number of iterations.
    */
   WheelFactorizer(const BitVector& n, uint64_t limit);
+
+  /**
+   * WheelFactorizer has a member (d_inc) that points to its own members. We
+   * don't need to copy/move an instance of a WheelFactorizer, thus copy/move
+   * assignment and construction is explicitly disabled.
+   */
+  WheelFactorizer(const WheelFactorizer&)            = delete;
+  WheelFactorizer& operator=(const WheelFactorizer&) = delete;
+  WheelFactorizer(WheelFactorizer&&)                 = delete;
+  WheelFactorizer& operator=(WheelFactorizer&&)      = delete;
+
   /**
    * Get next factor.
    * Returns nullptr when no next factor exists.
