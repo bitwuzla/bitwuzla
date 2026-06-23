@@ -136,6 +136,7 @@ Type::fp_sig_size() const
 uint64_t
 Type::fp_ieee_bv_size() const
 {
+  assert(is_fp());
   return d_data->get_fp_exp_size() + d_data->get_fp_sig_size();
 }
 
@@ -169,6 +170,7 @@ Type::fun_types() const
 const std::optional<std::string>&
 Type::uninterpreted_symbol() const
 {
+  assert(is_uninterpreted());
   return d_data->get_symbol();
 }
 

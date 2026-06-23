@@ -98,6 +98,8 @@ TEST_F(TestTypeManager, fp_type)
 
   ASSERT_EQ(fp16.fp_exp_size(), 5);
   ASSERT_EQ(fp16.fp_sig_size(), 11);
+  ASSERT_EQ(fp16.fp_ieee_bv_size(), 16);
+  ASSERT_EQ(fp32.fp_ieee_bv_size(), 32);
 
   ASSERT_NE(fp16, fp32);
   ASSERT_EQ(fp16, tm.mk_fp_type(5, 11));
@@ -180,6 +182,35 @@ TEST_F(TestTypeManager, fun_type)
   ASSERT_NE(fun_type, tm.mk_fun_type({bool_type, array_type}));
   ASSERT_NE(fun_type, fp16);
   ASSERT_NE(fun_type, bv32);
+}
+
+TEST_F(TestTypeManager, uninterpreted_type)
+{
+  TypeManager tm;
+  Type u  = tm.mk_uninterpreted_type("S");
+  Type u2 = tm.mk_uninterpreted_type();
+
+  ASSERT_TRUE(u.is_uninterpreted());
+  ASSERT_FALSE(u.is_bool());
+  ASSERT_FALSE(u.is_bv());
+  ASSERT_FALSE(u.is_fp());
+  ASSERT_FALSE(u.is_rm());
+  ASSERT_FALSE(u.is_array());
+  ASSERT_FALSE(u.is_fun());
+
+  ASSERT_TRUE(u.uninterpreted_symbol().has_value());
+  ASSERT_EQ(*u.uninterpreted_symbol(), "S");
+  ASSERT_FALSE(u2.uninterpreted_symbol().has_value());
+}
+
+// Typed accessors must assert on a wrong-kind type rather than dereferencing
+// d_data and failing deep inside std::get / on a null pointer.
+TEST_F(TestTypeManager, accessor_wrong_kind)
+{
+  TypeManager tm;
+  Type bv32 = tm.mk_bv_type(32);
+  ASSERT_DEATH_DEBUG(bv32.fp_ieee_bv_size(), "is_fp");
+  ASSERT_DEATH_DEBUG(bv32.uninterpreted_symbol(), "is_uninterpreted");
 }
 
 TEST_F(TestTypeManager, hash_type)
