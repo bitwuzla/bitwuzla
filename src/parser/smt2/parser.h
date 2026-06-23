@@ -718,7 +718,7 @@ class Parser : public bzla::parser::Parser
     item.d_item  = t;
     if (coo)
     {
-      d_work.back().d_coo = *coo;
+      item.d_coo = *coo;
     }
   }
 
