@@ -643,6 +643,13 @@ TEST_F(TestRewriterCore, core_distinct_card)
         d_nm.mk_node(Kind::DISTINCT, {a, b, c, d, e}));
   }
 
+  // Only run this test with external solver binary, not with internal
+  // solving context. We disable rewriting and preprocessing in the internal
+  // solving context and thus this test is too slow.
+  if (s_solver_binary == nullptr)
+  {
+    GTEST_SKIP();
+  }
   {
     Type t = d_nm.mk_fp_type(3, 8);
     // |fp(3, 8)| = 3 + 2^8 * (2^3 - 1) = 1795

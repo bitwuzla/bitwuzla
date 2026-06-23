@@ -16,6 +16,7 @@
 #include "rewrite/rewriter.h"
 #include "sat/sat_solver_factory.h"
 #include "solver/fp/floating_point.h"
+#include "solving_context.h"
 
 namespace bzla::test {
 
@@ -112,11 +113,6 @@ class TestRewriter : public ::testing::Test
                       const Type& type,
                       const std::vector<uint64_t>& indices = {})
   {
-    if (s_solver_binary == nullptr)
-    {
-      GTEST_SKIP_("SOLVER_BINARY environment variable not set.");
-    }
-
     size_t num_children = node::KindInfo::num_children(kind);
     size_t num_indices  = node::KindInfo::num_indices(kind);
     ASSERT_EQ(indices.size(), num_indices);
@@ -149,25 +145,32 @@ class TestRewriter : public ::testing::Test
     }
 
     Node node = d_nm.mk_node(kind, children, indices);
-
-    std::stringstream ss;
-    for (const Node& child : children)
-    {
-      ss << "(declare-const " << child << " " << child.type() << ")\n";
-    }
     Env env(d_nm, d_sat_factory);
-    ss << "(assert (distinct " << node << " " << env.rewriter().rewrite(node)
-       << "))\n";
-    ASSERT_EQ(check_sat(ss), "unsat");
+    Node res = env.rewriter().rewrite(node);
+    if (s_solver_binary)
+    {
+      std::stringstream ss;
+      for (const Node& child : children)
+      {
+        ss << "(declare-const " << child << " " << child.type() << ")\n";
+      }
+      ss << "(assert (distinct " << node << " " << res << "))\n";
+      ASSERT_EQ(check_sat(ss), "unsat");
+    }
+    else
+    {
+      d_options.preprocess.set(false);
+      d_options.rewrite_level.set(0);
+      sat::SatSolverFactory sat_factory(d_options);
+      SolvingContext ctx(d_nm, d_options, sat_factory);
+      ctx.assert_formula(d_nm.mk_node(node::Kind::DISTINCT, {node, res}));
+      ASSERT_EQ(ctx.solve(), Result::UNSAT);
+    }
   }
 
   template <RewriteRuleKind K>
   void test_rule(const Node& node)
   {
-    if (s_solver_binary == nullptr)
-    {
-      GTEST_SKIP_("SOLVER_BINARY environment variable not set.");
-    }
     Env env(d_nm, d_sat_factory);
     Rewriter& rewriter = env.rewriter();
     std::stringstream ss;
@@ -180,7 +183,7 @@ class TestRewriter : public ::testing::Test
       auto [it, inserted] = visited.emplace(cur);
       if (inserted)
       {
-        if (cur.is_const())
+        if (s_solver_binary && cur.is_const())
         {
           ss << "(declare-const " << cur << " " << cur.type() << ")\n";
         }
@@ -196,8 +199,20 @@ class TestRewriter : public ::testing::Test
     }
     assert(node != res);
     ASSERT_NE(node, res);
-    ss << "(assert (distinct " << node << " " << res << "))\n";
-    ASSERT_EQ(check_sat(ss), "unsat");
+    if (s_solver_binary)
+    {
+      ss << "(assert (distinct " << node << " " << res << "))\n";
+      ASSERT_EQ(check_sat(ss), "unsat");
+    }
+    else
+    {
+      d_options.preprocess.set(false);
+      d_options.rewrite_level.set(0);
+      sat::SatSolverFactory sat_factory(d_options);
+      SolvingContext ctx(d_nm, d_options, sat_factory);
+      ctx.assert_formula(d_nm.mk_node(node::Kind::DISTINCT, {node, res}));
+      ASSERT_EQ(ctx.solve(), Result::UNSAT);
+    }
   }
 
   template <RewriteRuleKind K>
