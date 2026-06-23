@@ -97,7 +97,7 @@ BvInterpolator::interpolant(const std::vector<Node>& ppA,
       label_lemma(var_labels,
                   clause_labels,
                   term_labels,
-                  d_am && d_am->is_processed(a) ? d_am->get_processed(a) : a);
+                  d_am ? d_am->get_processed(a) : a);
     }
   }
 
@@ -139,9 +139,9 @@ BvInterpolator::interpolant(const std::vector<Node>& ppA,
 
 #ifndef NDEBUG
   {
+    // First, check preprocessed assertions.
     node_ref_vector visit{ppA.begin(), ppA.end()};
     visit.insert(visit.end(), ppB.begin(), ppB.end());
-    visit.insert(visit.end(), d_lemmas.begin(), d_lemmas.end());
     unordered_node_ref_set cache;
     do
     {
@@ -150,14 +150,27 @@ BvInterpolator::interpolant(const std::vector<Node>& ppA,
       if (cache.insert(cur).second)
       {
         visit.insert(visit.end(), cur.begin(), cur.end());
-        // We label the lemma processed by the abstraction module, since this is
-        // the one bit-blasted, not the original one.
+        assert(term_labels.find(cur) != term_labels.end());
+      }
+    } while (!visit.empty());
+    // Then, check lemmas.
+    visit.insert(visit.end(), d_lemmas.begin(), d_lemmas.end());
+    while (!visit.empty())
+    {
+      const Node& cur = visit.back();
+      visit.pop_back();
+      if (cache.insert(cur).second)
+      {
+        visit.insert(visit.end(), cur.begin(), cur.end());
+        // We label the lemma processed by the abstraction module, since this
+        // is the one bit-blasted, not the original one. The abstraction module,
+        // however, only caches the lemma itself, but not the nodes it contains.
         assert(term_labels.find(d_am && d_am->is_processed(cur)
                                     ? d_am->get_processed(cur)
                                     : cur)
                != term_labels.end());
       }
-    } while (!visit.empty());
+    }
   }
 #endif
 

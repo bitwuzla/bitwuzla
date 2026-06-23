@@ -175,7 +175,7 @@ SolverEngine::unsat_core(std::vector<Node>& core) const
   {
     for (size_t i = 0, size = core.size(); i < size; ++i)
     {
-      if (d_am->is_processed_assertion(core[i]))
+      if (d_am->is_assertion_with_abstractions(core[i]))
       {
         core[i] = d_am->get_original_assertion(core[i]);
       }
@@ -196,11 +196,11 @@ SolverEngine::interpolant(const std::unordered_set<Node>& ppA,
     std::vector<Node> _ppA, _ppB;
     for (const auto& a : ppA)
     {
-      _ppA.push_back(d_am->is_processed(a) ? d_am->get_processed(a) : a);
+      _ppA.push_back(d_am->get_processed(a));
     }
     for (auto& a : ppB)
     {
-      _ppB.push_back(d_am->is_processed(a) ? d_am->get_processed(a) : a);
+      _ppB.push_back(d_am->get_processed(a));
     }
     return d_am->remove_abstractions(d_bv_solver.interpolant(_ppA, _ppB));
   }

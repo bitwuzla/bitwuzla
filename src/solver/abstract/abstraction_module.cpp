@@ -325,7 +325,7 @@ AbstractionModule::process_assertion(const Node& assertion, bool is_lemma)
 }
 
 bool
-AbstractionModule::is_processed_assertion(const Node& assertion)
+AbstractionModule::is_assertion_with_abstractions(const Node& assertion)
 {
   auto it = d_abstraction_cache_assertions.find(assertion);
   return it != d_abstraction_cache_assertions.end() && it->second != assertion;

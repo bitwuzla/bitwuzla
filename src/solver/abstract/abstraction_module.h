@@ -39,7 +39,7 @@ class AbstractionModule
    * @return True if processed assertion contains an abstracted term.
    *         Required for unsat cores.
    */
-  bool is_processed_assertion(const Node& assertion);
+  bool is_assertion_with_abstractions(const Node& assertion);
 
   /**
    * @return Original assertion without abstracted terms.
@@ -48,8 +48,9 @@ class AbstractionModule
   const Node& get_original_assertion(const Node& processed_assertion);
 
   /**
-   * @return True if given node has been processed and is cached in
-   *         d_abstraction_cache. Required for interpolation.
+   * @return True if given node has been processed (is cached in
+   *         d_abstraction_cache) and has abstracted terms.
+   *         Required for interpolation.
    */
   bool is_processed(const Node& assertion);
 
