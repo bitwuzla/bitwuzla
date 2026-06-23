@@ -855,6 +855,7 @@ Parser::parse_line(ParsedKind* pkind, int64_t* id)
   // Ignore optional symbol
   parse_opt_symbol();
 
+  d_statistics.num_lines += 1;
   return true;
 }
 
@@ -1041,7 +1042,7 @@ Parser::error_eof()
 /* Parser::Statistics ------------------------------------------------------- */
 
 Parser::Statistics::Statistics()
-    : num_lines(d_stats.new_stat<uint64_t>("parser::btor2:num_lines")),
+    : num_lines(d_stats.new_stat<uint64_t>("parser::btor2::num_lines")),
       time_parse(
           d_stats.new_stat<util::TimerStatistic>("parser::btor2::time_parse"))
 {
