@@ -3648,18 +3648,10 @@ RewriteRule<RewriteRuleKind::BV_ROL_ELIM>::_apply(Rewriter& rewriter,
   const Node& bits_left = rewriter.mk_node(Kind::BV_UREM, {node[1], num_bits});
   const Node& bits_right =
       rewriter.mk_node(Kind::BV_SUB, {num_bits, bits_left});
-  const Node& rol =
-      rewriter.mk_node(Kind::BV_OR,
-                       {rewriter.mk_node(Kind::BV_SHL, {node[0], bits_left}),
-                        rewriter.mk_node(Kind::BV_SHR, {node[0], bits_right})});
-
-  // Check if we have to rotate (num_bits > 0)
   return rewriter.mk_node(
-      Kind::ITE,
-      {rewriter.mk_node(Kind::EQUAL,
-                        {num_bits, nm.mk_value(BitVector::mk_zero(size))}),
-       node[0],
-       rol});
+      Kind::BV_OR,
+      {rewriter.mk_node(Kind::BV_SHL, {node[0], bits_left}),
+       rewriter.mk_node(Kind::BV_SHR, {node[0], bits_right})});
 }
 
 template <>
@@ -3698,18 +3690,10 @@ RewriteRule<RewriteRuleKind::BV_ROR_ELIM>::_apply(Rewriter& rewriter,
   const Node& bits_right = rewriter.mk_node(Kind::BV_UREM, {node[1], num_bits});
   const Node& bits_left =
       rewriter.mk_node(Kind::BV_SUB, {num_bits, bits_right});
-  const Node& rol =
-      rewriter.mk_node(Kind::BV_OR,
-                       {rewriter.mk_node(Kind::BV_SHL, {node[0], bits_left}),
-                        rewriter.mk_node(Kind::BV_SHR, {node[0], bits_right})});
-
-  // Check if we have to rotate (num_bits > 0)
   return rewriter.mk_node(
-      Kind::ITE,
-      {rewriter.mk_node(Kind::EQUAL,
-                        {num_bits, nm.mk_value(BitVector::mk_zero(size))}),
-       node[0],
-       rol});
+      Kind::BV_OR,
+      {rewriter.mk_node(Kind::BV_SHL, {node[0], bits_left}),
+       rewriter.mk_node(Kind::BV_SHR, {node[0], bits_right})});
 }
 
 template <>
