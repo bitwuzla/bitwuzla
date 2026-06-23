@@ -126,4 +126,19 @@ cardinality_lt(const Type& type, uint64_t bound)
   return card(type, b) < b;
 }
 
+bool
+cardinality_gt(const Type& type, uint64_t bound)
+{
+  // card() saturates at its bound, so to distinguish cardinality > bound from
+  // cardinality == bound we must allow the computation to reach bound + 1.
+  Integer b(bound);
+  return card(type, b + 1) > b;
+}
+
+Integer
+cardinality_min(const Type& type, uint64_t bound)
+{
+  return card(type, Integer(bound));
+}
+
 }  // namespace bzla::type

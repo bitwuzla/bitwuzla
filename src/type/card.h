@@ -14,6 +14,7 @@
 #include <cstdint>
 
 #include "type/type.h"
+#include "util/integer.h"
 
 namespace bzla::type {
 
@@ -22,11 +23,34 @@ namespace bzla::type {
  *
  * The cardinality is computed in a saturating fashion: the computation stops as
  * soon as the cardinality is known to reach `bound`. This avoids constructing
- * the astronomically large (and potentially unrepresentable) cardinalities of
- * array and function types, whose exact value is irrelevant once it exceeds the
- * bound we compare against.
+ * the large (and potentially unrepresentable) cardinalities of array and
+ * function types, whose exact value is irrelevant once it exceeds the bound we
+ * compare against.
  */
 bool cardinality_lt(const Type& type, uint64_t bound);
+
+/**
+ * Determine whether the cardinality of `type` is strictly greater than
+ * `bound`.
+ *
+ * The cardinality is computed in a saturating fashion: the computation stops as
+ * soon as the cardinality is known to reach `bound`. This avoids constructing
+ * the large (and potentially unrepresentable) cardinalities of array and
+ * function types, whose exact value is irrelevant once it exceeds the bound we
+ * compare against.
+ */
+bool cardinality_gt(const Type& type, uint64_t bound);
+
+/**
+ * Compute min(cardinality(type), bound).
+ *
+ * The cardinality is computed in a saturating fashion: the computation stops as
+ * soon as the cardinality is known to reach `bound`, which is returned in that
+ * case. This avoids constructing the large (and potentially unrepresentable)
+ * cardinalities of array and function types when only a bounded value is
+ * required.
+ */
+util::Integer cardinality_min(const Type& type, uint64_t bound);
 
 }  // namespace bzla::type
 
