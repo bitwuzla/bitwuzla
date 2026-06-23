@@ -128,15 +128,14 @@ class AigManager
   /** AND gate cache used for hash consing. */
   AigNodeUniqueTable d_unique_table;
 
-  /** AIG node representing true. */
-  AigNode d_true;
-  /** AIG node representing false. */
-  AigNode d_false;
-
   /** Indicates whether AIG manager is in garbage collection mode. */
   bool d_gc_mode = false;
 
   Statistics d_statistics;
+
+  /** AIG nodes representing true/false. Make sure these get destroyed first. */
+  AigNode d_true;
+  AigNode d_false;
 };
 
 }  // namespace bzla::bitblast
