@@ -1990,7 +1990,8 @@ TEST_F(TestRewriterBv, bv_shl_const)
       Kind::BV_SHL, {a64, d_nm.mk_value(BitVector::from_ui(64, 24))}));
   test_rule<kind>(d_nm.mk_node(
       Kind::BV_SHL, {a65, d_nm.mk_value(BitVector::from_ui(65, 24))}));
-  test_rule<kind>(d_nm.mk_node(Kind::BV_SHL, {d_bv4_a, d_bv4_b}));
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_SHL, {d_bv4_a, d_bv4_b}));
 }
 
 /* bvshr -------------------------------------------------------------------- */
@@ -2037,7 +2038,8 @@ TEST_F(TestRewriterBv, bv_shr_const)
       Kind::BV_SHR, {a64, d_nm.mk_value(BitVector::from_ui(64, 24))}));
   test_rule<kind>(d_nm.mk_node(
       Kind::BV_SHR, {a65, d_nm.mk_value(BitVector::from_ui(65, 24))}));
-  test_rule<kind>(d_nm.mk_node(Kind::BV_SHR, {d_bv4_a, d_bv4_b}));
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_SHR, {d_bv4_a, d_bv4_b}));
 }
 
 TEST_F(TestRewriterBv, bv_shr_same)
@@ -2632,7 +2634,8 @@ TEST_F(TestRewriterBv, bv_ashr_const)
       Kind::BV_ASHR, {a64, d_nm.mk_value(BitVector::from_ui(64, 24))}));
   test_rule<kind>(d_nm.mk_node(
       Kind::BV_ASHR, {a65, d_nm.mk_value(BitVector::from_ui(65, 24))}));
-  test_rule<kind>(d_nm.mk_node(Kind::BV_ASHR, {d_bv4_a, d_bv4_b}));
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_ASHR, {d_bv4_a, d_bv4_b}));
 }
 
 TEST_F(TestRewriterBv, bv_comp_eval)

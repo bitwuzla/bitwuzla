@@ -1207,8 +1207,8 @@ RewriteRule<RewriteRuleKind::BV_ASHR_CONST>::_apply(Rewriter& rewriter,
       padding = shift.to_uint64(false);
     }
 
-    Node zero = rewriter.nm().mk_value(BitVector(padding));
-    Node ones = rewriter.nm().mk_value(zero.value<BitVector>().bvneg());
+    Node zero = rewriter.nm().mk_value(BitVector::mk_zero(padding));
+    Node ones = rewriter.nm().mk_value(BitVector::mk_ones(padding));
 
     Node msb =
         rewriter.mk_node(Kind::BV_EXTRACT, {node[0]}, {size - 1, size - 1});
