@@ -196,11 +196,11 @@ SolverEngine::interpolant(const std::unordered_set<Node>& ppA,
     std::vector<Node> _ppA, _ppB;
     for (const auto& a : ppA)
     {
-      _ppA.push_back(d_am->process_assertion(a, false));
+      _ppA.push_back(d_am->is_processed(a) ? d_am->get_processed(a) : a);
     }
     for (auto& a : ppB)
     {
-      _ppB.push_back(d_am->process_assertion(a, false));
+      _ppB.push_back(d_am->is_processed(a) ? d_am->get_processed(a) : a);
     }
     return d_am->remove_abstractions(d_bv_solver.interpolant(_ppA, _ppB));
   }
