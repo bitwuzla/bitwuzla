@@ -33,6 +33,12 @@ TEST_F(TestNode, node_ctor_dtor)
   ASSERT_EQ(n.id(), 0);
   ASSERT_EQ(n.num_children(), 0);
   ASSERT_EQ(n.begin(), n.end());
+  // The kind predicates must be null-safe like the accessors above and report
+  // false for a null node rather than dereferencing the null payload.
+  ASSERT_FALSE(n.is_value());
+  ASSERT_FALSE(n.is_const());
+  ASSERT_FALSE(n.is_variable());
+  ASSERT_FALSE(n.is_inverted());
 }
 
 TEST_F(TestNode, node_move)

@@ -105,26 +105,26 @@ Node::type() const
 bool
 Node::is_value() const
 {
-  return d_data->get_kind() == node::Kind::VALUE;
+  return kind() == node::Kind::VALUE;
 }
 
 bool
 Node::is_const() const
 {
-  return d_data->get_kind() == node::Kind::CONSTANT;
+  return kind() == node::Kind::CONSTANT;
 }
 
 bool
 Node::is_variable() const
 {
-  return d_data->get_kind() == node::Kind::VARIABLE;
+  return kind() == node::Kind::VARIABLE;
 }
 
 bool
 Node::is_inverted() const
 {
-  return d_data->get_kind() == node::Kind::NOT
-         || d_data->get_kind() == node::Kind::BV_NOT;
+  node::Kind k = kind();
+  return k == node::Kind::NOT || k == node::Kind::BV_NOT;
 }
 
 size_t
