@@ -327,6 +327,10 @@ substitute(NodeManager& nm,
 Node
 invert_node(NodeManager& nm, const Node& node)
 {
+  if (node.is_inverted())
+  {
+    return node[0];
+  }
   const Type& type = node.type();
   if (type.is_bv())
   {

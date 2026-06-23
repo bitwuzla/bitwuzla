@@ -11,6 +11,7 @@
 #include <gtest/gtest.h>
 
 #include "node/node_manager.h"
+#include "node/node_utils.h"
 #include "rewrite/rewriter.h"
 #include "rewrite/rewrites_bool.h"
 #include "test/unit/rewrite/test_rewriter.h"
@@ -18,6 +19,7 @@
 namespace bzla::test {
 
 using namespace bzla::node;
+using namespace bzla::node::utils;
 
 class TestRewriterBool : public TestRewriter
 {
@@ -107,7 +109,7 @@ TEST_F(TestRewriterBool, bool_and_idem2)
   test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::AND, {d_a, d_b}));
   test_rule_does_not_apply<kind>(
       d_nm.mk_node(Kind::AND,
-                   {d_nm.invert_node(d_nm.mk_node(Kind::AND, {d_a, d_b})),
+                   {invert_node(d_nm, d_nm.mk_node(Kind::AND, {d_a, d_b})),
                     d_nm.mk_node(Kind::AND, {d_a, d_c})}));
 }
 
@@ -115,8 +117,8 @@ TEST_F(TestRewriterBool, bool_and_contra1)
 {
   constexpr RewriteRuleKind kind = RewriteRuleKind::AND_CONTRA1;
   //// applies
-  test_rule<kind>(d_nm.mk_node(Kind::AND, {d_nm.invert_node(d_a), d_a}));
-  test_rule<kind>(d_nm.mk_node(Kind::AND, {d_a, d_nm.invert_node(d_a)}));
+  test_rule<kind>(d_nm.mk_node(Kind::AND, {invert_node(d_nm, d_a), d_a}));
+  test_rule<kind>(d_nm.mk_node(Kind::AND, {d_a, invert_node(d_nm, d_a)}));
   //// does not apply
   test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::AND, {d_a, d_a}));
 }
@@ -128,34 +130,34 @@ TEST_F(TestRewriterBool, bool_and_contra2)
   test_rule<kind>(
       d_nm.mk_node(Kind::AND,
                    {d_nm.mk_node(Kind::AND, {d_a, d_b}),
-                    d_nm.mk_node(Kind::AND, {d_nm.invert_node(d_a), d_c})}));
+                    d_nm.mk_node(Kind::AND, {invert_node(d_nm, d_a), d_c})}));
   test_rule<kind>(
       d_nm.mk_node(Kind::AND,
-                   {d_nm.mk_node(Kind::AND, {d_nm.invert_node(d_a), d_b}),
+                   {d_nm.mk_node(Kind::AND, {invert_node(d_nm, d_a), d_b}),
                     d_nm.mk_node(Kind::AND, {d_a, d_c})}));
   test_rule<kind>(
       d_nm.mk_node(Kind::AND,
                    {d_nm.mk_node(Kind::AND, {d_a, d_b}),
-                    d_nm.mk_node(Kind::AND, {d_c, d_nm.invert_node(d_a)})}));
+                    d_nm.mk_node(Kind::AND, {d_c, invert_node(d_nm, d_a)})}));
   test_rule<kind>(
       d_nm.mk_node(Kind::AND,
-                   {d_nm.mk_node(Kind::AND, {d_nm.invert_node(d_a), d_b}),
+                   {d_nm.mk_node(Kind::AND, {invert_node(d_nm, d_a), d_b}),
                     d_nm.mk_node(Kind::AND, {d_c, d_a})}));
   test_rule<kind>(
       d_nm.mk_node(Kind::AND,
                    {d_nm.mk_node(Kind::AND, {d_b, d_a}),
-                    d_nm.mk_node(Kind::AND, {d_nm.invert_node(d_a), d_c})}));
+                    d_nm.mk_node(Kind::AND, {invert_node(d_nm, d_a), d_c})}));
   test_rule<kind>(
       d_nm.mk_node(Kind::AND,
-                   {d_nm.mk_node(Kind::AND, {d_b, d_nm.invert_node(d_a)}),
+                   {d_nm.mk_node(Kind::AND, {d_b, invert_node(d_nm, d_a)}),
                     d_nm.mk_node(Kind::AND, {d_a, d_c})}));
   test_rule<kind>(
       d_nm.mk_node(Kind::AND,
                    {d_nm.mk_node(Kind::AND, {d_b, d_a}),
-                    d_nm.mk_node(Kind::AND, {d_c, d_nm.invert_node(d_a)})}));
+                    d_nm.mk_node(Kind::AND, {d_c, invert_node(d_nm, d_a)})}));
   test_rule<kind>(
       d_nm.mk_node(Kind::AND,
-                   {d_nm.mk_node(Kind::AND, {d_b, d_nm.invert_node(d_a)}),
+                   {d_nm.mk_node(Kind::AND, {d_b, invert_node(d_nm, d_a)}),
                     d_nm.mk_node(Kind::AND, {d_c, d_a})}));
   //// does not apply
   test_rule_does_not_apply<kind>(
@@ -169,13 +171,17 @@ TEST_F(TestRewriterBool, bool_and_contra3)
   constexpr RewriteRuleKind kind = RewriteRuleKind::AND_CONTRA3;
   //// applies
   test_rule<kind>(d_nm.mk_node(
-      Kind::AND, {d_a, d_nm.mk_node(Kind::AND, {d_nm.invert_node(d_a), d_b})}));
+      Kind::AND,
+      {d_a, d_nm.mk_node(Kind::AND, {invert_node(d_nm, d_a), d_b})}));
   test_rule<kind>(d_nm.mk_node(
-      Kind::AND, {d_a, d_nm.mk_node(Kind::AND, {d_b, d_nm.invert_node(d_a)})}));
+      Kind::AND,
+      {d_a, d_nm.mk_node(Kind::AND, {d_b, invert_node(d_nm, d_a)})}));
   test_rule<kind>(d_nm.mk_node(
-      Kind::AND, {d_nm.invert_node(d_a), d_nm.mk_node(Kind::AND, {d_a, d_b})}));
+      Kind::AND,
+      {invert_node(d_nm, d_a), d_nm.mk_node(Kind::AND, {d_a, d_b})}));
   test_rule<kind>(d_nm.mk_node(
-      Kind::AND, {d_nm.invert_node(d_a), d_nm.mk_node(Kind::AND, {d_b, d_a})}));
+      Kind::AND,
+      {invert_node(d_nm, d_a), d_nm.mk_node(Kind::AND, {d_b, d_a})}));
   //// does not apply
   test_rule_does_not_apply<kind>(
       d_nm.mk_node(Kind::AND, {d_a, d_nm.mk_node(Kind::AND, {d_a, d_b})}));
@@ -188,12 +194,16 @@ TEST_F(TestRewriterBool, bool_and_subsum1)
   test_rule<kind>(d_nm.mk_node(
       Kind::AND,
       {d_nm.mk_node(Kind::AND, {d_a, d_b}),
-       d_nm.invert_node(d_nm.mk_node(
-           Kind::AND, {d_nm.invert_node(d_a), d_nm.invert_node(d_c)}))}));
+       invert_node(
+           d_nm,
+           d_nm.mk_node(Kind::AND,
+                        {invert_node(d_nm, d_a), invert_node(d_nm, d_c)}))}));
   test_rule<kind>(d_nm.mk_node(
       Kind::AND,
-      {d_nm.invert_node(d_nm.mk_node(
-           Kind::AND, {d_nm.invert_node(d_a), d_nm.invert_node(d_c)})),
+      {invert_node(
+           d_nm,
+           d_nm.mk_node(Kind::AND,
+                        {invert_node(d_nm, d_a), invert_node(d_nm, d_c)})),
        d_nm.mk_node(Kind::AND, {d_a, d_b})}));
   test_rule<kind>(d_nm.mk_node(Kind::AND,
                                {d_nm.mk_node(Kind::AND, {d_a, d_b}),
@@ -204,12 +214,16 @@ TEST_F(TestRewriterBool, bool_and_subsum1)
   test_rule<kind>(d_nm.mk_node(
       Kind::AND,
       {d_nm.mk_node(Kind::AND, {d_a, d_b}),
-       d_nm.invert_node(d_nm.mk_node(
-           Kind::AND, {d_nm.invert_node(d_c), d_nm.invert_node(d_a)}))}));
+       invert_node(
+           d_nm,
+           d_nm.mk_node(Kind::AND,
+                        {invert_node(d_nm, d_c), invert_node(d_nm, d_a)}))}));
   test_rule<kind>(d_nm.mk_node(
       Kind::AND,
-      {d_nm.invert_node(d_nm.mk_node(
-           Kind::AND, {d_nm.invert_node(d_c), d_nm.invert_node(d_a)})),
+      {invert_node(
+           d_nm,
+           d_nm.mk_node(Kind::AND,
+                        {invert_node(d_nm, d_c), invert_node(d_nm, d_a)})),
        d_nm.mk_node(Kind::AND, {d_a, d_b})}));
   test_rule<kind>(d_nm.mk_node(Kind::AND,
                                {d_nm.mk_node(Kind::AND, {d_a, d_b}),
@@ -220,12 +234,16 @@ TEST_F(TestRewriterBool, bool_and_subsum1)
   test_rule<kind>(d_nm.mk_node(
       Kind::AND,
       {d_nm.mk_node(Kind::AND, {d_b, d_a}),
-       d_nm.invert_node(d_nm.mk_node(
-           Kind::AND, {d_nm.invert_node(d_a), d_nm.invert_node(d_c)}))}));
+       invert_node(
+           d_nm,
+           d_nm.mk_node(Kind::AND,
+                        {invert_node(d_nm, d_a), invert_node(d_nm, d_c)}))}));
   test_rule<kind>(d_nm.mk_node(
       Kind::AND,
-      {d_nm.invert_node(d_nm.mk_node(
-           Kind::AND, {d_nm.invert_node(d_a), d_nm.invert_node(d_c)})),
+      {invert_node(
+           d_nm,
+           d_nm.mk_node(Kind::AND,
+                        {invert_node(d_nm, d_a), invert_node(d_nm, d_c)})),
        d_nm.mk_node(Kind::AND, {d_b, d_a})}));
   test_rule<kind>(d_nm.mk_node(Kind::AND,
                                {d_nm.mk_node(Kind::AND, {d_b, d_a}),
@@ -236,12 +254,16 @@ TEST_F(TestRewriterBool, bool_and_subsum1)
   test_rule<kind>(d_nm.mk_node(
       Kind::AND,
       {d_nm.mk_node(Kind::AND, {d_b, d_a}),
-       d_nm.invert_node(d_nm.mk_node(
-           Kind::AND, {d_nm.invert_node(d_c), d_nm.invert_node(d_a)}))}));
+       invert_node(
+           d_nm,
+           d_nm.mk_node(Kind::AND,
+                        {invert_node(d_nm, d_c), invert_node(d_nm, d_a)}))}));
   test_rule<kind>(d_nm.mk_node(
       Kind::AND,
-      {d_nm.invert_node(d_nm.mk_node(
-           Kind::AND, {d_nm.invert_node(d_c), d_nm.invert_node(d_a)})),
+      {invert_node(
+           d_nm,
+           d_nm.mk_node(Kind::AND,
+                        {invert_node(d_nm, d_c), invert_node(d_nm, d_a)})),
        d_nm.mk_node(Kind::AND, {d_b, d_a})}));
   test_rule<kind>(d_nm.mk_node(Kind::AND,
                                {d_nm.mk_node(Kind::AND, {d_b, d_a}),
@@ -253,13 +275,15 @@ TEST_F(TestRewriterBool, bool_and_subsum1)
   test_rule_does_not_apply<kind>(d_nm.mk_node(
       Kind::AND,
       {d_nm.mk_node(Kind::AND, {d_a, d_b}),
-       d_nm.invert_node(d_nm.mk_node(
-           Kind::AND, {d_nm.invert_node(d_c), d_nm.invert_node(d_d)}))}));
+       invert_node(
+           d_nm,
+           d_nm.mk_node(Kind::AND,
+                        {invert_node(d_nm, d_c), invert_node(d_nm, d_d)}))}));
   test_rule_does_not_apply<kind>(d_nm.mk_node(
       Kind::AND,
       {d_nm.mk_node(Kind::AND, {d_a, d_b}),
        d_nm.mk_node(Kind::AND,
-                    {d_nm.invert_node(d_a), d_nm.invert_node(d_c)})}));
+                    {invert_node(d_nm, d_a), invert_node(d_nm, d_c)})}));
 }
 
 TEST_F(TestRewriterBool, bool_and_subsum2)
@@ -269,8 +293,10 @@ TEST_F(TestRewriterBool, bool_and_subsum2)
   test_rule<kind>(d_nm.mk_node(
       Kind::AND,
       {d_a,
-       d_nm.invert_node(d_nm.mk_node(
-           Kind::AND, {d_nm.invert_node(d_a), d_nm.invert_node(d_b)}))}));
+       invert_node(
+           d_nm,
+           d_nm.mk_node(Kind::AND,
+                        {invert_node(d_nm, d_a), invert_node(d_nm, d_b)}))}));
   test_rule<kind>(
       d_nm.mk_node(Kind::AND, {d_nm.mk_node(Kind::OR, {d_a, d_b}), d_a}));
   test_rule<kind>(
@@ -280,8 +306,10 @@ TEST_F(TestRewriterBool, bool_and_subsum2)
   test_rule<kind>(d_nm.mk_node(
       Kind::AND,
       {d_a,
-       d_nm.invert_node(d_nm.mk_node(
-           Kind::AND, {d_nm.invert_node(d_b), d_nm.invert_node(d_a)}))}));
+       invert_node(
+           d_nm,
+           d_nm.mk_node(Kind::AND,
+                        {invert_node(d_nm, d_b), invert_node(d_nm, d_a)}))}));
   test_rule<kind>(
       d_nm.mk_node(Kind::AND, {d_nm.mk_node(Kind::OR, {d_b, d_a}), d_a}));
   test_rule<kind>(
@@ -292,13 +320,17 @@ TEST_F(TestRewriterBool, bool_and_subsum2)
   test_rule_does_not_apply<kind>(d_nm.mk_node(
       Kind::AND,
       {d_a,
-       d_nm.invert_node(d_nm.mk_node(
-           Kind::AND, {d_nm.invert_node(d_b), d_nm.invert_node(d_c)}))}));
+       invert_node(
+           d_nm,
+           d_nm.mk_node(Kind::AND,
+                        {invert_node(d_nm, d_b), invert_node(d_nm, d_c)}))}));
   test_rule_does_not_apply<kind>(d_nm.mk_node(
       Kind::AND,
       {d_a,
-       d_nm.invert_node(d_nm.mk_node(
-           Kind::AND, {d_nm.invert_node(d_c), d_nm.invert_node(d_d)}))}));
+       invert_node(
+           d_nm,
+           d_nm.mk_node(Kind::AND,
+                        {invert_node(d_nm, d_c), invert_node(d_nm, d_d)}))}));
 }
 
 TEST_F(TestRewriterBool, bool_and_not_and1)
@@ -308,45 +340,45 @@ TEST_F(TestRewriterBool, bool_and_not_and1)
   test_rule<kind>(
       d_nm.mk_node(Kind::AND,
                    {d_nm.mk_node(Kind::AND, {d_a, d_b}),
-                    d_nm.invert_node(d_nm.mk_node(Kind::AND, {d_a, d_c}))}));
+                    invert_node(d_nm, d_nm.mk_node(Kind::AND, {d_a, d_c}))}));
   test_rule<kind>(
       d_nm.mk_node(Kind::AND,
                    {d_nm.mk_node(Kind::AND, {d_a, d_b}),
-                    d_nm.invert_node(d_nm.mk_node(Kind::AND, {d_c, d_a}))}));
+                    invert_node(d_nm, d_nm.mk_node(Kind::AND, {d_c, d_a}))}));
   test_rule<kind>(
       d_nm.mk_node(Kind::AND,
                    {d_nm.mk_node(Kind::AND, {d_b, d_a}),
-                    d_nm.invert_node(d_nm.mk_node(Kind::AND, {d_a, d_c}))}));
+                    invert_node(d_nm, d_nm.mk_node(Kind::AND, {d_a, d_c}))}));
   test_rule<kind>(
       d_nm.mk_node(Kind::AND,
                    {d_nm.mk_node(Kind::AND, {d_b, d_a}),
-                    d_nm.invert_node(d_nm.mk_node(Kind::AND, {d_c, d_a}))}));
+                    invert_node(d_nm, d_nm.mk_node(Kind::AND, {d_c, d_a}))}));
   test_rule<kind>(
       d_nm.mk_node(Kind::AND,
-                   {d_nm.invert_node(d_nm.mk_node(Kind::AND, {d_a, d_c})),
+                   {invert_node(d_nm, d_nm.mk_node(Kind::AND, {d_a, d_c})),
                     d_nm.mk_node(Kind::AND, {d_a, d_b})}));
   test_rule<kind>(
       d_nm.mk_node(Kind::AND,
-                   {d_nm.invert_node(d_nm.mk_node(Kind::AND, {d_c, d_a})),
+                   {invert_node(d_nm, d_nm.mk_node(Kind::AND, {d_c, d_a})),
                     d_nm.mk_node(Kind::AND, {d_a, d_b})}));
   test_rule<kind>(
       d_nm.mk_node(Kind::AND,
-                   {d_nm.invert_node(d_nm.mk_node(Kind::AND, {d_a, d_c})),
+                   {invert_node(d_nm, d_nm.mk_node(Kind::AND, {d_a, d_c})),
                     d_nm.mk_node(Kind::AND, {d_b, d_a})}));
   test_rule<kind>(
       d_nm.mk_node(Kind::AND,
-                   {d_nm.invert_node(d_nm.mk_node(Kind::AND, {d_c, d_a})),
+                   {invert_node(d_nm, d_nm.mk_node(Kind::AND, {d_c, d_a})),
                     d_nm.mk_node(Kind::AND, {d_b, d_a})}));
   //// does not apply
   test_rule_does_not_apply<kind>(
       d_nm.mk_node(Kind::AND,
                    {d_nm.mk_node(Kind::AND, {d_a, d_b}),
-                    d_nm.invert_node(d_nm.mk_node(Kind::AND, {d_c, d_d}))}));
-  test_rule_does_not_apply<kind>(
-      d_nm.mk_node(Kind::AND,
-                   {d_nm.mk_node(Kind::AND, {d_a, d_b}),
-                    d_nm.invert_node(d_nm.mk_node(
-                        Kind::AND, {d_nm.invert_node(d_a), d_c}))}));
+                    invert_node(d_nm, d_nm.mk_node(Kind::AND, {d_c, d_d}))}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::AND,
+      {d_nm.mk_node(Kind::AND, {d_a, d_b}),
+       invert_node(d_nm,
+                   d_nm.mk_node(Kind::AND, {invert_node(d_nm, d_a), d_c}))}));
   test_rule_does_not_apply<kind>(
       d_nm.mk_node(Kind::AND,
                    {d_nm.mk_node(Kind::AND, {d_a, d_b}),
@@ -358,16 +390,21 @@ TEST_F(TestRewriterBool, bool_and_not_and2)
   constexpr RewriteRuleKind kind = RewriteRuleKind::AND_NOT_AND2;
   //// applies
   test_rule<kind>(d_nm.mk_node(
-      Kind::AND, {d_a, d_nm.invert_node(d_nm.mk_node(Kind::AND, {d_a, d_b}))}));
+      Kind::AND,
+      {d_a, invert_node(d_nm, d_nm.mk_node(Kind::AND, {d_a, d_b}))}));
   test_rule<kind>(d_nm.mk_node(
-      Kind::AND, {d_b, d_nm.invert_node(d_nm.mk_node(Kind::AND, {d_a, d_b}))}));
+      Kind::AND,
+      {d_b, invert_node(d_nm, d_nm.mk_node(Kind::AND, {d_a, d_b}))}));
   test_rule<kind>(d_nm.mk_node(
-      Kind::AND, {d_nm.invert_node(d_nm.mk_node(Kind::AND, {d_a, d_b})), d_a}));
+      Kind::AND,
+      {invert_node(d_nm, d_nm.mk_node(Kind::AND, {d_a, d_b})), d_a}));
   test_rule<kind>(d_nm.mk_node(
-      Kind::AND, {d_nm.invert_node(d_nm.mk_node(Kind::AND, {d_a, d_b})), d_b}));
+      Kind::AND,
+      {invert_node(d_nm, d_nm.mk_node(Kind::AND, {d_a, d_b})), d_b}));
   //// does not apply
   test_rule_does_not_apply<kind>(d_nm.mk_node(
-      Kind::AND, {d_a, d_nm.invert_node(d_nm.mk_node(Kind::AND, {d_b, d_c}))}));
+      Kind::AND,
+      {d_a, invert_node(d_nm, d_nm.mk_node(Kind::AND, {d_b, d_c}))}));
   test_rule_does_not_apply<kind>(
       d_nm.mk_node(Kind::AND, {d_a, d_nm.mk_node(Kind::AND, {d_a, d_b})}));
 }
@@ -382,7 +419,8 @@ TEST_F(TestRewriterBool, bool_and_idem3)
       d_nm.mk_node(Kind::AND, {d_nm.mk_node(Kind::AND, {d_a, d_c}), d_a}));
   //// does not apply
   test_rule_does_not_apply<kind>(d_nm.mk_node(
-      Kind::AND, {d_nm.invert_node(d_a), d_nm.mk_node(Kind::AND, {d_a, d_c})}));
+      Kind::AND,
+      {invert_node(d_nm, d_a), d_nm.mk_node(Kind::AND, {d_a, d_c})}));
 }
 
 TEST_F(TestRewriterBool, and_bv_lt_false)
@@ -422,100 +460,100 @@ TEST_F(TestRewriterBool, and_bv_lt)
   //// applies
   test_rule<kind>(d_nm.mk_node(
       Kind::AND,
-      {d_nm.invert_node(d_nm.mk_node(Kind::BV_ULT, {d_bv4_a, d_bv4_b})),
-       d_nm.invert_node(d_nm.mk_node(Kind::BV_ULT, {d_bv4_b, d_bv4_a}))}));
+      {invert_node(d_nm, d_nm.mk_node(Kind::BV_ULT, {d_bv4_a, d_bv4_b})),
+       invert_node(d_nm, d_nm.mk_node(Kind::BV_ULT, {d_bv4_b, d_bv4_a}))}));
   test_rule<kind>(d_nm.mk_node(
       Kind::AND,
-      {d_nm.invert_node(d_nm.mk_node(Kind::BV_SLT, {d_bv4_a, d_bv4_b})),
-       d_nm.invert_node(d_nm.mk_node(Kind::BV_SLT, {d_bv4_b, d_bv4_a}))}));
+      {invert_node(d_nm, d_nm.mk_node(Kind::BV_SLT, {d_bv4_a, d_bv4_b})),
+       invert_node(d_nm, d_nm.mk_node(Kind::BV_SLT, {d_bv4_b, d_bv4_a}))}));
   //// does not apply
   test_rule_does_not_apply<kind>(d_nm.mk_node(
       Kind::AND,
       {d_nm.mk_node(Kind::BV_ULT, {d_bv4_a, d_bv4_b}),
-       d_nm.invert_node(d_nm.mk_node(Kind::BV_ULT, {d_bv4_b, d_bv4_a}))}));
+       invert_node(d_nm, d_nm.mk_node(Kind::BV_ULT, {d_bv4_b, d_bv4_a}))}));
   test_rule_does_not_apply<kind>(d_nm.mk_node(
       Kind::AND,
-      {d_nm.invert_node(d_nm.mk_node(Kind::BV_ULT, {d_bv4_a, d_bv4_b})),
+      {invert_node(d_nm, d_nm.mk_node(Kind::BV_ULT, {d_bv4_a, d_bv4_b})),
        d_nm.mk_node(Kind::BV_ULT, {d_bv4_b, d_bv4_a})}));
   test_rule_does_not_apply<kind>(d_nm.mk_node(
       Kind::AND,
-      {d_nm.invert_node(d_nm.mk_node(Kind::BV_ULT, {d_bv4_a, d_bv4_b})),
-       d_nm.invert_node(d_nm.mk_node(Kind::BV_SLT, {d_bv4_b, d_bv4_a}))}));
+      {invert_node(d_nm, d_nm.mk_node(Kind::BV_ULT, {d_bv4_a, d_bv4_b})),
+       invert_node(d_nm, d_nm.mk_node(Kind::BV_SLT, {d_bv4_b, d_bv4_a}))}));
   test_rule_does_not_apply<kind>(d_nm.mk_node(
       Kind::AND,
-      {d_nm.invert_node(d_nm.mk_node(Kind::BV_ULT, {d_bv4_a, d_bv4_b})),
-       d_nm.invert_node(d_nm.mk_node(Kind::BV_SLT, {d_bv4_b, d_bv4_a}))}));
+      {invert_node(d_nm, d_nm.mk_node(Kind::BV_ULT, {d_bv4_a, d_bv4_b})),
+       invert_node(d_nm, d_nm.mk_node(Kind::BV_SLT, {d_bv4_b, d_bv4_a}))}));
   test_rule_does_not_apply<kind>(d_nm.mk_node(
       Kind::AND,
-      {d_nm.invert_node(d_nm.mk_node(Kind::BV_ULT, {d_bv4_a, d_bv4_b})),
-       d_nm.invert_node(d_nm.mk_node(Kind::BV_ULT, {d_bv4_b, d_bv4_c}))}));
+      {invert_node(d_nm, d_nm.mk_node(Kind::BV_ULT, {d_bv4_a, d_bv4_b})),
+       invert_node(d_nm, d_nm.mk_node(Kind::BV_ULT, {d_bv4_b, d_bv4_c}))}));
   test_rule_does_not_apply<kind>(d_nm.mk_node(
       Kind::AND,
-      {d_nm.invert_node(d_nm.mk_node(Kind::BV_SLT, {d_bv4_a, d_bv4_c})),
-       d_nm.invert_node(d_nm.mk_node(Kind::BV_SLT, {d_bv4_b, d_bv4_a}))}));
+      {invert_node(d_nm, d_nm.mk_node(Kind::BV_SLT, {d_bv4_a, d_bv4_c})),
+       invert_node(d_nm, d_nm.mk_node(Kind::BV_SLT, {d_bv4_b, d_bv4_a}))}));
 }
 
 TEST_F(TestRewriterBool, bool_and_resol1)
 {
   constexpr RewriteRuleKind kind = RewriteRuleKind::AND_RESOL1;
   //// applies
-  test_rule<kind>(
-      d_nm.mk_node(Kind::AND,
-                   {d_nm.invert_node(d_nm.mk_node(Kind::AND, {d_a, d_b})),
+  test_rule<kind>(d_nm.mk_node(
+      Kind::AND,
+      {invert_node(d_nm, d_nm.mk_node(Kind::AND, {d_a, d_b})),
 
-                    d_nm.invert_node(d_nm.mk_node(
-                        Kind::AND, {d_a, d_nm.invert_node(d_b)}))}));
-  test_rule<kind>(
-      d_nm.mk_node(Kind::AND,
-                   {
+       invert_node(d_nm,
+                   d_nm.mk_node(Kind::AND, {d_a, invert_node(d_nm, d_b)}))}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::AND,
+      {
 
-                       d_nm.invert_node(d_nm.mk_node(
-                           Kind::AND, {d_a, d_nm.invert_node(d_b)})),
-                       d_nm.invert_node(d_nm.mk_node(Kind::AND, {d_a, d_b}))}));
-  test_rule<kind>(
-      d_nm.mk_node(Kind::AND,
-                   {d_nm.invert_node(d_nm.mk_node(Kind::AND, {d_a, d_b})),
+          invert_node(d_nm,
+                      d_nm.mk_node(Kind::AND, {d_a, invert_node(d_nm, d_b)})),
+          invert_node(d_nm, d_nm.mk_node(Kind::AND, {d_a, d_b}))}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::AND,
+      {invert_node(d_nm, d_nm.mk_node(Kind::AND, {d_a, d_b})),
 
-                    d_nm.invert_node(d_nm.mk_node(
-                        Kind::AND, {d_nm.invert_node(d_b), d_a}))}));
-  test_rule<kind>(
-      d_nm.mk_node(Kind::AND,
-                   {
+       invert_node(d_nm,
+                   d_nm.mk_node(Kind::AND, {invert_node(d_nm, d_b), d_a}))}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::AND,
+      {
 
-                       d_nm.invert_node(d_nm.mk_node(
-                           Kind::AND, {d_nm.invert_node(d_b), d_a})),
-                       d_nm.invert_node(d_nm.mk_node(Kind::AND, {d_a, d_b}))}));
-  test_rule<kind>(
-      d_nm.mk_node(Kind::AND,
-                   {d_nm.invert_node(d_nm.mk_node(Kind::AND, {d_a, d_b})),
+          invert_node(d_nm,
+                      d_nm.mk_node(Kind::AND, {invert_node(d_nm, d_b), d_a})),
+          invert_node(d_nm, d_nm.mk_node(Kind::AND, {d_a, d_b}))}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::AND,
+      {invert_node(d_nm, d_nm.mk_node(Kind::AND, {d_a, d_b})),
 
-                    d_nm.invert_node(d_nm.mk_node(
-                        Kind::AND, {d_b, d_nm.invert_node(d_a)}))}));
-  test_rule<kind>(
-      d_nm.mk_node(Kind::AND,
-                   {
+       invert_node(d_nm,
+                   d_nm.mk_node(Kind::AND, {d_b, invert_node(d_nm, d_a)}))}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::AND,
+      {
 
-                       d_nm.invert_node(d_nm.mk_node(
-                           Kind::AND, {d_b, d_nm.invert_node(d_a)})),
-                       d_nm.invert_node(d_nm.mk_node(Kind::AND, {d_a, d_b}))}));
-  test_rule<kind>(
-      d_nm.mk_node(Kind::AND,
-                   {d_nm.invert_node(d_nm.mk_node(Kind::AND, {d_a, d_b})),
+          invert_node(d_nm,
+                      d_nm.mk_node(Kind::AND, {d_b, invert_node(d_nm, d_a)})),
+          invert_node(d_nm, d_nm.mk_node(Kind::AND, {d_a, d_b}))}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::AND,
+      {invert_node(d_nm, d_nm.mk_node(Kind::AND, {d_a, d_b})),
 
-                    d_nm.invert_node(d_nm.mk_node(
-                        Kind::AND, {d_nm.invert_node(d_a), d_b}))}));
-  test_rule<kind>(
-      d_nm.mk_node(Kind::AND,
-                   {
+       invert_node(d_nm,
+                   d_nm.mk_node(Kind::AND, {invert_node(d_nm, d_a), d_b}))}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::AND,
+      {
 
-                       d_nm.invert_node(d_nm.mk_node(
-                           Kind::AND, {d_nm.invert_node(d_a), d_b})),
-                       d_nm.invert_node(d_nm.mk_node(Kind::AND, {d_a, d_b}))}));
+          invert_node(d_nm,
+                      d_nm.mk_node(Kind::AND, {invert_node(d_nm, d_a), d_b})),
+          invert_node(d_nm, d_nm.mk_node(Kind::AND, {d_a, d_b}))}));
   //// does not apply
   test_rule_does_not_apply<kind>(
       d_nm.mk_node(Kind::AND,
                    {d_nm.mk_node(Kind::AND, {d_a, d_b}),
-                    d_nm.mk_node(Kind::AND, {d_a, d_nm.invert_node(d_b)})}));
+                    d_nm.mk_node(Kind::AND, {d_a, invert_node(d_nm, d_b)})}));
 }
 
 /* implies ------------------------------------------------------------------ */
@@ -565,14 +603,16 @@ TEST_F(TestRewriterBool, bool_not_xor)
 {
   constexpr RewriteRuleKind kind = RewriteRuleKind::NOT_XOR;
   //// applies
-  test_rule<kind>(d_nm.invert_node(d_nm.mk_node(Kind::XOR, {d_a, d_b})));
-  test_rule<kind>(
-      d_nm.invert_node(d_nm.mk_node(Kind::XOR, {d_nm.invert_node(d_a), d_b})));
-  test_rule<kind>(d_nm.invert_node(
-      d_nm.mk_node(Kind::XOR, {d_nm.invert_node(d_a), d_nm.invert_node(d_b)})));
+  test_rule<kind>(invert_node(d_nm, d_nm.mk_node(Kind::XOR, {d_a, d_b})));
+  test_rule<kind>(invert_node(
+      d_nm, d_nm.mk_node(Kind::XOR, {invert_node(d_nm, d_a), d_b})));
+  test_rule<kind>(invert_node(
+      d_nm,
+      d_nm.mk_node(Kind::XOR,
+                   {invert_node(d_nm, d_a), invert_node(d_nm, d_b)})));
   //// does not apply
   test_rule_does_not_apply<kind>(
-      d_nm.invert_node(d_nm.mk_node(Kind::OR, {d_a, d_b})));
+      invert_node(d_nm, d_nm.mk_node(Kind::OR, {d_a, d_b})));
 }
 
 /* or ----------------------------------------------------------------------- */

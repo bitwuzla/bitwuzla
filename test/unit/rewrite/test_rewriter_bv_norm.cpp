@@ -8,11 +8,13 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+#include "node/node_utils.h"
 #include "test/unit/rewrite/test_rewriter.h"
 
 namespace bzla::test {
 
 using namespace bzla::node;
+using namespace bzla::node::utils;
 
 class TestRewriterBvNorm : public TestRewriter
 {
@@ -22,11 +24,12 @@ TEST_F(TestRewriterBvNorm, norm_bv_add_mul)
 {
   constexpr RewriteRuleKind kind = RewriteRuleKind::NORM_BV_ADD_MUL;
   //// applies
-  test_rule<kind>(
-      d_nm.mk_node(Kind::BV_ADD,
-                   {d_nm.invert_node(d_nm.mk_node(
-                        Kind::BV_MUL, {d_bv4_a, d_nm.invert_node(d_bv4_b)})),
-                    d_bv4_one}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_ADD,
+      {invert_node(
+           d_nm,
+           d_nm.mk_node(Kind::BV_MUL, {d_bv4_a, invert_node(d_nm, d_bv4_b)})),
+       d_bv4_one}));
   //// does not apply
   test_rule_does_not_apply<kind>(
       RewriteRule<RewriteRuleKind::BV_NEG_ELIM>::apply(
@@ -40,19 +43,25 @@ TEST_F(TestRewriterBvNorm, norm_bv_not_or_shl)
 {
   constexpr RewriteRuleKind kind = RewriteRuleKind::NORM_BV_NOT_OR_SHL;
   //// applies
-  test_rule<kind>(d_nm.invert_node(d_nm.mk_node(
-      Kind::BV_AND,
-      {d_nm.invert_node(d_bv4_a),
-       d_nm.invert_node(d_nm.mk_node(Kind::BV_SHL, {d_bv4_b, d_bv4_a}))})));
-  test_rule<kind>(d_nm.invert_node(d_nm.mk_node(
-      Kind::BV_AND,
-      {d_nm.invert_node(d_nm.mk_node(Kind::BV_SHL, {d_bv4_b, d_bv4_a})),
-       d_nm.invert_node(d_bv4_a)})));
+  test_rule<kind>(invert_node(
+      d_nm,
+      d_nm.mk_node(
+          Kind::BV_AND,
+          {invert_node(d_nm, d_bv4_a),
+           invert_node(d_nm,
+                       d_nm.mk_node(Kind::BV_SHL, {d_bv4_b, d_bv4_a}))})));
+  test_rule<kind>(invert_node(
+      d_nm,
+      d_nm.mk_node(
+          Kind::BV_AND,
+          {invert_node(d_nm, d_nm.mk_node(Kind::BV_SHL, {d_bv4_b, d_bv4_a})),
+           invert_node(d_nm, d_bv4_a)})));
   //// does not apply
-  test_rule_does_not_apply<kind>(d_nm.invert_node(
-      d_nm.mk_node(Kind::BV_AND,
-                   {d_nm.mk_node(Kind::BV_SHL, {d_bv4_b, d_bv4_a}),
-                    d_nm.invert_node(d_bv4_a)})));
+  test_rule_does_not_apply<kind>(
+      invert_node(d_nm,
+                  d_nm.mk_node(Kind::BV_AND,
+                               {d_nm.mk_node(Kind::BV_SHL, {d_bv4_b, d_bv4_a}),
+                                invert_node(d_nm, d_bv4_a)})));
 }
 
 TEST_F(TestRewriterBvNorm, norm_bv_shl_neg)

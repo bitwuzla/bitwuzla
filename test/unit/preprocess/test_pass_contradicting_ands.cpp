@@ -10,6 +10,7 @@
 
 #include <gtest/gtest.h>
 
+#include "node/node_utils.h"
 #include "option/option.h"
 #include "preprocess/pass/contradicting_ands.h"
 #include "sat/sat_solver_factory.h"
@@ -18,6 +19,7 @@
 namespace bzla::test {
 
 using namespace node;
+using namespace node::utils;
 
 /* -------------------------------------------------------------------------- */
 
@@ -63,9 +65,9 @@ class TestPassContradictingAnds : public TestPreprocessingPass
   Node d_c    = d_nm.mk_const(d_bv8, "c");
   Node d_d    = d_nm.mk_const(d_bv8, "d");
   Node d_e    = d_nm.mk_const(d_bv8, "d");
-  Node d_a_inv = d_nm.invert_node(d_a);
-  Node d_b_inv = d_nm.invert_node(d_b);
-  Node d_c_inv = d_nm.invert_node(d_c);
+  Node d_a_inv = invert_node(d_nm, d_a);
+  Node d_b_inv = invert_node(d_nm, d_b);
+  Node d_c_inv = invert_node(d_nm, d_c);
   Node d_zero = d_nm.mk_value(BitVector::mk_zero(8));
 
   sat::SatSolverFactory d_sat_factory;
@@ -108,7 +110,7 @@ TEST_F(TestPassContradictingAnds, bvand3)
 {
   test_and(d_nm.mk_node(
       Kind::BV_AND,
-      {d_nm.mk_node(Kind::BV_AND, {d_a, d_b_inv}), d_nm.invert_node(d_a)}));
+      {d_nm.mk_node(Kind::BV_AND, {d_a, d_b_inv}), invert_node(d_nm, d_a)}));
 }
 
 TEST_F(TestPassContradictingAnds, bvand4)

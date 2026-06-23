@@ -13,8 +13,11 @@
 #include "bv/bitvector.h"
 #include "node/node_kind.h"
 #include "node/node_manager.h"
+#include "node/node_utils.h"
 
 namespace bzla::rewrite::utils {
+
+using namespace node::utils;
 
 bool
 is_inverted_of(const Node& a, const Node& b)
@@ -57,7 +60,7 @@ is_always_disequal(NodeManager& nm, const Node& a, const Node& b)
       // match: (= (bvadd a c) a) with c a non-zero value
       if (is_val00 && !node0[0].value<BitVector>().is_zero())
       {
-        if ((inverted0 && nm.invert_node(node0[1]) == nodes[idx1])
+        if ((inverted0 && invert_node(nm, node0[1]) == nodes[idx1])
             || (!inverted0 && node0[1] == nodes[idx1]))
         {
           return true;
@@ -65,7 +68,7 @@ is_always_disequal(NodeManager& nm, const Node& a, const Node& b)
       }
       else if (is_val01 && !node0[1].value<BitVector>().is_zero())
       {
-        if ((inverted0 && nm.invert_node(node0[0]) == nodes[idx1])
+        if ((inverted0 && invert_node(nm, node0[0]) == nodes[idx1])
             || (!inverted0 && node0[0] == nodes[idx1]))
         {
           return true;

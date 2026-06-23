@@ -13,6 +13,7 @@
 #include <set>
 
 #include "bv/bitvector.h"
+#include "node/node_utils.h"
 #include "option/option.h"
 #include "preprocess/pass/variable_substitution.h"
 #include "preprocess/preprocessor.h"
@@ -26,6 +27,7 @@ namespace bzla::test {
 using namespace preprocess;
 using namespace backtrack;
 using namespace node;
+using namespace node::utils;
 
 class TestPassVariableSubstitution : public TestPreprocessingPass
 {
@@ -89,9 +91,9 @@ TEST_F(TestPassVariableSubstitution, subst2)
 
 // Gaussian elimination must descend into an inverted (bvnot) sub-term to
 // detect the linear factor. Regression for a bug where the inverted branch
-// recursed on nm.invert_node(node) (= ~~node[0]) instead of node[0]: since
-// the NodeManager does not cancel double negation, the recursion never
-// terminated until the shared bound was exhausted, so no linear term was
+// recursed on invert_node(nm, node) (= ~~node[0]) instead of
+// node[0]: since the NodeManager does not cancel double negation, the recursion
+// never terminated until the shared bound was exhausted, so no linear term was
 // found (and a sibling attempt sharing the bound failed too).
 TEST_F(TestPassVariableSubstitution, gauss_inverted_term)
 {
@@ -103,7 +105,7 @@ TEST_F(TestPassVariableSubstitution, gauss_inverted_term)
   // ~(3 * x) = (s & t): x is linear only through the inverted wrapper, the
   // right-hand side is non-linear, so the only possible Gaussian elimination
   // is via the inverted left-hand side.
-  Node lhs = d_nm.invert_node(d_nm.mk_node(Kind::BV_MUL, {three, x}));
+  Node lhs = invert_node(d_nm, d_nm.mk_node(Kind::BV_MUL, {three, x}));
   Node rhs = d_nm.mk_node(Kind::BV_AND, {s, t});
   Node eq  = d_nm.mk_node(Kind::EQUAL, {lhs, rhs});
 
@@ -237,13 +239,13 @@ TEST_F(TestPassVariableSubstitution, inc1)
 
   if (d_options.pp_variable_subst_norm_diseq())
   {
-    Node not_t = d_nm.invert_node(t);
+    Node not_t = invert_node(d_nm, t);
     ASSERT_EQ(as.size(), 2);
     ASSERT_EQ(as[0], d_nm.mk_node(Kind::EQUAL, {y, y}));
     ASSERT_EQ(as[1], d_nm.mk_node(Kind::EQUAL, {y, not_t}));
     ASSERT_EQ(pp.process(eq), d_nm.mk_node(Kind::EQUAL, {not_t, not_t}));
     ASSERT_EQ(pp.process(di),
-              d_nm.invert_node(d_nm.mk_node(Kind::EQUAL, {not_t, t})));
+              invert_node(d_nm, d_nm.mk_node(Kind::EQUAL, {not_t, t})));
 
     ctx.pop();
     ctx.preprocess();
@@ -293,9 +295,9 @@ TEST_F(TestPassVariableSubstitution, inc2)
 
   if (d_options.pp_variable_subst_norm_diseq())
   {
-    Node not_y       = d_nm.invert_node(y);
+    Node not_y       = invert_node(d_nm, y);
     Node not_y_and_y = d_nm.mk_node(Kind::AND, {not_y, y});
-    ASSERT_EQ(as[0], d_nm.invert_node(d_nm.mk_node(Kind::EQUAL, {not_y, y})));
+    ASSERT_EQ(as[0], invert_node(d_nm, d_nm.mk_node(Kind::EQUAL, {not_y, y})));
     ASSERT_EQ(as[1], d_nm.mk_node(Kind::EQUAL, {not_y, y}));
     ASSERT_EQ(as[2], not_y_and_y);
     ASSERT_EQ(pp.process(eq), d_nm.mk_node(Kind::EQUAL, {not_y, y}));
@@ -348,11 +350,11 @@ TEST_F(TestPassVariableSubstitution, inc3)
 
   if (d_options.pp_variable_subst_norm_diseq())
   {
-    Node not_y       = d_nm.invert_node(y);
+    Node not_y       = invert_node(d_nm, y);
     Node not_y_eq_y  = d_nm.mk_node(Kind::EQUAL, {not_y, y});
     Node not_y_and_z = d_nm.mk_node(Kind::AND, {not_y, z});
     Node not_y_and_y = d_nm.mk_node(Kind::AND, {not_y, y});
-    ASSERT_EQ(as[0], d_nm.invert_node(not_y_eq_y));
+    ASSERT_EQ(as[0], invert_node(d_nm, not_y_eq_y));
     ASSERT_EQ(as[1], not_y_eq_y);
     ASSERT_EQ(as[2], not_y_and_y);
     ASSERT_EQ(as[3], not_y_and_z);

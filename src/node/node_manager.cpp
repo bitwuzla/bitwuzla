@@ -180,18 +180,6 @@ NodeManager::mk_node(Kind kind,
   return mk_node(kind, children, std::span<const uint64_t>(indices));
 }
 
-Node
-NodeManager::invert_node(const Node& node)
-{
-  assert(node.type().is_bool() || node.type().is_bv());
-  assert(node.nm() == this);
-  if (node.type().is_bool())
-  {
-    return mk_node(node::Kind::NOT, {node});
-  }
-  return mk_node(node::Kind::BV_NOT, {node});
-}
-
 Type
 NodeManager::mk_bool_type()
 {

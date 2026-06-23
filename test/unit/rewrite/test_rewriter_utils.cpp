@@ -12,12 +12,14 @@
 
 #include "env.h"
 #include "node/node_manager.h"
+#include "node/node_utils.h"
 #include "rewrite/rewriter.h"
 #include "sat/sat_solver_factory.h"
 
 namespace bzla::test {
 
 using namespace bzla::node;
+using namespace bzla::node::utils;
 
 class TestRewriterUtils : public ::testing::Test
 {
@@ -89,7 +91,7 @@ TEST_F(TestRewriterUtils, is_xor)
   ASSERT_FALSE(d_rewriter.is_xor(
       d_nm.mk_node(Kind::AND,
                    {d_nm.mk_node(Kind::OR, {d_a, d_b}),
-                    d_nm.invert_node(d_nm.mk_node(Kind::AND, {d_a, d_c}))}),
+                    invert_node(d_nm, d_nm.mk_node(Kind::AND, {d_a, d_c}))}),
       child0,
       child1));
 }
@@ -99,13 +101,13 @@ TEST_F(TestRewriterUtils, is_xnor)
   Node res, child0, child1;
   RewriteRuleKind kind;
   Node bxor  = d_nm.mk_node(Kind::XOR, {d_a, d_b});
-  Node bxnor = d_nm.invert_node(bxor);
+  Node bxnor = invert_node(d_nm, bxor);
   ASSERT_TRUE(d_rewriter.is_xnor(bxnor, child0, child1));
   ASSERT_EQ(child0, d_a);
   ASSERT_EQ(child1, d_b);
   std::tie(res, kind) =
       RewriteRule<RewriteRuleKind::XOR_ELIM>::apply(d_rewriter, bxor);
-  bxnor = d_nm.invert_node(res);
+  bxnor = invert_node(d_nm, res);
   ASSERT_TRUE(d_rewriter.is_xnor(bxnor, child0, child1));
   ASSERT_EQ(child0, d_a);
   ASSERT_EQ(child1, d_b);
@@ -123,7 +125,7 @@ TEST_F(TestRewriterUtils, is_bv_neg)
       RewriteRule<RewriteRuleKind::BV_NEG_ELIM>::apply(d_rewriter, bvneg);
   ASSERT_TRUE(d_rewriter.is_bv_neg(res, child));
   ASSERT_EQ(child, d_a4);
-  ASSERT_FALSE(d_rewriter.is_bv_neg(d_nm.invert_node(d_a4), child));
+  ASSERT_FALSE(d_rewriter.is_bv_neg(invert_node(d_nm, d_a4), child));
 }
 
 TEST_F(TestRewriterUtils, is_bv_or)
@@ -159,7 +161,7 @@ TEST_F(TestRewriterUtils, is_bv_sub)
   ASSERT_TRUE(d_rewriter.is_bv_sub(
       d_nm.mk_node(Kind::BV_ADD,
                    {d_nm.mk_node(Kind::BV_ADD,
-                                 {d_nm.invert_node(d_a4),
+                                 {invert_node(d_nm, d_a4),
                                   d_nm.mk_value(BitVector::mk_one(4))}),
                     d_b4}),
       child0,
@@ -186,10 +188,12 @@ TEST_F(TestRewriterUtils, is_bv_xnor)
   ASSERT_FALSE(d_rewriter.is_bv_xnor(
       d_nm.mk_node(Kind::BV_XOR, {d_a4, d_b4}), child0, child1));
   ASSERT_FALSE(d_rewriter.is_bv_xnor(
-      d_nm.invert_node(d_nm.mk_node(
-          Kind::BV_AND,
-          {d_nm.mk_node(Kind::BV_OR, {d_a4, d_b4}),
-           d_nm.invert_node(d_nm.mk_node(Kind::BV_AND, {d_a4, d_c4}))})),
+      invert_node(
+          d_nm,
+          d_nm.mk_node(
+              Kind::BV_AND,
+              {d_nm.mk_node(Kind::BV_OR, {d_a4, d_b4}),
+               invert_node(d_nm, d_nm.mk_node(Kind::BV_AND, {d_a4, d_c4}))})),
       child0,
       child1));
 }

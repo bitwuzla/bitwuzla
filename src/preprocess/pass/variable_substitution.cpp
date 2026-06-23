@@ -26,6 +26,7 @@
 namespace bzla::preprocess::pass {
 
 using namespace node;
+using namespace node::utils;
 
 namespace {
 /**
@@ -61,7 +62,7 @@ get_linear_bv_term_aux(NodeManager& nm,
     {
       return false;
     }
-    rhs = nm.invert_node(rhs);
+    rhs = invert_node(nm, rhs);
     assert(!factor.is_null());
     factor.ibvneg();
   }
@@ -512,11 +513,11 @@ PassVariableSubstitution::normalize_for_substitution(const Node& assertion)
     const Node& eq  = assertion[0];
     if (eq[0].is_const())
     {
-      return {nm.mk_node(Kind::EQUAL, {eq[0], nm.invert_node(eq[1])})};
+      return {nm.mk_node(Kind::EQUAL, {eq[0], invert_node(nm, eq[1])})};
     }
     if (eq[1].is_const())
     {
-      return {nm.mk_node(Kind::EQUAL, {eq[1], nm.invert_node(eq[0])})};
+      return {nm.mk_node(Kind::EQUAL, {eq[1], invert_node(nm, eq[0])})};
     }
   }
   else if (d_env.options().pp_variable_subst_norm_bv_ineq()

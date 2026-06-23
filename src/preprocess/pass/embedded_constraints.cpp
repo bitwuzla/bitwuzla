@@ -12,10 +12,12 @@
 
 #include "env.h"
 #include "node/node_manager.h"
+#include "node/node_utils.h"
 
 namespace bzla::preprocess::pass {
 
 using namespace bzla::node;
+using namespace bzla::node::utils;
 
 /* --- PassEmbeddedConstraints public --------------------------------------- */
 
@@ -87,7 +89,7 @@ PassEmbeddedConstraints::apply(AssertionVector& assertions)
                            : nm.mk_node(ass.kind(), children);
       if (assertion.is_inverted())
       {
-        rewritten = nm.invert_node(rewritten);
+        rewritten = invert_node(nm, rewritten);
       }
       assertions.replace(i, rewritten);
     }
