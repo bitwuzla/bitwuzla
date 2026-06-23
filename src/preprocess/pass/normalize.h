@@ -169,22 +169,15 @@ class PassNormalize : public PreprocessingPass
    */
   std::unordered_map<Node, Node> d_cache;
 
-  std::vector<Node> d_adder_chains;
-  std::unordered_map<Node, uint64_t> d_adder_chains_length;
-  std::unordered_set<Node> d_adder_chains_cache;
-
   /** A rewriter configured specifically for normalization rewrites. */
   Rewriter d_rewriter;
 
   /** Indicates whether we compute a bit-blasting score. */
   bool d_enable_scoring = true;
-  /** Only query caches for already processed assertions. */
-  bool d_disabled = false;
 
   struct Statistics
   {
     Statistics(util::Statistics& stats, const std::string& prefix);
-    Statistics(util::Statistics& stats);
     util::TimerStatistic& time_normalize_add;
     util::TimerStatistic& time_normalize_mul;
     util::TimerStatistic& time_compute_occurrences;
