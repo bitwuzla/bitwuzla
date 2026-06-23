@@ -70,16 +70,6 @@ class PreprocessingPass
 
  protected:
   /**
-   * Count number of parents for all nodes reachable from `node`.
-   *
-   * @param parents Parents map to store result.
-   * @param cache Traversal cache.
-   */
-  void count_parents(const Node& node,
-                     std::unordered_map<Node, uint64_t>& parents,
-                     std::unordered_set<Node>& cache);
-
-  /**
    * Replace all occurrences of `substititutions` in `node.
    * @param node          The node.
    * @param substitutions A Map from node that should be substituted to node to
