@@ -310,7 +310,6 @@ AbstractionModule::process_assertion(const Node& assertion, bool is_lemma)
              << ", orig: " << assertion << ")";
       d_abstraction_cache[abstr] = abstr;
       d_abstraction_cache_assertions.emplace(abstr, assertion);
-      d_active_assertion_abstractions.push_back(abstr);
       return d_abstraction_cache.at(abstr);
     }
     return processed;
