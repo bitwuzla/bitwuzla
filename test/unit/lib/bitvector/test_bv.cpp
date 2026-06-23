@@ -4002,10 +4002,9 @@ TestBitVector::test_concat(BvFunKind fun_kind)
       {7, 16}, {17, 32}, {33, 64}, {33, 127}};
   for (const auto& [min, max] : sizes)
   {
-    uint64_t ntests = std::min(1u << max, N_TESTS);
     uint64_t size0  = d_rng->pick<uint64_t>(min, max - 1);
     uint64_t size1  = max - size0;
-    for (uint32_t i = 0; i < ntests; ++i)
+    for (uint32_t i = 0; i < N_TESTS; ++i)
     {
       if (size1 > 64)
       {
