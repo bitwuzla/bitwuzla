@@ -4378,6 +4378,68 @@ TEST_F(TestApi, terminate_timeout_wrap)
 #endif
 }
 
+TEST_F(TestApi, terminate_mbqi_subsolver)
+{
+#ifdef BZLA_USE_CADICAL
+  // Regression test: the MBQI sub-solver of the quantifiers solver must honor
+  // the parent terminator and configured resource limits. Otherwise a hard
+  // ground query inside the MBQI sub-solve runs unboundedly past a configured
+  // limit (see QuantSolver::mbqi_check).
+  class TestTerminator : public bitwuzla::Terminator
+  {
+   public:
+    TestTerminator(uint32_t time_limit_ms)
+        : time_limit_ms(time_limit_ms),
+          start(std::chrono::high_resolution_clock::now())
+    {
+    }
+    bool terminate() override
+    {
+      return std::chrono::duration_cast<std::chrono::milliseconds>(
+                 std::chrono::high_resolution_clock::now() - start)
+                 .count()
+             >= time_limit_ms;
+    }
+    uint32_t time_limit_ms = 0;
+    std::chrono::high_resolution_clock::time_point start;
+  };
+
+  bitwuzla::Sort bv_sort32 = d_tm.mk_bv_sort(32);
+  bitwuzla::Term x         = d_tm.mk_var(bv_sort32);
+  bitwuzla::Term y         = d_tm.mk_var(bv_sort32);
+  bitwuzla::Term z         = d_tm.mk_var(bv_sort32);
+  // Associativity of bvmul: a tautology whose MBQI counterexample query (the
+  // distinct of the two products over three symbolic instantiation constants)
+  // is hard for bit-blasting and does not terminate on its own.
+  bitwuzla::Term body = d_tm.mk_term(
+      bitwuzla::Kind::EQUAL,
+      {d_tm.mk_term(bitwuzla::Kind::BV_MUL,
+                    {x, d_tm.mk_term(bitwuzla::Kind::BV_MUL, {y, z})}),
+       d_tm.mk_term(bitwuzla::Kind::BV_MUL,
+                    {d_tm.mk_term(bitwuzla::Kind::BV_MUL, {x, y}), z})});
+  bitwuzla::Term q = d_tm.mk_term(bitwuzla::Kind::FORALL, {x, y, z, body});
+
+  // A user-configured terminator must reach the MBQI sub-solver.
+  {
+    TestTerminator tt(1000);
+    bitwuzla::Options opts;
+    bitwuzla::Bitwuzla bitwuzla(d_tm, opts);
+    bitwuzla.configure_terminator(&tt);
+    bitwuzla.assert_formula(q);
+    ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNKNOWN);
+  }
+
+  // The time-limit-per resource terminator must reach the MBQI sub-solver.
+  {
+    bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::TIME_LIMIT_PER, 1000);
+    bitwuzla::Bitwuzla bitwuzla(d_tm, opts);
+    bitwuzla.assert_formula(q);
+    ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNKNOWN);
+  }
+#endif
+}
+
 #if defined(BZLA_USE_CMS) || defined(BZLA_USE_GIMSATUL) \
     || defined(BZLA_USE_KISSAT)
 TEST_F(TestApi, configure_terminator_unsupported)

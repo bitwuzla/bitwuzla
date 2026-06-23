@@ -382,6 +382,10 @@ QuantSolver::mbqi_check(const std::vector<Node>& to_check)
   options.pp_normalize.set(false);
   d_mbqi_solver.reset(new SolvingContext(
       d_env.nm(), options, d_env.sat_factory(), "mbqi", true));
+  // Propagate the parent terminator so that a hard ground query in the MBQI
+  // sub-solver still honors the user terminator and any configured resource
+  // limits (the parent's resource terminator is installed as its terminator).
+  d_mbqi_solver->env().configure_terminator(d_env.terminator());
 
   // Assert formula
   for (const Node& c : d_consts)
