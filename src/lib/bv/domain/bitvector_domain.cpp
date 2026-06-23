@@ -405,6 +405,7 @@ BitVectorDomainGenerator::BitVectorDomainGenerator(
   const BitVector& hi = d_domain.d_hi;
   const BitVector& lo = d_domain.d_lo;
 
+  // Domain is fixed, produces a single value, if the value is in range.
   if (d_domain.is_fixed())
   {
     d_is_fixed = true;
@@ -429,16 +430,19 @@ BitVectorDomainGenerator::BitVectorDomainGenerator(
   d_max = mmax;
 #endif
 
+  // No fixed bits, generator covers the full range.
   if (!d_domain.d_has_fixed_bits)
   {
     d__bits_min = range.d_min;
     d__bits_max = range.d_max;
-    d_bits      = &d__bits_min;
+    d__bits     = range.d_min;
+    d_bits      = &d__bits;
     d_bits_min  = &d__bits_min;
     d_bits_max  = &d__bits_max;
     return;
   }
 
+  // Domain has fixed bits but is not fixed.
   d_has_fixed_bits = true;
   for (size_t i = 0; i < size; ++i)
   {
@@ -514,10 +518,11 @@ BitVectorDomainGenerator::BitVectorDomainGenerator(
       }
     }
 
-    /* If bits_min > bits_max, we can't generate any value. */
+    // Init d_bits if we have values to generate, else bits_min > bits_max and
+    // we cannot generate any value (d_bits = nullptr).
     if (d_bits_min->compare(*d_bits_max) <= 0)
     {
-      d__bits = BitVector(*d_bits_min);
+      d__bits = *d_bits_min;
       d_bits  = &d__bits;
     }
   }
