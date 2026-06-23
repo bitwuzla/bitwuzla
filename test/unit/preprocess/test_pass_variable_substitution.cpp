@@ -87,6 +87,37 @@ TEST_F(TestPassVariableSubstitution, subst2)
   ASSERT_EQ(d_pass.process(di), expected);
 }
 
+// Gaussian elimination must descend into an inverted (bvnot) sub-term to
+// detect the linear factor. Regression for a bug where the inverted branch
+// recursed on nm.invert_node(node) (= ~~node[0]) instead of node[0]: since
+// the NodeManager does not cancel double negation, the recursion never
+// terminated until the shared bound was exhausted, so no linear term was
+// found (and a sibling attempt sharing the bound failed too).
+TEST_F(TestPassVariableSubstitution, gauss_inverted_term)
+{
+  Type bv8   = d_nm.mk_bv_type(8);
+  Node x     = d_nm.mk_const(bv8, "x");
+  Node s     = d_nm.mk_const(bv8, "s");
+  Node t     = d_nm.mk_const(bv8, "t");
+  Node three = d_nm.mk_value(BitVector::from_ui(8, 3));
+  // ~(3 * x) = (s & t): x is linear only through the inverted wrapper, the
+  // right-hand side is non-linear, so the only possible Gaussian elimination
+  // is via the inverted left-hand side.
+  Node lhs = d_nm.invert_node(d_nm.mk_node(Kind::BV_MUL, {three, x}));
+  Node rhs = d_nm.mk_node(Kind::BV_AND, {s, t});
+  Node eq  = d_nm.mk_node(Kind::EQUAL, {lhs, rhs});
+
+  d_as.push_back(eq);
+
+  preprocess::AssertionVector assertions(d_as.view());
+  d_pass.apply(assertions);
+
+  // x is eliminated, so the defining equation is rewritten to true.
+  const auto& substs = d_pass.substitutions();
+  ASSERT_NE(substs.find(x), substs.end());
+  ASSERT_EQ(d_as[0], d_nm.mk_value(true));
+}
+
 TEST_F(TestPassVariableSubstitution, cycle1)
 {
   Node x  = d_nm.mk_const(d_nm.mk_bool_type(), "x");

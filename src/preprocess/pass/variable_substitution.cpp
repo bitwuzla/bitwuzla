@@ -57,10 +57,7 @@ get_linear_bv_term_aux(NodeManager& nm,
     //      = -1 - (factor * lhs + rhs)
     //      = (-factor) * lhs + (-1 -rhs)
     //      = (-factor) * lhs + ~rhs
-
-    BitVector tmp_factor;
-    if (!get_linear_bv_term_aux(
-            nm, nm.invert_node(node), tmp_factor, lhs, rhs, bound))
+    if (!get_linear_bv_term_aux(nm, node[0], factor, lhs, rhs, bound))
     {
       return false;
     }
