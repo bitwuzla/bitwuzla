@@ -8,6 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+#include <bitwuzla/cpp/parser.h>
+
 #include <chrono>
 #include <cstdlib>
 #include <filesystem>
@@ -105,30 +107,58 @@ class TestAigBitblaster : public TestCommon
     bench << "(check-sat)\n";
     bench << "(get-model)\n";
 
-    char filename[] = "bzlabbtest-XXXXXX";
-    int fd          = mkstemp(filename);
-    assert(fd != -1);
-
-    FILE* file = fdopen(fd, "w");
-    fputs(bench.str().c_str(), file);
-    fflush(file);
-
-    std::stringstream cmd;
-    cmd << s_solver_binary << " " << filename;
-
-    // Execute solver and read output.
-    FILE* fp = popen(cmd.str().c_str(), "r");
-    char buf[1024];
-    std::stringstream output;
-    while (fgets(buf, 1024, fp))
+    std::string result;
+    if (s_solver_binary)
     {
-      output << buf;
-    }
-    pclose(fp);
-    remove(filename);
-    fclose(file);
+      char filename[] = "bzlabbtest-XXXXXX";
+      int fd          = mkstemp(filename);
+      assert(fd != -1);
 
-    std::string result = output.str();
+      FILE* file = fdopen(fd, "w");
+      fputs(bench.str().c_str(), file);
+      fflush(file);
+
+      std::stringstream cmd;
+      cmd << s_solver_binary << " " << filename;
+
+      // Execute solver and read output.
+      FILE* fp = popen(cmd.str().c_str(), "r");
+      char buf[1024];
+      std::stringstream output;
+      while (fgets(buf, 1024, fp))
+      {
+        output << buf;
+      }
+      pclose(fp);
+      remove(filename);
+      fclose(file);
+
+      result = output.str();
+    }
+    else
+    {
+      testing::internal::CaptureStdout();
+      std::string error;
+      try
+      {
+        bitwuzla::TermManager tm;
+        bitwuzla::Options options;
+        bitwuzla::parser::Parser parser(tm, options);
+        parser.parse("<string>", bench);
+      }
+      catch (const std::exception& e)
+      {
+        // Always release the captured stdout before propagating, otherwise the
+        // gtest stdout capturer leaks and aborts subsequent tests.
+        error = e.what();
+      }
+      result = testing::internal::GetCapturedStdout();
+      if (!error.empty())
+      {
+        ADD_FAILURE() << "parser error: " << error;
+        return result;
+      }
+    }
     size_t newline_pos = result.find_last_of('\n');
     return result.substr(0, newline_pos);
   }
@@ -136,12 +166,9 @@ class TestAigBitblaster : public TestCommon
   static void test_binary(const std::string& op,
                           const std::vector<bitblast::AigNode>& res,
                           const std::vector<bitblast::AigNode>& a,
-                          const std::vector<bitblast::AigNode>& b)
+                          const std::vector<bitblast::AigNode>& b,
+                          bool predicate = false)
   {
-    if (s_solver_binary == nullptr)
-    {
-      GTEST_SKIP_("SOLVER_BINARY environment variable not set.");
-    }
     std::stringstream ss;
     declare_const(ss, a);
     declare_const(ss, b);
@@ -150,7 +177,16 @@ class TestAigBitblaster : public TestCommon
     define_const(ss, "b", b);
     define_const(ss, "res", res);
     ss << "(declare-const expected (_ BitVec " << res.size() << "))\n";
-    ss << "(assert (= expected (" << op << " a b)))\n";
+    // Predicate operators return Bool, so convert the result to a 1-bit vector
+    // to compare against the bit-blasted result.
+    if (predicate)
+    {
+      ss << "(assert (= expected (ite (" << op << " a b) #b1 #b0)))\n";
+    }
+    else
+    {
+      ss << "(assert (= expected (" << op << " a b)))\n";
+    }
     ss << "(assert (distinct res expected))\n";
     ASSERT_EQ("unsat", check_sat(ss));
   }
@@ -158,10 +194,6 @@ class TestAigBitblaster : public TestCommon
   static void test_bv_mul_square(const std::vector<bitblast::AigNode>& res,
                                  const std::vector<bitblast::AigNode>& a)
   {
-    if (s_solver_binary == nullptr)
-    {
-      GTEST_SKIP_("SOLVER_BINARY environment variable not set.");
-    }
     std::stringstream ss;
     declare_const(ss, a);
     print_smt2(ss, res);
@@ -206,6 +238,15 @@ class TestAigBitblaster : public TestCommon
     auto b   = bb.bv_constant(size); \
     auto res = bb.func(a, b);        \
     test_binary(op, res, a, b);      \
+  }
+
+#define TEST_BIN_PRED(size, op, func) \
+  {                                   \
+    bitblast::AigBitblaster bb;       \
+    auto a   = bb.bv_constant(size);  \
+    auto b   = bb.bv_constant(size);  \
+    auto res = bb.func(a, b);         \
+    test_binary(op, res, a, b, true); \
   }
 
 TEST_F(TestAigBitblaster, ctor_dtor) { bitblast::AigBitblaster bb; }
@@ -360,23 +401,23 @@ TEST_F(TestAigBitblaster, bv_eq)
   ASSERT_EQ(bb_eq, bb.bv_eq(b, a));
 }
 
-TEST_F(TestAigBitblaster, bv_eq1) { TEST_BIN_OP(1, "=", bv_eq); }
+TEST_F(TestAigBitblaster, bv_eq1) { TEST_BIN_PRED(1, "=", bv_eq); }
 
-TEST_F(TestAigBitblaster, bv_eq16) { TEST_BIN_OP(16, "=", bv_eq); }
+TEST_F(TestAigBitblaster, bv_eq16) { TEST_BIN_PRED(16, "=", bv_eq); }
 
-TEST_F(TestAigBitblaster, bv_eq32) { TEST_BIN_OP(32, "=", bv_eq); }
+TEST_F(TestAigBitblaster, bv_eq32) { TEST_BIN_PRED(32, "=", bv_eq); }
 
-TEST_F(TestAigBitblaster, bv_ult1) { TEST_BIN_OP(1, "bvult", bv_ult); }
+TEST_F(TestAigBitblaster, bv_ult1) { TEST_BIN_PRED(1, "bvult", bv_ult); }
 
-TEST_F(TestAigBitblaster, bv_ult16) { TEST_BIN_OP(16, "bvult", bv_ult); }
+TEST_F(TestAigBitblaster, bv_ult16) { TEST_BIN_PRED(16, "bvult", bv_ult); }
 
-TEST_F(TestAigBitblaster, bv_ult32) { TEST_BIN_OP(32, "bvult", bv_ult); }
+TEST_F(TestAigBitblaster, bv_ult32) { TEST_BIN_PRED(32, "bvult", bv_ult); }
 
-TEST_F(TestAigBitblaster, bv_slt1) { TEST_BIN_OP(1, "bvslt", bv_slt); }
+TEST_F(TestAigBitblaster, bv_slt1) { TEST_BIN_PRED(1, "bvslt", bv_slt); }
 
-TEST_F(TestAigBitblaster, bv_slt16) { TEST_BIN_OP(16, "bvslt", bv_slt); }
+TEST_F(TestAigBitblaster, bv_slt16) { TEST_BIN_PRED(16, "bvslt", bv_slt); }
 
-TEST_F(TestAigBitblaster, bv_slt32) { TEST_BIN_OP(32, "bvslt", bv_slt); }
+TEST_F(TestAigBitblaster, bv_slt32) { TEST_BIN_PRED(32, "bvslt", bv_slt); }
 
 TEST_F(TestAigBitblaster, bv_add)
 {
@@ -476,10 +517,6 @@ TEST_F(TestAigBitblaster, bv_ite) {
   auto c      = bb.bv_constant(1);
   auto bb_ite = bb.bv_ite(c[0], a, b);
 
-    if (s_solver_binary == nullptr)
-    {
-      GTEST_SKIP_("SOLVER_BINARY environment variable not set.");
-    }
     std::stringstream ss;
     declare_const(ss, a);
     declare_const(ss, b);
@@ -489,7 +526,7 @@ TEST_F(TestAigBitblaster, bv_ite) {
     define_const(ss, "b", b);
     define_const(ss, "c", c);
     define_const(ss, "res", bb_ite);
-    ss << "(assert (distinct res (ite c a b)))\n";
+    ss << "(assert (distinct res (ite (= c #b1) a b)))\n";
     ASSERT_EQ("unsat", check_sat(ss));
 }
 
