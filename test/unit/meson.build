@@ -13,7 +13,8 @@ unit_tests = [
       'object',
       'unordered_map',
       'unordered_set',
-      'vector'
+      'vector',
+      'vector_map'
     ]
   ],
 
