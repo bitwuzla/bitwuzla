@@ -18,6 +18,7 @@
 #include "backtrack/unordered_map.h"
 #include "backtrack/unordered_set.h"
 #include "backtrack/vector.h"
+#include "backtrack/vector_map.h"
 #include "solver/solver.h"
 #include "util/hash.h"
 #include "util/logger.h"
@@ -272,8 +273,13 @@ class ArraySolver : public Solver
   /**
    * Maps array terms to their array parents, used for upwards propagation.
    * @note This map is computed in compute_parents().
+   *
+   * Backtrackable and kept in sync with d_active_parents: parent edges added
+   * for an equality are rolled back on pop() so that re-asserting the same
+   * equality after a pop() does not accumulate duplicate (or stale) parent
+   * entries across push/pop cycles.
    */
-  std::unordered_map<Node, std::vector<Node>> d_parents;
+  backtrack::vector_map<Node, Node> d_parents;
   /** Currently active parents. */
   backtrack::unordered_set<Node> d_active_parents;
   /**

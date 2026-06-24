@@ -895,6 +895,7 @@ tests_smt2 = [
   ['solver/array/bubsort002un.smt2'],
   ['solver/array/computeparents.smt2', ['--bv-solver=prop']],
   ['solver/array/computeparents.smt2'],
+  ['solver/array/computeparents_pushpop.smt2'],
   ['solver/array/constarray.smt2'],
   ['solver/array/dubreva002ue.smt2'],
   ['solver/array/duplicatelemma1.smt2'],

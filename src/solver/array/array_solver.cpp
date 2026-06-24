@@ -57,6 +57,7 @@ ArraySolver::ArraySolver(Env& env, SolverState& state)
     : Solver(env, state),
       d_selects(state.backtrack_mgr()),
       d_equalities(state.backtrack_mgr()),
+      d_parents(state.backtrack_mgr()),
       d_active_parents(state.backtrack_mgr()),
       d_disequality_lemma_cache(state.backtrack_mgr()),
       d_const_array_eq_lemma_cache(state.backtrack_mgr()),
@@ -1092,20 +1093,20 @@ ArraySolver::compute_parents(const Node& term)
 
     if (cur.kind() == Kind::EQUAL)
     {
-      d_parents[cur[0]].push_back(cur);
-      d_parents[cur[1]].push_back(cur);
+      d_parents.add(cur[0], cur);
+      d_parents.add(cur[1], cur);
       visit.insert(visit.end(), cur.begin(), cur.end());
     }
     else if (cur.kind() == Kind::STORE)
     {
       ++d_stats.num_stores;
-      d_parents[cur[0]].push_back(cur);
+      d_parents.add(cur[0], cur);
       visit.push_back(cur[0]);
     }
     else if (cur.kind() == Kind::ITE)
     {
-      d_parents[cur[1]].push_back(cur);
-      d_parents[cur[2]].push_back(cur);
+      d_parents.add(cur[1], cur);
+      d_parents.add(cur[2], cur);
       visit.push_back(cur[1]);
       visit.push_back(cur[2]);
     }
