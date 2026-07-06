@@ -92,8 +92,8 @@ TypeManager::init_id(TypeData* data)
   assert(d_type_id_counter < UINT64_MAX);
   assert(data != nullptr);
   assert(data->d_id == 0);
-  d_node_data.emplace_back(data);
-  assert(d_node_data.size() == static_cast<size_t>(d_type_id_counter));
+  d_type_data.emplace_back(data);
+  assert(d_type_data.size() == static_cast<size_t>(d_type_id_counter));
   data->d_id = d_type_id_counter++;
   ++d_refs;  // Increment reference count on TypeManager
 }
@@ -176,8 +176,8 @@ TypeManager::garbage_collect(TypeData* data)
       }
     }
 
-    assert(d_node_data[cur->d_id - 1]->d_id == cur->d_id);
-    d_node_data[cur->d_id - 1].reset(nullptr);
+    assert(d_type_data[cur->d_id - 1]->d_id == cur->d_id);
+    d_type_data[cur->d_id - 1].reset(nullptr);
     assert(d_refs > 0);
     --d_refs;
   } while (!visit.empty());

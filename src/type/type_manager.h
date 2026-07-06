@@ -124,7 +124,7 @@ class TypeManager
   bool d_in_gc_mode = false;
 
   /** Maps type id-1 to type data and stores all created type data. */
-  std::vector<std::unique_ptr<TypeData>> d_node_data;
+  std::vector<std::unique_ptr<TypeData>> d_type_data;
 
   /** Cache used for hash consing type data. */
   std::unordered_set<TypeData*, TypeDataHash, TypeDataKeyEqual> d_unique_types;
