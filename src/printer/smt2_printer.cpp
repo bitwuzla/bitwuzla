@@ -11,7 +11,6 @@
 #include "printer/smt2_printer.h"
 
 #include <iostream>
-#include <sstream>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -45,7 +44,8 @@ Smt2Printer::print(std::ostream& os, const Node& node)
   {
     os << "(!@t" << node.id() << " ";
   }
-  letify(os, node, def_map, let_map, depth, no_lets);
+  size_t num_lets = 0;
+  letify(os, node, def_map, let_map, {}, num_lets, depth, no_lets);
   if (annotate)
   {
     os << ")";
@@ -161,6 +161,7 @@ Smt2Printer::print_formula(std::ostream& os,
   bool has_quants = false;
   node_ref_vector visit;
   node_ref_vector decls;
+  std::unordered_set<std::string> symbols;
   unordered_node_ref_set cache;
   size_t level = 0;
 
@@ -221,6 +222,16 @@ Smt2Printer::print_formula(std::ostream& os,
       if (cur.is_const())
       {
         decls.emplace_back(cur);
+        if (cur.symbol())
+        {
+          symbols.insert(cur.symbol()->get());
+        }
+      }
+      // Bound variables are printed with their symbol and can thus be shadowed
+      // by generated let symbols, too. Record them to avoid such collisions.
+      else if (cur.is_variable() && cur.symbol())
+      {
+        symbols.insert(cur.symbol()->get());
       }
       visit.insert(visit.end(), cur.begin(), cur.end());
     }
@@ -284,7 +295,8 @@ Smt2Printer::print_formula(std::ostream& os,
     std::string symbol = "@def" + std::to_string(ndefs);
     os << "(define-const " << symbol << " " << node.type() << " ";
     node::unordered_node_ref_map<std::string> let_map;
-    letify(os, node, def_map, let_map, 0, no_lets);
+    size_t num_lets = 0;
+    letify(os, node, def_map, let_map, symbols, num_lets, 0, no_lets);
     os << ")" << std::endl;
     def_map[node] = symbol;
     ++ndefs;
@@ -302,8 +314,10 @@ Smt2Printer::print_formula(std::ostream& os,
         level = l;
       }
       node::unordered_node_ref_map<std::string> let_map;
+      size_t num_lets = 0;
       os << "(assert ";
-      letify(os, assertions[i], def_map, let_map, 0, no_lets);
+      letify(
+          os, assertions[i], def_map, let_map, symbols, num_lets, 0, no_lets);
       os << ")" << std::endl;
     }
   }
@@ -331,6 +345,8 @@ Smt2Printer::print(std::ostream& os,
                    const Node& node,
                    node::unordered_node_ref_map<std::string>& def_map,
                    node::unordered_node_ref_map<std::string>& let_map,
+                   const std::unordered_set<std::string>& symbols,
+                   size_t& num_lets,
                    size_t max_depth,
                    bool no_lets)
 {
@@ -524,7 +540,14 @@ Smt2Printer::print(std::ostream& os,
           os << ")) ";
           visit.pop_back();  // Pop variable
           visit.pop_back();  // Pop body
-          letify(os, cur[1], def_map, let_map, max_depth, no_lets);
+          letify(os,
+                 cur[1],
+                 def_map,
+                 let_map,
+                 symbols,
+                 num_lets,
+                 max_depth,
+                 no_lets);
           break;
 
         case Kind::VALUE:
@@ -682,12 +705,14 @@ Smt2Printer::letify(std::ostream& os,
                     const Node& node,
                     node::unordered_node_ref_map<std::string>& def_map,
                     node::unordered_node_ref_map<std::string>& let_map,
+                    const std::unordered_set<std::string>& symbols,
+                    size_t& num_lets,
                     size_t max_depth,
                     bool no_lets)
 {
   if (no_lets)
   {
-    print(os, node, def_map, let_map, max_depth, no_lets);
+    print(os, node, def_map, let_map, symbols, num_lets, max_depth, no_lets);
     return;
   }
 
@@ -772,7 +797,6 @@ Smt2Printer::letify(std::ostream& os,
     return a.id() < b.id();
   });
 
-  size_t nlets_map = let_map.size();
   size_t nlets = lets.size();
   if (nlets > 0)
   {
@@ -784,21 +808,28 @@ Smt2Printer::letify(std::ostream& os,
       }
       os << "(let (";
 
-      // Construct symbol of let, make sure avoid shadowing of let symbols in
-      // case of nested lets by adding the nlets_map offset.
-      std::stringstream ss;
-      ss << "_let" << i + nlets_map;
+      // Construct symbol of let. The `num_lets` counter is threaded (by
+      // reference) through all nested letify calls, so it strictly increases
+      // across nested scopes and thus never reuses a let symbol. Additionally
+      // skip any symbol that collides with a declared const or bound variable
+      // occurring in the formula (see `symbols`).
+      std::string sym;
+      do
+      {
+        sym = "_let" + std::to_string(num_lets++);
+      } while (symbols.find(sym) != symbols.end());
 
-      os << "(" << ss.str() << " ";
-      print(os, lets[i], def_map, let_map, max_depth, no_lets);
+      os << "(" << sym << " ";
+      print(
+          os, lets[i], def_map, let_map, symbols, num_lets, max_depth, no_lets);
       os << "))";
 
-      let_map[lets[i]] = ss.str();
+      let_map[lets[i]] = sym;
     }
     os << " ";
   }
 
-  print(os, node, def_map, let_map, max_depth, no_lets);
+  print(os, node, def_map, let_map, symbols, num_lets, max_depth, no_lets);
 
   for (size_t i = 0; i < nlets; ++i)
   {

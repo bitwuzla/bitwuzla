@@ -12,6 +12,7 @@
 #define BZLA_PRINTER_PRINTER_H_INCLUDED
 
 #include <ostream>
+#include <unordered_set>
 
 #include "node/node.h"
 #include "node/unordered_node_ref_map.h"
@@ -46,6 +47,11 @@ class Smt2Printer
    *                   symbols (to be printed as define-fun).
    * @param let_map    Map of expressions that are shared across expressions
    *                   with a binder scope or assertion (to be printed as let).
+   * @param symbols    The set of symbols of declared consts and bound
+   *                   variables occurring in the formula.
+   * @param num_lets   Number of let symbols emitted so far. Threaded through
+   *                   nested letify calls to keep generated let symbols unique
+   *                   (avoids shadowing of nested lets).
    * @param max_depth  The printing cutoff depth. Maximum depth to traversal
    *                   depth of `node` while printing.
    * @param no_lets    True if expressions should not be letified when printing.
@@ -54,6 +60,8 @@ class Smt2Printer
                     const Node& node,
                     node::unordered_node_ref_map<std::string>& def_map,
                     node::unordered_node_ref_map<std::string>& let_map,
+                    const std::unordered_set<std::string>& symbols,
+                    size_t& num_lets,
                     size_t max_depth,
                     bool no_lets);
 
@@ -64,6 +72,11 @@ class Smt2Printer
    *                   symbols (to be printed as define-fun).
    * @param let_map    Map of expressions that are shared across expressions
    *                   with a binder scope or assertion (to be printed as let).
+   * @param symbols    The set of symbols of declared consts and bound
+   *                   variables occurring in the formula.
+   * @param num_lets   Running counter of let symbols emitted so far. Threaded
+   *                   through nested letify calls to keep generated let symbols
+   *                   unique (avoids shadowing of nested lets).
    * @param max_depth  The printing cutoff depth. Maximum depth to traversal
    *                   depth of `node` while printing.
    * @param no_lets    True if expressions should not be letified when printing.
@@ -72,6 +85,8 @@ class Smt2Printer
                      const Node& node,
                      node::unordered_node_ref_map<std::string>& def_map,
                      node::unordered_node_ref_map<std::string>& let_map,
+                     const std::unordered_set<std::string>& symbols,
+                     size_t& num_lets,
                      size_t max_depth,
                      bool no_lets);
 
