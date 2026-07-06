@@ -21,7 +21,6 @@
 #include "solver/bv/bv_bitblast_solver.h"
 #include "solver/fp/word_blaster.h"
 #include "solver/solver.h"
-#include "util/exceptions.h"
 #include "util/statistics.h"
 
 namespace bzla {
@@ -38,7 +37,6 @@ namespace bv {
 
 class AigBitblaster;
 class BvSolver;
-class InterpolationBitblaster;
 
 class BvInterpolator
 {

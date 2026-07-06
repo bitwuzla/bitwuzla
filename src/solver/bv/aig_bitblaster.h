@@ -36,7 +36,7 @@ class AigBitblaster
   AigBitblaster(bool bool_bv1_mode = false) : d_bool_bv1_mode(bool_bv1_mode) {};
 
   /** Recursively bit-blast `term`. */
-  virtual void bitblast(const Node& term);
+  void bitblast(const Node& term);
 
   /** Return encoded bits associated with bit-blasted term. */
   const bitblast::AigBitblaster::Bits& bits(const Node& term) const;
