@@ -2330,6 +2330,90 @@ TEST_F(TestApi, print_unicode)
   bitwuzla.print_formula(std::cout);
 }
 
+TEST_F(TestApi, print_shadow_let)
+{
+  bitwuzla::Options options;
+
+  // Parse, print and check that reparsing the printed output. Generated let
+  // symbols must never shadow declared consts or bound variables occurring in
+  // the formula, and must never shadow each other across nested lets.
+  auto test = [this, &options](const std::string& smt2,
+                               const std::string& expected) {
+    {
+      bitwuzla::parser::Parser parser(d_tm, options);
+      testing::internal::CaptureStdout();
+      parser.parse(smt2, false, false);
+      ASSERT_EQ(testing::internal::GetCapturedStdout(), "sat\n");
+    }
+    std::stringstream ss;
+    {
+      bitwuzla::parser::Parser parser(d_tm, options);
+      parser.parse(smt2, true, false);
+      parser.bitwuzla()->print_formula(ss, "smt2");
+    }
+    ASSERT_EQ(ss.str(), expected);
+    {
+      bitwuzla::parser::Parser parser(d_tm, options);
+      testing::internal::CaptureStdout();
+      parser.parse("<string>", ss);
+      ASSERT_EQ(testing::internal::GetCapturedStdout(), "sat\n");
+    }
+  };
+
+  // A generated let symbol must not capture a declared const `_let0` that is
+  // shared inside a quantifier: the shared `(bvadd y y)` is bound to `_let1`.
+  test(
+      "(declare-const _let0 (_ BitVec 2)) (assert (= _let0 #b01)) (assert "
+      "(forall ((y (_ BitVec 2))) (=> (bvult (bvadd y y) (bvnot (bvadd y y))) "
+      "(= _let0 #b01)))) (check-sat)",
+      "(set-logic BV)\n"
+      "(declare-const _let0 (_ BitVec 2))\n"
+      "(assert (= _let0 #b01))\n"
+      "(assert (forall ((y (_ BitVec 2))) (let ((_let1 (bvadd y y))) (=> "
+      "(bvult _let1 (bvnot _let1)) (= _let0 #b01)))))\n"
+      "(check-sat)\n(exit)\n");
+
+  // A generated let symbol must not capture a bound variable named `_let0`:
+  // the shared `(g _let0)` is bound to `_let1`, not `_let0`.
+  test(
+      "(set-logic UFBV) (declare-fun g ((_ BitVec 2)) (_ BitVec 2)) "
+      "(declare-fun f ((_ BitVec 2) (_ BitVec 2)) (_ BitVec 2)) (assert "
+      "(forall ((_let0 (_ BitVec 2))) (= _let0 (f (g _let0) (g _let0))))) "
+      "(check-sat)",
+      "(set-logic UFBV)\n"
+      "(declare-fun g ((_ BitVec 2)) (_ BitVec 2))\n"
+      "(declare-fun f ((_ BitVec 2) (_ BitVec 2)) (_ BitVec 2))\n"
+      "(assert (forall ((_let0 (_ BitVec 2))) (let ((_let1 (g _let0))) (= "
+      "_let0 (f _let1 _let1)))))\n"
+      "(check-sat)\n(exit)\n");
+
+  // Nested lets must not reuse a let symbol even when an outer let symbol was
+  // bumped past a declared const `_let0`: the outer lets are `_let1`/`_let2`
+  // and the nested let continues with a fresh `_let3` (rather than reusing
+  // `_let2`, which would capture the outer `(bvnot (g1 _let0))`).
+  test(
+      "(set-logic UFBV) (declare-const _let0 (_ BitVec 4)) "
+      "(declare-fun g0 ((_ BitVec 4)) (_ BitVec 4)) "
+      "(declare-fun g1 ((_ BitVec 4)) (_ BitVec 4)) "
+      "(declare-fun h ((_ BitVec 4)) (_ BitVec 4)) "
+      "(declare-fun f ((_ BitVec 4) (_ BitVec 4)) (_ BitVec 4)) "
+      "(assert (or (not (= (f (bvnot (g0 _let0)) (bvnot (g0 _let0))) "
+      "(f (bvnot (g1 _let0)) (bvnot (g1 _let0))))) "
+      "(forall ((w (_ BitVec 4))) "
+      "(= (bvnot (g1 _let0)) (f (bvnot (h w)) (bvnot (h w))))))) (check-sat)",
+      "(set-logic UFBV)\n"
+      "(declare-const _let0 (_ BitVec 4))\n"
+      "(declare-fun g0 ((_ BitVec 4)) (_ BitVec 4))\n"
+      "(declare-fun g1 ((_ BitVec 4)) (_ BitVec 4))\n"
+      "(declare-fun h ((_ BitVec 4)) (_ BitVec 4))\n"
+      "(declare-fun f ((_ BitVec 4) (_ BitVec 4)) (_ BitVec 4))\n"
+      "(assert (let ((_let1 (bvnot (g0 _let0)))) (let ((_let2 (bvnot (g1 "
+      "_let0)))) (or (not (= (f _let1 _let1) (f _let2 _let2))) (forall ((w (_ "
+      "BitVec 4))) (let ((_let3 (bvnot (h w)))) (= _let2 (f _let3 _let3))))))))"
+      "\n"
+      "(check-sat)\n(exit)\n");
+}
+
 /* -------------------------------------------------------------------------- */
 /* Stastics                                                                   */
 /* -------------------------------------------------------------------------- */
