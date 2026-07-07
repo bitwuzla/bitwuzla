@@ -125,8 +125,6 @@ static const std::unordered_map<Option, bzla::option::Option>
         {Option::NUM_OPTS, bzla::option::Option::NUM_OPTIONS},
 
         {Option::PREPROCESS, bzla::option::Option::PREPROCESS},
-        {Option::PP_CONTRADICTING_ANDS,
-         bzla::option::Option::PP_CONTRADICTING_ANDS},
         {Option::PP_ELIM_BV_UDIV, bzla::option::Option::PP_ELIM_BV_UDIV},
         {Option::PP_EMBEDDED_CONSTR, bzla::option::Option::PP_EMBEDDED_CONSTR},
         {Option::PP_FLATTEN_AND, bzla::option::Option::PP_FLATTEN_AND},

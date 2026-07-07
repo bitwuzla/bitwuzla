@@ -50,7 +50,6 @@ Preprocessor::Preprocessor(SolvingContext& context)
                               ? new AssertionTracker(&d_backtrack_mgr)
                               : nullptr),
       d_pass_rewrite(d_env, &d_backtrack_mgr),
-      d_pass_contr_ands(d_env, &d_backtrack_mgr),
       d_pass_elim_lambda(d_env, &d_backtrack_mgr),
       d_pass_elim_bvudiv(d_env, &d_backtrack_mgr),
       d_pass_embedded_constraints(d_env, &d_backtrack_mgr),
@@ -125,7 +124,6 @@ Preprocessor::preprocess()
   // Clear rewriter and preprocessing pass caches
   d_env.rewriter().clear_cache();
   d_pass_rewrite.clear_cache();
-  d_pass_contr_ands.clear_cache();
   d_pass_elim_lambda.clear_cache();
   d_pass_elim_bvudiv.clear_cache();
   d_pass_embedded_constraints.clear_cache();
@@ -341,17 +339,6 @@ Preprocessor::apply(AssertionVector& assertions)
       if (is_inconsistent())
       {
         break;
-      }
-    }
-
-    if (options.pp_contr_ands())
-    {
-      assertions.reset_modified();
-      d_pass_contr_ands.apply(assertions);
-      modified |= assertions.modified();
-      if (d_logger.is_msg_enabled(1))
-      {
-        print_statistics(d_pass_contr_ands, assertions);
       }
     }
 

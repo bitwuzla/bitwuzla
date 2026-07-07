@@ -787,27 +787,6 @@ enum ENUM(Option)
    */
   EVALUE(PREPROCESS),
   /*!
-   * **Preprocessing: Find contradicting bit-vector ands.**
-   */
-#ifndef BITWUZLA_API_USE_C_ENUMS
-  /*!
-   * When enabled, substitutes contradicting nodes of kind Kind::BV_AND
-   * with zero.
-   */
-#else
-  /*!
-   * When enabled, substitutes contradicting nodes of kind #BITWUZLA_KIND_BV_AND
-   * with zero.
-   */
-#endif
-  /*!
-   *
-   * *Values:*
-   *  - **true**: enable
-   *  - **false**: disable [**default**]
-   */
-  EVALUE(PP_CONTRADICTING_ANDS),
-  /*!
    * **Preprocessing: Eliminate bit-vector operators bvudiv and bvurem.**
    *
    * When enabled, eliminates bit-vector unsigned division and remainder

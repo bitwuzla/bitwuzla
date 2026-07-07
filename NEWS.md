@@ -2,6 +2,9 @@
 
 This file collects a summary of important and/or user-visible changes.
 
+- Removed obsolete option `--pp-contr-ands`. This preprocessing pass was
+  disabled by default and does not have an observable positive impact.
+
 ## News for version 0.9.1
 
 - Updated SymFPU to version 1.2.0.

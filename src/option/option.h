@@ -77,14 +77,13 @@ enum class Option
   INTERPOLANTS_PRINT_STATS,  // bool
 
   // Preprocessing options for enabling/disabling passes
-  PREPROCESS,             // bool
-  PP_CONTRADICTING_ANDS,  // bool
-  PP_ELIM_BV_UDIV,        // bool
-  PP_EMBEDDED_CONSTR,     // bool
-  PP_FLATTEN_AND,         // bool
-  PP_NORMALIZE,           // bool
-  PP_SKELETON_PREPROC,    // bool
-  PP_VARIABLE_SUBST,      // bool
+  PREPROCESS,           // bool
+  PP_ELIM_BV_UDIV,      // bool
+  PP_EMBEDDED_CONSTR,   // bool
+  PP_FLATTEN_AND,       // bool
+  PP_NORMALIZE,         // bool
+  PP_SKELETON_PREPROC,  // bool
+  PP_VARIABLE_SUBST,    // bool
   PP_OPT_END,
 
   // Preprocessing pass options for configuring passes
@@ -619,7 +618,6 @@ class Options
 
   // Preprocessing
   OptionBool preprocess;
-  OptionBool pp_contr_ands;
   OptionBool pp_elim_bv_udiv;
   OptionBool pp_embedded_constr;
   OptionBool pp_flatten_and;

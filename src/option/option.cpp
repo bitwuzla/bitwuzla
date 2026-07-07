@@ -476,11 +476,6 @@ Options::Options()
       // Preprocessing
       preprocess(
           this, Option::PREPROCESS, true, "enable preprocessing", "preprocess"),
-      pp_contr_ands(this,
-                    Option::PP_CONTRADICTING_ANDS,
-                    false,
-                    "enable contradicting ands preprocessing pass",
-                    "pp-contr-ands"),
       pp_elim_bv_udiv(this,
                       Option::PP_ELIM_BV_UDIV,
                       false,
@@ -996,7 +991,6 @@ Options::data(Option opt)
     case Option::INTERPOLANTS_PRINT_STATS: return &interpolants_print_stats;
 
     case Option::PREPROCESS: return &preprocess;
-    case Option::PP_CONTRADICTING_ANDS: return &pp_contr_ands;
     case Option::PP_ELIM_BV_UDIV: return &pp_elim_bv_udiv;
     case Option::PP_EMBEDDED_CONSTR: return &pp_embedded_constr;
     case Option::PP_FLATTEN_AND: return &pp_flatten_and;
