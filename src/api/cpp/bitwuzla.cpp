@@ -1722,7 +1722,8 @@ Bitwuzla::get_interpolants(const std::vector<std::vector<Term>>& A)
       for (size_t j = 0, size = part.size(); j < size; ++j)
       {
         const Term& term = A[i][j];
-        BITWUZLA_CHECK_NOT_NULL_AT_IDX(term.d_node, i);
+        BITWUZLA_CHECK(term.d_node != nullptr)
+            << "expected non-null term at A[" << i << "][" << j << "]";
         BITWUZLA_CHECK_TERM_TERM_MGR_BITWUZLA(
             term,
             "assertion at position " + std::to_string(i) + " in partition "
