@@ -122,7 +122,7 @@ class ArraySolver : public Solver
 
   struct CompareAccess
   {
-    size_t operator()(const Access* acc1, const Access* acc2) const
+    bool operator()(const Access* acc1, const Access* acc2) const
     {
       return acc1->index_value() == acc2->index_value();
     }
