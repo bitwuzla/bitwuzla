@@ -16,21 +16,23 @@
 
 namespace bzla {
 
-class Unsupported : std::exception
+class Unsupported : public std::exception
 {
  public:
   Unsupported(const std::string& msg) : d_msg(msg) {}
   const std::string& msg() const { return d_msg; }
+  const char* what() const noexcept override { return msg().c_str(); }
 
  private:
   std::string d_msg;
 };
 
-class Error : std::exception
+class Error : public std::exception
 {
  public:
   Error(const std::string& msg) : d_msg(msg) {}
   const std::string& msg() const { return d_msg; }
+  const char* what() const noexcept override { return msg().c_str(); }
 
  private:
   std::string d_msg;
