@@ -218,6 +218,7 @@ bitwuzla_parser_get_declared_sorts(BitwuzlaParser* parser, size_t* size)
   BitwuzlaSort* res = nullptr;
   BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(parser);
+  BITWUZLA_CHECK_NOT_NULL(size);
   auto decl_sorts = parser->d_parser->get_declared_sorts();
   static thread_local std::vector<BitwuzlaSort> c_sorts;
   c_sorts.clear();
@@ -237,6 +238,7 @@ bitwuzla_parser_get_declared_funs(BitwuzlaParser* parser, size_t* size)
   BitwuzlaTerm* res = nullptr;
   BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(parser);
+  BITWUZLA_CHECK_NOT_NULL(size);
   auto decl_funs = parser->d_parser->get_declared_funs();
   static thread_local std::vector<BitwuzlaTerm> c_terms;
   c_terms.clear();

@@ -500,6 +500,7 @@ bitwuzla_get_assertions(Bitwuzla* bitwuzla, size_t* size)
   static thread_local std::vector<BitwuzlaTerm> res;
   BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);
+  BITWUZLA_CHECK_NOT_NULL(size);
   res.clear();
   auto assertions = bitwuzla->d_bitwuzla->get_assertions();
   auto tm         = bitwuzla->d_tm;
