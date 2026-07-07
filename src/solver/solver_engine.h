@@ -190,11 +190,6 @@ class SolverEngine
 
   /** Indicates whether solver engine is currently in solving loop. */
   bool d_in_solving_mode;
-  /**
-   * Indicates whether solver engine requires additional checks for model
-   * construction.
-   */
-  bool d_need_check = false;
 
   struct Statistics
   {
