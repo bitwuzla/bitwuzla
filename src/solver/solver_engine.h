@@ -35,7 +35,7 @@ namespace abstract {
 class AbstractionModule;
 }
 
-class ComputeValueException : std::exception
+class ComputeValueException : public std::exception
 {
  public:
   ComputeValueException(const Node& node) : d_node(node) {}
