@@ -205,8 +205,7 @@ ArraySolver::get_access(const Node& acc)
 void
 ArraySolver::check_access(const Node& access)
 {
-  auto [it, inserted] = d_check_access_cache.insert(access);
-  if (!inserted)
+  if (!d_check_access_cache.insert(access).second)
   {
     return;
   }
