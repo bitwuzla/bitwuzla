@@ -777,6 +777,7 @@ FloatingPoint::fpadd(const RoundingMode rm, const FloatingPoint &fp) const
 FloatingPoint
 FloatingPoint::fpmul(const RoundingMode rm, const FloatingPoint &fp) const
 {
+  assert(!is_null());
   assert(!fp.is_null());
   assert(d_exp_size == fp.d_exp_size && d_sig_size == fp.d_sig_size);
   FloatingPoint res(d_exp_size, d_sig_size);
