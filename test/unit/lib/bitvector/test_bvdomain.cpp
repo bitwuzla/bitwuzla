@@ -257,6 +257,9 @@ TEST_F(TestBitVectorDomain, eq)
   ASSERT_TRUE(d2 == d3);
   ASSERT_FALSE(d1 == d2);
   ASSERT_FALSE(d1 == d3);
+  ASSERT_EQ(BitVectorDomain(), BitVectorDomain());
+  ASSERT_NE(BitVectorDomain(), d1);
+  ASSERT_NE(d2, BitVectorDomain());
 }
 
 TEST_F(TestBitVectorDomain, not )

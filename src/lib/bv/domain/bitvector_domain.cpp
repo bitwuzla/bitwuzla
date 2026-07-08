@@ -213,9 +213,9 @@ BitVectorDomain::operator=(const BitVectorDomain& other)
 bool
 BitVectorDomain::operator==(const BitVectorDomain& other) const
 {
-  if (is_null())
+  if (is_null() || other.is_null())
   {
-    return other.is_null();
+    return is_null() == other.is_null();
   }
   return d_lo.compare(other.d_lo) == 0 && d_hi.compare(other.d_hi) == 0;
 }
