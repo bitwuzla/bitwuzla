@@ -85,6 +85,7 @@ unit_tests = [
 
   ['solver',
     [
+      'array_solver',
       'fun_solver',
       'incremental',
       'bv_solver',

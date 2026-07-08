@@ -1036,6 +1036,7 @@ tests_smt2 = [
   ['solver/array/regrconstarray31.smt2'],
   ['solver/array/regrconstarray32.smt2'],
   ['solver/array/regrconstarray33.smt2'],
+  ['solver/array/regrconstarray34.smt2'],
   ['solver/array/selsort002un.smt2'],
   ['solver/array/smtarraycond1.smt2'],
   ['solver/array/smtarraycond2.smt2'],

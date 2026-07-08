@@ -1342,20 +1342,91 @@ ArraySolver::construct_model_value(const Node& array,
   }
   assert(res.kind() == Kind::CONST_ARRAY);
 
+  // A queried select index not found in `map` (those returned above) takes
+  // the default value.
   if (!selected_index.is_null())
   {
     return res[0];
   }
 
-  const Node& default_value = res[0];
-  for (const auto& [index, value] : map)
+  // Construct canonical array value.
+  res = canonicalize_array_value(nm, array.type(), res[0], map);
+  cache.emplace(array, res);
+  return res;
+}
+
+Node
+ArraySolver::canonicalize_array_value(NodeManager& nm,
+                                      const Type& array_type,
+                                      const Node& default_value,
+                                      const std::map<Node, Node>& stores)
+{
+  const Type& t = array_type.array_index();
+  // Finite index sorts whose values can be enumerated
+  bool is_enum_index_sort = t.is_bool() || t.is_bv() || t.is_rm() || t.is_fp();
+
+  // The default can only be non-canonical when the explicit index/value pairs
+  // cover at least half of a finite domain (card <= 2 * |stores|). Otherwise
+  // the default region (card - |stores|) strictly dominates every explicit
+  // value and the given default is already the canonical choice.
+  Node canon_dv = default_value;
+  std::map<Node, Node> canon;
+  if (is_enum_index_sort)
   {
-    if (value != default_value)
+    // Saturating cardinality: exact iff card <= 2 * |stores|.
+    uint64_t card = type::cardinality_min(t, 2 * stores.size() + 1).to_uint64();
+    if (card <= 2 * stores.size())
     {
-      res = nm.mk_node(Kind::STORE, {res, index, value});
+      uint64_t default_region = card - stores.size();
+
+      // Determine the default value with the most occurrences by counting
+      // frequencies from `stores` with the default seeded at `default_region`.
+      // Tie-break by smaller node id.
+      std::unordered_map<Node, uint64_t> freq{{default_value, default_region}};
+      uint64_t max_freq = default_region;
+      for (const auto& [idx, v] : stores)
+      {
+        uint64_t f = ++freq[v];
+        if (f > max_freq || (f == max_freq && v < canon_dv))
+        {
+          max_freq = f;
+          canon_dv = v;
+        }
+      }
+
+      // If we determined a new default value, all indices not in `stores`
+      // (which hold the given default) now deviate and must be stored
+      // explicitly by enumerating the (small) domain.
+      if (canon_dv != default_value && default_region > 0)
+      {
+        for (Node idx = utils::mk_default_value(nm, t); !idx.is_null();
+             idx      = utils::next_value(nm, idx))
+        {
+          if (stores.find(idx) == stores.end())
+          {
+            canon.emplace(idx, default_value);
+          }
+        }
+      }
     }
   }
-  cache.emplace(array, res);
+
+  // Explicit cells that deviate from the canonical default.
+  for (const auto& [idx, v] : stores)
+  {
+    if (v != canon_dv)
+    {
+      canon.emplace(idx, v);
+    }
+  }
+
+  // Emit the constant array wrapped by the deviating cells, ordered by index
+  // node id.
+  Node res = nm.mk_const_array(array_type, canon_dv);
+  for (const auto& [index, value] : canon)
+  {
+    res = nm.mk_node(Kind::STORE, {res, index, value});
+  }
   return res;
 }
 

@@ -12,6 +12,7 @@
 #define BZLA_SOLVER_ARRAY_ARRAY_SOLVER_H_INCLUDED
 
 #include <cstdint>
+#include <map>
 #include <unordered_map>
 #include <vector>
 
@@ -226,6 +227,26 @@ class ArraySolver : public Solver
    */
   Node construct_element_value(const Node& term,
                                std::unordered_map<Node, Node>& cache);
+
+  /**
+   * Construct a canonical model value for an array from its default value and
+   * its explicit store map (index value -> element value).
+   *
+   * When the explicit index/element pairs cover at least half of a finite
+   * (enumerable) index domain (cardinality <= 2 * |stores|), the default is
+   * re-selected as the most frequent element value with a deterministic
+   * tie-break; otherwise the given default is kept.
+   *
+   * @param nm            The node manager.
+   * @param array_type    The array type of the value to construct.
+   * @param default_value The value at any index not present in @p stores.
+   * @param stores        Explicit index value -> element value assignments.
+   * @return The canonical CONST_ARRAY (wrapped in STOREs) model value.
+   */
+  static Node canonicalize_array_value(NodeManager& nm,
+                                       const Type& array_type,
+                                       const Node& default_value,
+                                       const std::map<Node, Node>& stores);
 
   bool is_equal(const Access* acc1, const Access* acc2);
   bool is_equal(const Access* acc, const Node& a);
