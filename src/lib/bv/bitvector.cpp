@@ -784,6 +784,7 @@ void
 BitVector::flip_bit(uint64_t idx)
 {
   assert(!is_null());
+  assert(idx < d_size);
   if (is_gmp())
   {
     mpz_combit(d_val_gmp, idx);
