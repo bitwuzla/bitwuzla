@@ -121,7 +121,7 @@ operator<<(std::ostream& os, LemmaKind kind)
     case LemmaKind::ADD_SAME: os << "ADD_SAME"; break;
     case LemmaKind::ADD_INV: os << "ADD_INV"; break;
     case LemmaKind::ADD_OVFL: os << "ADD_OVFL1"; break;
-    case LemmaKind::ADD_NOOVFL: os << "ADD_OVFL2"; break;
+    case LemmaKind::ADD_NOOVFL: os << "ADD_NOOVFL"; break;
     case LemmaKind::ADD_OR: os << "ADD_OR"; break;
     case LemmaKind::ADD_REF6: os << "ADD_REF6"; break;
     case LemmaKind::ADD_REF7: os << "ADD_REF7"; break;
