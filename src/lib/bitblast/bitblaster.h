@@ -301,6 +301,7 @@ class BitblasterInterface
 
   virtual Bits bv_slt(const Bits& a, const Bits& b)
   {
+    assert(a.size() == b.size());
     size_t msb_pos  = a.size() - 1;
     const T& a_sign = a[0];
     const T& b_sign = b[0];
