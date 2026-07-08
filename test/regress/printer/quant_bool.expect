@@ -1,0 +1,4 @@
+(set-logic ALL)
+(assert (forall ((p Bool)) true))
+(check-sat)
+(exit)

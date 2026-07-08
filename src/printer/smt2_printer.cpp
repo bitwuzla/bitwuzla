@@ -260,7 +260,7 @@ Smt2Printer::print_formula(std::ostream& os,
   {
     logic += "FP";
   }
-  os << (logic == "QF_" ? "ALL" : logic) << ")" << std::endl;
+  os << (logic.empty() || logic == "QF_" ? "ALL" : logic) << ")" << std::endl;
 
   // print declarations
   std::sort(decls.begin(), decls.end());

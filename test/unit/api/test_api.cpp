@@ -2280,9 +2280,9 @@ TEST_F(TestApi, print_formula5)
   {
     std::stringstream expected_smt2;
     expected_smt2
-        << "(set-logic )\n(declare-const _x0 Bool)\n(define-const @def0 Bool "
-           "(exists ((_x1 Bool)) (let ((_let0 (distinct (ite false _x1 _x0) "
-           "_x1 _x0))) (let ((_let1 (= _let0 _x0))) (ite _let1 _let1 "
+        << "(set-logic ALL)\n(declare-const _x0 Bool)\n(define-const @def0 "
+           "Bool (exists ((_x1 Bool)) (let ((_let0 (distinct (ite false _x1 "
+           "_x0) _x1 _x0))) (let ((_let1 (= _let0 _x0))) (ite _let1 _let1 "
            "_let0)))))\n(assert (ite @def0 @def0 _x0))\n(check-sat)\n(exit)\n";
     std::stringstream ss;
     bitwuzla->print_formula(ss, "smt2");
@@ -2291,11 +2291,11 @@ TEST_F(TestApi, print_formula5)
   {
     std::stringstream expected_smt2;
     expected_smt2
-        << "(set-logic )\n(declare-const _x0 Bool)\n(define-const @def0 Bool "
-           "(exists ((_x1 Bool)) (ite (= (distinct (ite false _x1 _x0) _x1 "
-           "_x0) _x0) (= (distinct (ite false _x1 _x0) _x1 _x0) _x0) (distinct "
-           "(ite false _x1 _x0) _x1 _x0))))\n(assert (ite @def0 @def0 "
-           "_x0))\n(check-sat)\n(exit)\n";
+        << "(set-logic ALL)\n(declare-const _x0 Bool)\n(define-const @def0 "
+           "Bool (exists ((_x1 Bool)) (ite (= (distinct (ite false _x1 _x0) "
+           "_x1 _x0) _x0) (= (distinct (ite false _x1 _x0) _x1 _x0) _x0) "
+           "(distinct (ite false _x1 _x0) _x1 _x0))))\n(assert (ite @def0 "
+           "@def0 _x0))\n(check-sat)\n(exit)\n";
     std::stringstream ss;
     ss << bitwuzla::set_letify(false);
     bitwuzla->print_formula(ss, "smt2");
