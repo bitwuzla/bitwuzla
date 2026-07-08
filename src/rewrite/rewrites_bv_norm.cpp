@@ -364,7 +364,8 @@ RewriteRule<RewriteRuleKind::NORM_FACT_BV_ADD_SHL>::_apply(Rewriter& rewriter,
   if ((node[0].kind() == Kind::BV_SHL && node[0][0] == node[1])
       || (node[1].kind() == Kind::BV_SHL && node[1][0] == node[0]))
   {
-    size_t idx    = node[0].kind() == Kind::BV_SHL ? 0 : 1;
+    size_t idx =
+        (node[0].kind() == Kind::BV_SHL && node[0][0] == node[1]) ? 0 : 1;
     const Node& c = node[idx][0];
     if (!c.is_value() || !c.value<BitVector>().is_one())
     {
