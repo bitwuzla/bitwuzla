@@ -6197,9 +6197,9 @@ BitVectorSignExtend::normalize_bounds(const BitVectorRange& bounds_u,
   {
     // Now, determine the disjunct bounds imposed from the extension.
     const BitVectorDomain& dx = child(0)->domain();
-    BitVectorDomain dn        = d_domain.bvextract(this->size() - 1, d_n - 1);
-    uint64_t dx_size          = dx.size();
-    bool has_fixed_bits       = dn.has_fixed_bits();
+    BitVectorDomain dn  = d_domain.bvextract(size() - 1, size() - d_n - 1);
+    uint64_t dx_size    = dx.size();
+    bool has_fixed_bits = dn.has_fixed_bits();
     BitVector min_0, max_0, min_1, max_1;
 
     if (!has_fixed_bits || dn.has_fixed_bits_false())
