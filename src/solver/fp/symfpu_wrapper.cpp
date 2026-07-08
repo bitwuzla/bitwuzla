@@ -744,14 +744,16 @@ template <bool is_signed>
 SymFpuSymBV<is_signed>
 SymFpuSymBV<is_signed>::maxValue(const uint32_t& w)
 {
-  return SymFpuNM::get().mk_value(BitVector::mk_max_signed(w));
+  return is_signed ? SymFpuNM::get().mk_value(BitVector::mk_max_signed(w))
+                   : SymFpuNM::get().mk_value(BitVector::mk_ones(w));
 }
 
 template <bool is_signed>
 SymFpuSymBV<is_signed>
 SymFpuSymBV<is_signed>::minValue(const uint32_t& w)
 {
-  return SymFpuNM::get().mk_value(BitVector::mk_min_signed(w));
+  return is_signed ? SymFpuNM::get().mk_value(BitVector::mk_min_signed(w))
+                   : SymFpuNM::get().mk_value(BitVector::mk_zero(w));
 }
 
 template <bool is_signed>
