@@ -183,12 +183,6 @@ struct hash<bzla::Type>
   size_t operator()(const bzla::Type& type) const;
 };
 
-template <>
-struct hash<bzla::Type*>
-{
-  size_t operator()(const bzla::Type* type) const;
-};
-
 }  // namespace std
 
 #endif

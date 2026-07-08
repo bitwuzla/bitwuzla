@@ -261,10 +261,4 @@ hash<bzla::Type>::operator()(const bzla::Type& type) const
   return type.id();
 }
 
-size_t
-hash<bzla::Type*>::operator()(const bzla::Type* type) const
-{
-  return type->id();
-}
-
 }  // namespace std

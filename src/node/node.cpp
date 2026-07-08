@@ -331,10 +331,4 @@ hash<bzla::Node>::operator()(const bzla::Node& node) const
   return node.id();
 }
 
-size_t
-hash<bzla::Node*>::operator()(const bzla::Node* node) const
-{
-  return node->id();
-}
-
 }  // namespace std

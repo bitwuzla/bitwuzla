@@ -249,11 +249,5 @@ struct hash<bzla::Node>
   size_t operator()(const bzla::Node& node) const;
 };
 
-template <>
-struct hash<bzla::Node*>
-{
-  size_t operator()(const bzla::Node* node) const;
-};
-
 }  // namespace std
 #endif
