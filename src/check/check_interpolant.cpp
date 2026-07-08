@@ -112,7 +112,7 @@ CheckInterpolant::check(const std::unordered_set<Node>& A,
   std::unordered_map<Node, VariableKind> consts;
   node_ref_vector visit{A.begin(), A.end()};
   unordered_node_ref_map<bool> cache;
-  do
+  while (!visit.empty())
   {
     const Node& cur     = visit.back();
     auto [it, inserted] = cache.emplace(cur, true);
@@ -130,7 +130,7 @@ CheckInterpolant::check(const std::unordered_set<Node>& A,
       }
     }
     visit.pop_back();
-  } while (!visit.empty());
+  }
 
   cache.clear();
   for (const auto& a : B)
