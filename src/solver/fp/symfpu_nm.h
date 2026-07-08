@@ -8,6 +8,9 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+#ifndef BZLA_SOLVER_FP_SYMFPU_NM_H_INCLUDED
+#define BZLA_SOLVER_FP_SYMFPU_NM_H_INCLUDED
+
 #include <cassert>
 
 namespace bzla {
@@ -41,3 +44,5 @@ class SymFpuNM
 
 }  // namespace fp
 }  // namespace bzla
+
+#endif
