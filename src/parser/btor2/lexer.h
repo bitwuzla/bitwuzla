@@ -122,7 +122,7 @@ class Lexer
       {"nego", Token::NEGO},       {"next", Token::NEXT},
       {"nor", Token::NOR},         {"not", Token::NOT},
       {"one", Token::ONE},         {"ones", Token::ONES},
-      {"or", Token::OR},           {"outpu", Token::OUTPUT},
+      {"or", Token::OR},           {"output", Token::OUTPUT},
       {"read", Token::READ},       {"redand", Token::REDAND},
       {"redor", Token::REDOR},     {"redxor", Token::REDXOR},
       {"rol", Token::ROL},         {"ror", Token::ROR},
