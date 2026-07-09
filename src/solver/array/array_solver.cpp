@@ -972,13 +972,11 @@ ArraySolver::collect_path_conditions(const Access& access,
 #ifndef NDEBUG
   unordered_node_ref_set pcache;
 #endif
-  Node prev = array;
   auto it = path.find(array);
   while (true)
   {
     assert(it != path.end());
     const Node& cur = it->second;
-    prev = cur;
 #ifndef NDEBUG
     auto [itc, inserted] = pcache.insert(cur);
     assert(inserted);

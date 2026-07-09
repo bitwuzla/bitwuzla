@@ -55,11 +55,6 @@ class ArraySolver : public Solver
 
   Node value(const Node& term) override;
 
-  /**
-   * Get the representative select stored in d_array_models.
-   */
-  Node repr(const Node& term) const;
-
   void register_term(const Node& term) override;
 
  private:
