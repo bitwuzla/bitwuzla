@@ -253,7 +253,7 @@ class BitblasterInterface
           d_bit_mgr.mk_ite(shift_less_than_size, shift_result[i], a[0]);
     }
 
-    return Bits{shift_result};
+    return shift_result;
   }
 
   virtual Bits bv_extract(const Bits& bits, size_t upper, size_t lower)
