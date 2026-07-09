@@ -57,30 +57,39 @@ CryptoMiniSat::assume(int32_t lit)
 int32_t
 CryptoMiniSat::value(int32_t lit)
 {
+  assert(lit);
   const std::vector<CMSat::lbool> &model = d_solver->get_model();
-  CMSat::Lit cms_lit                     = import_lit(lit);
-  assert(cms_lit.var() < model.size());
-  int32_t res = model[cms_lit.var()] == CMSat::l_True ? 1 : -1;
-  return cms_lit.sign() ? -res : res;
+  // Query the variable index directly instead of via import_lit(), which would
+  // grow the solver as a side effect and index past the model. An unknown
+  // literal (never added, or added after the last solve) has no model value.
+  uint32_t var = std::abs(lit);
+  if (var > model.size()) return 0;
+  int32_t res = model[var - 1] == CMSat::l_True ? 1 : -1;
+  return lit < 0 ? -res : res;
 }
 
 bool
 CryptoMiniSat::failed(int32_t lit)
 {
+  assert(lit);
   if (d_failed_map.empty()) analyze_failed();
-  CMSat::Lit cms_lit = import_lit(lit);
-  assert(cms_lit.var() < d_solver->nVars());
-  return d_failed_map[cms_lit.var()];
+  // Avoid import_lit() here: it would grow the solver and read past
+  // d_failed_map. An unknown literal cannot be part of the unsat core.
+  uint32_t var = std::abs(lit);
+  if (var > d_failed_map.size()) return false;
+  return d_failed_map[var - 1];
 }
 
 int32_t
 CryptoMiniSat::fixed(int32_t lit)
 {
+  assert(lit);
   if (d_assigned_map.empty()) analyze_fixed();
-  CMSat::Lit cms_lit = import_lit(lit);
-  uint32_t var       = cms_lit.var();
-  if (var >= d_nvars) return 0;
-  return cms_lit.sign() ? -d_assigned_map[var] : d_assigned_map[var];
+  // Avoid import_lit() here: it would grow the solver as a side effect of this
+  // read-only query. An unknown literal has no implied value.
+  uint32_t var = std::abs(lit);
+  if (var > d_nvars) return 0;
+  return lit < 0 ? -d_assigned_map[var - 1] : d_assigned_map[var - 1];
 }
 
 Result
@@ -118,7 +127,7 @@ CryptoMiniSat::set_num_threads(uint32_t n_threads) const
 /* --- CryptoMiniSat private ------------------------------------------------ */
 
 CMSat::Lit
-CryptoMiniSat::import_lit(int32_t lit) const
+CryptoMiniSat::import_lit(int32_t lit)
 {
   assert(lit);
   uint32_t var   = std::abs(lit);

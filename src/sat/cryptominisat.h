@@ -46,10 +46,14 @@ class CryptoMiniSat : public SatSolver
  private:
   /**
    * Convert literal to CryptoMiniSat literal.
+   *
+   * Allocates new variables in the solver if `lit` exceeds the current
+   * variable count, thus this must not be used for read-only queries.
+   *
    * @param lit The literal to convert.
    * @return The converted literal.
    */
-  CMSat::Lit import_lit(int32_t lit) const;
+  CMSat::Lit import_lit(int32_t lit);
   /**
    * Collect data for failed().
    * Caches for each variable if it is failed, i.e., in the unsat core, in

@@ -4789,6 +4789,55 @@ TEST_F(TestApi, sat_factory)
 }
 
 /* -------------------------------------------------------------------------- */
+/* SAT backend: querying literals that were never added                       */
+/* -------------------------------------------------------------------------- */
+
+#ifdef BZLA_USE_CMS
+TEST_F(TestApi, sat_cms_query_unknown_literal)
+{
+  // Regression test: value()/failed()/fixed() must treat a literal that was
+  // never added to the solver as "unknown" (0 / false) instead of growing the
+  // solver as a side effect and reading past its model / internal maps. This
+  // matches the behavior of the CaDiCaL backend. Before the fix, value(1000)
+  // grew the solver and read past get_model(), aborting on the debug assert.
+  {
+    // Satisfiable instance: (v1) & (-v2).
+    sat::CryptoMiniSat cms(1);
+    int32_t v1 = cms.new_var();
+    int32_t v2 = cms.new_var();
+    cms.add(v1);
+    cms.add(0);
+    cms.add(-v2);
+    cms.add(0);
+    ASSERT_EQ(cms.solve(), bitwuzla::Result::SAT);
+    ASSERT_EQ(cms.value(v1), 1);
+    ASSERT_EQ(cms.value(-v1), -1);
+    ASSERT_EQ(cms.value(v2), -1);
+    ASSERT_EQ(cms.value(-v2), 1);
+    // Never-added literal: must return unknown, not crash / read out of bounds.
+    ASSERT_EQ(cms.value(1000), 0);
+    ASSERT_EQ(cms.value(-1000), 0);
+    // fixed() for a never-added literal must return unknown as well.
+    ASSERT_EQ(cms.fixed(1000), 0);
+    ASSERT_EQ(cms.fixed(-1000), 0);
+  }
+  {
+    // Unsatisfiable under assumption -v1, to exercise failed().
+    sat::CryptoMiniSat cms(1);
+    int32_t v1 = cms.new_var();
+    cms.new_var();  // Allocate a second variable.
+    cms.add(v1);
+    cms.add(0);
+    cms.assume(-v1);
+    ASSERT_EQ(cms.solve(), bitwuzla::Result::UNSAT);
+    ASSERT_TRUE(cms.failed(v1));
+    // A never-added literal cannot be part of the unsat core.
+    ASSERT_FALSE(cms.failed(1000));
+  }
+}
+#endif
+
+/* -------------------------------------------------------------------------- */
 
 TEST_F(TestApi, term_manager)
 {
