@@ -1,0 +1,1 @@
+regress/parser/btor2perr017.btor2:2:1: line id must be a non-zero numeral

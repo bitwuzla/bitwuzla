@@ -336,8 +336,11 @@ Parser::parse_line(ParsedKind* pkind, int64_t* id)
   {
     return error("line id '" + std::to_string(line_id) + "' exceeds INT32_MAX");
   }
+  if (line_id == 0)
+  {
+    return error("line id must be a non-zero numeral");
+  }
 
-  assert(line_id);
   if (id)
   {
     *id = line_id;
