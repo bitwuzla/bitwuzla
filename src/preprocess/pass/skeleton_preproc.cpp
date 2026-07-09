@@ -152,7 +152,11 @@ PassSkeletonPreproc::apply(AssertionVector& assertions)
       bitblaster.bitblast(assertion);
       const auto& bits = bitblaster.bits(assertion);
       cnf_encoder.encode(bits[0], true);
-      d_assertion_lits.insert(bits[0].get_id());
+      // Top-level ANDs are not encoded (only their leafs).
+      if (cnf_encoder.is_encoded(bits[0]))
+      {
+        d_assertion_lits.insert(cnf_encoder.cnf_lit(bits[0]));
+      }
     }
   }
 
