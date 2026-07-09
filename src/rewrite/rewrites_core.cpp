@@ -1449,8 +1449,9 @@ RewriteRule<RewriteRuleKind::ITE_COND_EQUAL>::_apply(Rewriter& rewriter,
     Node res = _rw_ite_cond_equal(rewriter, node, 0);
     if (res == node)
     {
-      return _rw_ite_cond_equal(rewriter, node, 1);
+      res = _rw_ite_cond_equal(rewriter, node, 1);
     }
+    return res;
   }
   return node;
 }
