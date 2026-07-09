@@ -417,6 +417,11 @@ TEST_F(TestRewriterBool, bool_and_idem3)
       d_nm.mk_node(Kind::AND, {d_a, d_nm.mk_node(Kind::AND, {d_a, d_c})}));
   test_rule<kind>(
       d_nm.mk_node(Kind::AND, {d_nm.mk_node(Kind::AND, {d_a, d_c}), d_a}));
+  // second disjunct: node[idx0][1] == node[idx1]
+  test_rule<kind>(
+      d_nm.mk_node(Kind::AND, {d_c, d_nm.mk_node(Kind::AND, {d_a, d_c})}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::AND, {d_nm.mk_node(Kind::AND, {d_a, d_c}), d_c}));
   //// does not apply
   test_rule_does_not_apply<kind>(d_nm.mk_node(
       Kind::AND,
@@ -624,6 +629,34 @@ TEST_F(TestRewriterBool, bool_not_xor)
   //// does not apply
   test_rule_does_not_apply<kind>(
       invert_node(d_nm, d_nm.mk_node(Kind::OR, {d_a, d_b})));
+}
+
+TEST_F(TestRewriterBool, bool_not_equal_bv1_bool)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::NOT_EQUAL_BV1_BOOL;
+  //// applies
+  // bv1, value on lhs
+  test_rule<kind>(d_nm.mk_node(
+      Kind::NOT, {d_nm.mk_node(Kind::EQUAL, {d_bv1_one, d_bv1_a})}));
+  // bv1, value on rhs
+  test_rule<kind>(d_nm.mk_node(
+      Kind::NOT, {d_nm.mk_node(Kind::EQUAL, {d_bv1_a, d_bv1_one})}));
+  // bool, value on lhs
+  test_rule<kind>(
+      d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::EQUAL, {d_true, d_a})}));
+  // bool, value on rhs
+  test_rule<kind>(
+      d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::EQUAL, {d_a, d_true})}));
+  //// does not apply
+  // no value operand
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::EQUAL, {d_bv1_a, d_bv1_b})}));
+  // equality over bv4 (wrong type)
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::NOT, {d_nm.mk_node(Kind::EQUAL, {d_bv4_a, d_bv4_zero})}));
+  // child is not an equality
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::AND, {d_a, d_b})}));
 }
 
 /* or ----------------------------------------------------------------------- */

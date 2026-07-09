@@ -82,6 +82,16 @@ TEST_F(TestRewriterCore, core_equal_special_const)
         {RewriteRule<RewriteRuleKind::BV_XNOR_ELIM>::apply(d_rewriter, bv4xnor)
              .first,
          d_bv4_ones}));
+    //// does not apply
+    // ones vs neither bvand nor xnor
+    test_rule_does_not_apply<kind>(d_nm.mk_node(
+        Kind::EQUAL,
+        {d_bv4_ones, d_nm.mk_node(Kind::BV_ADD, {d_bv4_a, d_bv4_b})}));
+    // value that is neither zero nor ones
+    test_rule_does_not_apply<kind>(
+        d_nm.mk_node(Kind::EQUAL,
+                     {d_nm.mk_value(BitVector(4, "0101")),
+                      d_nm.mk_node(Kind::BV_XOR, {d_bv4_a, d_bv4_b})}));
   }
 }
 
@@ -106,6 +116,13 @@ TEST_F(TestRewriterCore, core_equal_const)
   test_rule_does_not_apply<kind>(d_nm.mk_node(
       Kind::EQUAL,
       {d_nm.mk_node(Kind::BV_AND, {d_bv4_a, d_bv4_b}), d_bv4_zero}));
+  // all-ones constant (neither zero nor ones guard)
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.mk_node(Kind::BV_AND, {d_bv4_a, d_bv4_b}), d_bv4_ones}));
+  // value vs neither bvand nor bvor (no slicing)
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL, {d_nm.mk_value(BitVector::from_ui(4, 5)), d_bv4_a}));
 }
 
 TEST_F(TestRewriterCore, core_equal_equal_const_bv1)
@@ -120,9 +137,15 @@ TEST_F(TestRewriterCore, core_equal_equal_const_bv1)
       Kind::EQUAL, {d_b, d_nm.mk_node(Kind::EQUAL, {d_bv1_a, d_bv1_one})}));
   test_rule<kind>(d_nm.mk_node(
       Kind::EQUAL, {d_b, d_nm.mk_node(Kind::EQUAL, {d_bv1_one, d_bv1_a})}));
+  // #b0 value exercises the e_value = mk_true() branch
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL, {d_nm.mk_node(Kind::EQUAL, {d_bv1_a, d_bv1_zero}), d_b}));
   //// does not apply
   test_rule_does_not_apply<kind>(d_nm.mk_node(
       Kind::EQUAL, {d_nm.mk_node(Kind::EQUAL, {d_bv4_a, d_bv4_zero}), d_b}));
+  // bv1 equality but neither operand is a value
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL, {d_nm.mk_node(Kind::EQUAL, {d_bv1_a, d_bv1_b}), d_b}));
 }
 
 TEST_F(TestRewriterCore, core_equal_true)
@@ -299,6 +322,11 @@ TEST_F(TestRewriterCore, core_equal_ite)
   test_rule_does_not_apply<kind>(d_nm.mk_node(
       Kind::EQUAL,
       {d_nm.mk_node(Kind::ITE, {d_b, d_bv4_a, d_bv4_b}), d_bv4_c}));
+  // two ITEs with different conditions
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::EQUAL,
+                   {d_nm.mk_node(Kind::ITE, {d_b, d_bv4_a, d_bv4_b}),
+                    d_nm.mk_node(Kind::ITE, {d_c, d_bv4_a, d_bv4_b})}));
 }
 
 TEST_F(TestRewriterCore, core_equal_const_bv_add)
@@ -600,6 +628,121 @@ TEST_F(TestRewriterCore, core_equal_inv)
                     d_nm.mk_node(Kind::FP_ABS, {d_fp35_b})}));
 }
 
+TEST_F(TestRewriterCore, core_equal_const_bv_not)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_CONST_BV_NOT;
+  Node val                       = d_nm.mk_value(BitVector(4, "0101"));
+  Node bvnot                     = d_nm.mk_node(Kind::BV_NOT, {d_bv4_a});
+  //// applies
+  // (= value (bvnot a))  (idx 0)
+  test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {val, bvnot}));
+  // (= (bvnot a) value)  (idx 1)
+  test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {bvnot, val}));
+  //// does not apply
+  // value vs non-bvnot
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::EQUAL, {val, d_bv4_a}));
+  // neither operand is a value
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL, {bvnot, d_nm.mk_node(Kind::BV_NOT, {d_bv4_b})}));
+}
+
+TEST_F(TestRewriterCore, core_equal_bv_comp_bv1)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_BV_COMP_BV1;
+  Node comp = d_nm.mk_node(Kind::BV_COMP, {d_bv4_a, d_bv4_b});
+  //// applies
+  // is_true -> EQUAL, both operand orders
+  test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {d_bv1_one, comp}));
+  test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {comp, d_bv1_one}));
+  // else -> DISTINCT, both operand orders
+  test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {d_bv1_zero, comp}));
+  test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {comp, d_bv1_zero}));
+  //// does not apply
+  // non-value vs bvcomp
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::EQUAL, {d_bv1_a, comp}));
+  // value vs non-bvcomp
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::EQUAL, {d_bv1_one, d_bv1_a}));
+}
+
+TEST_F(TestRewriterCore, core_equal_bv_mul_udiv_zero)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_BV_MUL_UDIV_ZERO;
+  Node udiv = d_nm.mk_node(Kind::BV_UDIV, {d_bv4_a, d_bv4_b});
+  Node mul0 = d_nm.mk_node(Kind::BV_MUL, {udiv, d_bv4_b});  // udiv at mul[0]
+  Node mul1 = d_nm.mk_node(Kind::BV_MUL, {d_bv4_b, udiv});  // udiv at mul[1]
+  //// applies (mul-side x udiv-side positions)
+  test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {mul0, d_bv4_zero}));
+  test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {mul1, d_bv4_zero}));
+  test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {d_bv4_zero, mul0}));
+  test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {d_bv4_zero, mul1}));
+  //// does not apply
+  // value is not zero
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::EQUAL, {mul0, d_bv4_one}));
+  // udiv[1] != t
+  Node mul_bad = d_nm.mk_node(Kind::BV_MUL, {udiv, d_bv4_c});
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::EQUAL, {mul_bad, d_bv4_zero}));
+}
+
+TEST_F(TestRewriterCore, core_equal_ite_lift_cond)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_ITE_LIFT_COND;
+  //// applies
+  // bv1: (= v (ite c v w)) -> c
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_bv1_one, d_nm.mk_node(Kind::ITE, {d_c, d_bv1_one, d_bv1_zero})}));
+  // bv1: (= v (ite c w v)) -> !c
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_bv1_one, d_nm.mk_node(Kind::ITE, {d_c, d_bv1_zero, d_bv1_one})}));
+  // value on rhs (exercises idx1)
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.mk_node(Kind::ITE, {d_c, d_bv1_one, d_bv1_zero}), d_bv1_one}));
+  // bool: (= v (ite c v w)) -> c
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL, {d_true, d_nm.mk_node(Kind::ITE, {d_c, d_true, d_false})}));
+  // bool: (= v (ite c w v)) -> !c
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL, {d_true, d_nm.mk_node(Kind::ITE, {d_c, d_false, d_true})}));
+  //// does not apply
+  // node[idx0] is not a value
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_bv1_a, d_nm.mk_node(Kind::ITE, {d_c, d_bv1_one, d_bv1_zero})}));
+  // ite branches are not both values
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_bv1_one, d_nm.mk_node(Kind::ITE, {d_c, d_bv1_a, d_bv1_zero})}));
+  // value matches neither branch
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::EQUAL,
+                   {d_nm.mk_value(BitVector(4, "0101")),
+                    d_nm.mk_node(Kind::ITE, {d_c, d_bv4_zero, d_bv4_ones})}));
+}
+
+TEST_F(TestRewriterCore, core_equal_bv_udiv1)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_BV_UDIV1;
+  Node udiv = d_nm.mk_node(Kind::BV_UDIV, {d_bv4_ones, d_bv4_a});
+  //// applies
+  // (= 0 (bvudiv ~0 t))
+  test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {d_bv4_zero, udiv}));
+  // (= (bvudiv ~0 t) 0)
+  test_rule<kind>(d_nm.mk_node(Kind::EQUAL, {udiv, d_bv4_zero}));
+  //// does not apply
+  // not a bit-vector equality
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::EQUAL, {d_a, d_b}));
+  // value is not zero
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::EQUAL, {d_bv4_one, udiv}));
+  // udiv numerator is not ones
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_bv4_zero, d_nm.mk_node(Kind::BV_UDIV, {d_bv4_one, d_bv4_a})}));
+}
+
 /* distinct ----------------------------------------------------------------- */
 
 TEST_F(TestRewriterCore, core_distinct_card)
@@ -668,6 +811,22 @@ TEST_F(TestRewriterCore, core_distinct_card)
     nodes.pop_back();
     test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::DISTINCT, nodes));
   }
+}
+
+/* distinct_n --------------------------------------------------------------- */
+
+TEST_F(TestRewriterCore, core_distinct_n_false)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::DISTINCT_N_FALSE;
+  Node n3                        = d_nm.mk_value(BitVector::from_ui(4, 3));
+  Node n2                        = d_nm.mk_value(BitVector::from_ui(4, 2));
+  //// applies: (num_children - 1) < N  -->  false
+  // DISTINCT_N(3, a, b): 2 elements < 3
+  test_rule<kind>(d_nm.mk_node(Kind::DISTINCT_N, {n3, d_bv4_a, d_bv4_b}));
+  //// does not apply: (num_children - 1) >= N
+  // DISTINCT_N(2, a, b): 2 elements, not < 2
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::DISTINCT_N, {n2, d_bv4_a, d_bv4_b}));
 }
 
 /* ite ---------------------------------------------------------------------- */
@@ -1160,6 +1319,90 @@ TEST_F(TestRewriterCore, core_ite_bv_op)
                     d_nm.mk_node(Kind::BV_UDIV, {d_bv4_b, d_bv4_c})}));
 }
 
+TEST_F(TestRewriterCore, core_ite_cond_equal)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::ITE_COND_EQUAL;
+  //// applies
+  // value on the rhs of the condition (idx 1)
+  // bv1: (ite (= t #b1) #b1 (bvnot #b1)) -> t
+  test_rule<kind>(d_nm.mk_node(Kind::ITE,
+                               {d_nm.mk_node(Kind::EQUAL, {d_bv1_a, d_bv1_one}),
+                                d_bv1_one,
+                                d_bv1_zero}));
+  // bv1: (ite (= t #b0) #b0 (bvnot #b0)) -> t
+  test_rule<kind>(
+      d_nm.mk_node(Kind::ITE,
+                   {d_nm.mk_node(Kind::EQUAL, {d_bv1_a, d_bv1_zero}),
+                    d_bv1_zero,
+                    d_bv1_one}));
+  // bool: (ite (= t true) true (not true)) -> t
+  test_rule<kind>(d_nm.mk_node(
+      Kind::ITE, {d_nm.mk_node(Kind::EQUAL, {d_a, d_true}), d_true, d_false}));
+  // value on the lhs of the condition (idx 0)
+  // bv1: (ite (= #b1 t) #b1 (bvnot #b1)) -> t
+  test_rule<kind>(d_nm.mk_node(Kind::ITE,
+                               {d_nm.mk_node(Kind::EQUAL, {d_bv1_one, d_bv1_a}),
+                                d_bv1_one,
+                                d_bv1_zero}));
+  //// does not apply
+  // node type is neither bv1 nor bool
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::ITE,
+      {d_nm.mk_node(Kind::EQUAL,
+                    {d_bv4_a, d_nm.mk_value(BitVector(4, "0101"))}),
+       d_nm.mk_value(BitVector(4, "0101")),
+       d_nm.mk_node(Kind::BV_NOT, {d_nm.mk_value(BitVector(4, "0101"))})}));
+  // condition operands are not values
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::ITE,
+      {d_nm.mk_node(Kind::EQUAL, {d_bv1_a, d_bv1_b}), d_bv1_a, d_bv1_b}));
+  // else branch is not the inverse of the value
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::ITE,
+      {d_nm.mk_node(Kind::EQUAL, {d_bv1_a, d_bv1_one}), d_bv1_one, d_bv1_one}));
+}
+
+TEST_F(TestRewriterCore, core_ite_bool_to_bv1)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::ITE_BOOL_TO_BV1;
+  //// applies
+  // node[0][0] value, == then -> t
+  test_rule<kind>(d_nm.mk_node(Kind::ITE,
+                               {d_nm.mk_node(Kind::EQUAL, {d_bv1_one, d_bv1_a}),
+                                d_bv1_one,
+                                d_bv1_zero}));
+  // node[0][0] value, == else -> (bvnot t)
+  test_rule<kind>(d_nm.mk_node(Kind::ITE,
+                               {d_nm.mk_node(Kind::EQUAL, {d_bv1_one, d_bv1_a}),
+                                d_bv1_zero,
+                                d_bv1_one}));
+  // node[0][1] value, == then -> t
+  test_rule<kind>(d_nm.mk_node(Kind::ITE,
+                               {d_nm.mk_node(Kind::EQUAL, {d_bv1_a, d_bv1_one}),
+                                d_bv1_one,
+                                d_bv1_zero}));
+  // node[0][1] value, == else -> (bvnot t)
+  test_rule<kind>(d_nm.mk_node(Kind::ITE,
+                               {d_nm.mk_node(Kind::EQUAL, {d_bv1_a, d_bv1_one}),
+                                d_bv1_zero,
+                                d_bv1_one}));
+  //// does not apply
+  // condition is not an equality
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::ITE, {d_c, d_bv1_one, d_bv1_zero}));
+  // branches are not values
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::ITE,
+      {d_nm.mk_node(Kind::EQUAL, {d_bv1_a, d_bv1_one}), d_bv1_b, d_bv1_zero}));
+  // equality operand is not bv1
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::ITE,
+      {d_nm.mk_node(Kind::EQUAL,
+                    {d_bv4_a, d_nm.mk_value(BitVector(4, "0101"))}),
+       d_bv1_one,
+       d_bv1_zero}));
+}
+
 /* --- Evaluation (Constant Folding) Rules----------------------------------- */
 
 TEST_F(TestRewriterCore, core_equal_eval)
@@ -1282,6 +1525,51 @@ TEST_F(TestRewriterCore, rewrite_cache_growth)
 TEST_F(TestRewriterCore, core_distinct_elim)
 {
   test_elim_rule_core(Kind::DISTINCT, d_bool_type);
+}
+
+/* --- Commutative Operator Normalization ----------------------------------- */
+
+TEST_F(TestRewriterCore, core_normalize_comm)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::NORMALIZE_COMM;
+  Node cnt                       = d_nm.mk_value(BitVector::from_ui(4, 2));
+  //// applies
+  // commutative 2-ary: swap when node[0].id() > node[1].id()
+  test_rule<kind>(d_nm.mk_node(Kind::BV_ADD, {d_bv4_b, d_bv4_a}));
+  // commutative n-ary (>= 3): sort children (DISTINCT)
+  test_rule<kind>(d_nm.mk_node(Kind::DISTINCT, {d_bv4_c, d_bv4_b, d_bv4_a}));
+  // DISTINCT_N: sort children (skipping cardinality operand at index 0)
+  test_rule<kind>(
+      d_nm.mk_node(Kind::DISTINCT_N, {cnt, d_bv4_c, d_bv4_b, d_bv4_a}));
+  // FP_ADD: swap operands when node[1].id() > node[2].id()
+  test_rule<kind>(d_nm.mk_node(Kind::FP_ADD, {d_rm, d_fp35_b, d_fp35_a}));
+  // FP_MUL: swap operands when node[1].id() > node[2].id()
+  test_rule<kind>(d_nm.mk_node(Kind::FP_MUL, {d_rm, d_fp35_b, d_fp35_a}));
+  // FP_FMA: swap first two operands when node[1].id() > node[2].id()
+  Node fp_c = d_nm.mk_const(d_fp35_type, "c_fp35");
+  test_rule<kind>(d_nm.mk_node(Kind::FP_FMA, {d_rm, d_fp35_b, d_fp35_a, fp_c}));
+  //// does not apply
+  // non-commutative, non-FP operator
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_SUB, {d_bv4_a, d_bv4_b}));
+  // commutative 2-ary already ordered (node[0].id() < node[1].id())
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_ADD, {d_bv4_a, d_bv4_b}));
+  // FP_ADD already ordered
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::FP_ADD, {d_rm, d_fp35_a, d_fp35_b}));
+}
+
+/* --- Quantifiers ---------------------------------------------------------- */
+
+TEST_F(TestRewriterCore, core_exists_elim)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::EXISTS_ELIM;
+  Node x                         = d_nm.mk_var(d_bv4_type);
+  Node body                      = d_nm.mk_node(Kind::EQUAL, {x, d_bv4_zero});
+  Node ex                        = d_nm.mk_node(Kind::EXISTS, {x, body});
+  //// applies: exists x. P  -->  not (forall x. not P)
+  test_rule<kind>(ex);
 }
 
 /* -------------------------------------------------------------------------- */

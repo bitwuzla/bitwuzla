@@ -29,6 +29,7 @@ class TestRewriterFp : public TestRewriter
 
 TEST_F(TestRewriterFp, fp_abs_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_ABS_EVAL;
   //// applies
   Node fpabs0 =
       d_nm.mk_node(Kind::FP_ABS,
@@ -46,6 +47,7 @@ TEST_F(TestRewriterFp, fp_abs_eval)
   //// does not apply
   Node fpabs2 = d_nm.mk_node(Kind::FP_ABS, {d_nm.mk_const(d_fp35_type)});
   ASSERT_EQ(fpabs2, d_rewriter.rewrite(fpabs2));
+  test_rule_does_not_apply<kind>(fpabs2);
 }
 
 TEST_F(TestRewriterFp, fp_abs_abs_neg)
@@ -66,6 +68,7 @@ TEST_F(TestRewriterFp, fp_abs_abs_neg)
 
 TEST_F(TestRewriterFp, fp_add_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_ADD_EVAL;
   //// applies
   Node fpadd0 =
       d_nm.mk_node(Kind::FP_ADD,
@@ -112,6 +115,7 @@ TEST_F(TestRewriterFp, fp_add_eval)
                                                 d_fp35_type.fp_sig_size(),
                                                 BitVector(8, "00100000")))});
   ASSERT_EQ(fpadd2, d_rewriter.rewrite(fpadd2));
+  test_rule_does_not_apply<kind>(fpadd2);
   Node fpadd3 =
       d_nm.mk_node(Kind::FP_ADD,
                    {d_nm.mk_value(RoundingMode::RNE),
@@ -131,6 +135,7 @@ TEST_F(TestRewriterFp, fp_add_eval)
 
 TEST_F(TestRewriterFp, fp_div_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_DIV_EVAL;
   //// applies
   Node fpdiv0 =
       d_nm.mk_node(Kind::FP_DIV,
@@ -178,6 +183,7 @@ TEST_F(TestRewriterFp, fp_div_eval)
                                                 d_fp35_type.fp_sig_size(),
                                                 BitVector(8, "00100000")))});
   ASSERT_EQ(fpdiv2, d_rewriter.rewrite(fpdiv2));
+  test_rule_does_not_apply<kind>(fpdiv2);
   Node fpdiv3 =
       d_nm.mk_node(Kind::FP_DIV,
                    {d_nm.mk_value(RoundingMode::RNE),
@@ -197,6 +203,7 @@ TEST_F(TestRewriterFp, fp_div_eval)
 
 TEST_F(TestRewriterFp, fp_fma_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_FMA_EVAL;
   //// applies
   Node fpfma0 =
       d_nm.mk_node(Kind::FP_FMA,
@@ -256,6 +263,7 @@ TEST_F(TestRewriterFp, fp_fma_eval)
                                                 d_fp35_type.fp_sig_size(),
                                                 BitVector(8, "00100000")))});
   ASSERT_EQ(fpfma2, d_rewriter.rewrite(fpfma2));
+  test_rule_does_not_apply<kind>(fpfma2);
   Node fpfma3 =
       d_nm.mk_node(Kind::FP_FMA,
                    {d_nm.mk_value(RoundingMode::RNE),
@@ -291,6 +299,7 @@ TEST_F(TestRewriterFp, fp_fma_eval)
 
 TEST_F(TestRewriterFp, fp_is_inf_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_IS_INF_EVAL;
   //// applies
   test_rewrite(
       d_nm.mk_node(Kind::FP_IS_INF,
@@ -307,6 +316,7 @@ TEST_F(TestRewriterFp, fp_is_inf_eval)
   // does not apply
   Node fpisinf2 = d_nm.mk_node(Kind::FP_IS_INF, {d_nm.mk_const(d_fp35_type)});
   ASSERT_EQ(fpisinf2, d_rewriter.rewrite(fpisinf2));
+  test_rule_does_not_apply<kind>(fpisinf2);
 }
 
 TEST_F(TestRewriterFp, fp_is_inf_abs_neg)
@@ -327,6 +337,7 @@ TEST_F(TestRewriterFp, fp_is_inf_abs_neg)
 
 TEST_F(TestRewriterFp, fp_is_nan_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_IS_NAN_EVAL;
   //// applies
   test_rewrite(
       d_nm.mk_node(Kind::FP_IS_NAN,
@@ -342,6 +353,7 @@ TEST_F(TestRewriterFp, fp_is_nan_eval)
   //// does not apply
   Node fpisnan2 = d_nm.mk_node(Kind::FP_IS_NAN, {d_nm.mk_const(d_fp35_type)});
   ASSERT_EQ(fpisnan2, d_rewriter.rewrite(fpisnan2));
+  test_rule_does_not_apply<kind>(fpisnan2);
 }
 
 TEST_F(TestRewriterFp, fp_is_nan_abs_neg)
@@ -362,6 +374,7 @@ TEST_F(TestRewriterFp, fp_is_nan_abs_neg)
 
 TEST_F(TestRewriterFp, fp_is_neg_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_IS_NEG_EVAL;
   //// applies
   test_rewrite(
       d_nm.mk_node(Kind::FP_IS_NEG,
@@ -378,12 +391,14 @@ TEST_F(TestRewriterFp, fp_is_neg_eval)
   //// does not apply
   Node fpisneg2 = d_nm.mk_node(Kind::FP_IS_NEG, {d_nm.mk_const(d_fp35_type)});
   ASSERT_EQ(fpisneg2, d_rewriter.rewrite(fpisneg2));
+  test_rule_does_not_apply<kind>(fpisneg2);
 }
 
 /* fpisnorm ----------------------------------------------------------------- */
 
 TEST_F(TestRewriterFp, fp_is_norm_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_IS_NORM_EVAL;
   //// applies
   test_rewrite(
       d_nm.mk_node(Kind::FP_IS_NORMAL,
@@ -401,6 +416,7 @@ TEST_F(TestRewriterFp, fp_is_norm_eval)
   Node fpisnorm2 =
       d_nm.mk_node(Kind::FP_IS_NORMAL, {d_nm.mk_const(d_fp35_type)});
   ASSERT_EQ(fpisnorm2, d_rewriter.rewrite(fpisnorm2));
+  test_rule_does_not_apply<kind>(fpisnorm2);
 }
 
 TEST_F(TestRewriterFp, fp_is_norm_abs_neg)
@@ -421,6 +437,7 @@ TEST_F(TestRewriterFp, fp_is_norm_abs_neg)
 
 TEST_F(TestRewriterFp, fp_is_pos_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_IS_POS_EVAL;
   //// applies
   test_rewrite(
       d_nm.mk_node(Kind::FP_IS_POS,
@@ -437,12 +454,14 @@ TEST_F(TestRewriterFp, fp_is_pos_eval)
   //// does not apply
   Node fpispos2 = d_nm.mk_node(Kind::FP_IS_POS, {d_nm.mk_const(d_fp35_type)});
   ASSERT_EQ(fpispos2, d_rewriter.rewrite(fpispos2));
+  test_rule_does_not_apply<kind>(fpispos2);
 }
 
 /* fpissubnorm -------------------------------------------------------------- */
 
 TEST_F(TestRewriterFp, fp_is_subnorm_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_IS_SUBNORM_EVAL;
   //// applies
   test_rewrite(
       d_nm.mk_node(Kind::FP_IS_SUBNORMAL,
@@ -466,6 +485,7 @@ TEST_F(TestRewriterFp, fp_is_subnorm_eval)
   Node fpissubnorm2 =
       d_nm.mk_node(Kind::FP_IS_SUBNORMAL, {d_nm.mk_const(d_fp35_type)});
   ASSERT_EQ(fpissubnorm2, d_rewriter.rewrite(fpissubnorm2));
+  test_rule_does_not_apply<kind>(fpissubnorm2);
 }
 
 TEST_F(TestRewriterFp, fp_is_subnorm_abs_neg)
@@ -487,6 +507,7 @@ TEST_F(TestRewriterFp, fp_is_subnorm_abs_neg)
 
 TEST_F(TestRewriterFp, fp_is_zero_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_IS_ZERO_EVAL;
   //// applies
   test_rewrite(d_nm.mk_node(Kind::FP_IS_ZERO, {d_fp35_pzero}), d_true);
   test_rewrite(d_nm.mk_node(Kind::FP_IS_ZERO, {d_fp35_nzero}), d_true);
@@ -499,6 +520,7 @@ TEST_F(TestRewriterFp, fp_is_zero_eval)
   //// does not apply
   Node fpiszero2 = d_nm.mk_node(Kind::FP_IS_ZERO, {d_nm.mk_const(d_fp35_type)});
   ASSERT_EQ(fpiszero2, d_rewriter.rewrite(fpiszero2));
+  test_rule_does_not_apply<kind>(fpiszero2);
 }
 
 TEST_F(TestRewriterFp, fp_is_zero_abs_neg)
@@ -519,6 +541,7 @@ TEST_F(TestRewriterFp, fp_is_zero_abs_neg)
 
 TEST_F(TestRewriterFp, fp_leq_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_LEQ_EVAL;
   // evaluates to (fp #b0 #b010 #b0000")
   Node fpadd0 =
       d_nm.mk_node(Kind::FP_ADD,
@@ -546,6 +569,7 @@ TEST_F(TestRewriterFp, fp_leq_eval)
                                                 d_fp35_type.fp_sig_size(),
                                                 BitVector(8, "00100000")))});
   ASSERT_EQ(fple2, d_rewriter.rewrite(fple2));
+  test_rule_does_not_apply<kind>(fple2);
   Node fple3 =
       d_nm.mk_node(Kind::FP_LEQ, {d_fp35_pzero, d_nm.mk_const(d_fp35_type)});
   ASSERT_EQ(fple3, d_rewriter.rewrite(fple3));
@@ -568,6 +592,7 @@ TEST_F(TestRewriterFp, fp_leq_eq)
 
 TEST_F(TestRewriterFp, fp_lt_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_LT_EVAL;
   // evaluates to (fp #b0 #b010 #b0000")
   Node fpadd0 =
       d_nm.mk_node(Kind::FP_ADD,
@@ -595,6 +620,7 @@ TEST_F(TestRewriterFp, fp_lt_eval)
                                                 d_fp35_type.fp_sig_size(),
                                                 BitVector(8, "00100000")))});
   ASSERT_EQ(fplt2, d_rewriter.rewrite(fplt2));
+  test_rule_does_not_apply<kind>(fplt2);
   Node fplt3 =
       d_nm.mk_node(Kind::FP_LT, {d_fp35_pzero, d_nm.mk_const(d_fp35_type)});
   ASSERT_EQ(fplt3, d_rewriter.rewrite(fplt3));
@@ -647,6 +673,7 @@ TEST_F(TestRewriterFp, fp_max_eq)
 
 TEST_F(TestRewriterFp, fp_mul_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_MUL_EVAL;
   //// applies
   Node fpmul0 =
       d_nm.mk_node(Kind::FP_MUL,
@@ -695,6 +722,7 @@ TEST_F(TestRewriterFp, fp_mul_eval)
                                                 d_fp35_type.fp_sig_size(),
                                                 BitVector(8, "00100000")))});
   ASSERT_EQ(fpmul2, d_rewriter.rewrite(fpmul2));
+  test_rule_does_not_apply<kind>(fpmul2);
   Node fpmul3 =
       d_nm.mk_node(Kind::FP_MUL,
                    {d_nm.mk_value(RoundingMode::RNE),
@@ -714,6 +742,7 @@ TEST_F(TestRewriterFp, fp_mul_eval)
 
 TEST_F(TestRewriterFp, fp_neg_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_NEG_EVAL;
   //// applies
   Node fpneg0 =
       d_nm.mk_node(Kind::FP_NEG,
@@ -731,6 +760,7 @@ TEST_F(TestRewriterFp, fp_neg_eval)
   //// does not apply
   Node fpneg2 = d_nm.mk_node(Kind::FP_NEG, {d_nm.mk_const(d_fp35_type)});
   ASSERT_EQ(fpneg2, d_rewriter.rewrite(fpneg2));
+  test_rule_does_not_apply<kind>(fpneg2);
 }
 
 TEST_F(TestRewriterFp, fp_neg_neg)
@@ -747,6 +777,7 @@ TEST_F(TestRewriterFp, fp_neg_neg)
 
 TEST_F(TestRewriterFp, fp_rem_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_REM_EVAL;
   //// applies
   Node fprem0 =
       d_nm.mk_node(Kind::FP_REM,
@@ -783,6 +814,7 @@ TEST_F(TestRewriterFp, fp_rem_eval)
                                                 d_fp35_type.fp_sig_size(),
                                                 BitVector(8, "00100000")))});
   ASSERT_EQ(fprem2, d_rewriter.rewrite(fprem2));
+  test_rule_does_not_apply<kind>(fprem2);
   Node fprem3 =
       d_nm.mk_node(Kind::FP_REM, {d_fp35_pzero, d_nm.mk_const(d_fp35_type)});
   ASSERT_EQ(fprem3, d_rewriter.rewrite(fprem3));
@@ -799,6 +831,8 @@ TEST_F(TestRewriterFp, fp_rem_same_div)
   test_rule_does_not_apply<kind>(d_nm.mk_node(
       Kind::FP_REM,
       {d_nm.mk_node(Kind::FP_REM, {d_fp35_b, d_fp35_a}), d_fp35_b}));
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::FP_REM, {d_fp35_a, d_fp35_b}));
 }
 
 TEST_F(TestRewriterFp, fp_rem_abs_neg)
@@ -829,6 +863,7 @@ TEST_F(TestRewriterFp, fp_rem_neg)
 
 TEST_F(TestRewriterFp, fp_rti_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_RTI_EVAL;
   // evaluates to (fp #b0 #b010 #b0000")
   Node fpadd0 =
       d_nm.mk_node(Kind::FP_ADD,
@@ -870,12 +905,14 @@ TEST_F(TestRewriterFp, fp_rti_eval)
   Node fprti3 = d_nm.mk_node(
       Kind::FP_RTI,
       {d_nm.mk_value(RoundingMode::RNE), d_nm.mk_const(d_fp35_type)});
+  test_rule_does_not_apply<kind>(fprti3);
 }
 
 /* fpsqrt ------------------------------------------------------------------- */
 
 TEST_F(TestRewriterFp, fp_sqrt_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_SQRT_EVAL;
   // evaluates to (fp #b0 #b010 #b0000")
   Node fpadd0 =
       d_nm.mk_node(Kind::FP_ADD,
@@ -917,12 +954,14 @@ TEST_F(TestRewriterFp, fp_sqrt_eval)
   Node fpsqrt3 = d_nm.mk_node(
       Kind::FP_SQRT,
       {d_nm.mk_value(RoundingMode::RNE), d_nm.mk_const(d_fp35_type)});
+  test_rule_does_not_apply<kind>(fpsqrt3);
 }
 
 /* to_fp: from_bv ----------------------------------------------------------- */
 
 TEST_F(TestRewriterFp, fp_to_fp_from_bv_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_TO_FP_FROM_BV_EVAL;
   // evaluates to #b00010111
   Node bvadd0 = d_nm.mk_node(Kind::BV_ADD,
                              {d_nm.mk_value(BitVector(8, "00001001")),
@@ -942,12 +981,14 @@ TEST_F(TestRewriterFp, fp_to_fp_from_bv_eval)
   Node tofpfrombv2 = d_nm.mk_node(
       Kind::FP_TO_FP_FROM_BV, {d_nm.mk_const(d_nm.mk_bv_type(8))}, {3, 5});
   ASSERT_EQ(tofpfrombv2, d_rewriter.rewrite(tofpfrombv2));
+  test_rule_does_not_apply<kind>(tofpfrombv2);
 }
 
 /* to_fp: from_fp ----------------------------------------------------------- */
 
 TEST_F(TestRewriterFp, fp_to_fp_from_fp_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_TO_FP_FROM_FP_EVAL;
   // evaluates to (fp #b0 #b010 #b0000")
   Node fpadd0 =
       d_nm.mk_node(Kind::FP_ADD,
@@ -979,6 +1020,7 @@ TEST_F(TestRewriterFp, fp_to_fp_from_fp_eval)
                                                 BitVector(8, "00010000")))},
                    {3, 5});
   ASSERT_EQ(tofpfromfp3, d_rewriter.rewrite(tofpfromfp3));
+  test_rule_does_not_apply<kind>(tofpfromfp3);
   Node tofpfromfp4 = d_nm.mk_node(
       Kind::FP_TO_FP_FROM_FP,
       {d_nm.mk_value(RoundingMode::RNE), d_nm.mk_const(d_fp35_type)},
@@ -990,6 +1032,7 @@ TEST_F(TestRewriterFp, fp_to_fp_from_fp_eval)
 
 TEST_F(TestRewriterFp, fp_to_fp_from_sbv_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_TO_FP_FROM_SBV_EVAL;
   // evaluates to #b10010111
   Node bvadd0 = d_nm.mk_node(Kind::BV_ADD,
                              {d_nm.mk_value(BitVector(8, "10001001")),
@@ -1012,6 +1055,7 @@ TEST_F(TestRewriterFp, fp_to_fp_from_sbv_eval)
       {d_nm.mk_const(d_rm_type), d_nm.mk_value(BitVector(8, "00010000"))},
       {3, 5});
   ASSERT_EQ(tofpfromsbv3, d_rewriter.rewrite(tofpfromsbv3));
+  test_rule_does_not_apply<kind>(tofpfromsbv3);
   Node tofpfromsbv4 = d_nm.mk_node(
       Kind::FP_TO_FP_FROM_SBV,
       {d_nm.mk_value(RoundingMode::RNE), d_nm.mk_const(d_nm.mk_bv_type(8))},
@@ -1034,6 +1078,7 @@ TEST_F(TestRewriterFp, fp_to_fp_from_sbv_bv1_elim)
 
 TEST_F(TestRewriterFp, fp_to_fp_from_ubv_eval)
 {
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_TO_FP_FROM_UBV_EVAL;
   // evaluates to #b10010111
   Node bvadd0 = d_nm.mk_node(Kind::BV_ADD,
                              {d_nm.mk_value(BitVector(8, "10001001")),
@@ -1056,6 +1101,7 @@ TEST_F(TestRewriterFp, fp_to_fp_from_ubv_eval)
       {d_nm.mk_const(d_rm_type), d_nm.mk_value(BitVector(8, "00010000"))},
       {3, 5});
   ASSERT_EQ(tofpfromubv3, d_rewriter.rewrite(tofpfromubv3));
+  test_rule_does_not_apply<kind>(tofpfromubv3);
   Node tofpfromubv4 = d_nm.mk_node(
       Kind::FP_TO_FP_FROM_UBV,
       {d_nm.mk_value(RoundingMode::RNE), d_nm.mk_const(d_nm.mk_bv_type(8))},

@@ -79,6 +79,9 @@ TEST_F(TestRewriterBv, bv_add_const)
       Kind::BV_ADD, {b_val, d_nm.mk_node(Kind::BV_ADD, {a_val, d_bv4_a})}));
   test_rule<kind>(d_nm.mk_node(
       Kind::BV_ADD, {d_nm.mk_node(Kind::BV_ADD, {a_val, d_bv4_a}), a_val}));
+  // inner add with the value as the second operand (node[idx1][1] is value)
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_ADD, {d_nm.mk_node(Kind::BV_ADD, {d_bv4_a, a_val}), b_val}));
   //// does not apply
   test_rule_does_not_apply<kind>(d_nm.mk_node(
       Kind::BV_ADD, {d_nm.mk_node(Kind::BV_ADD, {a_val, d_bv4_a}), d_bv4_a}));
@@ -422,6 +425,16 @@ TEST_F(TestRewriterBv, bv_add_ite1)
       Kind::BV_ADD,
       {d_nm.mk_node(Kind::ITE, {d_c, d_bv4_a, d_bv4_b}),
        invert_node(d_nm, d_nm.mk_node(Kind::ITE, {d_c, d_bv4_a, d_bv4_d}))}));
+  // both ITE with same condition but differing then and else arms
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_ADD,
+                   {d_nm.mk_node(Kind::ITE, {d_c, d_bv4_a, d_bv4_b}),
+                    d_nm.mk_node(Kind::ITE, {d_c, d_bv4_c, d_bv4_d})}));
+  // both ITE with differing conditions
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_ADD,
+                   {d_nm.mk_node(Kind::ITE, {d_c, d_bv4_a, d_bv4_b}),
+                    d_nm.mk_node(Kind::ITE, {d_d, d_bv4_a, d_bv4_b})}));
 }
 
 TEST_F(TestRewriterBv, bv_add_ite2)
@@ -925,6 +938,18 @@ TEST_F(TestRewriterBv, bv_and_concat)
       {invert_node(d_nm, d_nm.mk_node(Kind::BV_CONCAT, {d_bv4_a, d_bv4_zero})),
        invert_node(d_nm,
                    d_nm.mk_node(Kind::BV_CONCAT, {d_bv4_zero, d_bv4_a}))}));
+  // both concat halves ones under bvnot -> (_ bv0 (m+n))
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_AND,
+      {invert_node(d_nm, d_nm.mk_node(Kind::BV_CONCAT, {d_bv4_ones, d_bv4_a})),
+       invert_node(d_nm,
+                   d_nm.mk_node(Kind::BV_CONCAT, {d_bv4_b, d_bv4_ones}))}));
+  // first concat half ones, second concat half zero under bvnot -> node[idx0]
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_AND,
+      {invert_node(d_nm, d_nm.mk_node(Kind::BV_CONCAT, {d_bv4_ones, d_bv4_a})),
+       invert_node(d_nm,
+                   d_nm.mk_node(Kind::BV_CONCAT, {d_bv4_b, d_bv4_zero}))}));
   //// does not apply
   test_rule_does_not_apply<kind>(
       d_nm.mk_node(Kind::BV_AND,
@@ -1018,6 +1043,61 @@ TEST_F(TestRewriterBv, bv_and_resol1)
            d_nm,
            d_nm.mk_node(Kind::BV_AND, {d_bv4_b, invert_node(d_nm, d_bv4_b)})),
        invert_node(d_nm, d_nm.mk_node(Kind::BV_AND, {d_bv4_a, d_bv4_b}))}));
+}
+
+TEST_F(TestRewriterBv, bv_and_xor)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_AND_XOR;
+  Node bvxor = d_nm.mk_node(Kind::BV_XOR, {d_bv4_a, d_bv4_b});
+  //// applies
+  // a == xor[0]
+  test_rule<kind>(d_nm.mk_node(Kind::BV_AND, {d_bv4_a, bvxor}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_AND, {bvxor, d_bv4_a}));
+  // a == xor[1]
+  test_rule<kind>(d_nm.mk_node(Kind::BV_AND, {d_bv4_b, bvxor}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_AND, {bvxor, d_bv4_b}));
+  // a == bvnot(xor[0])
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_AND, {invert_node(d_nm, d_bv4_a), bvxor}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_AND, {bvxor, invert_node(d_nm, d_bv4_a)}));
+  // a == bvnot(xor[1])
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_AND, {invert_node(d_nm, d_bv4_b), bvxor}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_AND, {bvxor, invert_node(d_nm, d_bv4_b)}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_AND, {d_bv4_c, bvxor}));
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_AND, {d_bv4_a, d_bv4_b}));
+}
+
+TEST_F(TestRewriterBv, bv_and_xnor)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_AND_XNOR;
+  Node bvxnor =
+      invert_node(d_nm, d_nm.mk_node(Kind::BV_XOR, {d_bv4_a, d_bv4_b}));
+  //// applies
+  // a == xor[0]
+  test_rule<kind>(d_nm.mk_node(Kind::BV_AND, {d_bv4_a, bvxnor}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_AND, {bvxnor, d_bv4_a}));
+  // a == xor[1]
+  test_rule<kind>(d_nm.mk_node(Kind::BV_AND, {d_bv4_b, bvxnor}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_AND, {bvxnor, d_bv4_b}));
+  // a == bvnot(xor[0])
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_AND, {invert_node(d_nm, d_bv4_a), bvxnor}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_AND, {bvxnor, invert_node(d_nm, d_bv4_a)}));
+  // a == bvnot(xor[1])
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_AND, {invert_node(d_nm, d_bv4_b), bvxnor}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_AND, {bvxnor, invert_node(d_nm, d_bv4_b)}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_AND, {d_bv4_c, bvxnor}));
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_AND, {d_bv4_a, d_bv4_b}));
 }
 
 /* bvashr ------------------------------------------------------------------- */
@@ -1414,6 +1494,11 @@ TEST_F(TestRewriterBv, bv_extract_concat_lhs_rhs)
       d_nm.mk_node(Kind::BV_EXTRACT,
                    {d_nm.mk_node(Kind::BV_AND, {d_bv4_a, d_bv4_b})},
                    {2, 0}));
+  // boundary-crossing extract: u >= m && l < m
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_EXTRACT,
+                   {d_nm.mk_node(Kind::BV_CONCAT, {d_bv4_a, d_bv4_b})},
+                   {5, 2}));
 }
 
 TEST_F(TestRewriterBv, bv_extract_concat)
@@ -1457,6 +1542,11 @@ TEST_F(TestRewriterBv, bv_extract_concat)
       {d_nm.mk_node(Kind::BV_NOT,
                     {d_nm.mk_node(Kind::BV_CONCAT, {d_bv4_a, d_bv4_b})})},
       {7, 6}));
+  // l == 0 but u < m
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_EXTRACT,
+                   {d_nm.mk_node(Kind::BV_CONCAT, {d_bv4_a, d_bv4_b})},
+                   {2, 0}));
 }
 
 TEST_F(TestRewriterBv, bv_extract_and)
@@ -1577,6 +1667,13 @@ TEST_F(TestRewriterBv, bv_extract_and)
       Kind::BV_EXTRACT,
       {d_nm.mk_node(Kind::BV_NOT,
                     {d_nm.mk_node(Kind::BV_OR, {d_bv4_a, d_bv4_b})})},
+      {2, 0}));
+  // bvand whose operands are neither const, value nor extract
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::BV_AND,
+                    {d_nm.mk_node(Kind::BV_ADD, {d_bv4_a, d_bv4_b}),
+                     d_nm.mk_node(Kind::BV_ADD, {d_bv4_a, d_bv4_b})})},
       {2, 0}));
 }
 
@@ -1707,6 +1804,14 @@ TEST_F(TestRewriterBv, bv_extract_ite)
       {d_nm.mk_node(Kind::BV_NOT,
                     {d_nm.mk_node(Kind::BV_OR, {d_bv4_a, d_bv4_b})})},
       {2, 0}));
+  // ITE whose then/else are neither const, value nor extract
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_EXTRACT,
+      {d_nm.mk_node(Kind::ITE,
+                    {cond,
+                     d_nm.mk_node(Kind::BV_ADD, {d_bv4_a, d_bv4_b}),
+                     d_nm.mk_node(Kind::BV_ADD, {d_bv4_c, d_bv4_d})})},
+      {2, 0}));
 }
 
 TEST_F(TestRewriterBv, bv_extract_add_mul)
@@ -1803,6 +1908,9 @@ TEST_F(TestRewriterBv, bv_mul_special_const)
     test_rule<kind>(d_nm.mk_node(Kind::BV_MUL, {d_bv4_one, d_bv4_a}));
     test_rule<kind>(d_nm.mk_node(Kind::BV_MUL, {d_bv1_a, d_bv1_one}));
     test_rule<kind>(d_nm.mk_node(Kind::BV_MUL, {d_bv4_a, d_bv4_one}));
+    //// does not apply
+    test_rule_does_not_apply<kind>(d_nm.mk_node(
+        Kind::BV_MUL, {d_bv4_a, d_nm.mk_value(BitVector(4, "1110"))}));
   }
   ////// special const ones
   {
@@ -1818,6 +1926,13 @@ TEST_F(TestRewriterBv, bv_mul_special_const)
     auto pow2 = d_nm.mk_value(BitVector(4, "0100"));
     test_rule<kind>(d_nm.mk_node(Kind::BV_MUL, {pow2, d_bv4_a}));
     test_rule<kind>(d_nm.mk_node(Kind::BV_MUL, {d_bv4_a, pow2}));
+    //// does not apply
+    // neither operand is a value
+    test_rule_does_not_apply<kind>(
+        d_nm.mk_node(Kind::BV_MUL, {d_bv4_a, d_bv4_b}));
+    // value that is neither a power-of-two nor a negative power-of-two
+    test_rule_does_not_apply<kind>(d_nm.mk_node(
+        Kind::BV_MUL, {d_bv4_a, d_nm.mk_value(BitVector(4, "0011"))}));
   }
   ////// special const negative pow2
   {
@@ -1852,6 +1967,9 @@ TEST_F(TestRewriterBv, bv_mul_const)
       Kind::BV_MUL, {b_val, d_nm.mk_node(Kind::BV_MUL, {a_val, d_bv4_a})}));
   test_rule<kind>(d_nm.mk_node(
       Kind::BV_MUL, {d_nm.mk_node(Kind::BV_MUL, {a_val, d_bv4_a}), a_val}));
+  // inner mul with the value as the second operand (node[idx1][1] is value)
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_MUL, {d_nm.mk_node(Kind::BV_MUL, {d_bv4_a, a_val}), b_val}));
   //// does not apply
   test_rule_does_not_apply<kind>(d_nm.mk_node(
       Kind::BV_MUL, {d_nm.mk_node(Kind::BV_MUL, {a_val, d_bv4_a}), d_bv4_a}));
@@ -1876,6 +1994,29 @@ TEST_F(TestRewriterBv, bv_mul_const_add)
       Kind::BV_MUL, {d_nm.mk_node(Kind::BV_ADD, {a_val, d_bv4_a}), d_bv4_a}));
   test_rule_does_not_apply<kind>(d_nm.mk_node(
       Kind::BV_MUL, {d_nm.mk_node(Kind::BV_UDIV, {a_val, d_bv4_a}), d_bv4_a}));
+  // value operand present, node[idx1] is BV_ADD, but neither add child is a
+  // value
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_MUL, {b_val, d_nm.mk_node(Kind::BV_ADD, {d_bv4_a, d_bv4_b})}));
+}
+
+TEST_F(TestRewriterBv, bv_mul_const_shl)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_MUL_CONST_SHL;
+  Node a_val                     = d_nm.mk_value(BitVector::from_ui(4, 5));
+  Node b_val                     = d_nm.mk_value(BitVector::from_ui(4, 3));
+  //// applies
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_MUL, {d_nm.mk_node(Kind::BV_SHL, {a_val, d_bv4_a}), b_val}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_MUL, {b_val, d_nm.mk_node(Kind::BV_SHL, {a_val, d_bv4_a})}));
+  //// does not apply
+  // shl's first operand is not a value
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_MUL, {b_val, d_nm.mk_node(Kind::BV_SHL, {d_bv4_a, d_bv4_b})}));
+  // other operand is not a value
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_MUL, {d_bv4_b, d_nm.mk_node(Kind::BV_SHL, {a_val, d_bv4_a})}));
 }
 
 TEST_F(TestRewriterBv, bv_mul_ite)
@@ -2274,6 +2415,31 @@ TEST_F(TestRewriterBv, bv_slt_ite)
        d_nm.mk_node(Kind::ITE, {cond, d_bv4_c, d_bv4_b})}));
 }
 
+TEST_F(TestRewriterBv, bv_slt_bv_udiv1)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_SLT_BV_UDIV1;
+  // numerator value with msb = 0
+  Node c_val = d_nm.mk_value(BitVector(4, "0101"));
+  //// applies
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_SLT,
+      {d_bv4_zero, d_nm.mk_node(Kind::BV_UDIV, {c_val, d_bv4_a})}));
+  //// does not apply
+  // numerator of bvudiv is not a value
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_SLT,
+      {d_bv4_zero, d_nm.mk_node(Kind::BV_UDIV, {d_bv4_a, d_bv4_b})}));
+  // msb(numerator) = 1
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_SLT,
+      {d_bv4_zero,
+       d_nm.mk_node(Kind::BV_UDIV,
+                    {d_nm.mk_value(BitVector(4, "1101")), d_bv4_a})}));
+  // lhs is not the zero value
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_SLT, {d_bv4_a, d_nm.mk_node(Kind::BV_UDIV, {c_val, d_bv4_b})}));
+}
+
 /* bvudiv-------------------------------------------------------------------- */
 
 TEST_F(TestRewriterBv, bv_udiv_special_const)
@@ -2420,6 +2586,12 @@ TEST_F(TestRewriterBv, bv_ult_special_const)
     test_rule<kind>(d_nm.mk_node(Kind::BV_ULT, {d_bv4_ones, d_bv4_a}));
     test_rule<kind>(d_nm.mk_node(Kind::BV_ULT, {d_bv4_a, d_bv4_ones}));
   }
+  ////// non-special const
+  {
+    //// does not apply
+    test_rule_does_not_apply<kind>(d_nm.mk_node(
+        Kind::BV_ULT, {d_bv4_a, d_nm.mk_value(BitVector(4, "1110"))}));
+  }
 }
 
 TEST_F(TestRewriterBv, bv_ult_same)
@@ -2531,6 +2703,11 @@ TEST_F(TestRewriterBv, bv_urem_special_const)
     test_rule_does_not_apply<kind>(d_nm.mk_node(
         Kind::BV_UREM, {d_bv4_a, d_nm.mk_value(BitVector(4, "1110"))}));
   }
+  ////// special const 1
+  {
+    //// applies
+    test_rule<kind>(d_nm.mk_node(Kind::BV_UREM, {d_bv4_a, d_bv4_one}));
+  }
   ////// special const pow2
   {
     //// applies
@@ -2589,6 +2766,24 @@ TEST_F(TestRewriterBv, bv_xor_special_const)
       Kind::BV_XOR, {d_nm.mk_value(BitVector(4, "1110")), d_bv4_a}));
   test_rule_does_not_apply<kind>(d_nm.mk_node(
       Kind::BV_XOR, {d_bv4_a, d_nm.mk_value(BitVector(4, "1110"))}));
+}
+
+TEST_F(TestRewriterBv, bv_xor_not)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_XOR_NOT;
+  //// applies
+  // left operand inverted
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_XOR, {invert_node(d_nm, d_bv4_a), d_bv4_b}));
+  // right operand inverted
+  test_rule<kind>(
+      d_nm.mk_node(Kind::BV_XOR, {d_bv4_a, invert_node(d_nm, d_bv4_b)}));
+  // both operands inverted
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_XOR, {invert_node(d_nm, d_bv4_a), invert_node(d_nm, d_bv4_b)}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::BV_XOR, {d_bv4_a, d_bv4_b}));
 }
 
 /* --- Evaluation (Constant Folding) Rules----------------------------------- */
@@ -3786,6 +3981,8 @@ TEST_F(TestRewriterBv, bv_dec_elim) { test_elim_rule_bv(Kind::BV_DEC); }
 
 TEST_F(TestRewriterBv, bv_inc_elim) { test_elim_rule_bv(Kind::BV_INC); }
 #endif
+
+TEST_F(TestRewriterBv, bv_comp_elim) { test_elim_rule_bv(Kind::BV_COMP); }
 
 TEST_F(TestRewriterBv, bv_nand_elim) { test_elim_rule_bv(Kind::BV_NAND); }
 

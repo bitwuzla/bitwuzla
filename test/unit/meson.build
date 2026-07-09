@@ -80,6 +80,7 @@ unit_tests = [
       'rewriter_bv_overflow',
       'rewriter_bv_rotate',
       'rewriter_fp',
+      'rewriter_array',
     ]
   ],
 
