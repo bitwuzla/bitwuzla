@@ -554,6 +554,17 @@ TEST_F(TestRewriterBool, bool_and_resol1)
       d_nm.mk_node(Kind::AND,
                    {d_nm.mk_node(Kind::AND, {d_a, d_b}),
                     d_nm.mk_node(Kind::AND, {d_a, invert_node(d_nm, d_b)})}));
+  // shared literal b, but leftover literals a and (not b) are not inverses
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::AND,
+      {invert_node(d_nm, d_nm.mk_node(Kind::AND, {d_a, d_b})),
+       invert_node(d_nm,
+                   d_nm.mk_node(Kind::AND, {d_b, invert_node(d_nm, d_b)}))}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::AND,
+      {invert_node(d_nm,
+                   d_nm.mk_node(Kind::AND, {d_b, invert_node(d_nm, d_b)})),
+       invert_node(d_nm, d_nm.mk_node(Kind::AND, {d_a, d_b}))}));
 }
 
 /* implies ------------------------------------------------------------------ */

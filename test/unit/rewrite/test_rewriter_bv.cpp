@@ -1005,6 +1005,19 @@ TEST_F(TestRewriterBv, bv_and_resol1)
       Kind::BV_AND,
       {d_nm.mk_node(Kind::BV_AND, {d_bv4_a, d_bv4_b}),
        d_nm.mk_node(Kind::BV_AND, {d_bv4_a, invert_node(d_nm, d_bv4_b)})}));
+  // shared literal b, but leftover literals a and (bvnot b) are not inverses
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_AND,
+      {invert_node(d_nm, d_nm.mk_node(Kind::BV_AND, {d_bv4_a, d_bv4_b})),
+       invert_node(d_nm,
+                   d_nm.mk_node(Kind::BV_AND,
+                                {d_bv4_b, invert_node(d_nm, d_bv4_b)}))}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_AND,
+      {invert_node(
+           d_nm,
+           d_nm.mk_node(Kind::BV_AND, {d_bv4_b, invert_node(d_nm, d_bv4_b)})),
+       invert_node(d_nm, d_nm.mk_node(Kind::BV_AND, {d_bv4_a, d_bv4_b}))}));
 }
 
 /* bvashr ------------------------------------------------------------------- */

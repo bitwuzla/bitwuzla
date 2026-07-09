@@ -780,21 +780,17 @@ _rw_bv_and_resol1(Rewriter& rewriter, const Node& node, size_t idx)
   if (node[idx0].is_inverted() && node[idx0][0].kind() == Kind::BV_AND
       && node[idx1].is_inverted() && node[idx1][0].kind() == Kind::BV_AND)
   {
-    if ((node[idx0][0][0] == node[idx1][0][0]
-         && rewrite::utils::is_inverted_of(node[idx0][0][1], node[idx1][0][1]))
-        || (node[idx0][0][0] == node[idx1][0][1]
-            && rewrite::utils::is_inverted_of(node[idx0][0][1],
-                                              node[idx1][0][0])))
+    const Node& n0 = node[idx0][0];
+    const Node& n1 = node[idx1][0];
+    if ((n0[0] == n1[0] && rewrite::utils::is_inverted_of(n0[1], n1[1]))
+        || (n0[0] == n1[1] && rewrite::utils::is_inverted_of(n0[1], n1[0])))
     {
-      return rewriter.invert_node(node[idx0][0][0]);
+      return rewriter.invert_node(n0[0]);
     }
-    if ((node[idx0][0][1] == node[idx1][0][0]
-         && rewrite::utils::is_inverted_of(node[idx0][0][1], node[idx1][0][1]))
-        || (node[idx0][0][1] == node[idx1][0][1]
-            && rewrite::utils::is_inverted_of(node[idx0][0][0],
-                                              node[idx1][0][0])))
+    if ((n0[1] == n1[0] && rewrite::utils::is_inverted_of(n0[0], n1[1]))
+        || (n0[1] == n1[1] && rewrite::utils::is_inverted_of(n0[0], n1[0])))
     {
-      return rewriter.invert_node(node[idx0][0][1]);
+      return rewriter.invert_node(n0[1]);
     }
   }
   return node;
