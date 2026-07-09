@@ -297,6 +297,8 @@ tests_smt2 = [
   ['parser/smt2perr227.smt2'],
   ['parser/smt2perr228.smt2'],
   ['parser/smt2perr229.smt2'],
+  ['parser/smt2perr230.smt2'],
+  ['parser/smt2perr231.smt2'],
   ## preprocess
   #['preprocess/array/nondestr_subst1.smt2'], # TODO slow
   ['preprocess/array/nondestr_subst10.smt2', ['--print-model']],

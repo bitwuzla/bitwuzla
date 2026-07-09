@@ -1383,7 +1383,10 @@ Parser::parse_command_set_option()
     assert(d_lexer->has_token());
     assert(d_lexer->token()[0] == ':');
     std::string opt = d_lexer->token() + 1;
-    (void) next_token();
+    if (!check_token(next_token()))
+    {
+      return false;
+    }
     assert(d_lexer->has_token());
     if (!d_options.is_valid(opt))
     {
