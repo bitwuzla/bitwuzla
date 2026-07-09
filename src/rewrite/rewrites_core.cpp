@@ -1672,26 +1672,54 @@ RewriteRule<RewriteRuleKind::DISTINCT_EVAL>::_apply(Rewriter& rewriter,
                                                     const Node& node)
 {
   (void) rewriter;
-  assert(node.num_children() == 2);
-  if (!node[0].is_value() || !node[1].is_value()) return node;
-  NodeManager& nm = rewriter.nm();
-  if (node[0].type().is_bool())
+  // DISTINCT is n-ary, so we cannot assume exactly two children here.
+  assert(node.num_children() >= 2);
+  size_t num_children = node.num_children();
+  NodeManager& nm     = rewriter.nm();
+  const Type& type    = node[0].type();
+  // (distinct a_1 ... a_n) evaluates to true iff all pairwise values differ.
+  for (size_t i = 0; i < num_children; ++i)
   {
-    return nm.mk_value(node[0].value<bool>() != node[1].value<bool>());
+    if (!node[i].is_value())
+    {
+      return node;
+    }
+    for (size_t j = i + 1; j < num_children; ++j)
+    {
+      if (!node[j].is_value())
+      {
+        return node;
+      }
+      bool equal;
+      if (type.is_bool())
+      {
+        equal = node[i].value<bool>() == node[j].value<bool>();
+      }
+      else if (type.is_bv())
+      {
+        equal = node[i].value<BitVector>() == node[j].value<BitVector>();
+      }
+      else if (type.is_fp())
+      {
+        equal =
+            node[i].value<FloatingPoint>() == node[j].value<FloatingPoint>();
+      }
+      else if (type.is_rm())
+      {
+        equal = node[i].value<RoundingMode>() == node[j].value<RoundingMode>();
+      }
+      else
+      {
+        assert(type.is_uninterpreted());
+        equal = node[i].value<std::string>() == node[j].value<std::string>();
+      }
+      if (equal)
+      {
+        return nm.mk_value(false);
+      }
+    }
   }
-  if (node[0].type().is_bv())
-  {
-    return nm.mk_value(
-        (node[0].value<BitVector>() != node[1].value<BitVector>()));
-  }
-  if (node[0].type().is_fp())
-  {
-    return nm.mk_value(
-        (node[0].value<FloatingPoint>() != node[1].value<FloatingPoint>()));
-  }
-  assert(node[0].type().is_rm());
-  return nm.mk_value(
-      (node[0].value<RoundingMode>() != node[1].value<RoundingMode>()));
+  return nm.mk_value(true);
 }
 
 template <>

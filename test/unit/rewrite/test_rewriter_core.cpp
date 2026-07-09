@@ -1476,6 +1476,39 @@ TEST_F(TestRewriterCore, core_distinct_eval)
   test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::DISTINCT, {d_b, d_false}));
 }
 
+// Directly exercise DISTINCT_EVAL via eval() (the _eval() dispatch path), which
+// -- unlike the main rewrite path -- does not eliminate DISTINCT nodes first.
+// Covers n-ary distinct (> 2 children) and uninterpreted-sort values.
+TEST_F(TestRewriterCore, core_distinct_eval_nary)
+{
+  Node bv00 = d_nm.mk_value(BitVector(2, "00"));
+  Node bv01 = d_nm.mk_value(BitVector(2, "01"));
+  Node bv10 = d_nm.mk_value(BitVector(2, "10"));
+
+  // All pairwise distinct -> true.
+  ASSERT_EQ(d_rewriter.eval(d_nm.mk_node(Kind::DISTINCT, {bv00, bv01, bv10})),
+            d_true);
+  // A duplicate among later children -> false (regression: the old rule only
+  // compared the first two children and would have returned true here).
+  ASSERT_EQ(d_rewriter.eval(d_nm.mk_node(Kind::DISTINCT, {bv00, bv01, bv00})),
+            d_false);
+  ASSERT_EQ(d_rewriter.eval(d_nm.mk_node(Kind::DISTINCT, {bv01, bv10, bv10})),
+            d_false);
+
+  // Uninterpreted-sort values (regression: the old rule asserted is_rm() and
+  // then read value<RoundingMode>() on an uninterpreted value).
+  Type u  = d_nm.mk_uninterpreted_type();
+  Node u0 = d_nm.mk_value(u, "@u0");
+  Node u1 = d_nm.mk_value(u, "@u1");
+  Node u2 = d_nm.mk_value(u, "@u2");
+  ASSERT_EQ(d_rewriter.eval(d_nm.mk_node(Kind::DISTINCT, {u0, u1})), d_true);
+  ASSERT_EQ(d_rewriter.eval(d_nm.mk_node(Kind::DISTINCT, {u0, u0})), d_false);
+  ASSERT_EQ(d_rewriter.eval(d_nm.mk_node(Kind::DISTINCT, {u0, u1, u2})),
+            d_true);
+  ASSERT_EQ(d_rewriter.eval(d_nm.mk_node(Kind::DISTINCT, {u0, u1, u0})),
+            d_false);
+}
+
 TEST_F(TestRewriterCore, core_ite_eval)
 {
   constexpr RewriteRuleKind kind = RewriteRuleKind::ITE_EVAL;
