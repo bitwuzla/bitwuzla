@@ -2715,7 +2715,7 @@ TermManager::substitute_terms(std::vector<Term>& terms,
         for (size_t i = 0, n = cur.num_children(); i < n; ++i)
         {
           auto cit = cache.find(cur[i]);
-          assert(cit != map.end());
+          assert(cit != cache.end());
           children.push_back(cit->second);
         }
         result = rebuild_term(*this, cur, children);
