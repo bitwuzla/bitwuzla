@@ -890,6 +890,11 @@ Options::finalize()
   // solver engine.
   adc_sat_propagator.set(false);
 #endif
+  // Sat propagator is only compatible with the bit-blast solver
+  if (adc_sat_propagator() && bv_solver() != BvSolver::BITBLAST)
+  {
+    adc_sat_propagator.set(false);
+  }
   // configure default values for number of propagations and updates in case
   // of sequential portfolio bv solver configuration PREPROP
   if (bv_solver() == BvSolver::PREPROP)
