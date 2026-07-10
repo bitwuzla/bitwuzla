@@ -88,7 +88,16 @@ class SatSolver
    */
   virtual Result solve() = 0;
 
-  /** Push assertion level. */
+  /**
+   * Push assertion level.
+   *
+   * Implementing push()/pop()/set_level() is optional: all clauses sent to
+   * the SAT solver are globally valid (Tseitin definitions and theory-valid
+   * lemmas; assertions of non-zero levels are assumption-guarded), so
+   * backends may ignore assertion levels at the cost of accumulating clauses
+   * from popped levels. Backends that support it (e.g., via activation
+   * literals) can free popped clauses instead.
+   */
   virtual void push() {};
 
   /** Pop assertion level. */

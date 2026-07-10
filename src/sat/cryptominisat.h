@@ -37,6 +37,9 @@ class CryptoMiniSat : public SatSolver
   bool failed(int32_t lit) override;
   int32_t fixed(int32_t lit) override;
   Result solve() override;
+  void push() override;
+  void pop() override;
+  void set_level(uint32_t level) override;
   void configure_terminator(Terminator *terminator) override;
   const char *get_name() const override { return "CryptoMiniSat"; }
   const char *get_version() const override;
@@ -85,6 +88,10 @@ class CryptoMiniSat : public SatSolver
   /** A cache for the current number of variables in the solver. */
   uint32_t d_nvars = 0;
   int32_t d_max_var = 1;
+  /** Activation variables per assertion level, index 0 is a sentinel. */
+  std::vector<int32_t> d_activation_vars;
+  /** Assertion level associated with incoming clauses. */
+  uint32_t d_clause_level = 0;
 };
 
 }  // namespace bzla::sat
