@@ -28,50 +28,6 @@ namespace bzla::bv {
 
 using namespace bzla::node;
 
-/* --- PushPopCallback ----------------------------------------------------- */
-
-PushPopCallback::PushPopCallback(backtrack::BacktrackManager* mgr)
-    : backtrack::Backtrackable(mgr),
-      d_level(0),
-      d_sat_solver(nullptr),
-      d_cnf_encoder(nullptr)
-{
-}
-
-void
-PushPopCallback::pop()
-{
-  assert(d_sat_solver);
-  assert(d_cnf_encoder);
-  if (d_level > 0)
-  {
-    --d_level;
-    d_sat_solver->pop();
-    d_cnf_encoder->pop();
-  }
-}
-
-void
-PushPopCallback::set(sat::SatSolver* sat_solver,
-                     bitblast::AigCnfEncoder* cnf_enc)
-{
-  d_sat_solver  = sat_solver;
-  d_cnf_encoder = cnf_enc;
-}
-
-void
-PushPopCallback::sync_level(size_t level)
-{
-  assert(d_sat_solver);
-  assert(d_cnf_encoder);
-  while (d_level < level)
-  {
-    d_sat_solver->push();
-    d_cnf_encoder->push();
-    ++d_level;
-  }
-}
-
 /* --- BitblastSatSolver --------------------------------------------------- */
 
 /** Sat solver wrapper for AIG encoder for bitblasting, no interpolation. */
@@ -192,7 +148,6 @@ BvBitblastSolver::BvBitblastSolver(Env& env, SolverState& state)
       d_opt_print_aig(!env.options().write_aiger().empty()
                       || !env.options().write_cnf().empty()),
       d_produce_interpolants(env.options().produce_interpolants()),
-      d_push_pop_callback(state.backtrack_mgr()),
       d_stats(env.statistics(), "solver::bv::bitblast::")
 {
   init_sat_solver();
@@ -223,7 +178,7 @@ BvBitblastSolver::solve()
       uint64_t enc_level = 0;
       if (!d_produce_interpolants)
       {
-        d_push_pop_callback.sync_level(level);
+        sync_sat_level(level);
         enc_level = is_lemma ? d_solver_state.term_level(n) : level;
       }
       const auto& bits = d_bitblaster.bits(n);
@@ -233,8 +188,6 @@ BvBitblastSolver::solve()
     if (!d_produce_interpolants)
     {
       d_encode_queue.clear();
-      d_push_pop_callback.sync_level(
-          d_solver_state.backtrack_mgr()->num_levels());
     }
   }
 
@@ -381,6 +334,19 @@ BvBitblastSolver::pop()
   if (d_produce_interpolants)
   {
     d_reset_sat = true;
+    return;
+  }
+  assert(d_sat_level <= d_mgr->num_levels());
+  // The backtrack manager decrements its level counter after invoking the
+  // callbacks, so d_mgr->num_levels() is the level currently being popped.
+  // Levels above d_sat_level were never added in the SAT solver
+  // (sync_sat_level() is only called for levels with pending assertions), so
+  // there is nothing to pop for them.
+  if (d_sat_level == d_mgr->num_levels())
+  {
+    --d_sat_level;
+    d_sat_solver->pop();
+    d_cnf_encoder->pop();
   }
 }
 
@@ -430,7 +396,19 @@ BvBitblastSolver::init_sat_solver()
         ->connect_tracer(d_env, d_bitblaster, *d_cnf_encoder);
 #endif
   }
-  d_push_pop_callback.set(d_sat_solver.get(), d_cnf_encoder.get());
+  // A newly created SAT solver/CNF encoder has no assertion levels pushed.
+  d_sat_level = 0;
+}
+
+void
+BvBitblastSolver::sync_sat_level(uint32_t level)
+{
+  while (d_sat_level < level)
+  {
+    d_sat_solver->push();
+    d_cnf_encoder->push();
+    ++d_sat_level;
+  }
 }
 
 void
