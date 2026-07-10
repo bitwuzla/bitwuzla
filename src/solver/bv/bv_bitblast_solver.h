@@ -28,28 +28,6 @@ namespace bv {
 class BvSolver;
 class BvInterpolator;
 
-/**
- * Backtrackable callback used by BvBitblastSolver to sync push/pop of the
- * underlying SAT solver and CNF encoder with the bit-vector solver's backtrack
- * manager.
- */
-class PushPopCallback : public backtrack::Backtrackable
-{
- public:
-  PushPopCallback(backtrack::BacktrackManager* mgr);
-
-  void push() override {};
-  void pop() override;
-
-  void set(sat::SatSolver* sat_solver, bitblast::AigCnfEncoder* cnf_enc);
-  void sync_level(size_t level);
-
- private:
-  size_t d_level;
-  sat::SatSolver* d_sat_solver;
-  bitblast::AigCnfEncoder* d_cnf_encoder;
-};
-
 class BvBitblastSolver : public Solver,
                          public BvSolverInterface,
                          public backtrack::Backtrackable
@@ -120,6 +98,12 @@ class BvBitblastSolver : public Solver,
   /** Initialize sat solver and bitblast infrastructure. */
   void init_sat_solver();
 
+  /**
+   * Push SAT solver and CNF encoder activation levels until `d_sat_level`
+   * reaches `level`.
+   */
+  void sync_sat_level(size_t level);
+
   void register_distinct_n(const Node& node);
 
   /** Process registered equality heuristics. */
@@ -178,8 +162,13 @@ class BvBitblastSolver : public Solver,
   std::vector<std::vector<Node>> d_pending_eq_heuristics;
   std::vector<std::vector<Node>> d_pending_distinct_heuristics;
 
-  /** Synchronizes SAT solver + CNF encoder push/pop with backtrack manager. */
-  PushPopCallback d_push_pop_callback;
+  /**
+   * Number of activation levels materialized in the SAT solver and CNF
+   * encoder. Levels are only materialized for backtrack levels with pending
+   * assertions (see sync_sat_level()), so this may lag behind
+   * d_mgr->num_levels().
+   */
+  size_t d_sat_level = 0;
 
   struct Statistics
   {
