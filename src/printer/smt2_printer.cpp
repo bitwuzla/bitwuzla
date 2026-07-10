@@ -10,6 +10,7 @@
 
 #include "printer/smt2_printer.h"
 
+#include <algorithm>
 #include <iostream>
 #include <unordered_map>
 #include <unordered_set>
@@ -792,6 +793,17 @@ Smt2Printer::letify(std::ostream& os,
     }
   }
 
+  // Do not re-letify nodes that are already letified in an enclosing scope.
+  // Their symbol is still in scope here, and re-letifying would overwrite
+  // the enclosing scope's binding in `let_map` (which has to stay intact
+  // after this scope is closed, see below).
+  lets.erase(std::remove_if(lets.begin(),
+                            lets.end(),
+                            [&let_map](const Node& n) {
+                              return let_map.find(n) != let_map.end();
+                            }),
+             lets.end());
+
   // Sort letified nodes by id in ascending order
   std::sort(lets.begin(), lets.end(), [](const Node& a, const Node& b) {
     return a.id() < b.id();
@@ -834,6 +846,15 @@ Smt2Printer::letify(std::ostream& os,
   for (size_t i = 0; i < nlets; ++i)
   {
     os << ")";
+  }
+
+  // The lets of this scope end with its closing parentheses. Remove them
+  // from `let_map` so that a node shared with a sibling scope is not printed
+  // there as a let symbol that is no longer in scope (it is letified in the
+  // sibling scope, or printed in full, instead).
+  for (const Node& let : lets)
+  {
+    let_map.erase(let);
   }
 }
 

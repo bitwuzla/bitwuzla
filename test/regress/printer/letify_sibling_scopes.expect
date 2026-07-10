@@ -1,0 +1,7 @@
+(set-logic BV)
+(declare-const a (_ BitVec 8))
+(declare-const b (_ BitVec 8))
+(assert (and (forall ((x (_ BitVec 8))) (let ((_let0 (bvmul a b))) (not (= x (bvadd _let0 _let0))))) (forall ((y (_ BitVec 8))) (not (= y (bvmul a b))))))
+(assert (let ((_let0 (bvmul b b))) (and (= a _let0) (forall ((z (_ BitVec 8))) (not (= z (bvadd _let0 _let0)))))))
+(check-sat)
+(exit)

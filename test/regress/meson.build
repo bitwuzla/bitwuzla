@@ -466,6 +466,7 @@ tests_smt2 = [
   ['printer/btor2_bool_value.smt2',
    ['-p', '--output-lang', 'btor2', '-rwl', '0', '--preprocess=false']],
   ['printer/quant_bool.smt2', ['-p']],
+  ['printer/letify_sibling_scopes.smt2', ['-p', '-rwl', '0', '--preprocess=false']],
   ## rewrite
   ['rewrite/array/hang_min_32.smt2'],
   ['rewrite/array/regr3vl4.btor.smt2'],
