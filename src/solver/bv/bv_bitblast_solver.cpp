@@ -519,16 +519,17 @@ BvBitblastSolver::update_statistics()
   d_stats.num_aig_ands     = d_bitblaster.num_aig_ands();
   d_stats.num_aig_consts   = d_bitblaster.num_aig_consts();
   d_stats.num_aig_shared   = d_bitblaster.num_aig_shared();
-  auto& cnf_stats          = d_cnf_encoder->statistics();
-  d_stats.num_cnf_vars     = cnf_stats.num_vars;
-  d_stats.num_cnf_clauses  = cnf_stats.num_clauses;
-  d_stats.num_cnf_literals = cnf_stats.num_literals;
+  auto& cnf_stats                = d_cnf_encoder->statistics();
+  d_stats.num_cnf_allocated_vars = cnf_stats.allocated_vars;
+  d_stats.num_cnf_vars           = cnf_stats.num_vars;
+  d_stats.num_cnf_clauses        = cnf_stats.num_clauses;
+  d_stats.num_cnf_literals       = cnf_stats.num_literals;
 }
 
 BvBitblastSolver::Statistics::Statistics(util::Statistics& stats,
                                          const std::string& prefix)
     : time_sat(
-        stats.new_stat<util::TimerStatistic>(prefix + "sat::time_solve")),
+          stats.new_stat<util::TimerStatistic>(prefix + "sat::time_solve")),
       time_bitblast(
           stats.new_stat<util::TimerStatistic>(prefix + "aig::time_bitblast")),
       time_encode(
@@ -536,6 +537,8 @@ BvBitblastSolver::Statistics::Statistics(util::Statistics& stats,
       num_aig_ands(stats.new_stat<uint64_t>(prefix + "aig::num_ands")),
       num_aig_consts(stats.new_stat<uint64_t>(prefix + "aig::num_consts")),
       num_aig_shared(stats.new_stat<uint64_t>(prefix + "aig::num_shared")),
+      num_cnf_allocated_vars(
+          stats.new_stat<uint64_t>(prefix + "cnf::allocated_vars")),
       num_cnf_vars(stats.new_stat<uint64_t>(prefix + "cnf::num_vars")),
       num_cnf_clauses(stats.new_stat<uint64_t>(prefix + "cnf::num_clauses")),
       num_cnf_literals(stats.new_stat<uint64_t>(prefix + "cnf::num_literals"))

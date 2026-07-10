@@ -79,9 +79,10 @@ class AigCnfEncoder
  public:
   struct Statistics
   {
-    uint64_t num_vars     = 0;  // Number of added variables
-    uint64_t num_clauses  = 0;  // Number of added clauses
-    uint64_t num_literals = 0;  // Number of added literals
+    uint64_t allocated_vars = 0;  // Number of allocated SAT variables
+    uint64_t num_vars       = 0;  // Number of currently encoded variables
+    uint64_t num_clauses    = 0;  // Number of added clauses
+    uint64_t num_literals   = 0;  // Number of added literals
   };
 
   AigCnfEncoder(SatInterface& sat_solver);
