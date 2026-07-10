@@ -249,34 +249,4 @@ AigBitblaster::bits(const Node& term) const
   return it->second;
 }
 
-uint64_t
-AigBitblaster::count_aig_ands(const Node& term,
-                              unordered_aig_node_ref_set& cache)
-{
-  std::vector<std::reference_wrapper<const bitblast::AigNode>> visit;
-  bitblast(term);
-  const auto& b = bits(term);
-  visit.insert(visit.end(), b.begin(), b.end());
-  assert(!visit.empty());
-
-  uint64_t res = 0;
-  do
-  {
-    const bitblast::AigNode& cur = visit.back();
-    visit.pop_back();
-
-    if (cache.insert(cur).second)
-    {
-      if (cur.is_and())
-      {
-        ++res;
-        visit.push_back(cur[0]);
-        visit.push_back(cur[1]);
-      }
-    }
-  } while (!visit.empty());
-
-  return res;
-}
-
 }  // namespace bzla::bv

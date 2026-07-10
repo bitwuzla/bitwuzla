@@ -41,9 +41,6 @@ class AigBitblaster
   /** Return encoded bits associated with bit-blasted term. */
   const bitblast::AigBitblaster::Bits& bits(const Node& term) const;
 
-  /** Count number of AIG nodes in term. */
-  uint64_t count_aig_ands(const Node& term, unordered_aig_node_ref_set& cache);
-
   uint64_t num_aig_ands() const { return d_bitblaster.num_aig_ands(); }
   uint64_t num_aig_consts() const { return d_bitblaster.num_aig_consts(); }
   uint64_t num_aig_shared() const { return d_bitblaster.num_aig_shared(); }
