@@ -25,6 +25,7 @@ CryptoMiniSat::CryptoMiniSat(uint32_t nthreads)
   assert(nthreads > 0);
   d_solver.reset(new CMSat::SATSolver());
   d_solver->set_num_threads(nthreads);
+  d_activation_vars.push_back(0);
 }
 
 int32_t
@@ -44,6 +45,13 @@ CryptoMiniSat::add(int32_t lit, int64_t cgroup_id)
   }
   else
   {
+    // Add activation literal of corresponding clause level when clause is
+    // closed.
+    if (d_clause_level > 0)
+    {
+      assert(d_clause_level < d_activation_vars.size());
+      d_clause.push_back(import_lit(d_activation_vars[d_clause_level]));
+    }
     d_solver->add_clause(d_clause), d_clause.clear();
   }
 }
@@ -96,11 +104,38 @@ Result
 CryptoMiniSat::solve()
 {
   reset();
+  for (size_t i = 1, size = d_activation_vars.size(); i < size; ++i)
+  {
+    d_assumptions.push_back(import_lit(-d_activation_vars[i]));
+  }
   CMSat::lbool res = d_solver->solve(&d_assumptions);
   d_assumptions.clear();
   if (res == CMSat::l_True) return Result::SAT;
   if (res == CMSat::l_False) return Result::UNSAT;
   return Result::UNKNOWN;
+}
+
+void
+CryptoMiniSat::push()
+{
+  d_activation_vars.push_back(new_var());
+}
+
+void
+CryptoMiniSat::pop()
+{
+  assert(d_activation_vars.size() > 1);
+  assert(d_clause.empty());
+  int32_t var = d_activation_vars.back();
+  d_activation_vars.pop_back();
+  // Permanently disable this level by adding the activation literal as unit.
+  d_solver->add_clause({import_lit(var)});
+}
+
+void
+CryptoMiniSat::set_level(uint32_t level)
+{
+  d_clause_level = level;
 }
 
 void
