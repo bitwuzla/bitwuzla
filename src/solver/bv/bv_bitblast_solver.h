@@ -179,6 +179,7 @@ class BvBitblastSolver : public Solver,
     uint64_t& num_aig_ands;
     uint64_t& num_aig_consts;
     uint64_t& num_aig_shared;
+    uint64_t& num_cnf_allocated_vars;
     uint64_t& num_cnf_vars;
     uint64_t& num_cnf_clauses;
     uint64_t& num_cnf_literals;

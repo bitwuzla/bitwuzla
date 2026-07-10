@@ -32,6 +32,7 @@ AigCnfEncoder::initialize()
   assert(d_true_var == 0);
   d_true_var       = d_sat_solver.new_var();
   d_aig_encoded[0] = d_true_var;
+  ++d_statistics.allocated_vars;
 }
 
 void
@@ -370,6 +371,7 @@ AigCnfEncoder::set_encoded(const AigNode& aig)
   if (encoded == 0)
   {
     encoded = d_sat_solver.new_var();
+    ++d_statistics.allocated_vars;
   }
   // Variable allocated, but not yet encoded.
   assert(encoded > 0);
