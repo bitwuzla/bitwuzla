@@ -136,8 +136,6 @@ class BvBitblastSolver : public Solver,
   /** Sat interface used for d_cnf_encoder when producing interpolants. */
   class InterpolationSatSolver;
 
-  /** The current set of assertions. */
-  backtrack::vector<Node> d_assertions;
   /** The current set of assumptions. */
   backtrack::vector<Node> d_assumptions;
   /**

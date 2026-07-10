@@ -186,7 +186,6 @@ class BvBitblastSolver::InterpolationSatSolver : public bitblast::SatInterface
 BvBitblastSolver::BvBitblastSolver(Env& env, SolverState& state)
     : Solver(env, state),
       backtrack::Backtrackable(state.backtrack_mgr()),
-      d_assertions(state.backtrack_mgr()),
       d_assumptions(state.backtrack_mgr()),
       d_encode_queue(state.backtrack_mgr()),
       d_last_result(Result::UNKNOWN),
@@ -234,7 +233,6 @@ BvBitblastSolver::solve()
     if (!d_produce_interpolants)
     {
       d_encode_queue.clear();
-      d_assertions.clear();
       d_push_pop_callback.sync_level(
           d_solver_state.backtrack_mgr()->num_levels());
     }
@@ -297,10 +295,6 @@ BvBitblastSolver::register_assertion(const Node& assertion,
   if (!top_level)
   {
     d_assumptions.push_back(assertion);
-  }
-  else
-  {
-    d_assertions.push_back(assertion);
   }
 
   {
