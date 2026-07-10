@@ -134,8 +134,8 @@ AigScore::process(uint64_t limit)
 
         case Kind::AND:
         case Kind::BV_AND:
-          assert(cur.kind() != Kind::NOT || type.is_bool());
-          assert(cur.kind() != Kind::BV_NOT || type.is_bv());
+          assert(cur.kind() != Kind::AND || type.is_bool());
+          assert(cur.kind() != Kind::BV_AND || type.is_bv());
           it->second = d_bitblaster.bv_and(bits(cur[0]), bits(cur[1]));
           break;
 
