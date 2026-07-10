@@ -12,6 +12,8 @@
 
 #include <sstream>
 
+#include "util/util.h"
+
 namespace bzla {
 namespace parser::btor2 {
 
@@ -81,7 +83,7 @@ Lexer::next_token_aux(Token expected)
         }
       }
     }
-  } while (is_printable(ch) && std::isspace(ch));
+  } while (is_printable(ch) && util::is_space(ch));
 
   if (expected == Token::NUMBER_BIN)
   {
@@ -115,7 +117,7 @@ Lexer::next_token_aux(Token expected)
   }
   else if (expected == Token::NUMBER_HEX)
   {
-    while (isxdigit(ch))
+    while (util::is_xdigit(ch))
     {
       push_char(ch);
       ch = next_char();

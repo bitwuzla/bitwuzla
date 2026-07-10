@@ -735,8 +735,8 @@ Options::set(const std::string& name,
   if (is_bool(it->second))
   {
     std::string v = value;
-    v.erase(std::remove_if(v.begin(), v.end(), ::isspace), v.end());
-    std::transform(v.begin(), v.end(), v.begin(), ::tolower);
+    v.erase(std::remove_if(v.begin(), v.end(), util::is_space), v.end());
+    std::transform(v.begin(), v.end(), v.begin(), util::to_lower);
     if (v != "0" && v != "1" && v != "true" && v != "false")
     {
       throw Exception(

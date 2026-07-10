@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "parser/btor2/token.h"
+#include "util/util.h"
 
 namespace bzla {
 namespace parser::btor2 {
@@ -79,8 +80,7 @@ class Lexer
   int32_t look_ahead()
   {
     int32_t ch;
-    while ((ch = next_char()) && std::isspace(ch) && ch != '\n')
-      ;
+    while ((ch = next_char()) && util::is_space(ch) && ch != '\n');
     save_char(ch);
     return ch;
   }

@@ -49,6 +49,7 @@ tests_smt2 = [
   ['get-value/fp_real.smt2'],
   ['get-value/fp_regr9.smt2'],
   ## options
+  ['options/set_option_bool_value_case.smt2'],
   ['options/time_limit_out_of_range.smt2', ['-t', '99999999999999999999999']],
   ['options/bv_output_format_overflow.smt2', ['--bv-output-format', '258']],
   ## parser

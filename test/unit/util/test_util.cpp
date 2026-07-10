@@ -45,3 +45,72 @@ TEST_F(TestUtil, is_valid_real_str_high_byte)
   ASSERT_FALSE(is_valid_real_str(std::string("12") + static_cast<char>(0xc3)
                                  + std::string("3")));
 }
+
+TEST_F(TestUtil, is_digit)
+{
+  for (char c = '0'; c <= '9'; ++c)
+  {
+    ASSERT_TRUE(is_digit(c));
+  }
+  ASSERT_FALSE(is_digit('/'));  // just before '0'
+  ASSERT_FALSE(is_digit(':'));  // just after '9'
+  ASSERT_FALSE(is_digit('a'));
+  ASSERT_FALSE(is_digit('A'));
+  ASSERT_FALSE(is_digit(' '));
+  // High-bit bytes (negative on platforms where char is signed) are not digits
+  // and must not trigger undefined behavior.
+  ASSERT_FALSE(is_digit(static_cast<char>(0x80)));
+  ASSERT_FALSE(is_digit(static_cast<char>(0xff)));
+}
+
+TEST_F(TestUtil, is_xdigit)
+{
+  for (char c = '0'; c <= '9'; ++c)
+  {
+    ASSERT_TRUE(is_xdigit(c));
+  }
+  for (char c = 'a'; c <= 'f'; ++c)
+  {
+    ASSERT_TRUE(is_xdigit(c));
+  }
+  for (char c = 'A'; c <= 'F'; ++c)
+  {
+    ASSERT_TRUE(is_xdigit(c));
+  }
+  ASSERT_FALSE(is_xdigit('g'));
+  ASSERT_FALSE(is_xdigit('G'));
+  ASSERT_FALSE(is_xdigit(' '));
+  ASSERT_FALSE(is_xdigit(static_cast<char>(0x80)));
+  ASSERT_FALSE(is_xdigit(static_cast<char>(0xff)));
+}
+
+TEST_F(TestUtil, is_space)
+{
+  ASSERT_TRUE(is_space(' '));
+  ASSERT_TRUE(is_space('\t'));
+  ASSERT_TRUE(is_space('\n'));
+  ASSERT_TRUE(is_space('\v'));
+  ASSERT_TRUE(is_space('\f'));
+  ASSERT_TRUE(is_space('\r'));
+  ASSERT_FALSE(is_space('a'));
+  ASSERT_FALSE(is_space('0'));
+  ASSERT_FALSE(is_space(static_cast<char>(0x80)));
+  // Latin-1 non-breaking space is not an ASCII whitespace character.
+  ASSERT_FALSE(is_space(static_cast<char>(0xa0)));
+  ASSERT_FALSE(is_space(static_cast<char>(0xff)));
+}
+
+TEST_F(TestUtil, to_lower)
+{
+  for (char c = 'A'; c <= 'Z'; ++c)
+  {
+    ASSERT_EQ(to_lower(c), c - 'A' + 'a');
+  }
+  // Characters that are not upper-case ASCII letters are returned unchanged.
+  ASSERT_EQ(to_lower('a'), 'a');
+  ASSERT_EQ(to_lower('z'), 'z');
+  ASSERT_EQ(to_lower('0'), '0');
+  ASSERT_EQ(to_lower(' '), ' ');
+  ASSERT_EQ(to_lower(static_cast<char>(0x80)), static_cast<char>(0x80));
+  ASSERT_EQ(to_lower(static_cast<char>(0xff)), static_cast<char>(0xff));
+}

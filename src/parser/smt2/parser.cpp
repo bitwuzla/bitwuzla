@@ -13,6 +13,8 @@
 #include <algorithm>
 #include <iostream>
 
+#include "util/util.h"
+
 namespace bzla {
 namespace parser::smt2 {
 
@@ -1848,8 +1850,7 @@ Parser::parse_open_term_indexed()
         return error("invalid indexed term '" + val + "'");
       }
       std::string v = val.substr(2);
-      if (!std::all_of(
-              v.begin(), v.end(), [](char c) { return std::isdigit(c); }))
+      if (!std::all_of(v.begin(), v.end(), util::is_digit))
       {
         return error("invalid bit-vector value '" + val + "'");
       }

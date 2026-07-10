@@ -12,9 +12,10 @@
 
 #include <algorithm>
 #include <cassert>
-#include <cctype>
 #include <sstream>
 #include <vector>
+
+#include "util/util.h"
 
 namespace bzla {
 namespace parser::smt2 {
@@ -166,7 +167,7 @@ Lexer::next_token_aux()
         d_token.push_back(0);
         return Token::ENDOFFILE;
       }
-    } while (CharacterClasses::is_printable(ch) && std::isspace(ch));
+    } while (CharacterClasses::is_printable(ch) && util::is_space(ch));
 
     if (ch != ';')
     {

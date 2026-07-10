@@ -9,6 +9,7 @@
 #include <sstream>
 
 #include "main/error.h"
+#include "util/util.h"
 
 namespace bzla::main {
 
@@ -490,7 +491,7 @@ parse_options(int32_t argc, char* argv[], std::vector<std::string>& args)
                                || option == bitwuzla::Option::LOGLEVEL;
               auto value = std::string(argv[i + 1]);
               if (!allow_inc
-                  || std::all_of(value.begin(), value.end(), ::isdigit))
+                  || std::all_of(value.begin(), value.end(), util::is_digit))
               {
                 args.emplace_back(argv[++i]);
               }
