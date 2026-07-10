@@ -1200,6 +1200,7 @@ RewriteRule<RewriteRuleKind::BV_ASHR_CONST>::_apply(Rewriter& rewriter,
     uint64_t padding = size;
     if (shift.compare(bv_size) < 0)
     {
+      assert(!shift.is_zero());
       padding = shift.to_uint64(false);
     }
 
@@ -2091,6 +2092,7 @@ RewriteRule<RewriteRuleKind::BV_SHL_CONST>::_apply(Rewriter& rewriter,
     {
       return rewriter.nm().mk_value(BitVector::mk_zero(size));
     }
+    assert(!shift.is_zero());
     uint64_t uishift = shift.to_uint64(false);
     return rewriter.mk_node(
         Kind::BV_CONCAT,
