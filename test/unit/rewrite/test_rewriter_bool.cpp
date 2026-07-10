@@ -333,6 +333,45 @@ TEST_F(TestRewriterBool, bool_and_subsum2)
                         {invert_node(d_nm, d_c), invert_node(d_nm, d_d)}))}));
 }
 
+TEST_F(TestRewriterBool, bool_and_subsum1_or_xor)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::AND_SUBSUM1;
+  // The disjunction is given as (not (and (xor a b) (not c))); matching its
+  // first disjunct is not syntactic but requires rewriting the inversion of
+  // (xor a b) (NOT_XOR: (not (xor a b)) -> (= a b)).
+  Node bxor = d_nm.mk_node(Kind::XOR, {d_a, d_b});
+  Node eq   = d_rewriter.rewrite(d_nm.mk_node(Kind::NOT, {bxor}));
+  ASSERT_FALSE(eq.is_inverted());
+  Node bor = invert_node(
+      d_nm, d_nm.mk_node(Kind::AND, {bxor, invert_node(d_nm, d_c)}));
+  //// applies
+  test_rule<kind>(
+      d_nm.mk_node(Kind::AND, {d_nm.mk_node(Kind::AND, {eq, d_d}), bor}));
+  test_rule<kind>(
+      d_nm.mk_node(Kind::AND, {bor, d_nm.mk_node(Kind::AND, {eq, d_d})}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(
+      d_nm.mk_node(Kind::AND, {d_nm.mk_node(Kind::AND, {d_a, d_d}), bor}));
+}
+
+TEST_F(TestRewriterBool, bool_and_subsum2_or_xor)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::AND_SUBSUM2;
+  // The disjunction is given as (not (and (xor a b) (not c))); matching its
+  // first disjunct is not syntactic but requires rewriting the inversion of
+  // (xor a b) (NOT_XOR: (not (xor a b)) -> (= a b)).
+  Node bxor = d_nm.mk_node(Kind::XOR, {d_a, d_b});
+  Node eq   = d_rewriter.rewrite(d_nm.mk_node(Kind::NOT, {bxor}));
+  ASSERT_FALSE(eq.is_inverted());
+  Node bor = invert_node(
+      d_nm, d_nm.mk_node(Kind::AND, {bxor, invert_node(d_nm, d_c)}));
+  //// applies
+  test_rule<kind>(d_nm.mk_node(Kind::AND, {eq, bor}));
+  test_rule<kind>(d_nm.mk_node(Kind::AND, {bor, eq}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::AND, {d_a, bor}));
+}
+
 TEST_F(TestRewriterBool, bool_and_not_and1)
 {
   constexpr RewriteRuleKind kind = RewriteRuleKind::AND_NOT_AND1;

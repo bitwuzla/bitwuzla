@@ -776,6 +776,30 @@ TEST_F(TestRewriterBv, bv_and_subsum1)
            {invert_node(d_nm, d_bv4_a), invert_node(d_nm, d_bv4_c)})}));
 }
 
+TEST_F(TestRewriterBv, bv_and_subsum1_or_value)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_AND_SUBSUM1;
+  // The disjunction is given as (bvnot (bvand c (bvnot b))) with value c;
+  // matching its first disjunct is not syntactic but requires rewriting
+  // the inversion of c (constant folding of the complement value).
+  Node bv4_val     = d_nm.mk_value(BitVector(4, "0011"));
+  Node bv4_val_inv = d_nm.mk_value(BitVector(4, "1100"));
+  Node bvor        = invert_node(
+      d_nm,
+      d_nm.mk_node(Kind::BV_AND, {bv4_val_inv, invert_node(d_nm, d_bv4_b)}));
+  //// applies
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_AND, {d_nm.mk_node(Kind::BV_AND, {bv4_val, d_bv4_c}), bvor}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_AND, {bvor, d_nm.mk_node(Kind::BV_AND, {bv4_val, d_bv4_c})}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_AND,
+      {d_nm.mk_node(Kind::BV_AND,
+                    {d_nm.mk_value(BitVector(4, "1010")), d_bv4_c}),
+       bvor}));
+}
+
 TEST_F(TestRewriterBv, bv_and_subsum2)
 {
   constexpr RewriteRuleKind kind = RewriteRuleKind::BV_AND_SUBSUM2;
@@ -821,6 +845,25 @@ TEST_F(TestRewriterBv, bv_and_subsum2)
                                 d_nm.mk_node(Kind::BV_AND,
                                              {invert_node(d_nm, d_bv4_c),
                                               invert_node(d_nm, d_bv4_d)}))}));
+}
+
+TEST_F(TestRewriterBv, bv_and_subsum2_or_value)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_AND_SUBSUM2;
+  // The disjunction is given as (bvnot (bvand c (bvnot b))) with value c;
+  // matching its first disjunct is not syntactic but requires rewriting
+  // the inversion of c (constant folding of the complement value).
+  Node bv4_val     = d_nm.mk_value(BitVector(4, "0011"));
+  Node bv4_val_inv = d_nm.mk_value(BitVector(4, "1100"));
+  Node bvor        = invert_node(
+      d_nm,
+      d_nm.mk_node(Kind::BV_AND, {bv4_val_inv, invert_node(d_nm, d_bv4_b)}));
+  //// applies
+  test_rule<kind>(d_nm.mk_node(Kind::BV_AND, {bv4_val, bvor}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_AND, {bvor, bv4_val}));
+  //// does not apply
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_AND, {d_nm.mk_value(BitVector(4, "1010")), bvor}));
 }
 
 TEST_F(TestRewriterBv, bv_and_not_and1)
@@ -1066,10 +1109,33 @@ TEST_F(TestRewriterBv, bv_and_xor)
       d_nm.mk_node(Kind::BV_AND, {invert_node(d_nm, d_bv4_b), bvxor}));
   test_rule<kind>(
       d_nm.mk_node(Kind::BV_AND, {bvxor, invert_node(d_nm, d_bv4_b)}));
+  // a == bvnot(xor[0]), inversion is not syntactic but requires rewriting
+  // (constant folding of the complement value)
+  Node bv4_val     = d_nm.mk_value(BitVector(4, "0011"));
+  Node bv4_val_inv = d_nm.mk_value(BitVector(4, "1100"));
+  Node bvxor_val0  = d_nm.mk_node(Kind::BV_XOR, {bv4_val, d_bv4_b});
+  test_rule<kind>(d_nm.mk_node(Kind::BV_AND, {bv4_val_inv, bvxor_val0}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_AND, {bvxor_val0, bv4_val_inv}));
+  // a == bvnot(xor[1]), inversion is not syntactic but requires rewriting
+  // (constant folding of the complement value)
+  Node bvxor_val1 = d_nm.mk_node(Kind::BV_XOR, {d_bv4_b, bv4_val});
+  test_rule<kind>(d_nm.mk_node(Kind::BV_AND, {bv4_val_inv, bvxor_val1}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_AND, {bvxor_val1, bv4_val_inv}));
+  // a == bvnot(xor[0]), inversion is not syntactic but requires rewriting
+  // (BV_NOT_BV_NEG: (bvnot (bvneg a)) -> (bvadd a (bvnot (_ bv0 N))))
+  Node bvneg     = d_nm.mk_node(Kind::BV_NEG, {d_bv4_a});
+  Node bvneg_inv = d_rewriter.rewrite(d_nm.mk_node(Kind::BV_NOT, {bvneg}));
+  ASSERT_FALSE(bvneg_inv.is_inverted());
+  Node bvxor_neg = d_nm.mk_node(Kind::BV_XOR, {bvneg, d_bv4_b});
+  test_rule<kind>(d_nm.mk_node(Kind::BV_AND, {bvneg_inv, bvxor_neg}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_AND, {bvxor_neg, bvneg_inv}));
   //// does not apply
   test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_AND, {d_bv4_c, bvxor}));
   test_rule_does_not_apply<kind>(
       d_nm.mk_node(Kind::BV_AND, {d_bv4_a, d_bv4_b}));
+  // a is a value but not the complement of xor[0]
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_AND, {d_nm.mk_value(BitVector(4, "1010")), bvxor_val0}));
 }
 
 TEST_F(TestRewriterBv, bv_and_xnor)
@@ -1094,10 +1160,27 @@ TEST_F(TestRewriterBv, bv_and_xnor)
       d_nm.mk_node(Kind::BV_AND, {invert_node(d_nm, d_bv4_b), bvxnor}));
   test_rule<kind>(
       d_nm.mk_node(Kind::BV_AND, {bvxnor, invert_node(d_nm, d_bv4_b)}));
+  // a == bvnot(xor[0]), inversion is not syntactic but requires rewriting
+  // (constant folding of the complement value)
+  Node bv4_val     = d_nm.mk_value(BitVector(4, "0011"));
+  Node bv4_val_inv = d_nm.mk_value(BitVector(4, "1100"));
+  Node bvxnor_val0 =
+      invert_node(d_nm, d_nm.mk_node(Kind::BV_XOR, {bv4_val, d_bv4_b}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_AND, {bv4_val_inv, bvxnor_val0}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_AND, {bvxnor_val0, bv4_val_inv}));
+  // a == bvnot(xor[1]), inversion is not syntactic but requires rewriting
+  // (constant folding of the complement value)
+  Node bvxnor_val1 =
+      invert_node(d_nm, d_nm.mk_node(Kind::BV_XOR, {d_bv4_b, bv4_val}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_AND, {bv4_val_inv, bvxnor_val1}));
+  test_rule<kind>(d_nm.mk_node(Kind::BV_AND, {bvxnor_val1, bv4_val_inv}));
   //// does not apply
   test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_AND, {d_bv4_c, bvxnor}));
   test_rule_does_not_apply<kind>(
       d_nm.mk_node(Kind::BV_AND, {d_bv4_a, d_bv4_b}));
+  // a is a value but not the complement of xor[0]
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_AND, {d_nm.mk_value(BitVector(4, "1010")), bvxnor_val0}));
 }
 
 /* bvashr ------------------------------------------------------------------- */
