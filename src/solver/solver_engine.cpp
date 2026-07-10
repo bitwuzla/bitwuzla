@@ -792,7 +792,6 @@ SolverEngine::_value(const Node& term)
         case Kind::FP_IS_POS:
         case Kind::FP_IS_SUBNORMAL:
         case Kind::FP_IS_ZERO:
-        case Kind::FP_EQUAL:
         case Kind::FP_LEQ:
         case Kind::FP_LT:
           // During solving we use the current value in the bit-vector
@@ -810,12 +809,9 @@ SolverEngine::_value(const Node& term)
         // Boolean kinds
         case Kind::NOT:
         case Kind::AND:
-        case Kind::OR:
 
         // Bit-vector kinds
         case Kind::BV_NOT:
-        case Kind::BV_DEC:
-        case Kind::BV_INC:
         case Kind::BV_AND:
         case Kind::BV_XOR:
         case Kind::BV_EXTRACT:
@@ -837,9 +833,6 @@ SolverEngine::_value(const Node& term)
         case Kind::FP_ADD:
         case Kind::FP_DIV:
         case Kind::FP_FMA:
-        case Kind::FP_FP:
-        case Kind::FP_GEQ:
-        case Kind::FP_GT:
         case Kind::FP_MUL:
         case Kind::FP_NEG:
         case Kind::FP_REM:
@@ -847,8 +840,7 @@ SolverEngine::_value(const Node& term)
         case Kind::FP_SQRT:
         case Kind::FP_TO_FP_FROM_BV:
         case Kind::FP_TO_FP_FROM_SBV:
-        case Kind::FP_TO_FP_FROM_UBV:
-        case Kind::FP_SUB: {
+        case Kind::FP_TO_FP_FROM_UBV: {
         EVALUATE:
           std::vector<Node> values;
           for (const Node& arg : cur)

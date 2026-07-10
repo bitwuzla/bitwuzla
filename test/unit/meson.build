@@ -72,6 +72,7 @@ unit_tests = [
 
   ['rewrite',
     [
+      'evaluator',
       'rewriter_core',
       'rewriter_utils',
       'rewriter_bool',

@@ -35,13 +35,8 @@ Evaluator::evaluate(NodeManager& nm,
     case Kind::AND:
       return nm.mk_value(values[0].value<bool>() && values[1].value<bool>());
 
-    case Kind::OR:
-      return nm.mk_value(values[0].value<bool>() || values[1].value<bool>());
-
     // Bit-vector kinds
     case Kind::BV_NOT: return nm.mk_value(values[0].value<BitVector>().bvnot());
-    case Kind::BV_DEC: return nm.mk_value(values[0].value<BitVector>().bvdec());
-    case Kind::BV_INC: return nm.mk_value(values[0].value<BitVector>().bvinc());
     case Kind::BV_AND:
       return nm.mk_value(
           values[0].value<BitVector>().bvand(values[1].value<BitVector>()));
@@ -125,12 +120,6 @@ Evaluator::evaluate(NodeManager& nm,
           values[0].value<RoundingMode>(),
           values[2].value<FloatingPoint>(),
           values[3].value<FloatingPoint>()));
-    case Kind::FP_GEQ:
-      return nm.mk_value(values[0].value<FloatingPoint>().fpge(
-          values[1].value<FloatingPoint>()));
-    case Kind::FP_GT:
-      return nm.mk_value(values[0].value<FloatingPoint>().fpgt(
-          values[1].value<FloatingPoint>()));
     case Kind::FP_MUL:
       return nm.mk_value(values[1].value<FloatingPoint>().fpmul(
           values[0].value<RoundingMode>(), values[2].value<FloatingPoint>()));
@@ -160,7 +149,9 @@ Evaluator::evaluate(NodeManager& nm,
                                        values[0].value<RoundingMode>(),
                                        values[1].value<BitVector>(),
                                        false));
-    default: std::cerr << kind << std::endl; assert(false);
+    default:
+      std::cerr << "Evaluator: unhandled node kind: " << kind << std::endl;
+      assert(false);
   }
   return Node();
 }
