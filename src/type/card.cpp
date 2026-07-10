@@ -96,10 +96,8 @@ card(const Type& type, const Integer& bound)
                        card(type.array_index(), bound),
                        bound);
   }
-  else
+  else if (type.is_fun())
   {
-    assert(type.is_fun());
-
     // Cardinality of (d_1, ..., d_n -> codomain) is
     // |codomain|^(|d_1| * ... * |d_n|).
     const auto& domains = type.fun_types();
@@ -114,6 +112,11 @@ card(const Type& type, const Integer& bound)
       }
     }
     return pow_bounded(card(domains.back(), bound), exp, bound);
+  }
+  else
+  {
+    assert(type.is_uninterpreted());
+    return bound;
   }
 }
 

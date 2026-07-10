@@ -151,4 +151,37 @@ TEST_F(TestCardinality, fun_nested)
   check_card(d_tm.mk_fun_type({bool_type, array_type}), 16);
 }
 
+TEST_F(TestCardinality, uninterpreted)
+{
+  // An uninterpreted sort has unbounded cardinality: bitwuzla assumes no fixed
+  // size, so card() must saturate at its bound.
+  Type u = d_tm.mk_uninterpreted_type();
+  check_card_huge(u);
+  // A symbol does not change the (unbounded) cardinality.
+  check_card_huge(d_tm.mk_uninterpreted_type("S"));
+
+  // cardinality_gt and cardinality_min must treat it as unbounded too: it is
+  // strictly greater than every bound, and cardinality_min saturates exactly to
+  // the requested bound.
+  EXPECT_TRUE(cardinality_gt(u, 0));
+  EXPECT_TRUE(cardinality_gt(u, UINT64_MAX));
+  EXPECT_EQ(cardinality_min(u, 0), util::Integer(0));
+  EXPECT_EQ(cardinality_min(u, 42), util::Integer(42));
+  EXPECT_EQ(cardinality_min(u, UINT64_MAX), util::Integer(UINT64_MAX));
+}
+
+TEST_F(TestCardinality, uninterpreted_nested)
+{
+  Type bool_type = d_tm.mk_bool_type();
+  Type u         = d_tm.mk_uninterpreted_type();
+
+  // Any array or function type built over an uninterpreted sort inherits its
+  // unbounded cardinality, whether the sort appears as index/domain or
+  // element/codomain.
+  check_card_huge(d_tm.mk_array_type(u, bool_type));  // (U -> Bool): 2^|U|
+  check_card_huge(d_tm.mk_array_type(bool_type, u));  // (Bool -> U): |U|^2
+  check_card_huge(d_tm.mk_fun_type({u, bool_type}));  // (U -> Bool): 2^|U|
+  check_card_huge(d_tm.mk_fun_type({bool_type, u}));  // (Bool -> U): |U|^2
+}
+
 }  // namespace bzla::test
