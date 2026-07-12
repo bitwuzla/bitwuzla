@@ -317,6 +317,92 @@ RewriteRule<RewriteRuleKind::BV_ADD_UREM>::_apply(Rewriter& rewriter,
 }
 
 /**
+ * We have for a s/ b that a = n * b + r (a - n * b = r), and thus for
+ * a - ((a s/ b) * b) = a s% b with (a s/ b) = n.
+ *
+ * Since bvsdiv and bvsrem are eliminated during rewriting (BV_SDIV_ELIM,
+ * BV_SREM_ELIM), this matches the eliminated form of
+ *   (bvadd a (bvmul (bvneg b) (bvsdiv a b)))
+ * for a value b (with msb(b) = 0, else the conditions of the two ites below
+ * differ and we do not match):
+ *
+ * match:  (bvadd a (bvmul nb (ite c (bvneg (bvudiv x b)) (bvudiv x b))))
+ *         with nb, b values such that nb = -b
+ *         and x = (ite c (bvneg a) a)
+ *         (or with the branches of both ites swapped)
+ * result: (ite c (bvneg (bvurem x b)) (bvurem x b))
+ *         (branches swapped accordingly), the eliminated form of (bvsrem a b)
+ *
+ * This is correct for any condition c: if the negated branches are not
+ * taken it is the unsigned identity x - b * (x u/ b) = x u% b with x = a,
+ * else it is the same identity for x = -a, negated.
+ */
+namespace {
+Node
+_rw_bv_add_srem(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  size_t idx0   = idx;
+  size_t idx1   = 1 - idx;
+  const Node& a = node[idx1];
+  if (node[idx0].kind() != Kind::BV_MUL)
+  {
+    return node;
+  }
+  const Node& mul = node[idx0];
+  for (size_t i = 0; i < 2; ++i)
+  {
+    const Node& nb  = mul[i];
+    const Node& ite = mul[1 - i];
+    if (!nb.is_value() || ite.kind() != Kind::ITE)
+    {
+      continue;
+    }
+    const Node& cond = ite[0];
+    for (size_t j = 1; j <= 2; ++j)
+    {
+      // branch j is the negation of branch 3 - j, which is the udiv
+      Node neg_udiv;
+      if (!rewriter.is_bv_neg(ite[j], neg_udiv) || neg_udiv != ite[3 - j]
+          || neg_udiv.kind() != Kind::BV_UDIV)
+      {
+        continue;
+      }
+      const Node& x = neg_udiv[0];
+      const Node& b = neg_udiv[1];
+      if (!b.is_value() || nb.value<BitVector>() != b.value<BitVector>().bvneg())
+      {
+        continue;
+      }
+      // x = (ite c (bvneg a) a), negated on the same branch as the udiv
+      Node neg_a;
+      if (x.kind() == Kind::ITE && x[0] == cond && x[3 - j] == a
+          && rewriter.is_bv_neg(x[j], neg_a) && neg_a == a)
+      {
+        Node urem     = rewriter.mk_node(Kind::BV_UREM, {x, b});
+        Node neg_urem = rewriter.mk_node(Kind::BV_NEG, {urem});
+        return j == 1 ? rewriter.mk_node(Kind::ITE, {cond, neg_urem, urem})
+                      : rewriter.mk_node(Kind::ITE, {cond, urem, neg_urem});
+      }
+    }
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_ADD_SREM>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  Node res = _rw_bv_add_srem(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_bv_add_srem(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
  * match:  (bvadd (ite c a b) (ite c a d))
  * result: (ite c (bvadd a a) (bvadd b d))
  *
