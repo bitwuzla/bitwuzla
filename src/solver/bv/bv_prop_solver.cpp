@@ -145,7 +145,6 @@ BvPropSolver::register_assertion(const Node& assertion,
                                  bool top_level,
                                  bool is_lemma)
 {
-  (void) top_level;
   (void) is_lemma;
 
   d_stats.num_assertions += 1;
