@@ -104,7 +104,7 @@ BvInterpolator::interpolant(const std::vector<Node>& ppA,
 
   log_bitblaster_cache(2);
 
-  util::Timer timer(d_stats.time_interpol);
+  util::Timer timer(d_stats.time_interpolant);
   Node res = d_tracer->get_interpolant(var_labels, clause_labels, term_labels);
   assert(!res.is_null());
   res = d_env.rewriter().rewrite(res);
@@ -667,16 +667,10 @@ BvInterpolator::log_bitblaster_cache(uint64_t level) const
 // may already have been registered by a prior BvInterpolator instance.
 BvInterpolator::Statistics::Statistics(util::Statistics& stats,
                                        const std::string& prefix)
-    : time_sat(
-          stats.new_or_get_stat<util::TimerStatistic>(prefix + "time_sat")),
-      time_interpol(stats.new_or_get_stat<util::TimerStatistic>(
+    : time_interpolant(stats.new_or_get_stat<util::TimerStatistic>(
           prefix + "time_interpol")),
-      time_bitblast(stats.new_or_get_stat<util::TimerStatistic>(
-          prefix + "time_bitblast")),
       time_label(
           stats.new_or_get_stat<util::TimerStatistic>(prefix + "time_label")),
-      time_encode(
-          stats.new_or_get_stat<util::TimerStatistic>(prefix + "time_encode")),
       size_interpolant(
           stats.new_or_get_stat<uint64_t>(prefix + "size_interpolant")),
       bb_num_aig_ands(

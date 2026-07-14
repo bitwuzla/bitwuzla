@@ -22,7 +22,9 @@ namespace bzla::sat::interpolants {
 // of Tracer may already have been registered by a prior Tracer instance.
 Tracer::Statistics::Statistics(util::Statistics& stats,
                                const std::string& prefix)
-    : size_interpolant(
+    : time_get_interpolant(stats.new_or_get_stat<util::TimerStatistic>(
+          prefix + "time_get_interpolant")),
+      size_interpolant(
           stats.new_or_get_stat<uint64_t>(prefix + "size_interpolant")),
       size_proof(stats.new_or_get_stat<uint64_t>(prefix + "size_proof")),
       size_proof_core(

@@ -287,6 +287,8 @@ CadicalTracer::get_interpolant(
     const std::unordered_map<Node, sat::interpolants::VariableKind>&
         term_labels)
 {
+  util::Timer timer(d_stats.time_get_interpolant);
+
   d_part_interpolants.clear();
   uint64_t final_clause_id = d_final_clause_ids[0];
 

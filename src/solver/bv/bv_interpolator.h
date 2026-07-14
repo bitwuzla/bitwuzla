@@ -71,11 +71,8 @@ class BvInterpolator
   struct Statistics
   {
     Statistics(util::Statistics& stats, const std::string& prefix);
-    util::TimerStatistic& time_sat;
-    util::TimerStatistic& time_interpol;
-    util::TimerStatistic& time_bitblast;
+    util::TimerStatistic& time_interpolant;
     util::TimerStatistic& time_label;
-    util::TimerStatistic& time_encode;
     uint64_t& size_interpolant;
     uint64_t& bb_num_aig_ands;
     uint64_t& bb_num_aig_consts;
@@ -86,9 +83,6 @@ class BvInterpolator
   } d_stats;
 
  private:
-  /** Update AIG and CNF statistics. */
-  void update_statistics();
-
   /**
    * Label associated SAT clauses in a given set of nodes.
    * @param clause_labels The clause labels map to add to. Maps AIG ids to
