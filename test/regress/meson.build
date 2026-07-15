@@ -877,6 +877,8 @@ tests_smt2 = [
   ['solver/abstract/murxla-cc7db96bcf2e620d.min.smt2'],
   ['solver/abstract/red-bench-8002.smt2'],
   ['solver/abstract/eagerrefine1.smt2'],
+  ['solver/array/adc_const_index.smt2', ['--adc-sat-propagator=true']],
+  ['solver/array/adc_partially_fixed_index.smt2', ['--adc-sat-propagator=true']],
   ['solver/array/arraycond1.btor.smt2'],
   ['solver/array/arraycond10.btor.smt2'],
   ['solver/array/arraycond11.btor.smt2'],

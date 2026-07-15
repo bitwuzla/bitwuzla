@@ -32,6 +32,13 @@ class WatchedBV
 
   int32_t watched() const;
   bool assign(const Propagator& propagator, int32_t lit);
+  /**
+   * Initialize with the next literal to watch. Fixed literals are skipped.
+   *
+   * @return True if all literals are fixed, i.e., the bit-vector value is fully
+   *         assigned.
+   */
+  bool init(const Propagator& propagator);
   const auto& lits() const { return d_lits; }
   bool assigned(const Propagator& propagator) const;
   std::ostream& str(const Propagator& propagator, std::ostream& os) const;
@@ -87,7 +94,6 @@ class DistinctNPropagator : public SatPropagator
  private:
   /** All literals of watched bit-vector assigned. */
   void assigned(int32_t var, WatchedBV* wbv);
-
   /** Attached propagator. */
   Propagator* d_propagator = nullptr;
   /** CNF variable representing this propagator. */

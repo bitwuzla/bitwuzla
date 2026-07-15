@@ -184,9 +184,23 @@ Propagator::resize(int32_t var)
 void
 Propagator::watch(int32_t lit)
 {
-  int32_t var       = std::abs(lit);
-  info(var).watched = true;
+  int32_t var = std::abs(lit);
+  auto& vi    = info(var);
+  vi.watched  = true;
   d_solver->add_observed_var(var);
+  // Check whether this variable is fixed. The propagator is registered only
+  // when it is actually needed and may miss fixed notifications. Update the
+  // fixed flag on-demand when a variable is watched by one of the SAT
+  // propagators.
+  if (!vi.fixed)
+  {
+    int32_t v = d_solver->fixed(var);
+    if (v != 0)
+    {
+      vi.assignment = v;
+      vi.fixed      = true;
+    }
+  }
   ++d_stats.num_observed;
   ++d_stats.num_watched;
 }

@@ -52,6 +52,23 @@ WatchedBV::assign(const Propagator& propagator, int32_t lit)
 }
 
 bool
+WatchedBV::init(const Propagator& propagator)
+{
+  size_t size = d_lits.size();
+  size_t i    = 0;
+  while (i < size)
+  {
+    if (!propagator.info(watched()).fixed)
+    {
+      break;
+    }
+    d_watched = (d_watched + 1) % size;
+    ++i;
+  }
+  return propagator.info(watched()).fixed;
+}
+
+bool
 WatchedBV::assigned(const Propagator& propagator) const
 {
   return propagator.info(watched()).assignment != 0;
@@ -80,9 +97,10 @@ WatchedBV::str(const Propagator& propagator, std::ostream& os) const
   return os;
 }
 
-DistinctNPropagator::DistinctNPropagator(util::Integer& card,
-                             int32_t var,
-                             const std::vector<std::vector<int32_t>>& bvs)
+DistinctNPropagator::DistinctNPropagator(
+    util::Integer& card,
+    int32_t var,
+    const std::vector<std::vector<int32_t>>& bvs)
     : d_propagator(nullptr),
       d_var(var),
       d_cardinality(card),
@@ -92,12 +110,11 @@ DistinctNPropagator::DistinctNPropagator(util::Integer& card,
   assert(!bvs.empty());
   d_num_conflict_thres -= d_cardinality;
 
-  // Add watched bit-vectors
+  // Add watched bit-vectors. d_watched_vars will be initialized on
+  // attach_propagator().
   for (const auto& bv : bvs)
   {
-    auto wbv = new WatchedBV(bv);
-    d_watched_bv.emplace_back(wbv);
-    d_watched_vars[wbv->watched()].push_back(wbv);
+    d_watched_bv.emplace_back(new WatchedBV(bv));
   }
 }
 
@@ -114,8 +131,8 @@ DistinctNPropagator::attach_propagator(Propagator* propagator)
   d_propagator = propagator;
   // Observe propagator variable since it can occur in conflict clauses.
   d_propagator->observe(d_var);
-  // Always fix phase of propagator variable to true, it will only be assigned false if
-  // forced on decision level 0.
+  // Always fix phase of propagator variable to true, it will only be assigned
+  // false if forced on decision level 0.
   d_propagator->force_phase(d_var);
 
   // We can never reach the given cardinality since we do not have enough
@@ -126,6 +143,7 @@ DistinctNPropagator::attach_propagator(Propagator* propagator)
   }
   else
   {
+    assert(d_watched_vars.empty());
     assert(!d_watched_bv.empty());
     BitVector phase(d_watched_bv.front()->lits().size());
     // Watch all literals of watched bit-vectors.
@@ -141,6 +159,17 @@ DistinctNPropagator::attach_propagator(Propagator* propagator)
         d_propagator->force_phase(phase.bit(size - 1 - i) ? lit : -lit);
       }
       phase.ibvinc();
+
+      // Some (or all) literals may already be fixed. If all literals are fixed,
+      // the bit-vector value is fully assigned which we register right away.
+      if (wbv->init(*d_propagator))
+      {
+        assigned(wbv->watched(), wbv.get());
+      }
+      else
+      {
+        d_watched_vars[wbv->watched()].push_back(wbv.get());
+      }
     }
   }
 }
