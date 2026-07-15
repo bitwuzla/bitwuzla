@@ -3640,7 +3640,7 @@ BitVectorUlt::is_invertible(const BitVector& t,
           ddx.fix_bit(bw_xx - 1, true);
           dx  = &ddx;
           res = _is_invertible(dx, t, pos_x, is_essential_check, false);
-          if (!res || d_rng->flip_coin())
+          if (!res || (!is_essential_check && d_rng->flip_coin()))
           {
             dxn.fix(BitVector::mk_zero(dxn.size()));
             ddx = dxn.bvconcat(dxx);
@@ -4271,7 +4271,7 @@ BitVectorSlt::is_invertible(const BitVector& t,
           ddx.fix_bit(bw_xx - 1, true);
           dx  = &ddx;
           res = _is_invertible(dx, t, pos_x, is_essential_check, false);
-          if (!res || d_rng->flip_coin())
+          if (!res || (!is_essential_check && d_rng->flip_coin()))
           {
             dxn.fix(BitVector::mk_zero(dxn.size()));
             ddx = dxn.bvconcat(dxx);
