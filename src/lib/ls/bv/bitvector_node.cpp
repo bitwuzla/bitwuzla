@@ -2609,7 +2609,7 @@ BitVectorAshr::is_consistent(const BitVector& t, uint64_t pos_x)
 
   if (pos_x == 0)
   {
-    // fixed: x <<a s = t
+    // fixed: x >>a s = t
     if (x.is_fixed())
     {
       uint64_t cnt_x = is_signed ? x.lo().count_leading_ones()
@@ -2664,15 +2664,8 @@ BitVectorAshr::is_consistent(const BitVector& t, uint64_t pos_x)
     // Consistent value: cnt(t) = size: random value with msb set to t[msb]
     if (cnt_t == size)
     {
-      if (x.has_fixed_bits())
-      {
-        BitVectorDomainGenerator gen(x, d_rng);
-        BV_NODE_CACHE_CONSISTENT(gen.random());
-      }
-      else
-      {
-        d_consistent.reset(new BitVector(size, *d_rng));
-      }
+      assert(!x.has_fixed_bits());
+      d_consistent.reset(new BitVector(size, *d_rng));
       if (is_signed && !d_consistent->msb())
       {
         d_consistent->set_bit(size - 1, true);
