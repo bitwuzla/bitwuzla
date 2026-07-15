@@ -89,9 +89,8 @@ FunSolver::value(const Node& term)
   }
   else if (term.kind() == Kind::CONSTANT && term.type().is_uninterpreted())
   {
-    std::stringstream ss;
-    ss << "@const_" << term.id();
-    return nm.mk_value(term.type(), ss.str());
+    // By default assign unique per-term value for uninterpreted sorts.
+    return unique_uninterpreted_value(term);
   }
   else if (term.kind() == Kind::APPLY)
   {
@@ -116,9 +115,8 @@ FunSolver::value(const Node& term)
     }
     if (term.type().is_uninterpreted())
     {
-      std::stringstream ss;
-      ss << "@const_" << term.id();
-      return nm.mk_value(term.type(), ss.str());
+      // By default assign unique per-term value for uninterpreted sorts.
+      return unique_uninterpreted_value(term);
     }
     return node::utils::mk_default_value(nm, term.type());
   }
@@ -158,6 +156,12 @@ FunSolver::value(const Node& term)
     }
     vars.push_back(res);
     return utils::mk_binder(nm, Kind::LAMBDA, vars);
+  }
+
+  // By default assign unique per-term value for uninterpreted sorts.
+  if (term.type().is_uninterpreted())
+  {
+    return unique_uninterpreted_value(term);
   }
   return utils::mk_default_value(nm, term.type());
 }
@@ -246,6 +250,15 @@ FunSolver::beta_reduce(const Node& apply)
   } while (!visit.empty());
 
   return cache.at(body);
+}
+
+Node
+FunSolver::unique_uninterpreted_value(const Node& term)
+{
+  assert(term.type().is_uninterpreted());
+  std::stringstream ss;
+  ss << "@const_" << term.id();
+  return d_env.nm().mk_value(term.type(), ss.str());
 }
 
 FunSolver::Statistics::Statistics(util::Statistics& stats,

@@ -43,6 +43,9 @@ class FunSolver : public Solver
   /** Beta-reduce function application on lambda term. */
   Node beta_reduce(const Node& apply);
 
+  /** Construct per-term unique value for term of uninterpreted sort. */
+  Node unique_uninterpreted_value(const Node& term);
+
   /** Registered function applications. */
   backtrack::vector<Node> d_applies;
   /** Registered equalities. */
