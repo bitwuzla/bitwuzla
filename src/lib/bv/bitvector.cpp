@@ -3812,17 +3812,27 @@ BitVector::ibvmodinv()
 BitVector&
 BitVector::ibvpow(const BitVector& base, const mpz_t exp)
 {
+  assert(!base.is_null());
+
+  uint64_t size = base.d_size;
+
   mpz_t mod;
   mpz_init_set_ull(mod, 1);
-  mpz_mul_2exp_ull(mod, mod, size());
-  if (is_gmp())
+  mpz_mul_2exp_ull(mod, mod, size);
+  if (base.is_gmp())
   {
-    assert(base.is_gmp());
+    if (!is_gmp())
+    {
+      mpz_init(d_val_gmp);
+    }
     mpz_powm(d_val_gmp, base.d_val_gmp, exp, mod);
   }
   else
   {
-    assert(!base.is_gmp());
+    if (is_gmp())
+    {
+      mpz_clear(d_val_gmp);
+    }
     mpz_t res;
     mpz_init_set_ull(res, base.d_val_uint64);
     mpz_powm(res, res, exp, mod);
@@ -3830,6 +3840,7 @@ BitVector::ibvpow(const BitVector& base, const mpz_t exp)
     mpz_clear(res);
   }
   mpz_clear(mod);
+  d_size = size;
   return *this;
 }
 
