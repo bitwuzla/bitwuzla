@@ -2848,7 +2848,7 @@ BitVectorUdiv::is_invertible(const BitVector& t,
    *                   ((s != 0 || t != 0) => (s / hi_x <= t) && \exists y. (
    *                       mcb(x, y) &&
    *                       (t = ones => y <= s / t) &&
-   *                       (t != ones => y > t + 1 && y <= s / t)))
+   *                       (t != ones => y > s / (t + 1) && y <= s / t)))
    *
    * Inverse value:
    *   pos_x = 0: t = ones: s = 1: ones

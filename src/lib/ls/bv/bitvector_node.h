@@ -693,7 +693,7 @@ class BitVectorUdiv : public BitVectorNode
    *                  ((s != 0 || t != 0) => (s / x_hi <= t) && \exists y. (
    *                      mfb(x, y) &&
    *                      (t = ones => y <= s / t) &&
-   *                      (t != ones => y > t + 1 && y <= s / t)))
+   *                      (t != ones => y > s / (t + 1) && y <= s / t)))
    */
   bool is_invertible(const BitVector& t,
                      uint64_t pos_x,
