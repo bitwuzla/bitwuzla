@@ -705,6 +705,8 @@ BitVectorAnd::compute_min_max_bounds(const BitVector& t, uint64_t pos_x)
   const BitVector& s       = child(pos_s)->assignment();
   BitVectorNode* op_x      = child(pos_x);
   const BitVectorDomain& x = op_x->domain();
+  // Cache domain-induced bounds [x_lo | t, x_hi & ~(s ^ t)] for reuse in
+  // is_invertible().
   d_bounds = BitVectorRange(x.lo().bvor(t), x.hi().bvand(s.bvxnor(t)));
   return op_x->tighten_bounds(d_bounds, BitVectorRange());
 }
@@ -767,7 +769,7 @@ BitVectorAnd::is_invertible(const BitVector& t,
         BV_NODE_CACHE_INVERSE_IF(d_bounds.d_min);
         return true;
       }
-      BitVectorDomain tmp(x.lo().bvor(t), x.hi().bvand(s.bvxnor(t)));
+      BitVectorDomain tmp(d_bounds.d_min, d_bounds.d_max);
       BitVectorDomainDualGenerator gen(tmp, bounds, d_rng);
       if (!gen.has_random())
       {

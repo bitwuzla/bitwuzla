@@ -298,6 +298,12 @@ class BitVectorAnd : public BitVectorNode
 
   void evaluate() override;
 
+  /**
+   * @note Caches the (untightened) domain-induced bounds on `x`, i.e.,
+   *       [x_lo | t, x_hi & ~(s ^ t)], in `d_bounds`. This cache is valid
+   *       until the assignment of `s` changes and is read by is_invertible()
+   *       after compute_normalized_bounds() to avoid recomputing these values.
+   */
   std::tuple<BitVectorRange, BitVectorRange> compute_min_max_bounds(
       const BitVector& t, uint64_t pos_x) override;
 
@@ -328,7 +334,11 @@ class BitVectorAnd : public BitVectorNode
                                     uint64_t pos_x) override;
 
  private:
-  /** Cache for current bound wrt. s and t and fixed bits in x. */
+  /**
+   * Cache for the current domain-induced bounds on `x` wrt. `s` and `t`, i.e.,
+   * [x_lo | t, x_hi & ~(s ^ t)] for is_invertible(). Computed and written
+   * (only) by compute_min_max_bounds().
+   */
   BitVectorRange d_bounds;
 };
 
