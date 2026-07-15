@@ -1085,27 +1085,30 @@ class BitVectorIte : public BitVectorNode
   bool is_essential(const BitVector& t, uint64_t pos_x) override;
 
   /**
-   * ite(_c, _t, _e)
+   * ite(cond, then, else)
    *
    * IC:
    *   w/o const bits (IC_wo):
    *       pos_x = 0: s0 == t || s1 == t
-   *                  with s0 the value for '_t' branch
-   *                  and s1 the value for '_e'
+   *                  with s0 the value for the 'then' branch
+   *                  and  s1 the value for the 'else' branch
    *       pos_x = 1: s0 == true
-   *                  with s0 the value for '_c'
+   *                  with s0 the value for condition 'cond'
    *       pos_x = 2: s0 == false
-   *                  with s0 the value for '_c'
+   *                  with s0 the value for condition 'cond'
    *
    *   with const bits:
    *       pos_x = 0: (!is_fixed(x) && (s0 = t || s1 = t)) ||
    *                  (is_fixed_true(x) && s0 = t) ||
    *                  (is_fixed_false(x) && s1 = t)
-   *                  with s0 the value for '_t' and s1 the value for '_e'
-   *       pos_x = 1: s0 = true && mfb(x, t)
-   *                  with s0 the value for '_c'
-   *       pos_x = 2: s0 == false && mfb(x, t)
-   *                  with s0 the value for '_c'
+   *                  with s0 the value for the 'then' branch
+   *                  and  s1 the value for the 'else' branch
+   *       pos_x = 1: (s0 = true && mcb(x, t)) || (s0 = false && s1 = t)
+   *                  with s0 the value for 'cond'
+   *                  and  s1 the value for the 'else' branch
+   *       pos_x = 2: (s0 == false && mcb(x, t)) || (s0 == true && s1 = t)
+   *                  with s0 the value for 'cond'
+   *                  and  s1 the value for the 'then' branch
    */
   bool is_invertible(const BitVector& t,
                      uint64_t pos_x,

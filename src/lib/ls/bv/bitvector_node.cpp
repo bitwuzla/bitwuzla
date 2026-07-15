@@ -5506,35 +5506,34 @@ BitVectorIte::is_invertible(const BitVector& t,
                             uint64_t pos_x,
                             bool is_essential_check)
 {
-  (void) is_essential_check;
-
   d_inverse.reset(nullptr);
   d_consistent.reset(nullptr);
 
   /**
    * IC_wo: pos_x = 0: s0 == t || s1 == t
-   *                   with s0 the value for the '_t' branch
-   *                   and s1 the value for the '_e' branch
+   *                   with s0 the value for the 'then' branch
+   *                   and  s1 the value for the 'else' branch
    *        pos_x = 1: s0 == true
-   *                   with s0 the value for condition '_c'
+   *                   with s0 the value for condition 'cond'
    *        pos_x = 2: s0 == false
-   *                   with s0 the value for condition '_c'
+   *                   with s0 the value for condition 'cond'
    * IC:    pos_x = 0: (!is_fixed(x) && (s0 = t || s1 = t)) ||
    *                   (is_fixed_true(x) && s0 = t) ||
    *                   (is_fixed_false(x) && s1 = t)
-   *                   with s0 the value for '_t' and s1 the value for '_e'
-   *        pos_x = 1: (s0 = true && mcb(x, t)) ||
-   *                   (s0 = false && s1 = t)
-   *                   with s0 the value for '_c' and s1 the value for '_e'
-   *        pos_x = 2: (s0 == false && mcb(x, t)) ||
-   *                   (s1 == true && s1 = t)
-   *                   with s0 the value for '_c' and s1 the value for '_t'
+   *                   with s0 the value for the 'then' branch
+   *                   and  s1 the value for the 'else' branch
+   *        pos_x = 1: (s0 = true && mcb(x, t)) || (s0 = false && s1 = t)
+   *                   with s0 the value for 'cond'
+   *                   and  s1 the value for the 'else' branch
+   *        pos_x = 2: (s0 == false && mcb(x, t)) || (s0 == true && s1 = t)
+   *                   with s0 the value for 'cond'
+   *                   and  s1 the value for the 'then' branch
    *
    * Inverse values:
-   *   pos_x = 0: t = 0: random value >=s s
-   *              t = 1: random value <s s
-   *   pos_x = 1: t = 0: random value <=s s
-   *              t = 1: random value >s s
+   *   pos_x = 0: fixed value of x if x is fixed, else
+   *              - random if s0 = t and s1 = t, else
+   *              - true if s0 = t and false if s1 = t
+   *   pos_x > 0: t if branch is enabled, else current assignment
    */
 
   uint64_t pos_s0          = pos_x == 0 ? 1 : 0;
@@ -5564,30 +5563,8 @@ BitVectorIte::is_invertible(const BitVector& t,
       {
         if (cmp0 && cmp1)
         {
-          if (x_has_fixed_bits)
-          {
-            if (d_rng->flip_coin())
-            {
-              BitVector bv = BitVector::mk_true();
-              if (x.match_fixed_bits(bv))
-              {
-                BV_NODE_CACHE_INVERSE(std::move(bv));
-              }
-              else
-              {
-                BV_NODE_CACHE_INVERSE(BitVector::mk_false());
-              }
-            }
-            else
-            {
-              BV_NODE_CACHE_INVERSE(BitVector::mk_false());
-            }
-          }
-          else
-          {
-            BV_NODE_CACHE_INVERSE(d_rng->flip_coin() ? BitVector::mk_true()
-                                                     : BitVector::mk_false());
-          }
+          BV_NODE_CACHE_INVERSE(d_rng->flip_coin() ? BitVector::mk_true()
+                                                   : BitVector::mk_false());
         }
         else if (cmp0)
         {
