@@ -4684,7 +4684,7 @@ BitVectorSlt::is_consistent(const BitVector& t, uint64_t pos_x)
       else
       {
         // CC_wo: true
-        // Consistent value: pos_x = 1: t = 1: random value <s max_signed
+        // Consistent value: pos_x = 1: t = 1: random value >s min_signed
         d_consistent.reset(
             new BitVector(BitVector(size,
                                     *d_rng,
@@ -4875,7 +4875,7 @@ BitVectorUrem::is_invertible(const BitVector& t,
       // -> n <= (~0 - t) / s (truncated)
       // -> ~0 - s * n >= t
 
-      // s > t -> n_hi = ~0 / t (subtracting t is redundant)
+      // s > t -> n_hi = ~0 / s (subtracting t is redundant)
       BitVector n_hi = ones.bvudiv(s);
       assert(!n_hi.is_zero());
       // ~0 - s * n_hi < t ? decrease n_hi until >= t
@@ -5251,7 +5251,7 @@ BitVectorUrem::is_consistent(const BitVector& t, uint64_t pos_x)
     }
     else
     {
-      // Consistent value: pos_x = 0: t != ones: x = s * t with x > t
+      // Consistent value: pos_x = 0: t != ones: x = s + t with x > t
       //                                         s.t. no overflow occurs
       BitVector max = BitVector::mk_ones(size).ibvsub(t);
       BitVector min = t.bvinc();
