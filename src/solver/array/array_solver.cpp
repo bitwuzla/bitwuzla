@@ -1131,10 +1131,12 @@ ArraySolver::construct_model_value(const Node& array,
   assert(!d_in_check);
   assert(array.type().is_array());
 
-  auto it = cache.find(array);
-  if (it != cache.end())
   {
-    return it->second;
+    auto it = cache.find(array);
+    if (it != cache.end())
+    {
+      return it->second;
+    }
   }
 
   std::map<Node, Node> map;
@@ -1340,11 +1342,14 @@ ArraySolver::construct_model_value(const Node& array,
   }
   assert(res.kind() == Kind::CONST_ARRAY);
 
-  // A queried select index not found in `map` (those returned above) takes
-  // the default value.
+  // A queried select index takes its value from `map` if present, otherwise the
+  // default value res[0]. The early returns above only cover map entries from
+  // the stores and regular accesses. The const-array merging block adds
+  // further entries that must be considered.
   if (!selected_index.is_null())
   {
-    return res[0];
+    auto it = map.find(selected_index);
+    return it != map.end() ? it->second : res[0];
   }
 
   // Construct canonical array value.

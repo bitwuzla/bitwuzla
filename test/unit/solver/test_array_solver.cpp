@@ -9,13 +9,18 @@
  */
 
 #include <map>
+#include <memory>
 #include <set>
+#include <unordered_map>
 #include <vector>
 
 #include "node/node_manager.h"
+#include "sat/sat_solver_factory.h"
 #include "solver/array/array_solver.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
+#include "solver/solver_engine.h"
+#include "solving_context.h"
 #include "test/unit/test.h"
 
 namespace bzla::test {
@@ -426,6 +431,95 @@ TEST_F(TestArrayCanonicalize, uninterpreted_index_keeps_default)
                               {u2, bv(1, 0)}};  // redundant (== default)
   Node expected = store(d_nm.mk_const_array(at, bv(1, 0)), u1, bv(1, 1));
   ASSERT_EQ(canon(at, bv(1, 0), stores), expected);
+}
+
+/*
+ * Unit test for ArraySolver::construct_model_value with a selected index.
+ *
+ * When an array's model value is built from several constant arrays connected
+ * to it via equalities, the "const-array merging" block inserts entries into
+ * the internal store map beyond the ones produced by the store walk and regular
+ * accesses (namely other const arrays' default values at their missing indices,
+ * and canonical values at overlap indices). A per-index query
+ * (construct_model_value with a non-null selected_index) must return the value
+ * of that index in the *same* full array model, i.e. it must consult those
+ * merged map entries too instead of blindly returning the constant-array
+ * default.
+ */
+class TestArrayConstructModelValue : public TestCommon
+{
+};
+
+TEST_F(TestArrayConstructModelValue, select_index_matches_merged_full_model)
+{
+  NodeManager nm;
+  option::Options options;
+  sat::SatSolverFactory sat_factory(options);
+  SolvingContext ctx(nm, options, sat_factory);
+
+  SolverEngine& engine = ctx.solver_engine();
+  SolverState& state   = engine.d_solver_state;
+  ArraySolver& as      = engine.d_array_solver;
+
+  // construct_model_value queries model values via the solver engine, which
+  // requires either solving mode or a SAT state. We drive it directly here, so
+  // pretend the last solve() returned SAT. All queried nodes are values, so the
+  // engine short-circuits and never consults an actual SAT model.
+  engine.d_sat_state = Result::SAT;
+
+  Type it = nm.mk_bv_type(2);  // index sort, cardinality 4
+  Type et = nm.mk_bv_type(2);  // element sort
+  Type at = nm.mk_array_type(it, et);
+
+  auto bv2 = [&](uint64_t v) { return nm.mk_value(BitVector::from_ui(2, v)); };
+
+  // Base array whose model is built purely from two connected constant arrays.
+  Node a   = nm.mk_const(at);
+  Node ca0 = nm.mk_const_array(at, bv2(0));  // default #b00
+  Node ca1 = nm.mk_const_array(at, bv2(1));  // default #b01
+
+  // ca0 overwrites {0, 2} along its propagation path to `a`; ca1 overwrites
+  // {1}. ca1 has the smaller updated-index set, so it is chosen as the array
+  // whose default #b01 becomes the generic default of `a`. Index 1 is then
+  // filled with ca0's default #b00 by the merging block (it is missing from
+  // ca0's set), so the model value at index 1 (#b00) differs from the generic
+  // default (#b01).
+  auto acc0 = std::make_unique<ArraySolver::Access>(ca0, bv2(0), state);
+  auto acc1 = std::make_unique<ArraySolver::Access>(ca1, bv2(1), state);
+  as.d_array_models[a]                     = {acc0.get(), acc1.get()};
+  as.d_updated_indices[{a.id(), ca0.id()}] = {bv2(0), bv2(2)};
+  as.d_updated_indices[{a.id(), ca1.id()}] = {bv2(1)};
+
+  // Full array model value (selected_index == null path).
+  std::unordered_map<Node, Node> cache_full;
+  Node full = as.construct_model_value(a, cache_full);
+
+  // Read the value of `index` from a canonical array model value (CONST_ARRAY
+  // wrapped in STOREs). All values are concrete, so node equality decides.
+  auto read = [](Node arr, const Node& index) {
+    while (arr.kind() == Kind::STORE)
+    {
+      if (arr[1] == index)
+      {
+        return arr[2];
+      }
+      arr = arr[0];
+    }
+    assert(arr.kind() == Kind::CONST_ARRAY);
+    return arr[0];
+  };
+
+  // A per-index query must agree with the full model on every index. Before the
+  // fix, index 1 (added by the merging block) wrongly returned the generic
+  // default #b01 instead of #b00.
+  for (uint64_t i = 0; i < 4; ++i)
+  {
+    Node index = bv2(i);
+    std::unordered_map<Node, Node> cache_sel;
+    Node selected = as.construct_model_value(a, cache_sel, index);
+    ASSERT_EQ(selected, read(full, index));
+  }
+  ASSERT_EQ(read(full, bv2(1)), bv2(0));  // sanity: the distinguishing index
 }
 
 }  // namespace bzla::test
