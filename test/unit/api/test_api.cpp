@@ -4352,7 +4352,7 @@ TEST_F(TestApi, terminate_sat)
     bitwuzla::Options opts;
     opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
     opts.set(bitwuzla::Option::PREPROCESS, false);
-    TestTerminator tt(1000);
+    TestTerminator tt(100);
     std::stringstream smt2;
     smt2 << "(declare-const x (_ BitVec 32))"
          << "(declare-const s (_ BitVec 32))"
