@@ -700,7 +700,8 @@ BitVector::compare(const BitVector& bv) const
 
   if (is_gmp())
   {
-    return mpz_cmp(d_val_gmp, bv.d_val_gmp);
+    int32_t cmp = mpz_cmp(d_val_gmp, bv.d_val_gmp);
+    return cmp < 0 ? -1 : (cmp > 0 ? 1 : 0);
   }
 
   if (d_val_uint64 == bv.d_val_uint64)
