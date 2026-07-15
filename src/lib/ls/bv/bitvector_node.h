@@ -948,12 +948,14 @@ class BitVectorSlt : public BitVectorNode
    * @param d The domain.
    * @param min The lower bound of the range.
    * @param max The upper bound of the range.
+   * @param is_signed True to interpret the range as signed, else unsigned.
    * @return A random value within the given range, if there is one, else
    *         a null BitVector.
    */
   BitVector inverse_value_concat_new_random(const BitVectorDomain& d,
                                             const BitVector& min,
-                                            const BitVector& max);
+                                            const BitVector& max,
+                                            bool is_signed);
   /**
    * True to enable optimization for inverse_value computation of concat
    * and sign extension operands.

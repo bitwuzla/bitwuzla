@@ -4391,7 +4391,8 @@ BitVectorSlt::_is_invertible(const BitVectorDomain* d,
 BitVector
 BitVectorSlt::inverse_value_concat_new_random(const BitVectorDomain& d,
                                               const BitVector& min,
-                                              const BitVector& max)
+                                              const BitVector& max,
+                                              bool is_signed)
 {
   uint64_t size = d.size();
   assert(min.size() == size);
@@ -4399,15 +4400,26 @@ BitVectorSlt::inverse_value_concat_new_random(const BitVectorDomain& d,
 
   if (d.has_fixed_bits())
   {
-    BitVectorDomainSignedGenerator gen(d, d_rng, BitVectorRange(min, max));
-    if (gen.has_random())
+    if (is_signed)
     {
-      return gen.random();
+      BitVectorDomainSignedGenerator gen(d, d_rng, BitVectorRange(min, max));
+      if (gen.has_random())
+      {
+        return gen.random();
+      }
+    }
+    else
+    {
+      BitVectorDomainGenerator gen(d, d_rng, BitVectorRange(min, max));
+      if (gen.has_random())
+      {
+        return gen.random();
+      }
     }
   }
   else
   {
-    return BitVector(size, *d_rng, min, max, true);
+    return BitVector(size, *d_rng, min, max, is_signed);
   }
   return BitVector();
 }
@@ -4426,10 +4438,10 @@ BitVectorSlt::inverse_value_concat(bool t, uint64_t pos_x)
   uint64_t bw_x1 = op_x.child(1)->size();
   assert(bw_x - bw_x1 == bw_x0);
 
-  const BitVector x   = op_x.assignment();
+  const BitVector& x  = op_x.assignment();
   BitVector x0        = x.bvextract(bw_x - 1, bw_x1);
   BitVector x1        = x.bvextract(bw_x1 - 1, 0);
-  const BitVector s   = op_s.assignment();
+  const BitVector& s  = op_s.assignment();
   BitVector s0        = s.bvextract(bw_x - 1, bw_x1);
   BitVector s1        = s.bvextract(bw_x1 - 1, 0);
   BitVectorDomain dx0 = dx.bvextract(bw_x - 1, bw_x1);
@@ -4442,11 +4454,11 @@ BitVectorSlt::inverse_value_concat(bool t, uint64_t pos_x)
     {
       assert(!s.is_min_signed());
 
-      /* s0 != 0 && x0 >=s s0 -> pick x0 <s s0 */
+      /* s0 != min_signed && x0 >=s s0 -> pick x0 <s s0 */
       if (!s0.is_min_signed() && x0.signed_compare(s0) >= 0)
       {
         BitVector res_x0 = inverse_value_concat_new_random(
-            dx0, BitVector::mk_min_signed(bw_x0), s0.bvdec());
+            dx0, BitVector::mk_min_signed(bw_x0), s0.bvdec(), true);
         if (!res_x0.is_null())
         {
           res_x0.ibvconcat(x1);
@@ -4457,12 +4469,14 @@ BitVectorSlt::inverse_value_concat(bool t, uint64_t pos_x)
         }
       }
 
-      /* s1 != 0 && x0 == s0 && x1 >=s s1 -> pick x1 <s s1 */
-      if (!s1.is_min_signed() && x0.signed_compare(s0) == 0
-          && x1.signed_compare(s1) >= 0)
+      /* Note: With x0 == s0, the sign bit of x and s is determined by the
+       *       (equal) high limbs, hence x <s s iff x1 <u s1 (unsigned!). */
+
+      /* s1 != 0 && x0 == s0 && x1 >=u s1 -> pick x1 <u s1 */
+      if (!s1.is_zero() && x0.signed_compare(s0) == 0 && x1.compare(s1) >= 0)
       {
         BitVector res_x1 = inverse_value_concat_new_random(
-            dx1, BitVector::mk_min_signed(bw_x1), s1.bvdec());
+            dx1, BitVector::mk_zero(bw_x1), s1.bvdec(), false);
         if (!res_x1.is_null())
         {
           res_x1.ibvconcat(x0, res_x1);
@@ -4480,7 +4494,7 @@ BitVectorSlt::inverse_value_concat(bool t, uint64_t pos_x)
       if (x0.signed_compare(s0) < 0)
       {
         BitVector res_x0 = inverse_value_concat_new_random(
-            dx0, s0, BitVector::mk_max_signed(bw_x0));
+            dx0, s0, BitVector::mk_max_signed(bw_x0), true);
         if (!res_x0.is_null())
         {
           res_x0.ibvconcat(x1);
@@ -4491,11 +4505,11 @@ BitVectorSlt::inverse_value_concat(bool t, uint64_t pos_x)
         }
       }
 
-      /* x0 == s0 && x1 <s s1 -> pick x1 >=s s1 */
-      if (x0.signed_compare(s0) == 0 && x1.signed_compare(s1) < 0)
+      /* x0 == s0 && x1 <u s1 -> pick x1 >=u s1 (see note above) */
+      if (x0.signed_compare(s0) == 0 && x1.compare(s1) < 0)
       {
         BitVector res_x1 = inverse_value_concat_new_random(
-            dx1, s1, BitVector::mk_max_signed(bw_x1));
+            dx1, s1, BitVector::mk_ones(bw_x1), false);
         if (!res_x1.is_null())
         {
           res_x1.ibvconcat(x0, res_x1);
@@ -4518,7 +4532,7 @@ BitVectorSlt::inverse_value_concat(bool t, uint64_t pos_x)
       if (!s0.is_max_signed() && x0.signed_compare(s0) < 0)
       {
         BitVector res_x0 = inverse_value_concat_new_random(
-            dx0, s0.bvinc(), BitVector::mk_max_signed(bw_x0));
+            dx0, s0.bvinc(), BitVector::mk_max_signed(bw_x0), true);
         if (!res_x0.is_null())
         {
           res_x0.ibvconcat(x1);
@@ -4529,13 +4543,14 @@ BitVectorSlt::inverse_value_concat(bool t, uint64_t pos_x)
         }
       }
 
-      /* !s1.is_max_signed() && x0 == s0 && x1 <=s s1 -> pick x1 >s s1 */
-      if (x0.signed_compare(s0) == 0 && !s1.is_max_signed()
-          && x1.signed_compare(s1) <= 0)
+      /* Note: With x0 == s0, the sign bit of x and s is determined by the
+       *       (equal) high limbs, hence s <s x iff s1 <u x1 (unsigned!). */
+
+      /* x0 == s0 && s1 != ones && x1 <=u s1 -> pick x1 >u s1 */
+      if (x0.signed_compare(s0) == 0 && !s1.is_ones() && x1.compare(s1) <= 0)
       {
-        assert(!s1.is_max_signed());
         BitVector res_x1 = inverse_value_concat_new_random(
-            dx1, s1.bvinc(), BitVector::mk_max_signed(bw_x1));
+            dx1, s1.bvinc(), BitVector::mk_ones(bw_x1), false);
         if (!res_x1.is_null())
         {
           res_x1.ibvconcat(x0, res_x1);
@@ -4549,11 +4564,11 @@ BitVectorSlt::inverse_value_concat(bool t, uint64_t pos_x)
     /* s0 o s1 >=s x0 o x1 */
     else
     {
-      /* s0 < x0 -> pick x0 <=s s0 */
+      /* s0 <s x0 -> pick x0 <=s s0 */
       if (s0.signed_compare(x0) < 0)
       {
         BitVector res_x0 = inverse_value_concat_new_random(
-            dx0, BitVector::mk_min_signed(bw_x0), s0);
+            dx0, BitVector::mk_min_signed(bw_x0), s0, true);
         if (!res_x0.is_null())
         {
           res_x0.ibvconcat(x1);
@@ -4564,11 +4579,11 @@ BitVectorSlt::inverse_value_concat(bool t, uint64_t pos_x)
         }
       }
 
-      /* s0 == x0 && s1 <s x1 -> pick x1 <=s s1 */
-      if (x0.signed_compare(s0) == 0 && s1.signed_compare(x1) < 0)
+      /* s0 == x0 && s1 <u x1 -> pick x1 <=u s1 (see note above) */
+      if (x0.signed_compare(s0) == 0 && s1.compare(x1) < 0)
       {
         BitVector res_x1 = inverse_value_concat_new_random(
-            dx1, BitVector::mk_min_signed(bw_x1), s1);
+            dx1, BitVector::mk_zero(bw_x1), s1, false);
         if (!res_x1.is_null())
         {
           res_x1.ibvconcat(x0, res_x1);
