@@ -428,9 +428,9 @@ class BitVectorDomainDualGenerator
  protected:
   /* The associated RNG (may be 0). */
   RNG* d_rng = nullptr;
-  /** The generator covering the lower range < 0. */
+  /** The generator covering the lower range [0, max_signed]. */
   std::unique_ptr<BitVectorDomainGenerator> d_gen_lo;
-  /** The generator covering the upper range >= 0. */
+  /** The generator covering the upper range [min_signed, ones]. */
   std::unique_ptr<BitVectorDomainGenerator> d_gen_hi;
   /** The currently active generator. */
   BitVectorDomainGenerator* d_gen_cur = nullptr;
