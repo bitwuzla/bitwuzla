@@ -3015,6 +3015,13 @@ BitVectorUdiv::is_invertible(const BitVector& t,
     //                    mcb(x, y) &&
     //                    (t = ones => y <= s / t) &&
     //                    (t != ones => y > t + 1 && y <= s / t)))
+    // Inverse value:
+    // pos_x = 1: t = ones: s = t:  1 or 0
+    //                      s != t: 0
+    //            t = 0   : 0 < s < ones: random value > s
+    //            s = 0   : random value > 0
+    //            t is a divisor of s: t / s or s with s / x = t (0.5 prob)
+    //            else    : s with s / x = t
     if ((x_has_fixed_bits || !is_essential_check)
         && (!s.is_zero() || !t.is_zero()))
     {
@@ -3057,43 +3064,19 @@ BitVectorUdiv::is_invertible(const BitVector& t,
     }
     else if (!is_essential_check)
     {
-      // Inverse value:
-      // pos_x = 1: t = ones: s = t:  1 or 0
-      //                      s != t: 0
-      //            t = 0   : 0 < s < ones: random value > s
-      //            s = 0   : random value > 0
-      //            t is a divisor of s: t / s or s with s / x = t (0.5 prob)
-      //            else    : s with s / x = t
       uint64_t size = s.size();
-      if (t.is_ones())
+      assert(t.is_zero() && s.is_zero());
+      BitVector min = BitVector::mk_one(size);
+      BitVector max = BitVector::mk_ones(size);
+      if (x.has_fixed_bits())
       {
-        BitVector one = BitVector::mk_one(size);
-        if (s.compare(t) == 0 && x.match_fixed_bits(one)
-            && (!x.match_fixed_bits(BitVector::mk_zero(size))
-                || d_rng->flip_coin()))
-        {
-          BV_NODE_CACHE_INVERSE(std::move(one));
-        }
-        else
-        {
-          BV_NODE_CACHE_INVERSE(BitVector::mk_zero(size));
-        }
+        BitVectorDomainGenerator gen(x, d_rng, {min, max});
+        assert(gen.has_random());
+        BV_NODE_CACHE_INVERSE(gen.random());
       }
       else
       {
-        assert(t.is_zero() && s.is_zero());
-        BitVector min = BitVector::mk_one(size);
-        BitVector max = BitVector::mk_ones(size);
-        if (x.has_fixed_bits())
-        {
-          BitVectorDomainGenerator gen(x, d_rng, {min, max});
-          assert(gen.has_random());
-          BV_NODE_CACHE_INVERSE(gen.random());
-        }
-        else
-        {
-          BV_NODE_CACHE_INVERSE(BitVector(size, *d_rng, min, max));
-        }
+        BV_NODE_CACHE_INVERSE(BitVector(size, *d_rng, min, max));
       }
     }
     return true;
