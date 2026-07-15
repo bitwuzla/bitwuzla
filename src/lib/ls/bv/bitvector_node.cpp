@@ -4758,7 +4758,6 @@ BitVectorUrem::BitVectorUrem(RNG* rng,
 {
   assert(size == child0->size());
   assert(child0->size() == child1->size());
-  d_inverse_domain.reset(nullptr);
 }
 
 BitVectorUrem::BitVectorUrem(RNG* rng,
@@ -4769,7 +4768,6 @@ BitVectorUrem::BitVectorUrem(RNG* rng,
 {
   assert(child0->size() == child1->size());
   assert(domain.size() == child0->size());
-  d_inverse_domain.reset(nullptr);
 }
 
 void
