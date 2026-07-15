@@ -1813,17 +1813,20 @@ BitVectorShl::is_invertible(const BitVector& t,
         {
           if (x.hi().compare(min) >= 0)
           {
-            BitVectorDomainGenerator gen(x, d_rng, {min, x.hi()});
-            assert(gen.has_random());
-            // Inverse value: t = 0: ctz(t) - ctz(s) <= res < size
-            BV_NODE_CACHE_INVERSE(gen.random());
+            if (!is_essential_check)
+            {
+              BitVectorDomainGenerator gen(x, d_rng, {min, x.hi()});
+              assert(gen.has_random());
+              // Inverse value: t = 0: ctz(t) - ctz(s) <= res < size
+              BV_NODE_CACHE_INVERSE(gen.random());
+            }
             return true;
           }
           return false;
         }
         else
         {
-          BV_NODE_CACHE_INVERSE(
+          BV_NODE_CACHE_INVERSE_IF(
               BitVector(size, *d_rng, min, BitVector::mk_ones(size)));
           return true;
         }
