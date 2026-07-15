@@ -4354,9 +4354,9 @@ TEST_F(TestApi, terminate_sat)
     opts.set(bitwuzla::Option::PREPROCESS, false);
     TestTerminator tt(1000);
     std::stringstream smt2;
-    smt2 << "(declare-const x (_ BitVec 32))"
-         << "(declare-const s (_ BitVec 32))"
-         << "(declare-const t (_ BitVec 32))"
+    smt2 << "(declare-const x (_ BitVec 64))"
+         << "(declare-const s (_ BitVec 64))"
+         << "(declare-const t (_ BitVec 64))"
          << "(assert (distinct (bvmul s (bvmul x t)) (bvmul (bvmul s x) t)))"
          << "(check-sat)" << std::endl;
     bitwuzla::parser::Parser parser(d_tm, opts);
