@@ -587,14 +587,17 @@ BvInverter::ic(
 
     case Kind::BV_SLT:
     case Kind::BV_SGT: {
+      // Bit-vector inequalities on the path are only reachable via EQUAL
+      // as predicate (when chaining inverses in invert()), the ICs below
+      // encode the semantics of (= (<kind> <x> <s>) t).
+      assert(predicate == Kind::EQUAL);
       Node s = node[1 - idx_x];
-      if ((kind == Kind::BV_SLT && idx == 0)
-          || (kind == Kind::BV_SGT && idx == 1))
+      if ((kind == Kind::BV_SLT && idx_x == 0)
+          || (kind == Kind::BV_SGT && idx_x == 1))
       {
-        // x <_s t = t
-        // s >_s x = t
-        // IC: (distinct t min_signed_[w])
-        Node s = node[1 - idx_x];
+        // (x <_s s) = t
+        // (s >_s x) = t
+        // IC: (=> t (distinct s min_signed_[w]))
         return d_nm.mk_node(
             Kind::IMPLIES,
             {t,
@@ -603,9 +606,9 @@ BvInverter::ic(
                            d_nm.mk_value(BitVector::mk_min_signed(
                                s.type().bv_size()))})});
       }
-      // x >_s s = t
-      // s <_s x = t
-      // IC: (distinct t max_signed_[w])
+      // (x >_s s) = t
+      // (s <_s x) = t
+      // IC: (=> t (distinct s max_signed_[w]))
       return d_nm.mk_node(
           Kind::IMPLIES,
           {t,
@@ -616,13 +619,17 @@ BvInverter::ic(
     }
     case Kind::BV_ULT:
     case Kind::BV_UGT: {
+      // Bit-vector comparison nodes on the path are only reachable with EQUAL
+      // as predicate (when chaining inverses in invert()), the ICs below
+      // encode the semantics of (= (<kind> <x> <s>) t).
+      assert(predicate == Kind::EQUAL);
       Node s = node[1 - idx_x];
-      if ((kind == Kind::BV_ULT && idx == 0)
-          || (kind == Kind::BV_UGT && idx == 1))
+      if ((kind == Kind::BV_ULT && idx_x == 0)
+          || (kind == Kind::BV_UGT && idx_x == 1))
       {
-        // x <_u s = t
-        // s >_u x = t
-        // IC: (distinct t (_ bv0 w))
+        // (x <_u s) = t
+        // (s >_u x) = t
+        // IC: (=> t (distinct s (_ bv0 w)))
         return d_nm.mk_node(
             Kind::IMPLIES,
             {t,
@@ -630,9 +637,9 @@ BvInverter::ic(
                  Kind::DISTINCT,
                  {s, d_nm.mk_value(BitVector::mk_zero(s.type().bv_size()))})});
       }
-      // x >_u s = t
-      // s <_u x = t
-      // IC: (distinct t (bvnot (_ bv0 w)))
+      // (x >_u s) = t
+      // (s <_u x) = t
+      // IC: (=> t (distinct s (bvnot (_ bv0 w))))
       return d_nm.mk_node(
           Kind::IMPLIES,
           {t,

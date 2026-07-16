@@ -43,7 +43,9 @@ class TestBvInverter : public TestCommon
 
   void test_ic_bool(Kind predicate, Kind kind, size_t idx, size_t idx_x);
 
-  void test_ic_ineq(Kind predicate, uint64_t bw, size_t idx);
+  void test_ic_cmp(Kind kind, uint64_t bw, size_t idx, size_t idx_x);
+
+  void test_ic_cmp(Kind predicate, uint64_t bw, size_t idx);
 
   void check_conds(const Node& node,
                    const Node& x,
@@ -187,7 +189,7 @@ TestBvInverter::test_ic_sext(Kind predicate,
 }
 
 void
-TestBvInverter::test_ic_ineq(Kind predicate, uint64_t bw, size_t idx)
+TestBvInverter::test_ic_cmp(Kind predicate, uint64_t bw, size_t idx)
 {
   Type bv = d_nm.mk_bv_type(bw);
   Node x  = d_nm.mk_var(bv, "x");
@@ -231,6 +233,16 @@ TestBvInverter::test_ic_bool(Kind predicate,
           d_nm.mk_bool_type(),
           idx,
           idx_x);
+}
+
+void
+TestBvInverter::test_ic_cmp(Kind kind, uint64_t bw, size_t idx, size_t idx_x)
+{
+  // Bit-vector comparison nodes on the path are only handled under an EQUAL
+  // predicate (with a Boolean right-hand side), as reached when chaining
+  // inverses in invert().
+  Type bv = d_nm.mk_bv_type(bw);
+  test_ic(Kind::EQUAL, kind, bv, bv, d_nm.mk_bool_type(), idx, idx_x);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -508,14 +520,62 @@ TEST_F(TestBvInverter, bv_sext)
   }
 }
 
+TEST_F(TestBvInverter, bv_ult)
+{
+  for (size_t idx : std::vector<size_t>{0, 1})
+  {
+    for (size_t idx_x : std::vector<size_t>{0, 1})
+    {
+      test_ic_cmp(Kind::BV_ULT, 1, idx, idx_x);
+      test_ic_cmp(Kind::BV_ULT, 4, idx, idx_x);
+    }
+  }
+}
+
+TEST_F(TestBvInverter, bv_ugt)
+{
+  for (size_t idx : std::vector<size_t>{0, 1})
+  {
+    for (size_t idx_x : std::vector<size_t>{0, 1})
+    {
+      test_ic_cmp(Kind::BV_UGT, 1, idx, idx_x);
+      test_ic_cmp(Kind::BV_UGT, 4, idx, idx_x);
+    }
+  }
+}
+
+TEST_F(TestBvInverter, bv_slt)
+{
+  for (size_t idx : std::vector<size_t>{0, 1})
+  {
+    for (size_t idx_x : std::vector<size_t>{0, 1})
+    {
+      test_ic_cmp(Kind::BV_SLT, 1, idx, idx_x);
+      test_ic_cmp(Kind::BV_SLT, 4, idx, idx_x);
+    }
+  }
+}
+
+TEST_F(TestBvInverter, bv_sgt)
+{
+  for (size_t idx : std::vector<size_t>{0, 1})
+  {
+    for (size_t idx_x : std::vector<size_t>{0, 1})
+    {
+      test_ic_cmp(Kind::BV_SGT, 1, idx, idx_x);
+      test_ic_cmp(Kind::BV_SGT, 4, idx, idx_x);
+    }
+  }
+}
+
 TEST_F(TestBvInverter, ineq)
 {
   for (Kind predicate : d_predicates)
   {
-    test_ic_ineq(predicate, 1, 0);
-    test_ic_ineq(predicate, 1, 1);
-    test_ic_ineq(predicate, 4, 0);
-    test_ic_ineq(predicate, 4, 1);
+    test_ic_cmp(predicate, 1, 0);
+    test_ic_cmp(predicate, 1, 1);
+    test_ic_cmp(predicate, 4, 0);
+    test_ic_cmp(predicate, 4, 1);
   }
 }
 
