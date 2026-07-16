@@ -87,10 +87,19 @@ class QuantSolver : public Solver
    * @param var          The variable to find the instantiation for.
    * @param body         The body of the quantified formula.
    * @param inst         The instantiation term determined via symbolic_term().
-   * @param conditions   The set of conditions for currently active conditional
-   *                     inverses, i.e., inverses used for instantiation.
    * @param model_values The current model values of the currently active
    *                     instantiation constants.
+   * @param deps         Output parameter, the free variables of the inverse
+   *                     and its conditions (variables of the quantifier
+   *                     prefix). The caller must only accept the inverse if
+   *                     closing these references keeps the conditions over
+   *                     the fresh instantiation constants acyclic (else they
+   *                     may form a cyclic, potentially unsatisfiable system
+   *                     of constraints), and caches accepted inverses.
+   * @param conditions   Output parameter, the conditions of this inverse
+   *                     (choice conditions and the optional definition of the
+   *                     fresh instantiation constant), to be added to the
+   *                     lemma by the caller on acceptance.
    * @return The inverse term.
    */
   Node inverse_term(const Node& q,
@@ -98,6 +107,7 @@ class QuantSolver : public Solver
                     const Node& body,
                     const Node& inst,
                     const std::unordered_map<Node, Node>& model_values,
+                    std::unordered_set<Node>& deps,
                     std::vector<Node>& conditions);
 
   /**

@@ -552,9 +552,16 @@ QuantSolver::is_expensive(const Node& node) const
 }
 
 namespace {
+/**
+ * Collect the free variables of `node` into `fvs`.
+ * @param node The node.
+ * @param fvs  Output parameter. The free variables of `node`.
+ * @return True if the node has free variables.
+ */
 bool
-has_free_vars(const Node& node)
+free_vars(const Node& node, std::unordered_set<Node>* fvs = nullptr)
 {
+  bool res = false;
   std::unordered_set<Node> quants;
   std::vector<Node> vars;
   std::vector<Node> visit{node};
@@ -581,10 +588,15 @@ has_free_vars(const Node& node)
   {
     if (quants.find(v) == quants.end())
     {
-      return true;
+      if (!fvs)
+      {
+        return true;
+      }
+      res = true;
+      fvs->insert(v);
     }
   }
-  return false;
+  return res;
 }
 }  // namespace
 
@@ -615,6 +627,33 @@ QuantSolver::mbqi_lemma(
 
   Node cur = q;
   std::vector<Node> conditions;
+  // Dependency graph over accepted inverses: maps a variable to the prefix
+  // variables its inverse (and conditions) reference.
+  std::unordered_map<Node, std::unordered_set<Node>> inv_deps;
+  // True if `node` (transitively) references `x` via accepted inverses.
+  auto is_cyclic = [&inv_deps](const Node& node, const Node& x) {
+    std::vector<Node> visit{node};
+    std::unordered_set<Node> visited;
+    do
+    {
+      Node cur = visit.back();
+      visit.pop_back();
+      if (cur == x)
+      {
+        return true;
+      }
+      if (!visited.insert(cur).second)
+      {
+        continue;
+      }
+      auto it = inv_deps.find(cur);
+      if (it != inv_deps.end())
+      {
+        visit.insert(visit.end(), it->second.begin(), it->second.end());
+      }
+    } while (!visit.empty());
+    return false;
+  };
   while (cur.kind() == Kind::FORALL)
   {
     const Node& ic = inst_const(cur);
@@ -623,11 +662,38 @@ QuantSolver::mbqi_lemma(
     {
       // Try to find instantiation via inverse term computation. Conditional
       // logic to actually try to find this inverse is encoded in inverse_term.
-      Node inv = inverse_term(q, cur[0], body, value, model_values, conditions);
+      std::unordered_set<Node> deps;
+      std::vector<Node> conds;
+      Node inv =
+          inverse_term(q, cur[0], body, value, model_values, deps, conds);
       if (!inv.is_null())
       {
-        value      = inv;
-        lemma_kind = QuantSolver::LemmaKind::MBQI_INST_INV;
+        // Accept the inverse only if closing its references keeps the
+        // conditions acyclic over the fresh instantiation constants: no
+        // referenced variable may (transitively) reference this variable
+        // through an already accepted inverse. Else the conditions of
+        // multiple variables may form a cyclic system of constraints over
+        // their fresh instantiation constants, which is potentially
+        // unsatisfiable and thus unsound to assert. A rejected inverse is
+        // not cached so that the variable may retry in a later round (when
+        // the referencing inverse is blocked by the cache).
+        bool acyclic = true;
+        for (const auto& fv : deps)
+        {
+          if (is_cyclic(fv, cur[0]))
+          {
+            acyclic = false;
+            break;
+          }
+        }
+        if (acyclic)
+        {
+          d_inv_cache.insert(cur[0]);
+          value      = inv;
+          lemma_kind = QuantSolver::LemmaKind::MBQI_INST_INV;
+          conditions.insert(conditions.end(), conds.begin(), conds.end());
+          inv_deps.emplace(cur[0], std::move(deps));
+        }
       }
     }
     // Cache the number of value instantations per quantifier.
@@ -654,7 +720,7 @@ QuantSolver::mbqi_lemma(
   // This is mainly to document that this can never happen since we ensure
   // in inverse_term() that we use an inverse as is only under safe conditions,
   // and else introduce a fresh constant that the variable is mapped to.
-  assert(!has_free_vars(lem));
+  assert(!free_vars(lem));
   lemma(lem, lemma_kind);
 }
 
@@ -832,6 +898,7 @@ QuantSolver::inverse_term(const Node& q,
                           const Node& body,
                           const Node& value,
                           const std::unordered_map<Node, Node>& model_values,
+                          std::unordered_set<Node>& deps,
                           std::vector<Node>& conditions)
 {
   // Only try to compute IC-based lemma for bit-vector variables, and only
@@ -852,12 +919,6 @@ QuantSolver::inverse_term(const Node& q,
     auto [invert, conds] = d_bv_inverter.invert(bbody, var, path);
     if (!invert.is_null())
     {
-      // We only cache when we were actually able to compute an inverse.
-      // We do cache even if the inverse would be filtered, mainly because if
-      // we produced an inverse once that was already too expensive and thus
-      // filtered, subsequent inverses for this variable will be as expensive.
-      d_inv_cache.insert(var);
-
       bool filtered = false;
       if (d_opt_quant_ic_filter)
       {
@@ -872,16 +933,38 @@ QuantSolver::inverse_term(const Node& q,
         }
       }
       // If filtering option is enabled, we do not use potentially
-      // expensive IC lemmas for instantiation.
-      if (!filtered)
+      // expensive IC lemmas for instantiation. Filtered inverses are cached
+      // (subsequent inverses for this variable will be as expensive);
+      // returned inverses are cached by the caller if accepted.
+      if (filtered)
       {
+        d_inv_cache.insert(var);
+      }
+      else
+      {
+        // Free variables may occur in the inverse and its conditions in case
+        // of nested/chained quantifiers. We report them to the caller via
+        // `deps`: variables already mapped to an instantiation (earlier in
+        // the quantifier prefix) may be referenced symbolically, all others
+        // (later in the prefix) are pinned by the caller to their default
+        // ground instantiation. This stratifies the conditions over the
+        // fresh instantiation constants: each condition only references
+        // ground terms or constants introduced for variables processed
+        // earlier. Otherwise, the conditions of multiple variables may form
+        // a cyclic system of constraints over their fresh instantiation
+        // constants, which is potentially unsatisfiable and thus unsound to
+        // assert.
+        bool has_fvs = free_vars(invert, &deps);
+        for (const auto& c : conds)
+        {
+          free_vars(c, &deps);
+        }
         conditions.insert(conditions.end(), conds.begin(), conds.end());
         // We only use an inverse as-is if it does not contain free variables
         // to ensure that instantiation in lemmas does not pull in free
-        // variables. Free variables may occur in an unconditional inverse in
-        // case of nested/chained quantifiers. In that case, we introduce a
-        // fresh constant that `var` is mapped to.
-        if (!has_free_vars(invert))
+        // variables. In case it does (variables of the quantifier prefix,
+        // see above), we introduce a fresh constant that `var` is mapped to.
+        if (!has_fvs)
         {
           return invert;
         }
