@@ -50,24 +50,26 @@ class TestBvInverter : public TestCommon
   void check_conds(const Node& node,
                    const Node& x,
                    const Node& invert,
-                   const std::vector<Node>& conds,
-                   bool expect_x = false);
+                   const std::vector<Node>& conds);
   void check_inverse(const Node& node,
                      const Node& x,
                      const Node& invert,
-                     const std::vector<Node>& conds);
+                     const std::vector<Node>& conds,
+                     bool check_valid);
 
   void test_invert(const Node& node,
                    const Node& x,
                    bool expect_conds,
-                   bool expect_inv = true,
-                   bool expect_x   = false);
+                   bool expect_inv  = true,
+                   bool check_valid = true,
+                   bool under_det   = false);
 
   NodeManager d_nm;
   option::Options d_options;
   sat::SatSolverFactory d_sat_factory;
   Env d_env;
   BvInverter d_inverter;
+  BvInverter d_inverter_underdet{d_env, true};
 
   std::vector<Kind> d_predicates = {Kind::BV_ULT,
                                     Kind::BV_ULE,
@@ -252,9 +254,11 @@ TestBvInverter::test_invert(const Node& node,
                             const Node& x,
                             bool expect_conds,
                             bool expect_inv,
-                            bool expect_x)
+                            bool check_valid,
+                            bool underdet)
 {
-  auto [invert, conds] = d_inverter.invert(node, x);
+  BvInverter& inverter = underdet ? d_inverter_underdet : d_inverter;
+  auto [invert, conds] = inverter.invert(node, x);
   if (expect_inv != !invert.is_null() || !conds.empty() != expect_conds)
   {
     std::cout << "node: " << node << std::endl;
@@ -267,42 +271,90 @@ TestBvInverter::test_invert(const Node& node,
   ASSERT_TRUE(!conds.empty() == expect_conds);
   if (expect_inv)
   {
-    check_conds(node, x, invert, conds, expect_x);
-    check_inverse(node, x, invert, conds);
+    check_conds(node, x, invert, conds);
+    check_inverse(node, x, invert, conds, check_valid);
   }
 }
+
+namespace {
+/** Collect all constant leafs of `node` into `consts`. */
+void
+collect_consts(const Node& node, std::unordered_set<Node>& consts)
+{
+  std::vector<Node> visit{node};
+  std::unordered_set<Node> cache;
+  do
+  {
+    Node cur = visit.back();
+    visit.pop_back();
+    auto [it, inserted] = cache.insert(cur);
+    if (inserted)
+    {
+      if (cur.is_const())
+      {
+        consts.insert(cur);
+      }
+      visit.insert(visit.end(), cur.begin(), cur.end());
+    }
+  } while (!visit.empty());
+}
+}  // namespace
 
 void
 TestBvInverter::check_conds(const Node& node,
                             const Node& x,
                             const Node& invert,
-                            const std::vector<Node>& conds,
-                            bool expect_x)
+                            const std::vector<Node>& conds)
 {
-  bool found_x = false;
+  if (conds.empty())
+  {
+    return;
+  }
+  // The conditions constrain the fresh choice constants introduced by
+  // invert() relative to the constants of the original node. Since the
+  // conditions are asserted unconditionally in instantiation lemmas, they
+  // must be satisfiable in the choice constants for all values of the
+  // original constants:
+  //   \forall s, t. \exists y . C
+  // where y are the fresh constants introduced by invert() and C is the
+  // conjunction of the conditions. We check the negation: assert
+  //   (forall y . (not C))
+  // with the original constants free, which must be unsatisfiable.
+  std::unordered_set<Node> node_consts;
+  collect_consts(node, node_consts);
+  std::unordered_set<Node> cond_consts;
   for (const auto& c : conds)
   {
-    std::vector<Node> visit{c};
-    std::unordered_set<Node> cache;
-    do
-    {
-      Node cur = visit.back();
-      visit.pop_back();
-      auto [it, inserted] = cache.insert(cur);
-      if (inserted)
-      {
-        if (cur == x)
-        {
-          found_x = true;
-          break;
-        }
-        visit.insert(visit.end(), cur.begin(), cur.end());
-      }
-    } while (!visit.empty());
+    collect_consts(c, cond_consts);
   }
-  if (found_x != expect_x)
+  std::unordered_map<Node, Node> substs;
+  std::vector<Node> vars;
+  for (const auto& c : cond_consts)
+  {
+    if (node_consts.find(c) == node_consts.end())
+    {
+      Node var = d_nm.mk_var(c.type());
+      substs.emplace(c, var);
+      vars.push_back(var);
+    }
+  }
+  std::unordered_map<Node, Node> subst_cache;
+  Node body = d_nm.mk_node(
+      Kind::NOT, {utils::substitute(d_nm,
+                                    utils::mk_nary(d_nm, Kind::AND, conds),
+                                    substs,
+                                    subst_cache)});
+  for (auto it = vars.rbegin(); it != vars.rend(); ++it)
+  {
+    body = d_nm.mk_node(Kind::FORALL, {*it, body});
+  }
+  SolvingContext ctx(d_nm, d_options, d_sat_factory);
+  ctx.assert_formula(body);
+  Result res = ctx.solve();
+  if (res != Result::UNSAT)
   {
     std::cout << "node: " << node << std::endl;
+    std::cout << "x: " << x << std::endl;
     std::cout << "invert: " << invert << std::endl;
     std::cout << "conditions:" << std::endl;
     for (const auto& c : conds)
@@ -310,37 +362,54 @@ TestBvInverter::check_conds(const Node& node,
       std::cout << "- " << c << std::endl;
     }
   }
-  ASSERT_EQ(found_x, expect_x);
+  ASSERT_EQ(res, Result::UNSAT);
 }
 
 void
 TestBvInverter::check_inverse(const Node& node,
                               const Node& x,
                               const Node& invert,
-                              const std::vector<Node>& conds)
+                              const std::vector<Node>& conds,
+                              bool check_valid)
 {
   SolvingContext ctx(d_nm, d_options, d_sat_factory);
   std::unordered_map<Node, Node> subst_cache;
   Node ass = utils::substitute(d_nm, node, {{x, invert}}, subst_cache);
   if (conds.empty())
   {
-    ctx.assert_formula(d_nm.mk_node(Kind::NOT, {ass}));
-    Result res = ctx.solve();
-    if (res != Result::UNSAT)
+    // Unconditional inverses must be valid, i.e., substituting the inverse
+    // for x must satisfy the node for all values of the remaining constants.
+    // Exception: under-determined inverses (e.g., for concat) disregard that
+    // invertibility is conditional and are only expected to satisfy the node
+    // for some values (any instantiation is sound, check_valid = false).
+    if (check_valid)
     {
-      std::cout << "node: " << node << std::endl;
-      std::cout << "invert: " << invert << std::endl;
+      ctx.assert_formula(d_nm.mk_node(Kind::NOT, {ass}));
+      Result res = ctx.solve();
+      if (res != Result::UNSAT)
+      {
+        std::cout << "node: " << node << std::endl;
+        std::cout << "invert: " << invert << std::endl;
+      }
+      ASSERT_EQ(res, Result::UNSAT);
     }
-    ASSERT_EQ(res, Result::UNSAT);
+    else
+    {
+      ctx.assert_formula(ass);
+      Result res = ctx.solve();
+      if (res != Result::SAT)
+      {
+        std::cout << "node: " << node << std::endl;
+        std::cout << "invert: " << invert << std::endl;
+      }
+      ASSERT_EQ(res, Result::SAT);
+    }
   }
-  // For conditional inverses, we cannot easily test this similarly to
-  // unconditional inverses. The (conceptual) choice term's value is
-  // undetermined when the condition is false (the conditions are encoded over
-  // implications IC => predicate), i.e., the condition must be valid and the
-  // following condition would have to be checked:
-  //   \forall s, t. \exists y. (not (implies C P[y]))
-  // where y is one or more fresh symbols introduced by invert (the choice
-  // variables, and C is the conjunction of the conditions returned by invert).
+  // For conditional inverses, the (conceptual) choice term's value is
+  // undetermined when the invertibility condition is false (the conditions
+  // are encoded over implications IC => predicate), hence no validity check
+  // is performed here. The satisfiability of the conditions themselves is
+  // checked in check_conds_satisfiable().
 }
 
 /* -------------------------------------------------------------------------- */
@@ -776,6 +845,180 @@ TEST_F(TestBvInverter, invert10)
 
   test_invert(node, x, true);
   test_invert(node, t, true);
+}
+
+TEST_F(TestBvInverter, invert_ineq_under_eq)
+{
+  // Bit-vector comparison nodes on the path, reachable via chaining
+  // inverses under a Boolean equality: (= (<cmp> <x> <s>) <p>).
+  Type b = d_nm.mk_bv_type(4);
+  Node x = d_nm.mk_const(b, "x");
+  Node s = d_nm.mk_const(b, "s");
+  Node p = d_nm.mk_const(d_nm.mk_bool_type(), "p");
+  for (Kind cmp : std::vector<Kind>{Kind::BV_ULT, Kind::BV_SLT})
+  {
+    for (size_t idx_x : std::vector<size_t>{0, 1})
+    {
+      Node c    = d_nm.mk_node(cmp, {idx_x == 0 ? x : s, idx_x == 0 ? s : x});
+      Node node = d_nm.mk_node(Kind::EQUAL, {c, p});
+      test_invert(node, x, true);
+      test_invert(d_nm.mk_node(Kind::NOT, {node}), x, true);
+      // Nested below the comparison: (= (<cmp> .. (bvadd x s) ..) <p>)
+      Node add  = d_nm.mk_node(Kind::BV_ADD, {x, s});
+      Node ca   = d_nm.mk_node(cmp, {idx_x == 0 ? add : s,
+                                     idx_x == 0 ? s : add});
+      test_invert(d_nm.mk_node(Kind::EQUAL, {ca, p}), x, true);
+    }
+  }
+}
+
+TEST_F(TestBvInverter, invert_witness_ops)
+{
+  // Operators without exact inverses require conditional inverses via
+  // fresh choice constants: (= (<op> <x> <s>) t) and negated/inequality
+  // variants.
+  Type b = d_nm.mk_bv_type(4);
+  Node x = d_nm.mk_const(b, "x");
+  Node s = d_nm.mk_const(b, "s");
+  Node t = d_nm.mk_const(b, "t");
+  for (Kind op : std::vector<Kind>{Kind::BV_AND,
+                                   Kind::BV_OR,
+                                   Kind::BV_MUL,
+                                   Kind::BV_SHL,
+                                   Kind::BV_SHR,
+                                   Kind::BV_ASHR,
+                                   Kind::BV_UDIV,
+                                   Kind::BV_UREM})
+  {
+    for (size_t idx_x : std::vector<size_t>{0, 1})
+    {
+      Node o = d_nm.mk_node(op, {idx_x == 0 ? x : s, idx_x == 0 ? s : x});
+      test_invert(d_nm.mk_node(Kind::EQUAL, {o, t}), x, true);
+      test_invert(
+          d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::EQUAL, {o, t})}),
+          x,
+          true);
+      test_invert(d_nm.mk_node(Kind::BV_ULT, {o, t}), x, true);
+      test_invert(
+          d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::BV_SLT, {t, o})}),
+          x,
+          true);
+    }
+  }
+}
+
+TEST_F(TestBvInverter, invert_concat)
+{
+  // Default (not under-determined) inverter: concat requires a conditional
+  // inverse.
+  Type b2 = d_nm.mk_bv_type(2);
+  Node x  = d_nm.mk_const(b2, "x");
+  Node s  = d_nm.mk_const(b2, "s");
+  Node t  = d_nm.mk_const(d_nm.mk_bv_type(4), "t");
+  for (size_t idx_x : std::vector<size_t>{0, 1})
+  {
+    Node c = d_nm.mk_node(Kind::BV_CONCAT,
+                          {idx_x == 0 ? x : s, idx_x == 0 ? s : x});
+    test_invert(d_nm.mk_node(Kind::EQUAL, {c, t}), x, true);
+  }
+}
+
+TEST_F(TestBvInverter, invert_bool_structure)
+{
+  // Bit-vector literal below Boolean structure.
+  Type b = d_nm.mk_bv_type(4);
+  Node x = d_nm.mk_const(b, "x");
+  Node s = d_nm.mk_const(b, "s");
+  Node t = d_nm.mk_const(b, "t");
+  Node g = d_nm.mk_const(d_nm.mk_bool_type(), "g");
+
+  Node eq = d_nm.mk_node(Kind::EQUAL, {d_nm.mk_node(Kind::BV_ADD, {x, s}), t});
+  Node a  = d_nm.mk_node(Kind::AND, {eq, g});
+  test_invert(a, x, true);
+  test_invert(d_nm.mk_node(Kind::NOT, {a}), x, true);
+  test_invert(d_nm.mk_node(Kind::AND, {g, d_nm.mk_node(Kind::NOT, {eq})}),
+              x,
+              true);
+}
+
+TEST_F(TestBvInverter, invert_chain_mixed)
+{
+  // (not (bvult (bvlshr (bvadd x s1) s2) t))
+  Type b  = d_nm.mk_bv_type(4);
+  Node x  = d_nm.mk_const(b, "x");
+  Node t  = d_nm.mk_const(b, "t");
+  Node s1 = d_nm.mk_const(b, "s1");
+  Node s2 = d_nm.mk_const(b, "s2");
+
+  Node add  = d_nm.mk_node(Kind::BV_ADD, {x, s1});
+  Node shr  = d_nm.mk_node(Kind::BV_SHR, {add, s2});
+  Node node = d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::BV_ULT, {shr, t})});
+  test_invert(node, x, true);
+}
+
+TEST_F(TestBvInverter, invert_none)
+{
+  Type b = d_nm.mk_bv_type(4);
+  Node x = d_nm.mk_const(b, "x");
+  Node s = d_nm.mk_const(b, "s");
+  Node t = d_nm.mk_const(b, "t");
+  Node c = d_nm.mk_const(d_nm.mk_bool_type(), "c");
+
+  // x does not occur in node
+  test_invert(d_nm.mk_node(Kind::EQUAL, {s, t}), x, false, false);
+  // non-invertible node (ite) on path
+  test_invert(
+      d_nm.mk_node(Kind::EQUAL, {d_nm.mk_node(Kind::ITE, {c, x, s}), t}),
+      x,
+      false,
+      false);
+  // extract on path is only invertible in under-determined mode
+  test_invert(
+      d_nm.mk_node(Kind::EQUAL,
+                   {d_nm.mk_node(Kind::BV_EXTRACT, {x}, {2, 1}),
+                    d_nm.mk_const(d_nm.mk_bv_type(2), "t2")}),
+      x,
+      false,
+      false);
+}
+
+TEST_F(TestBvInverter, invert_underdet_extract)
+{
+  // Under-determined inverses for extract reconstruct sliced-out bits with
+  // fresh constants. The resulting inverse is unconditional and valid (the
+  // extracted bits do not depend on the fresh constants).
+  Type b  = d_nm.mk_bv_type(4);
+  Type b2 = d_nm.mk_bv_type(2);
+  Node x  = d_nm.mk_const(b, "x");
+  Node s  = d_nm.mk_const(b2, "s");
+  Node t  = d_nm.mk_const(b2, "t");
+
+  Node xt = d_nm.mk_node(Kind::BV_EXTRACT, {x}, {2, 1});
+  test_invert(d_nm.mk_node(Kind::EQUAL, {xt, t}), x, false, true, true, true);
+  // extract below an exact inverse
+  Node add = d_nm.mk_node(Kind::BV_ADD, {xt, s});
+  test_invert(d_nm.mk_node(Kind::EQUAL, {add, t}), x, false, true, true, true);
+  // extract below a conditional inverse
+  Node mul = d_nm.mk_node(Kind::BV_MUL, {xt, s});
+  test_invert(d_nm.mk_node(Kind::EQUAL, {mul, t}), x, true, true, true, true);
+}
+
+TEST_F(TestBvInverter, invert_underdet_concat)
+{
+  // Under-determined inverses for concat disregard that invertibility is
+  // conditional on the sibling. The inverse is unconditional but only
+  // satisfies the node for some values of the remaining constants
+  // (check_valid = false).
+  Type b2 = d_nm.mk_bv_type(2);
+  Node x  = d_nm.mk_const(b2, "x");
+  Node s  = d_nm.mk_const(b2, "s");
+  Node t  = d_nm.mk_const(d_nm.mk_bv_type(4), "t");
+  for (size_t idx_x : std::vector<size_t>{0, 1})
+  {
+    Node c = d_nm.mk_node(Kind::BV_CONCAT,
+                          {idx_x == 0 ? x : s, idx_x == 0 ? s : x});
+    test_invert(d_nm.mk_node(Kind::EQUAL, {c, t}), x, false, true, false, true);
+  }
 }
 
 }  // namespace bzla::test
