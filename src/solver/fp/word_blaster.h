@@ -159,8 +159,6 @@ class WordBlaster
   /** Map function type of UF introduced for FP_TO_UBV to UF. */
   std::unordered_map<Type, Node> d_ubv_uf_map;
 
-  std::vector<Node> d_additional_assertions;
-
   /**
    * Cache which constants have been word-blasted in the currently active
    * assertion levels.
