@@ -15,11 +15,9 @@
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
 #include "node/node_utils.h"
-#include "node/unordered_node_ref_set.h"
 #include "rewrite/rewriter.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
-#include "type/card.h"
 #include "util/integer.h"
 
 namespace bzla::fp {
@@ -47,7 +45,6 @@ FpSolver::FpSolver(Env& env, SolverState& state)
     : Solver(env, state),
       d_word_blaster(env, state),
       d_word_blast_queue(state.backtrack_mgr()),
-      d_distinct_n(state.backtrack_mgr()),
       d_word_blast_index(state.backtrack_mgr()),
       d_valid_constraints_cache(state.backtrack_mgr())
 {
