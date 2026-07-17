@@ -212,14 +212,21 @@ FloatingPointSymFPU::FloatingPointSymFPU(const FloatingPointSymFPU& other)
   d_uf.reset(new UnpackedFloat(*other.unpacked()));
 }
 
+FloatingPointSymFPU::FloatingPointSymFPU(FloatingPointSymFPU&& other) noexcept =
+    default;
+
 FloatingPointSymFPU&
 FloatingPointSymFPU::operator=(const FloatingPointSymFPU& other)
-
 {
+  if (&other == this) return *this;
+
   d_size.reset(new SymFPUFloatingPointTypeInfo(*other.size()));
   d_uf.reset(new UnpackedFloat(*other.unpacked()));
   return *this;
 }
+
+FloatingPointSymFPU& FloatingPointSymFPU::operator=(
+    FloatingPointSymFPU&& other) noexcept = default;
 
 FloatingPointSymFPU::~FloatingPointSymFPU() {}
 

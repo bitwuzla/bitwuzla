@@ -188,8 +188,12 @@ class FloatingPointSymFPU
 
   /** Copy constructor. */
   FloatingPointSymFPU(const FloatingPointSymFPU& other);
+  /** Move constructor. */
+  FloatingPointSymFPU(FloatingPointSymFPU&& other) noexcept;
   /** Copy assignment. */
   FloatingPointSymFPU& operator=(const FloatingPointSymFPU& other);
+  /** Move assignment. */
+  FloatingPointSymFPU& operator=(FloatingPointSymFPU&& other) noexcept;
   /** Destructor. */
   ~FloatingPointSymFPU();
 
