@@ -252,10 +252,10 @@ class FloatingPoint
   /** @return True if this floating-point is less than or equal `fp`. */
   bool fple(const FloatingPoint &fp) const;
 
-  /** @return True if this floating-point is less than `fp`. */
+  /** @return True if this floating-point is greater than `fp`. */
   bool fpgt(const FloatingPoint &fp) const;
 
-  /** @return True if this floating-point is less than or equal `fp`. */
+  /** @return True if this floating-point is greater than or equal `fp`. */
   bool fpge(const FloatingPoint &fp) const;
 
   /**
@@ -269,9 +269,9 @@ class FloatingPoint
    */
   FloatingPoint fpmin(const FloatingPoint &fp) const;
   /**
-   * Determine the minimum of two floating-point values.
+   * Determine the maximum of two floating-point values.
    * @note The +/- zero case is undefined as the IEEE 754 standard states that
-   *       min(-zero, +zero) and min(+zero, -zero) may both return either.
+   *       max(-zero, +zero) and max(+zero, -zero) may both return either.
    *       This function returns +zero in this case, thus users of this
    *       function have to make sure that this undefined case is handled
    *       properly on top of this function.
@@ -352,7 +352,7 @@ class FloatingPoint
    * @param rm The rounding mode.
    * @param fp0 The operand to the multiplication.
    * @param fp1 The operand to the addition.
-   * @return The result of the division.
+   * @return The result of the fused multiply-add.
    */
   FloatingPoint fpfma(const RoundingMode rm,
                       const FloatingPoint &fp0,
