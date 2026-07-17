@@ -925,6 +925,13 @@ SymFpuSymBV<is_signed>::operator!(void) const
 
 template <bool is_signed>
 SymFpuSymProp
+SymFpuSymBV<is_signed>::operator&&(const SymFpuSymBV<is_signed>& op) const
+{
+  return SymFpuNM::get().mk_node(Kind::BV_AND, {d_node, op.d_node});
+}
+
+template <bool is_signed>
+SymFpuSymProp
 SymFpuSymBV<is_signed>::operator||(const SymFpuSymBV<is_signed>& op) const
 {
   return SymFpuNM::get().mk_node(Kind::BV_OR, {d_node, op.d_node});
@@ -1058,13 +1065,6 @@ SymFpuSymBV<is_signed>::check_node(const Node& node) const
 {
   assert(!node.is_null());
   return node.type().is_bv();
-}
-
-template <bool is_signed>
-bool
-SymFpuSymBV<is_signed>::check_bool_node(const Node& node) const
-{
-  return node.type().is_bool();
 }
 
 template class SymFpuSymBV<true>;

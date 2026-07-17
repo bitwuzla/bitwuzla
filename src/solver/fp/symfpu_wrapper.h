@@ -343,14 +343,7 @@ class SymFpuSymBV
 
  protected:
   using literalType = typename BzlaSignedToLitSort<is_signed>::BzlaLitSort;
-
-  // BzlaNode* boolNodeToBV(BzlaNode* node) const;
-  // BzlaNode* BVToBoolNode(BzlaNode* node) const;
-
   bool check_node(const Node& node) const;
-  bool check_bool_node(const Node& node) const;
-  // BzlaNode *fromProposition (BzlaNode *node) const;
-  // BzlaNode *toProposition (BzlaNode *node) const;
 
  private:
   Node d_node;
