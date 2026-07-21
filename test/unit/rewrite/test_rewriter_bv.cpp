@@ -321,6 +321,70 @@ TEST_F(TestRewriterBv, bv_add_urem)
                d_nm.mk_node(Kind::BV_UDIV, {d_bv4_a, d_bv4_b}), d_bv4_b})}));
 }
 
+TEST_F(TestRewriterBv, bv_add_srem)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_ADD_SREM;
+  // the eliminated form of (bvadd a (bvmul (bvneg b) (bvsdiv a b))) for a
+  // value b
+  Node a     = d_bv4_a;
+  Node b     = d_nm.mk_value(BitVector::from_ui(4, 5));
+  Node nb    = d_nm.mk_value(BitVector::from_ui(4, 5).bvneg());
+  Node neg_a = d_nm.mk_node(Kind::BV_NEG, {a});
+  Node x     = d_nm.mk_node(Kind::ITE, {d_c, neg_a, a});
+  Node udiv  = d_nm.mk_node(Kind::BV_UDIV, {x, b});
+  Node sdiv  = d_nm.mk_node(
+      Kind::ITE, {d_c, d_nm.mk_node(Kind::BV_NEG, {udiv}), udiv});
+  //// applies
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_ADD, {a, d_nm.mk_node(Kind::BV_MUL, {nb, sdiv})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_ADD, {a, d_nm.mk_node(Kind::BV_MUL, {sdiv, nb})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_ADD, {d_nm.mk_node(Kind::BV_MUL, {nb, sdiv}), a}));
+  // swapped ite branches
+  Node xs    = d_nm.mk_node(Kind::ITE, {d_c, a, neg_a});
+  Node udivs = d_nm.mk_node(Kind::BV_UDIV, {xs, b});
+  Node sdivs = d_nm.mk_node(
+      Kind::ITE, {d_c, udivs, d_nm.mk_node(Kind::BV_NEG, {udivs})});
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_ADD, {a, d_nm.mk_node(Kind::BV_MUL, {nb, sdivs})}));
+  // negations in eliminated form
+  Node neg_a_e =
+      RewriteRule<RewriteRuleKind::BV_NEG_ELIM>::apply(d_rewriter, neg_a)
+          .first;
+  Node x_e    = d_nm.mk_node(Kind::ITE, {d_c, neg_a_e, a});
+  Node udiv_e = d_nm.mk_node(Kind::BV_UDIV, {x_e, b});
+  Node sdiv_e = d_nm.mk_node(
+      Kind::ITE,
+      {d_c,
+       RewriteRule<RewriteRuleKind::BV_NEG_ELIM>::apply(
+           d_rewriter, d_nm.mk_node(Kind::BV_NEG, {udiv_e}))
+           .first,
+       udiv_e});
+  test_rule<kind>(d_nm.mk_node(
+      Kind::BV_ADD, {a, d_nm.mk_node(Kind::BV_MUL, {nb, sdiv_e})}));
+  //// does not apply
+  // multiplier is not the negation of the divisor
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_ADD,
+      {a,
+       d_nm.mk_node(Kind::BV_MUL,
+                    {d_nm.mk_value(BitVector::from_ui(4, 6).bvneg()), sdiv})}));
+  // conditions of the two ites differ
+  Node sdiv_d = d_nm.mk_node(
+      Kind::ITE, {d_d, d_nm.mk_node(Kind::BV_NEG, {udiv}), udiv});
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_ADD, {a, d_nm.mk_node(Kind::BV_MUL, {nb, sdiv_d})}));
+  // ite branches of the two ites do not align
+  Node sdiv_mixed = d_nm.mk_node(
+      Kind::ITE, {d_c, d_nm.mk_node(Kind::BV_NEG, {udivs}), udivs});
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_ADD, {a, d_nm.mk_node(Kind::BV_MUL, {nb, sdiv_mixed})}));
+  // dividend does not match the other add operand
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_ADD, {d_bv4_b, d_nm.mk_node(Kind::BV_MUL, {nb, sdiv})}));
+}
+
 // reversed by NORM_BV_NOT_OR_SHL
 // TEST_F(TestRewriterBv, bv_add_shl)
 //{

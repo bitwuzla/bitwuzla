@@ -38,6 +38,10 @@ Node RewriteRule<RewriteRuleKind::BV_ADD_NOT>::_apply(Rewriter& rewriter,
 template <>
 Node RewriteRule<RewriteRuleKind::BV_ADD_UREM>::_apply(Rewriter& rewriter,
                                                        const Node& node);
+// srem_add
+template <>
+Node RewriteRule<RewriteRuleKind::BV_ADD_SREM>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
 // neg_add
 template <>
 Node RewriteRule<RewriteRuleKind::BV_ADD_NEG>::_apply(Rewriter& rewriter,
