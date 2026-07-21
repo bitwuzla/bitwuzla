@@ -11,6 +11,7 @@
 #ifndef BZLA_SAT_DISTINCT_DECISION_HEURISTIC_H_INCLUDED
 #define BZLA_SAT_DISTINCT_DECISION_HEURISTIC_H_INCLUDED
 
+#include <cstddef>
 #include <unordered_map>
 #include <vector>
 
