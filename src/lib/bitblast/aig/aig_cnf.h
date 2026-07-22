@@ -95,7 +95,7 @@ class AigCnfEncoder
    *        enables certain optimization.
    * @param level Assertion level to encode at (forwarded to the SAT solver).
    * */
-  void encode(const AigNode& node, bool top_level = false, uint64_t level = 0);
+  void encode(const AigNode& node, bool top_level = false, uint32_t level = 0);
 
   int32_t value(const AigNode& node);
 

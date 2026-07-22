@@ -127,7 +127,7 @@ class BvBitblastSolver : public Solver,
    * encoding. Backtrackable, so entries above a popped level are dropped
    * automatically.
    */
-  backtrack::vector<std::tuple<Node, bool, bool, size_t>> d_encode_queue;
+  backtrack::vector<std::tuple<Node, bool, bool, uint32_t>> d_encode_queue;
 
   /** AIG bit-blaster. */
   AigBitblaster d_bitblaster;

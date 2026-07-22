@@ -163,7 +163,7 @@ class SolverEngine
    * Used to encode lemma terms at the level of their dependencies, rather than
    * at the current top assertion level.
    */
-  uint64_t term_level(const Node& term);
+  uint32_t term_level(const Node& term);
 
   /** Counter for how often a statistics line was printed. */
   uint64_t d_num_printed_stats = 0;
@@ -186,9 +186,12 @@ class SolverEngine
    * Term cache used by process_term(). Maps registered term to the assertion
    * level at which the term was first registered.
    */
-  backtrack::unordered_map<Node, uint64_t> d_register_term_cache;
-  /** Cached term level computations. */
-  backtrack::unordered_map<Node, int64_t> d_term_level_cache;
+  backtrack::unordered_map<Node, uint32_t> d_register_term_cache;
+  /**
+   * Cached term level computations. An entry is present iff the level has been
+   * fully computed (the value never holds a placeholder/in-progress marker).
+   */
+  backtrack::unordered_map<Node, uint32_t> d_term_level_cache;
   backtrack::vector<Node> d_distinct_n;
 
   /** Lemmas added via lemma(). */

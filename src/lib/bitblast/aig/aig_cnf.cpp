@@ -36,14 +36,14 @@ AigCnfEncoder::initialize()
 }
 
 void
-AigCnfEncoder::encode(const AigNode& node, bool top_level, uint64_t level)
+AigCnfEncoder::encode(const AigNode& node, bool top_level, uint32_t level)
 {
   if (d_true_var == 0)
   {
     initialize();
   }
 
-  d_sat_solver.set_level(static_cast<uint32_t>(level));
+  d_sat_solver.set_level(level);
   if (top_level)
   {
     // flatten, thus only add leafs of top-level AIGs
