@@ -63,7 +63,7 @@ class SolverState
   const backtrack::unordered_set<Node>& lemma_cache() const;
 
   /** @return The assertion level associated with a term. */
-  uint64_t term_level(const Node& term);
+  uint32_t term_level(const Node& term);
 
  private:
   /** Associated solver engine. */

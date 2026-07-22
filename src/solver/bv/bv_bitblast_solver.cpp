@@ -175,7 +175,7 @@ BvBitblastSolver::solve()
       // SAT-level activation literals, so when producing interpolants we
       // always encode at level 0 (no activation literals) and rely on the
       // d_reset_sat reset-on-pop path instead.
-      uint64_t enc_level = 0;
+      uint32_t enc_level = 0;
       if (!d_produce_interpolants)
       {
         sync_sat_level(level);

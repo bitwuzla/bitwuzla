@@ -514,7 +514,7 @@ SolverEngine::process_term(const Node& term)
   util::Timer timer(d_stats.time_register_term);
   // Make sure that terms are processed by the abstraction module.
   node::node_ref_vector visit{term};
-  uint64_t level = d_backtrack_mgr.num_levels();
+  uint32_t level = static_cast<uint32_t>(d_backtrack_mgr.num_levels());
   do
   {
     const Node& cur = visit.back();
@@ -897,44 +897,46 @@ SolverEngine::cached_value(const Node& term) const
   return it->second;
 }
 
-uint64_t
+uint32_t
 SolverEngine::term_level(const Node& term)
 {
-  std::vector<Node> visit{term};
+  // Post-order traversal. The local `cache` marks nodes whose children have
+  // been queued, which distinguishes the first visit (queue children) from the
+  // second visit (compute level). Computed levels are memoized in
+  // d_term_level_cache, which therefore only ever holds fully computed results.
+  node_ref_vector visit{term};
+  std::unordered_set<Node> cache;
   do
   {
-    Node cur            = visit.back();
-    auto [it, inserted] = d_term_level_cache.emplace(cur, -1);
+    const Node& cur = visit.back();
+    // Level already computed
+    if (d_term_level_cache.find(cur) != d_term_level_cache.end())
+    {
+      visit.pop_back();
+      continue;
+    }
+    auto [it, inserted] = cache.insert(cur);
     if (inserted)
     {
       visit.insert(visit.end(), cur.begin(), cur.end());
       continue;
     }
-    else if (it->second == -1)
+    // All children are computed, the level is the maximum over the children's
+    // levels. Leaf terms that are not values take the assertion level at which
+    // they were first registered (top level if not registered).
+    uint32_t level = 0;
+    for (const auto& c : cur)
     {
-      int64_t level = -1;
-      for (const auto& c : cur)
-      {
-        level = std::max(level, d_term_level_cache.at(c));
-      }
-      if (level == -1)
-      {
-        assert(cur.num_children() == 0);
-        if (cur.is_value())
-        {
-          level = 0;
-        }
-        else
-        {
-          auto itt = d_register_term_cache.find(cur);
-          level    = itt == d_register_term_cache.end()
-                         ? d_backtrack_mgr.num_levels()
-                         : itt->second;
-        }
-      }
-      assert(level > -1);
-      it->second = level;
+      level = std::max(level, d_term_level_cache.at(c));
     }
+    if (cur.num_children() == 0 && !cur.is_value())
+    {
+      auto rit = d_register_term_cache.find(cur);
+      level    = rit == d_register_term_cache.end()
+                     ? static_cast<uint32_t>(d_backtrack_mgr.num_levels())
+                     : rit->second;
+    }
+    d_term_level_cache.emplace(cur, level);
     visit.pop_back();
   } while (!visit.empty());
   return d_term_level_cache.at(term);
