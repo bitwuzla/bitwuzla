@@ -15,6 +15,7 @@
 #include "sat/ae_kissat.h"
 
 #include <cassert>
+#include <cstdlib>
 
 #include "util/exceptions.h"
 
@@ -43,9 +44,16 @@ AEKissat::AEKissat()
 
 AEKissat::~AEKissat() { kissat_release(d_solver); }
 
+int32_t
+AEKissat::new_var()
+{
+  return d_max_var++;
+}
+
 void
 AEKissat::add(int32_t lit, int64_t cgroup_id)
 {
+  assert(std::abs(lit) < d_max_var);
   (void) cgroup_id;
   kissat_add(d_solver, lit);
 }

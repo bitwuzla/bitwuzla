@@ -33,6 +33,7 @@ class AEKissat : public SatSolver
   AEKissat();
   ~AEKissat();
 
+  int32_t new_var() override;
   void add(int32_t lit, int64_t cgroup_id = 0) override;
   void assume(int32_t lit) override;
   int32_t value(int32_t lit) override;
@@ -44,7 +45,8 @@ class AEKissat : public SatSolver
   const char *get_version() const override;
 
  private:
-  kissat *d_solver = nullptr;
+  int32_t d_max_var = 1;
+  kissat *d_solver  = nullptr;
 };
 
 }  // namespace bzla::sat
