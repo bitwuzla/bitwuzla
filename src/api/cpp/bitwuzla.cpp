@@ -542,8 +542,9 @@ Options::set(const std::vector<std::string>& args)
     const std::string& arg = args[i++];
 
     // -o=v, --option=value
+    // Split at the first '=' (option names never contain '=', values may).
     std::string opt, value;
-    auto pos = arg.rfind("=");
+    auto pos = arg.find("=");
     if (pos != std::string::npos)
     {
       opt   = arg.substr(0, pos);

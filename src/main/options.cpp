@@ -317,7 +317,8 @@ parse_arg_val(int32_t argc, int32_t& i, char* argv[])
   std::string arg(argv[i]);
 
   std::string opt, value;
-  auto pos = arg.rfind("=");
+  // Split at the first '=' (option names never contain '=', values may).
+  auto pos = arg.find("=");
   // -o=v, --option=value
   if (pos != std::string::npos)
   {
