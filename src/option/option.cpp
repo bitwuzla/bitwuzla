@@ -55,8 +55,9 @@ operator<<(std::ostream& out, SatSolver solver)
   {
     case SatSolver::CADICAL: out << "CADICAL"; break;
     case SatSolver::CRYPTOMINISAT: out << "CRYPTOMINISAT"; break;
-    case SatSolver::GIMSATUL: out << ""; break;
+    case SatSolver::GIMSATUL: out << "GIMSATUL"; break;
     case SatSolver::KISSAT: out << "KISSAT"; break;
+    case SatSolver::MALLOB: out << "MALLOB"; break;
 #if !defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
     case SatSolver::NONE: out << "NONE"; break;
 #endif
@@ -253,13 +254,16 @@ Options::Options()
                  SatSolver::GIMSATUL,
 #elif defined(BZLA_USE_KISSAT)
                  SatSolver::KISSAT,
+#elif defined(BZLA_USE_MALLOB)
+                 SatSolver::MALLOB,
 #else
                  SatSolver::NONE,
 #endif
                  {{SatSolver::CADICAL, "cadical"},
                   {SatSolver::CRYPTOMINISAT, "cms"},
                   {SatSolver::GIMSATUL, "gimsatul"},
-                  {SatSolver::KISSAT, "kissat"}
+                  {SatSolver::KISSAT, "kissat"},
+                  {SatSolver::MALLOB, "mallob"}
 #if !defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
                   ,
                   {SatSolver::NONE, "none"}
@@ -274,6 +278,34 @@ Options::Options()
                          "use ADC SAT propagator for DISTINCT_N "
                          "(default: theory-level handling in solver engine)",
                          "adc-sat-propagator"),
+      mallob_api_dir(this,
+                     Option::MALLOB_API_DIR,
+                     ".api/jobs.0",
+                     "job API directory of a running Mallob process (only "
+                     "relevant for SAT solver 'mallob', ignored if "
+                     "--mallob-binary is set)",
+                     "mallob-api-dir"),
+      mallob_binary(this,
+                    Option::MALLOB_BINARY,
+                    "",
+                    "path to Mallob binary; if set, a Mallob process is "
+                    "launched and managed automatically (only relevant for "
+                    "SAT solver 'mallob', uses --nthreads solver threads or "
+                    "all cores if unset)",
+                    "mallob-binary"),
+      mallob_launcher(this,
+                      Option::MALLOB_LAUNCHER,
+                      "",
+                      "launcher prefix for the managed Mallob process, e.g. "
+                      "'mpirun -np 4' (only relevant with --mallob-binary)",
+                      "mallob-launcher"),
+      mallob_args(this,
+                  Option::MALLOB_ARGS,
+                  "",
+                  "additional arguments for the managed Mallob process, "
+                  "e.g. '-satsolver=kcl' (only relevant with "
+                  "--mallob-binary)",
+                  "mallob-args"),
       write_aiger(this,
                   Option::WRITE_AIGER,
                   "",
@@ -717,6 +749,15 @@ Options::set(Option opt, const std::string& value, bool is_user_set)
                       + ", Kissat not compiled in");
     }
 #endif
+#ifndef BZLA_USE_MALLOB
+    if (opt == Option::SAT_SOLVER
+        && value == sat_solver.mode_to_string(SatSolver::MALLOB))
+    {
+      throw Exception("invalid configuration for option --"
+                      + std::string(sat_solver.lng())
+                      + ", Mallob not compiled in");
+    }
+#endif
     reinterpret_cast<OptionMode*>(data(opt))->set_str(value, is_user_set);
   }
   else
@@ -952,6 +993,10 @@ Options::data(Option opt)
     case Option::PRODUCE_INTERPOLANTS: return &produce_interpolants;
     case Option::SAT_SOLVER: return &sat_solver;
     case Option::ADC_SAT_PROPAGATOR: return &adc_sat_propagator;
+    case Option::MALLOB_API_DIR: return &mallob_api_dir;
+    case Option::MALLOB_BINARY: return &mallob_binary;
+    case Option::MALLOB_LAUNCHER: return &mallob_launcher;
+    case Option::MALLOB_ARGS: return &mallob_args;
     case Option::WRITE_AIGER: return &write_aiger;
     case Option::WRITE_CNF: return &write_cnf;
     case Option::SEED: return &seed;

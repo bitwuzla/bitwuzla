@@ -37,6 +37,10 @@ enum class Option
   REWRITE_LEVEL,       // numeric
   SAT_SOLVER,          // enum
   ADC_SAT_PROPAGATOR,  // bool
+  MALLOB_API_DIR,      // str
+  MALLOB_BINARY,       // str
+  MALLOB_LAUNCHER,     // str
+  MALLOB_ARGS,         // str
 
   WRITE_AIGER,  // str
   WRITE_CNF,    // str
@@ -133,6 +137,7 @@ enum class SatSolver
   CRYPTOMINISAT,
   GIMSATUL,
   KISSAT,
+  MALLOB,
 #if !defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
   NONE,
 #endif
@@ -577,6 +582,10 @@ class Options
   OptionModeT<BvSolver> bv_solver;
   OptionModeT<SatSolver> sat_solver;
   OptionBool adc_sat_propagator;
+  OptionStr mallob_api_dir;
+  OptionStr mallob_binary;
+  OptionStr mallob_launcher;
+  OptionStr mallob_args;
   OptionStr write_aiger;
   OptionStr write_cnf;
   OptionNumeric rewrite_level;

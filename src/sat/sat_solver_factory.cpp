@@ -23,6 +23,9 @@
 #ifdef BZLA_USE_GIMSATUL
 #include "sat/gimsatul.h"
 #endif
+#ifdef BZLA_USE_MALLOB
+#include "sat/mallob.h"
+#endif
 
 #include <cassert>
 
@@ -65,6 +68,20 @@ SatSolverFactory::new_sat_solver(bool produce_interpolants)
     return std::unique_ptr<SatSolver>(new Gimsatul(d_nthreads));
   }
 #endif
+#ifdef BZLA_USE_MALLOB
+  if (d_sat_solver == option::SatSolver::MALLOB)
+  {
+    if (produce_interpolants)
+    {
+      throw Unsupported("interpolant generation not supported with Mallob");
+    }
+    return std::unique_ptr<SatSolver>(new Mallob(d_mallob_api_dir,
+                                                 d_mallob_binary,
+                                                 d_mallob_launcher,
+                                                 d_mallob_args,
+                                                 d_mallob_nthreads));
+  }
+#endif
   assert(d_sat_solver == option::SatSolver::CADICAL);
 #ifdef BZLA_USE_CADICAL
   if (produce_interpolants)
@@ -97,6 +114,13 @@ SatSolverFactory::has_terminator_support()
   if (d_sat_solver == option::SatSolver::GIMSATUL)
   {
     return false;
+  }
+#endif
+#ifdef BZLA_USE_MALLOB
+  if (d_sat_solver == option::SatSolver::MALLOB)
+  {
+    // Termination requests are forwarded to Mallob as job interrupts.
+    return true;
   }
 #endif
   assert(d_sat_solver == option::SatSolver::CADICAL);

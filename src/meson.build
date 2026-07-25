@@ -73,6 +73,11 @@ endif
 if gimsatul_dep.found()
   cpp_args += ['-DBZLA_USE_GIMSATUL']
 endif
+# Mallob is used via its filesystem job API and does not require a library
+# dependency.
+if get_option('mallob')
+  cpp_args += ['-DBZLA_USE_MALLOB']
+endif
 if mpfr_dep.found()
   cpp_args += ['-DMPFR_USE_C99_FEATURE=1']
 endif
@@ -254,6 +259,7 @@ sources = files([
   'sat/interpolants/tracer.cpp',
   'sat/interpolants/tracer_kinds.cpp',
   'sat/kissat.cpp',
+  'sat/mallob.cpp',
   'sat/propagator.cpp',
   'sat/sat_solver_factory.cpp',
   'solver/array/array_solver.cpp',

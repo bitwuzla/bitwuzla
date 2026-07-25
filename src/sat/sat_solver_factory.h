@@ -12,6 +12,7 @@
 #define BZLA_SAT_SAT_SOLVER_FACTORY_H_INCLUDED
 
 #include <memory>
+#include <string>
 
 #include "option/option.h"
 #include "sat/sat_solver.h"
@@ -23,7 +24,14 @@ class SatSolverFactory
  public:
   /** Constructor. */
   SatSolverFactory(const option::Options& options)
-      : d_sat_solver(options.sat_solver()), d_nthreads(options.nthreads())
+      : d_sat_solver(options.sat_solver()),
+        d_nthreads(options.nthreads()),
+        d_mallob_api_dir(options.mallob_api_dir()),
+        d_mallob_binary(options.mallob_binary()),
+        d_mallob_launcher(options.mallob_launcher()),
+        d_mallob_args(options.mallob_args()),
+        d_mallob_nthreads(
+            options.nthreads.is_user_set() ? options.nthreads() : 0)
   {
   }
   virtual ~SatSolverFactory() {}
@@ -36,6 +44,12 @@ class SatSolverFactory
  private:
   option::SatSolver d_sat_solver;
   uint64_t d_nthreads;
+  std::string d_mallob_api_dir;
+  std::string d_mallob_binary;
+  std::string d_mallob_launcher;
+  std::string d_mallob_args;
+  /** Threads for a managed Mallob process, 0 to use all available cores. */
+  uint32_t d_mallob_nthreads;
 };
 
 }  // namespace bzla::sat

@@ -95,6 +95,7 @@ def main():
     bool_opt(ap, 'kissat', 'Kissat support')
     bool_opt(ap, 'cryptominisat', 'CryptoMiniSat support')
     bool_opt(ap, 'gimsatul', 'Gimsatul support')
+    bool_opt(ap, 'mallob', 'Mallob support')
     bool_opt(ap,
              'fpexp',
              'support for experimental floating-point formats, ' +
@@ -150,6 +151,8 @@ def main():
         build_opts.append(f'-Dcryptominisat={_bool(args.cryptominisat)}')
     if args.gimsatul is not None:
         build_opts.append(f'-Dgimsatul={_bool(args.gimsatul)}')
+    if args.mallob is not None:
+        build_opts.append(f'-Dmallob={_bool(args.mallob)}')
     if args.fpexp is not None:
         build_opts.append(f'-Dfpexp={_bool(args.fpexp)}')
     else:

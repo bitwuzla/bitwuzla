@@ -173,11 +173,67 @@ enum ENUM(Option)
    *  - **cms**:
    *    Use [CryptoMiniSat](https://github.com/msoos/cryptominisat)
    *    as the backend SAT solver.
+   *  - **gimsatul**:
+   *    Use [Gimsatul](https://github.com/arminbiere/gimsatul)
+   *    as the backend SAT solver.
    *  - **kissat**:
    *    Use [Kissat](https://github.com/arminbiere/kissat)
    *    as the backend SAT solver.
+   *  - **mallob**:
+   *    Use [Mallob](https://github.com/domschrei/mallob)
+   *    as the backend SAT solver. Requires a running Mallob process (see
+   *    option `MALLOB_API_DIR`).
    */
   EVALUE(SAT_SOLVER),
+  /*!
+   * **Job API directory of a running Mallob process.**
+   *
+   * Configures the base directory of the filesystem job API (containing
+   * subdirectories `in/` and `out/`) of the Mallob process used for SAT
+   * solving when the SAT solver is set to `mallob`. Corresponds to
+   * `.api/jobs.<i>/` in the working directory of the Mallob client
+   * process `<i>`.
+   *
+   * *Values:*
+   *  - A string denoting the path to the Mallob job API base directory.
+   *    [**default:** ".api/jobs.0"]
+   */
+  EVALUE(MALLOB_API_DIR),
+  /*!
+   * **Path to the Mallob binary for automatic launching.**
+   *
+   * If set, Bitwuzla launches and manages a Mallob process itself when the
+   * SAT solver is set to `mallob` (option `MALLOB_API_DIR` is then ignored).
+   * The process runs with `-t=<n>` solver threads, where `<n>` is the value
+   * of option `NTHREADS` if configured and the number of available cores
+   * otherwise, and is shut down when the solver is deleted. A configuration
+   * value representing the empty string disables automatic launching.
+   *
+   * *Values:*
+   *  - A string denoting the path to the Mallob binary.
+   *    [**default:** ""]
+   */
+  EVALUE(MALLOB_BINARY),
+  /*!
+   * **Launcher prefix for the managed Mallob process.**
+   *
+   * Prefixed to the command launching the Mallob process configured via
+   * option `MALLOB_BINARY`, e.g., `mpirun -np 4` for a multi-process Mallob.
+   *
+   * *Values:*
+   *  - A string denoting the launcher command prefix. [**default:** ""]
+   */
+  EVALUE(MALLOB_LAUNCHER),
+  /*!
+   * **Additional arguments for the managed Mallob process.**
+   *
+   * Appended to the command launching the Mallob process configured via
+   * option `MALLOB_BINARY`, e.g., `-satsolver=kcl`.
+   *
+   * *Values:*
+   *  - A string denoting additional Mallob arguments. [**default:** ""]
+   */
+  EVALUE(MALLOB_ARGS),
   /*!
    * **Use ADC SAT propagator for DISTINCT_N.**
    *
