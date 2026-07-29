@@ -341,7 +341,17 @@ SolverEngine::check_distinct_n()
   NodeManager& nm = d_env.nm();
   for (size_t i = 0, size = d_distinct_n.size(); i < size; ++i)
   {
-    const Node& dc = d_distinct_n[i];
+    // Copy rather than reference d_distinct_n[i]: the value() queries below
+    // re-enter process_term(), which pushes onto d_distinct_n when it sees an
+    // unregistered DISTINCT_N, and a reallocation would leave a reference here
+    // dangling (cf. the same defect in FunSolver::check(), issue #216).
+    //
+    // No input is currently known to reach that, and by inspection none can:
+    // process_term() does not descend into DISTINCT_N children, DISTINCT_N is
+    // only ever built by ArraySolver's const-array-diff lemma, and lemmas are
+    // registered in process_lemmas() rather than here. Those are implicit
+    // invariants though, so do not rely on them to stay true.
+    Node dc = d_distinct_n[i];
 
     Node dc_val = d_solver_state.value(dc);
 
