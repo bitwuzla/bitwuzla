@@ -57,7 +57,10 @@ FunSolver::check()
   // Do not cache size here since d_applies may grow while iterating.
   for (size_t i = 0; i < d_applies.size(); ++i)
   {
-    const Node& apply = d_applies[i];
+    // Copy, do not take a reference here: constructing Apply below queries
+    // model values, which re-enters register_term() and may push onto (and
+    // thus reallocate) d_applies, invalidating references into it.
+    Node apply      = d_applies[i];
     const Node& fun = apply[0];
     auto& fun_model = d_fun_models[fun];
 
@@ -277,15 +280,18 @@ FunSolver::Apply::Apply(const Node& apply,
 {
   // Compute hash value of function applications based on the current function
   // argument model values.
-  for (size_t i = 1, size = apply.num_children(); i < size; ++i)
+  // Note: Use d_apply, not the `apply` parameter, throughout. state.value()
+  // may re-enter FunSolver::register_term() and invalidate whatever storage
+  // `apply` refers to, whereas d_apply is our own copy.
+  for (size_t i = 1, size = d_apply.num_children(); i < size; ++i)
   {
-    d_values.emplace_back(state.value(apply[i]));
+    d_values.emplace_back(state.value(d_apply[i]));
     d_hash += std::hash<Node>{}(d_values.back());
   }
   if (cache_apply_value)
   {
     // Cache value of function application
-    d_value = state.value(apply);
+    d_value = state.value(d_apply);
   }
 }
 

@@ -21,6 +21,8 @@ tests_smt2 = [
   ['check/regr_cm7.smt2'],
   ['check/regr_cm8.smt2'],
   ['check/regr_cm9.smt2'],
+  ['check/regr_issue216.smt2'],
+  ['check/regr_issue216b.smt2'],
   ['check/regr_uc1.smt2'],
   ## get-model
   ['get-model/regr-5smod3.btor.smt2', ['--print-model']],
