@@ -26,6 +26,13 @@ namespace bzla::node::utils {
 bool is_bv_sext(const Node& node, Node& child);
 
 /**
+ * @return True if x occurs in the given node.
+ * @param node The node to check for x.
+ * @param x    The node to check for.
+ */
+bool has_x(const Node& node, const Node& x);
+
+/**
  * @return n-ary node of given kind.
  * @param kind The node kind.
  * @param terms The children of the node.

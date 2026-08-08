@@ -74,6 +74,28 @@ is_bv_sext(const Node& node, Node& child)
   return false;
 }
 
+bool
+has_x(const Node& node, const Node& x)
+{
+  std::vector<Node> visit{node};
+  std::unordered_set<Node> cache;
+  do
+  {
+    auto cur            = visit.back();
+    auto [it, inserted] = cache.emplace(cur);
+    visit.pop_back();
+    if (cur == x)
+    {
+      return true;
+    }
+    if (inserted)
+    {
+      visit.insert(visit.end(), cur.begin(), cur.end());
+    }
+  } while (!visit.empty());
+  return false;
+}
+
 Node
 mk_nary(NodeManager& nm, Kind kind, const std::vector<Node>& terms)
 {
