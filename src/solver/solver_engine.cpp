@@ -341,7 +341,7 @@ SolverEngine::check_distinct_n()
   NodeManager& nm = d_env.nm();
   for (size_t i = 0, size = d_distinct_n.size(); i < size; ++i)
   {
-    const Node& dc = d_distinct_n[i];
+    const Node dc = d_distinct_n[i];
 
     Node dc_val = d_solver_state.value(dc);
 

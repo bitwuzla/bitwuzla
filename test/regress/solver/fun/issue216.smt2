@@ -1,0 +1,6 @@
+(set-logic QF_FP)
+(declare-const x (_ FloatingPoint 11 53))
+(define-fun m () (_ FloatingPoint 11 53) (fp.min x (fp.neg x)))
+(assert (= ((_ fp.to_ubv 1) RNE (fp.mul RNE m m)) #b1))
+(set-info :status sat)
+(check-sat)
