@@ -321,6 +321,105 @@ TEST_F(TestRewriterBv, bv_add_urem)
                d_nm.mk_node(Kind::BV_UDIV, {d_bv4_a, d_bv4_b}), d_bv4_b})}));
 }
 
+TEST_F(TestRewriterBv, bv_add_srem)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::BV_ADD_SREM;
+  // Note: bvsdiv and bvsrem are eliminated during rewriting (BV_SDIV_ELIM,
+  //       BV_SREM_ELIM), i.e., the rule matches the eliminated form of
+  //       (bvsdiv a b) and constructs the eliminated form of (bvsrem a b).
+  //       We thus let the rewriter construct these forms instead of hard-coding
+  //       them, so that this test does not depend on how bvsdiv and bvsrem are
+  //       eliminated.
+  const Node& a = d_bv4_a;
+  // Divisor with msb = 0, msb = 1, and unknown sign.
+  for (const Node& b : {d_nm.mk_value(BitVector::from_ui(4, 5)),
+                        d_nm.mk_value(BitVector::from_ui(4, 5).bvneg()),
+                        d_bv4_b})
+  {
+    Node sdiv     = d_rewriter.rewrite(d_nm.mk_node(Kind::BV_SDIV, {a, b}));
+    Node srem     = d_rewriter.rewrite(d_nm.mk_node(Kind::BV_SREM, {a, b}));
+    Node neg_b    = d_rewriter.rewrite(d_nm.mk_node(Kind::BV_NEG, {b}));
+    Node neg_sdiv = d_rewriter.rewrite(d_nm.mk_node(Kind::BV_NEG, {sdiv}));
+    Node mul      = d_nm.mk_node(Kind::BV_MUL, {b, sdiv});
+    Node neg_mul  = d_nm.mk_node(Kind::BV_NEG, {mul});
+    // The rule applies and yields the eliminated form of (bvsrem a b).
+    auto applies = [&](const Node& node) {
+      test_rule<kind>(node);
+      ASSERT_EQ(srem, RewriteRule<kind>::apply(d_rewriter, node).first);
+    };
+    //// applies
+    // (bvadd a (bvneg (bvmul b (bvsdiv a b))))
+    applies(d_nm.mk_node(Kind::BV_ADD, {a, neg_mul}));
+    applies(d_nm.mk_node(Kind::BV_ADD, {neg_mul, a}));
+    applies(d_nm.mk_node(
+        Kind::BV_ADD,
+        {a,
+         d_nm.mk_node(Kind::BV_NEG, {d_nm.mk_node(Kind::BV_MUL, {sdiv, b})})}));
+    // with bvneg in eliminated form
+    applies(d_nm.mk_node(
+        Kind::BV_ADD,
+        {a,
+         RewriteRule<RewriteRuleKind::BV_NEG_ELIM>::apply(d_rewriter, neg_mul)
+             .first}));
+    // (bvadd a (bvmul (bvneg b) (bvsdiv a b)))
+    applies(d_nm.mk_node(
+        Kind::BV_ADD,
+        {a,
+         d_nm.mk_node(Kind::BV_MUL, {d_nm.mk_node(Kind::BV_NEG, {b}), sdiv})}));
+    applies(d_nm.mk_node(Kind::BV_ADD,
+                         {a, d_nm.mk_node(Kind::BV_MUL, {neg_b, sdiv})}));
+    applies(d_nm.mk_node(Kind::BV_ADD,
+                         {a, d_nm.mk_node(Kind::BV_MUL, {sdiv, neg_b})}));
+    // (bvadd a (bvmul b (bvneg (bvsdiv a b))))
+    applies(d_nm.mk_node(
+        Kind::BV_ADD,
+        {a,
+         d_nm.mk_node(Kind::BV_MUL, {b, d_nm.mk_node(Kind::BV_NEG, {sdiv})})}));
+    applies(d_nm.mk_node(Kind::BV_ADD,
+                         {a, d_nm.mk_node(Kind::BV_MUL, {b, neg_sdiv})}));
+    //// does not apply
+    // the product of divisor and quotient is not subtracted
+    test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::BV_ADD, {a, mul}));
+    // the divisor does not match the divisor of the (bvsdiv a b) term
+    test_rule_does_not_apply<kind>(d_nm.mk_node(
+        Kind::BV_ADD,
+        {a,
+         d_nm.mk_node(Kind::BV_NEG,
+                      {d_nm.mk_node(Kind::BV_MUL, {d_bv4_c, sdiv})})}));
+    // the dividend does not match the dividend of the (bvsdiv a b) term
+    test_rule_does_not_apply<kind>(
+        d_nm.mk_node(Kind::BV_ADD, {d_bv4_d, neg_mul}));
+    //// the rule fires on the rewritten form of the above patterns
+    test_rewrite(
+        d_nm.mk_node(Kind::BV_ADD,
+                     {a,
+                      d_nm.mk_node(Kind::BV_MUL,
+                                   {d_nm.mk_node(Kind::BV_NEG, {b}),
+                                    d_nm.mk_node(Kind::BV_SDIV, {a, b})})}),
+        srem);
+    test_rewrite(
+        d_nm.mk_node(Kind::BV_SUB,
+                     {a,
+                      d_nm.mk_node(Kind::BV_MUL,
+                                   {d_nm.mk_node(Kind::BV_SDIV, {a, b}), b})}),
+        srem);
+  }
+  //// does not apply
+  // the multiplicand is an ite over a bvudiv term and its negation, but not the
+  // eliminated form of a bvsdiv term, i.e., we do not match ites that we cannot
+  // attribute to a bvsdiv term (here, the condition is not the sign of the
+  // dividend)
+  Node b = d_nm.mk_value(BitVector::from_ui(4, 5));
+  Node abs_a =
+      d_nm.mk_node(Kind::ITE, {d_c, d_nm.mk_node(Kind::BV_NEG, {a}), a});
+  Node udiv = d_nm.mk_node(Kind::BV_UDIV, {abs_a, b});
+  Node ite =
+      d_nm.mk_node(Kind::ITE, {d_c, d_nm.mk_node(Kind::BV_NEG, {udiv}), udiv});
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::BV_ADD,
+      {a, d_nm.mk_node(Kind::BV_NEG, {d_nm.mk_node(Kind::BV_MUL, {b, ite})})}));
+}
+
 // reversed by NORM_BV_NOT_OR_SHL
 // TEST_F(TestRewriterBv, bv_add_shl)
 //{

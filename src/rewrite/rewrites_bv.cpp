@@ -317,6 +317,141 @@ RewriteRule<RewriteRuleKind::BV_ADD_UREM>::_apply(Rewriter& rewriter,
 }
 
 /**
+ * We have for a s/ b that a = n * b + r (a - n * b = r), and thus for
+ * a - ((a s/ b) * b) = a s% b with (a s/ b) = n .
+ * match:  (bvadd a (bvneg (bvmul b (bvsdiv a b))))
+ *         (bvadd a (bvmul (bvneg b) (bvsdiv a b)))
+ *         (bvadd a (bvmul b (bvneg (bvsdiv a b))))
+ * result: (bvsrem a b)
+ *
+ * Note: Contrary to BV_ADD_UREM, we cannot match the above patterns
+ *       syntactically since bvsdiv is eliminated during rewriting
+ *       (BV_SDIV_ELIM), i.e., we have to match its eliminated form (and
+ *       construct the eliminated form of the result, see BV_SREM_ELIM).
+ *       Instead of matching the eliminated form of (bvsdiv a b) syntactically,
+ *       which requires updating this rule whenever the elimination of bvsdiv
+ *       changes, we determine candidates for dividend a and divisor b from the
+ *       multiplication and then confirm the match by comparing against the
+ *       rewritten form of (bvsdiv a b). We only match the eliminated form
+ *       syntactically as a cheap filter to guard this comparison, never to
+ *       determine the match. Analogously, we construct the result as
+ *       (bvsrem a b) and leave its elimination to the rewriter. Note that bvneg
+ *       is eliminated (BV_NEG_ELIM), which is handled by Rewriter::is_bv_neg().
+ */
+namespace {
+/**
+ * Determine if `sdiv` is the rewritten form of (bvsdiv a b), and if so, return
+ * the rewritten form of (bvsrem a b). Returns a null node on mismatch.
+ */
+Node
+_rw_bv_add_srem_sdiv(Rewriter& rewriter,
+                     const Node& a,
+                     const Node& b,
+                     const Node& sdiv)
+{
+  // The eliminated (bvsdiv a b) is an ite that negates the quotient of the
+  // absolute values of its operands iff their signs differ, i.e., it is of the
+  // form (ite c q (bvneg q)). If the signs are already known, it is rewritten
+  // to a bvudiv term over the absolute values of the operands, which we do not
+  // match here (BV_ADD_UREM only matches bvudiv terms over a and b).
+  if (sdiv.kind() != Kind::ITE)
+  {
+    return Node();
+  }
+  // Matching this shape first avoids constructing (bvsdiv a b) for candidates
+  // that cannot match.
+  Node quot;
+  if ((!rewriter.is_bv_neg(sdiv[1], quot) || quot != sdiv[2])
+      && (!rewriter.is_bv_neg(sdiv[2], quot) || quot != sdiv[1]))
+  {
+    return Node();
+  }
+  if (rewriter.mk_node(Kind::BV_SDIV, {a, b}) != sdiv)
+  {
+    return Node();
+  }
+  return rewriter.mk_node(Kind::BV_SREM, {a, b});
+}
+
+Node
+_rw_bv_add_srem(Rewriter& rewriter, const Node& node, size_t idx)
+{
+  const Node& a = node[1 - idx];
+  // (bvadd a (bvneg (bvmul b (bvsdiv a b))))
+  Node mul;
+  bool neg_mul = rewriter.is_bv_neg(node[idx], mul);
+  if (!neg_mul)
+  {
+    mul = node[idx];
+  }
+  if (mul.kind() != Kind::BV_MUL)
+  {
+    return node;
+  }
+
+  for (size_t i = 0; i < 2; ++i)
+  {
+    // Candidate for the (possibly negated) divisor b.
+    const Node& m = mul[i];
+    // Candidate for the (possibly negated) eliminated (bvsdiv a b).
+    const Node& s = mul[1 - i];
+
+    Node res;
+    if (neg_mul)
+    {
+      // (bvadd a (bvneg (bvmul b (bvsdiv a b))))
+      res = _rw_bv_add_srem_sdiv(rewriter, a, m, s);
+    }
+    else if (s.kind() == Kind::ITE)
+    {
+      // (bvadd a (bvmul (bvneg b) (bvsdiv a b))), the negation of a value
+      // divisor is folded into a value.
+      Node b;
+      if (m.is_value())
+      {
+        b = rewriter.nm().mk_value(m.value<BitVector>().bvneg());
+      }
+      else
+      {
+        rewriter.is_bv_neg(m, b);
+      }
+      if (!b.is_null())
+      {
+        res = _rw_bv_add_srem_sdiv(rewriter, a, b, s);
+      }
+    }
+    else
+    {
+      // (bvadd a (bvmul b (bvneg (bvsdiv a b))))
+      Node sdiv;
+      if (rewriter.is_bv_neg(s, sdiv))
+      {
+        res = _rw_bv_add_srem_sdiv(rewriter, a, m, sdiv);
+      }
+    }
+    if (!res.is_null())
+    {
+      return res;
+    }
+  }
+  return node;
+}
+}  // namespace
+
+template <>
+Node
+RewriteRule<RewriteRuleKind::BV_ADD_SREM>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  Node res = _rw_bv_add_srem(rewriter, node, 0);
+  if (res == node)
+  {
+    res = _rw_bv_add_srem(rewriter, node, 1);
+  }
+  return res;
+}
+
+/**
  * match:  (bvadd (ite c a b) (ite c a d))
  * result: (ite c (bvadd a a) (bvadd b d))
  *

@@ -469,8 +469,9 @@ enum class RewriteRuleKind
   BV_ADD_SAME,
   BV_ADD_NOT,
   BV_ADD_NEG,
-  BV_ADD_UREM,
   // Level 2+
+  BV_ADD_UREM,
+  BV_ADD_SREM,
   BV_ADD_ITE1,
   BV_ADD_ITE2,
   BV_ADD_SHL,
