@@ -40,87 +40,87 @@ operator<<(std::ostream& os, LemmaKind kind)
 {
   switch (kind)
   {
-    case LemmaKind::MUL_IC: os << "MUL_IC"; break;
-    case LemmaKind::MUL_ODD: os << "MUL_ODD"; break;
-    case LemmaKind::MUL_POW2: os << "MUL_POW2"; break;
-    case LemmaKind::MUL_NEG_POW2: os << "MUL_NEG_POW2"; break;
-    case LemmaKind::MUL_REF1: os << "MUL_REF1"; break;
-    case LemmaKind::MUL_REF3: os << "MUL_REF3"; break;
-    case LemmaKind::MUL_REFN3: os << "MUL_REFN3"; break;
-    case LemmaKind::MUL_REFN4: os << "MUL_REFN4"; break;
-    case LemmaKind::MUL_REFN5: os << "MUL_REFN5"; break;
-    case LemmaKind::MUL_REFN6: os << "MUL_REFN6"; break;
-    case LemmaKind::MUL_REFN9: os << "MUL_REFN9"; break;
-    case LemmaKind::MUL_REFN11: os << "MUL_REFN11"; break;
-    case LemmaKind::MUL_REFN12: os << "MUL_REFN12"; break;
-    case LemmaKind::MUL_REFN13: os << "MUL_REFN13"; break;
-    case LemmaKind::MUL_REF12: os << "MUL_REF12"; break;
-    case LemmaKind::MUL_REF13: os << "MUL_REF13"; break;
-    case LemmaKind::MUL_REF14: os << "MUL_REF14"; break;
-    case LemmaKind::MUL_REF15: os << "MUL_REF15"; break;
-    case LemmaKind::MUL_REF18: os << "MUL_REF18"; break;
+    case LemmaKind::MUL3_IC: os << "MUL3_IC"; break;
+    case LemmaKind::MUL4_ODD: os << "MUL4_ODD"; break;
+    case LemmaKind::MUL1_POW2: os << "MUL1_POW2"; break;
+    case LemmaKind::MUL2_NEG_POW2: os << "MUL2_NEG_POW2"; break;
+    case LemmaKind::MUL5: os << "MUL5"; break;
+    case LemmaKind::MUL6: os << "MUL6"; break;
+    case LemmaKind::MUL7: os << "MUL7"; break;
+    case LemmaKind::MUL8: os << "MUL8"; break;
+    case LemmaKind::MUL9: os << "MUL9"; break;
+    case LemmaKind::MUL10: os << "MUL10"; break;
+    case LemmaKind::MUL11: os << "MUL11"; break;
+    case LemmaKind::MUL12: os << "MUL12"; break;
+    case LemmaKind::MUL13: os << "MUL13"; break;
+    case LemmaKind::MUL14: os << "MUL14"; break;
+    case LemmaKind::MUL15: os << "MUL15"; break;
+    case LemmaKind::MUL16: os << "MUL16"; break;
+    case LemmaKind::MUL17: os << "MUL17"; break;
+    case LemmaKind::MUL18: os << "MUL18"; break;
+    case LemmaKind::MUL19: os << "MUL19"; break;
     case LemmaKind::MUL_VALUE: os << "MUL_VALUE"; break;
 
-    case LemmaKind::UDIV_POW2: os << "UDIV_POW2"; break;
-    case LemmaKind::UDIV_REF1: os << "UDIV_REF1"; break;
-    case LemmaKind::UDIV_REF2: os << "UDIV_REF2"; break;
-    case LemmaKind::UDIV_REF3: os << "UDIV_REF3"; break;
-    case LemmaKind::UDIV_REF4: os << "UDIV_REF4"; break;
-    case LemmaKind::UDIV_REF5: os << "UDIV_REF5"; break;
-    case LemmaKind::UDIV_REF6: os << "UDIV_REF6"; break;
-    case LemmaKind::UDIV_REF7: os << "UDIV_REF7"; break;
-    case LemmaKind::UDIV_REF8: os << "UDIV_REF8"; break;
-    case LemmaKind::UDIV_REF9: os << "UDIV_REF9"; break;
-    case LemmaKind::UDIV_REF10: os << "UDIV_REF10"; break;
-    case LemmaKind::UDIV_REF11: os << "UDIV_REF11"; break;
-    case LemmaKind::UDIV_REF12: os << "UDIV_REF12"; break;
-    case LemmaKind::UDIV_REF13: os << "UDIV_REF13"; break;
-    case LemmaKind::UDIV_REF14: os << "UDIV_REF14"; break;
-    case LemmaKind::UDIV_REF15: os << "UDIV_REF15"; break;
-    case LemmaKind::UDIV_REF16: os << "UDIV_REF16"; break;
-    case LemmaKind::UDIV_REF17: os << "UDIV_REF17"; break;
-    case LemmaKind::UDIV_REF18: os << "UDIV_REF18"; break;
-    case LemmaKind::UDIV_REF19: os << "UDIV_REF19"; break;
-    case LemmaKind::UDIV_REF20: os << "UDIV_REF20"; break;
-    case LemmaKind::UDIV_REF21: os << "UDIV_REF21"; break;
-    case LemmaKind::UDIV_REF23: os << "UDIV_REF23"; break;
-    case LemmaKind::UDIV_REF24: os << "UDIV_REF24"; break;
-    case LemmaKind::UDIV_REF25: os << "UDIV_REF25"; break;
-    case LemmaKind::UDIV_REF26: os << "UDIV_REF26"; break;
-    case LemmaKind::UDIV_REF27: os << "UDIV_REF27"; break;
-    case LemmaKind::UDIV_REF28: os << "UDIV_REF28"; break;
-    case LemmaKind::UDIV_REF29: os << "UDIV_REF29"; break;
-    case LemmaKind::UDIV_REF30: os << "UDIV_REF30"; break;
-    case LemmaKind::UDIV_REF31: os << "UDIV_REF31"; break;
-    case LemmaKind::UDIV_REF32: os << "UDIV_REF32"; break;
-    case LemmaKind::UDIV_REF33: os << "UDIV_REF33"; break;
-    case LemmaKind::UDIV_REF34: os << "UDIV_REF34"; break;
-    case LemmaKind::UDIV_REF36: os << "UDIV_REF36"; break;
-    case LemmaKind::UDIV_REF37: os << "UDIV_REF37"; break;
-    case LemmaKind::UDIV_REF38: os << "UDIV_REF38"; break;
+    case LemmaKind::UDIV1_POW2: os << "UDIV1_POW2"; break;
+    case LemmaKind::UDIV2: os << "UDIV2"; break;
+    case LemmaKind::UDIV3: os << "UDIV3"; break;
+    case LemmaKind::UDIV4: os << "UDIV4"; break;
+    case LemmaKind::UDIV5: os << "UDIV5"; break;
+    case LemmaKind::UDIV6: os << "UDIV6"; break;
+    case LemmaKind::UDIV7: os << "UDIV7"; break;
+    case LemmaKind::UDIV8: os << "UDIV8"; break;
+    case LemmaKind::UDIV9: os << "UDIV9"; break;
+    case LemmaKind::UDIV10: os << "UDIV10"; break;
+    case LemmaKind::UDIV11: os << "UDIV11"; break;
+    case LemmaKind::UDIV12: os << "UDIV12"; break;
+    case LemmaKind::UDIV13: os << "UDIV13"; break;
+    case LemmaKind::UDIV14: os << "UDIV14"; break;
+    case LemmaKind::UDIV15: os << "UDIV15"; break;
+    case LemmaKind::UDIV16: os << "UDIV16"; break;
+    case LemmaKind::UDIV17: os << "UDIV17"; break;
+    case LemmaKind::UDIV18: os << "UDIV18"; break;
+    case LemmaKind::UDIV19: os << "UDIV19"; break;
+    case LemmaKind::UDIV20: os << "UDIV20"; break;
+    case LemmaKind::UDIV21: os << "UDIV21"; break;
+    case LemmaKind::UDIV22: os << "UDIV22"; break;
+    case LemmaKind::UDIV23: os << "UDIV23"; break;
+    case LemmaKind::UDIV24: os << "UDIV24"; break;
+    case LemmaKind::UDIV25: os << "UDIV25"; break;
+    case LemmaKind::UDIV26: os << "UDIV26"; break;
+    case LemmaKind::UDIV27: os << "UDIV27"; break;
+    case LemmaKind::UDIV28: os << "UDIV28"; break;
+    case LemmaKind::UDIV29: os << "UDIV29"; break;
+    case LemmaKind::UDIV30: os << "UDIV30"; break;
+    case LemmaKind::UDIV31: os << "UDIV31"; break;
+    case LemmaKind::UDIV32: os << "UDIV32"; break;
+    case LemmaKind::UDIV33: os << "UDIV33"; break;
+    case LemmaKind::UDIV34: os << "UDIV34"; break;
+    case LemmaKind::UDIV35: os << "UDIV35"; break;
+    case LemmaKind::UDIV36: os << "UDIV36"; break;
+    case LemmaKind::UDIV37: os << "UDIV37"; break;
     case LemmaKind::UDIV_VALUE: os << "UDIV_VALUE"; break;
 
-    case LemmaKind::UREM_POW2: os << "UREM_POW2"; break;
-    case LemmaKind::UREM_REF1: os << "UREM_REF1"; break;
-    case LemmaKind::UREM_REF2: os << "UREM_REF2"; break;
-    case LemmaKind::UREM_REF3: os << "UREM_REF3"; break;
-    case LemmaKind::UREM_REF4: os << "UREM_REF4"; break;
-    case LemmaKind::UREM_REF5: os << "UREM_REF5"; break;
-    case LemmaKind::UREM_REF6: os << "UREM_REF6"; break;
-    case LemmaKind::UREM_REF7: os << "UREM_REF7"; break;
-    case LemmaKind::UREM_REF8: os << "UREM_REF8"; break;
-    case LemmaKind::UREM_REF9: os << "UREM_REF9"; break;
-    case LemmaKind::UREM_REF10: os << "UREM_REF10"; break;
-    case LemmaKind::UREM_REF11: os << "UREM_REF11"; break;
-    case LemmaKind::UREM_REF12: os << "UREM_REF12"; break;
-    case LemmaKind::UREM_REF13: os << "UREM_REF13"; break;
-    case LemmaKind::UREM_REF14: os << "UREM_REF14"; break;
+    case LemmaKind::UREM1_POW2: os << "UREM1_POW2"; break;
+    case LemmaKind::UREM2: os << "UREM2"; break;
+    case LemmaKind::UREM3: os << "UREM3"; break;
+    case LemmaKind::UREM4: os << "UREM4"; break;
+    case LemmaKind::UREM5: os << "UREM5"; break;
+    case LemmaKind::UREM6: os << "UREM6"; break;
+    case LemmaKind::UREM7: os << "UREM7"; break;
+    case LemmaKind::UREM8: os << "UREM8"; break;
+    case LemmaKind::UREM9: os << "UREM9"; break;
+    case LemmaKind::UREM10: os << "UREM10"; break;
+    case LemmaKind::UREM11: os << "UREM11"; break;
+    case LemmaKind::UREM12: os << "UREM12"; break;
+    case LemmaKind::UREM13: os << "UREM13"; break;
+    case LemmaKind::UREM14: os << "UREM14"; break;
+    case LemmaKind::UREM15: os << "UREM15"; break;
     case LemmaKind::UREM_VALUE: os << "UREM_VALUE"; break;
 
     case LemmaKind::ADD_ZERO: os << "ADD_ZERO"; break;
     case LemmaKind::ADD_SAME: os << "ADD_SAME"; break;
     case LemmaKind::ADD_INV: os << "ADD_INV"; break;
-    case LemmaKind::ADD_OVFL: os << "ADD_OVFL1"; break;
+    case LemmaKind::ADD_OVFL: os << "ADD_OVFL"; break;
     case LemmaKind::ADD_NOOVFL: os << "ADD_NOOVFL"; break;
     case LemmaKind::ADD_OR: os << "ADD_OR"; break;
     case LemmaKind::ADD_REF6: os << "ADD_REF6"; break;
@@ -149,9 +149,9 @@ operator<<(std::ostream& os, LemmaKind kind)
 
 template <>
 Node
-Lemma<LemmaKind::MUL_IC>::instance(const Node& x,
-                                   const Node& s,
-                                   const Node& t) const
+Lemma<LemmaKind::MUL3_IC>::instance(const Node& x,
+                                    const Node& s,
+                                    const Node& t) const
 {
   (void) x;
   Node lhs = d_nm.mk_node(
@@ -162,9 +162,9 @@ Lemma<LemmaKind::MUL_IC>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::MUL_ODD>::instance(const Node& x,
-                                    const Node& s,
-                                    const Node& t) const
+Lemma<LemmaKind::MUL4_ODD>::instance(const Node& x,
+                                     const Node& s,
+                                     const Node& t) const
 {
   return d_nm.mk_node(
       Kind::EQUAL,
@@ -178,12 +178,12 @@ Lemma<LemmaKind::MUL_ODD>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::MUL_POW2>::instance(const Node& val_x,
-                                     const Node& val_s,
-                                     const Node& val_t,
-                                     const Node& x,
-                                     const Node& s,
-                                     const Node& t) const
+Lemma<LemmaKind::MUL1_POW2>::instance(const Node& val_x,
+                                      const Node& val_s,
+                                      const Node& val_t,
+                                      const Node& x,
+                                      const Node& s,
+                                      const Node& t) const
 {
   (void) val_s;
   (void) val_t;
@@ -204,12 +204,12 @@ Lemma<LemmaKind::MUL_POW2>::instance(const Node& val_x,
 
 template <>
 Node
-Lemma<LemmaKind::MUL_NEG_POW2>::instance(const Node& val_x,
-                                         const Node& val_s,
-                                         const Node& val_t,
-                                         const Node& x,
-                                         const Node& s,
-                                         const Node& t) const
+Lemma<LemmaKind::MUL2_NEG_POW2>::instance(const Node& val_x,
+                                          const Node& val_s,
+                                          const Node& val_t,
+                                          const Node& x,
+                                          const Node& s,
+                                          const Node& t) const
 {
   (void) val_s;
   (void) val_t;
@@ -234,9 +234,9 @@ Lemma<LemmaKind::MUL_NEG_POW2>::instance(const Node& val_x,
 
 template <>
 Node
-Lemma<LemmaKind::MUL_REF1>::instance(const Node& x,
-                                     const Node& s,
-                                     const Node& t) const
+Lemma<LemmaKind::MUL5>::instance(const Node& x,
+                                 const Node& s,
+                                 const Node& t) const
 {
   // Lemma is only valid with the asserted restriction. This is assertion is
   // mainly for documentation purposes since we globally restrict the minimum
@@ -261,9 +261,9 @@ Lemma<LemmaKind::MUL_REF1>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::MUL_REF3>::instance(const Node& x,
-                                     const Node& s,
-                                     const Node& t) const
+Lemma<LemmaKind::MUL6>::instance(const Node& x,
+                                 const Node& s,
+                                 const Node& t) const
 {
   // Lemma is only valid with the asserted restriction. This is assertion is
   // mainly for documentation purposes since we globally restrict the minimum
@@ -278,9 +278,9 @@ Lemma<LemmaKind::MUL_REF3>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::MUL_REFN3>::instance(const Node& x,
-                                      const Node& s,
-                                      const Node& t) const
+Lemma<LemmaKind::MUL7>::instance(const Node& x,
+                                 const Node& s,
+                                 const Node& t) const
 {
   // Lemma is only valid with the asserted restriction. This is assertion is
   // mainly for documentation purposes since we globally restrict the minimum
@@ -298,9 +298,9 @@ Lemma<LemmaKind::MUL_REFN3>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::MUL_REFN4>::instance(const Node& x,
-                                      const Node& s,
-                                      const Node& t) const
+Lemma<LemmaKind::MUL8>::instance(const Node& x,
+                                 const Node& s,
+                                 const Node& t) const
 {
   // (= s (bvshl s (bvand x (bvlshr #b0001 t))))
   Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
@@ -316,9 +316,9 @@ Lemma<LemmaKind::MUL_REFN4>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::MUL_REFN5>::instance(const Node& x,
-                                      const Node& s,
-                                      const Node& t) const
+Lemma<LemmaKind::MUL9>::instance(const Node& x,
+                                 const Node& s,
+                                 const Node& t) const
 {
   // Lemma is only valid with the asserted restriction. This is assertion is
   // mainly for documentation purposes since we globally restrict the minimum
@@ -339,9 +339,9 @@ Lemma<LemmaKind::MUL_REFN5>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::MUL_REFN6>::instance(const Node& x,
-                                      const Node& s,
-                                      const Node& t) const
+Lemma<LemmaKind::MUL10>::instance(const Node& x,
+                                  const Node& s,
+                                  const Node& t) const
 {
   // (not (= x (bvxor #b0001 (bvshl x (bvxor s t)))))
   Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
@@ -356,9 +356,9 @@ Lemma<LemmaKind::MUL_REFN6>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::MUL_REFN9>::instance(const Node& x,
-                                      const Node& s,
-                                      const Node& t) const
+Lemma<LemmaKind::MUL13>::instance(const Node& x,
+                                  const Node& s,
+                                  const Node& t) const
 {
   // (not (= x (bvsub (bvshl x (bvadd s t)) #b0001)))
   Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
@@ -373,9 +373,9 @@ Lemma<LemmaKind::MUL_REFN9>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::MUL_REFN11>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::MUL15>::instance(const Node& x,
+                                  const Node& s,
+                                  const Node& t) const
 {
   // (not (= s (bvadd #b0001 (bvshl s (bvsub t x)))))
   Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
@@ -390,9 +390,9 @@ Lemma<LemmaKind::MUL_REFN11>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::MUL_REFN12>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::MUL16>::instance(const Node& x,
+                                  const Node& s,
+                                  const Node& t) const
 {
   // (not (= s (bvsub #b0001 (bvshl s (bvsub t x)))))
   Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
@@ -407,9 +407,9 @@ Lemma<LemmaKind::MUL_REFN12>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::MUL_REFN13>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::MUL17>::instance(const Node& x,
+                                  const Node& s,
+                                  const Node& t) const
 {
   // (not (= s (bvadd #b0001 (bvshl s (bvsub x t)))))
   Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
@@ -424,9 +424,9 @@ Lemma<LemmaKind::MUL_REFN13>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::MUL_REF12>::instance(const Node& x,
-                                      const Node& s,
-                                      const Node& t) const
+Lemma<LemmaKind::MUL19>::instance(const Node& x,
+                                  const Node& s,
+                                  const Node& t) const
 {
   return d_nm.mk_node(
       Kind::DISTINCT,
@@ -438,9 +438,9 @@ Lemma<LemmaKind::MUL_REF12>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::MUL_REF13>::instance(const Node& x,
-                                      const Node& s,
-                                      const Node& t) const
+Lemma<LemmaKind::MUL18>::instance(const Node& x,
+                                  const Node& s,
+                                  const Node& t) const
 {
   // Lemma is only valid with the asserted restriction. This is assertion is
   // mainly for documentation purposes since we globally restrict the minimum
@@ -456,9 +456,9 @@ Lemma<LemmaKind::MUL_REF13>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::MUL_REF14>::instance(const Node& x,
-                                      const Node& s,
-                                      const Node& t) const
+Lemma<LemmaKind::MUL11>::instance(const Node& x,
+                                  const Node& s,
+                                  const Node& t) const
 {
   // Lemma is only valid with the asserted restriction. This is assertion is
   // mainly for documentation purposes since we globally restrict the minimum
@@ -477,9 +477,9 @@ Lemma<LemmaKind::MUL_REF14>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::MUL_REF15>::instance(const Node& x,
-                                      const Node& s,
-                                      const Node& t) const
+Lemma<LemmaKind::MUL12>::instance(const Node& x,
+                                  const Node& s,
+                                  const Node& t) const
 {
   // Lemma is only valid with the asserted restriction. This is assertion is
   // mainly for documentation purposes since we globally restrict the minimum
@@ -496,9 +496,9 @@ Lemma<LemmaKind::MUL_REF15>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::MUL_REF18>::instance(const Node& x,
-                                      const Node& s,
-                                      const Node& t) const
+Lemma<LemmaKind::MUL14>::instance(const Node& x,
+                                  const Node& s,
+                                  const Node& t) const
 {
   Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
   return d_nm.mk_node(
@@ -514,12 +514,12 @@ Lemma<LemmaKind::MUL_REF18>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_POW2>::instance(const Node& val_x,
-                                      const Node& val_s,
-                                      const Node& val_t,
-                                      const Node& x,
-                                      const Node& s,
-                                      const Node& t) const
+Lemma<LemmaKind::UDIV1_POW2>::instance(const Node& val_x,
+                                       const Node& val_s,
+                                       const Node& val_t,
+                                       const Node& x,
+                                       const Node& s,
+                                       const Node& t) const
 {
   (void) val_x;
   (void) val_t;
@@ -540,9 +540,9 @@ Lemma<LemmaKind::UDIV_POW2>::instance(const Node& val_x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF1>::instance(const Node& x,
-                                      const Node& s,
-                                      const Node& t) const
+Lemma<LemmaKind::UDIV37>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   // (=> (= s #b0001) (= t x))
   Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
@@ -553,9 +553,9 @@ Lemma<LemmaKind::UDIV_REF1>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF2>::instance(const Node& x,
-                                      const Node& s,
-                                      const Node& t) const
+Lemma<LemmaKind::UDIV2>::instance(const Node& x,
+                                  const Node& s,
+                                  const Node& t) const
 {
   // (=> (and (= s x) (distinct s #b0000)) (= t #b0001))
   Node one  = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
@@ -570,9 +570,9 @@ Lemma<LemmaKind::UDIV_REF2>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF3>::instance(const Node& x,
-                                      const Node& s,
-                                      const Node& t) const
+Lemma<LemmaKind::UDIV3>::instance(const Node& x,
+                                  const Node& s,
+                                  const Node& t) const
 {
   // (=> (= s #b0000) (= t (bvnot #b0000)))
   Node ones = d_nm.mk_value(BitVector::mk_ones(x.type().bv_size()));
@@ -586,9 +586,9 @@ Lemma<LemmaKind::UDIV_REF3>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF4>::instance(const Node& x,
-                                      const Node& s,
-                                      const Node& t) const
+Lemma<LemmaKind::UDIV4>::instance(const Node& x,
+                                  const Node& s,
+                                  const Node& t) const
 {
   // (=> (and (= x #b0000) (distinct s #b0000)) (= t #b0000))
   Node zero = d_nm.mk_value(BitVector::mk_zero(x.type().bv_size()));
@@ -601,9 +601,9 @@ Lemma<LemmaKind::UDIV_REF4>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF5>::instance(const Node& x,
-                                      const Node& s,
-                                      const Node& t) const
+Lemma<LemmaKind::UDIV5>::instance(const Node& x,
+                                  const Node& s,
+                                  const Node& t) const
 {
   // (=> (distinct s #b0000) (bvule t x))
   Node zero = d_nm.mk_value(BitVector::mk_zero(x.type().bv_size()));
@@ -616,9 +616,9 @@ Lemma<LemmaKind::UDIV_REF5>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF6>::instance(const Node& x,
-                                      const Node& s,
-                                      const Node& t) const
+Lemma<LemmaKind::UDIV6>::instance(const Node& x,
+                                  const Node& s,
+                                  const Node& t) const
 {
   // (let ((_let_1 (bvnot #b0000)))
   //  (=> (and (= s _let_1) (distinct x _let_1)) (= t #b0000)))
@@ -634,9 +634,9 @@ Lemma<LemmaKind::UDIV_REF6>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF7>::instance(const Node& x,
-                                      const Node& s,
-                                      const Node& t) const
+Lemma<LemmaKind::UDIV7>::instance(const Node& x,
+                                  const Node& s,
+                                  const Node& t) const
 {
   // (not (bvult x (bvneg (bvand (bvneg s) (bvneg t)))))
   return d_nm.mk_node(
@@ -652,9 +652,9 @@ Lemma<LemmaKind::UDIV_REF7>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF8>::instance(const Node& x,
-                                      const Node& s,
-                                      const Node& t) const
+Lemma<LemmaKind::UDIV8>::instance(const Node& x,
+                                  const Node& s,
+                                  const Node& t) const
 {
   // (not (bvult (bvneg (bvor s #b0001)) t))
   Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
@@ -667,9 +667,9 @@ Lemma<LemmaKind::UDIV_REF8>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF9>::instance(const Node& x,
-                                      const Node& s,
-                                      const Node& t) const
+Lemma<LemmaKind::UDIV9>::instance(const Node& x,
+                                  const Node& s,
+                                  const Node& t) const
 {
   // (not (= t (bvneg (bvand s (bvnot x)))))
   return d_nm.mk_node(
@@ -682,9 +682,9 @@ Lemma<LemmaKind::UDIV_REF9>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF10>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::UDIV10>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   // (not (= (bvor s t) (bvand x (bvnot #b0001))))
   Node m = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()).ibvnot());
@@ -697,9 +697,9 @@ Lemma<LemmaKind::UDIV_REF10>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF11>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::UDIV11>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   // (not (= (bvor s #b0001) (bvand x (bvnot t))))
   Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
@@ -711,9 +711,9 @@ Lemma<LemmaKind::UDIV_REF11>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF12>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::UDIV12>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   // (not (bvult (bvand x (bvneg t)) (bvand s t)))
   return d_nm.mk_node(
@@ -724,9 +724,9 @@ Lemma<LemmaKind::UDIV_REF12>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF13>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::UDIV13>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   // (not (bvult s (bvlshr x t)))
   return d_nm.mk_node(Kind::BV_UGE, {s, d_nm.mk_node(Kind::BV_SHR, {x, t})});
@@ -734,9 +734,9 @@ Lemma<LemmaKind::UDIV_REF13>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF14>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::UDIV14>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   // (not (bvult x (bvshl (bvlshr s (bvshl s t)) #b0001)))
   Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
@@ -751,9 +751,9 @@ Lemma<LemmaKind::UDIV_REF14>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF15>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::UDIV15>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   // (not (bvult x (bvlshr (bvshl t #b0001) (bvshl t s))))
   Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
@@ -766,9 +766,9 @@ Lemma<LemmaKind::UDIV_REF15>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF16>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::UDIV16>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   // (not (bvult t (bvshl (bvlshr x s) #b0001)))
   Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
@@ -780,9 +780,9 @@ Lemma<LemmaKind::UDIV_REF16>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF17>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::UDIV17>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   // (not (bvult x (bvand (bvor x t) (bvshl s #b0001))))
   Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
@@ -795,9 +795,9 @@ Lemma<LemmaKind::UDIV_REF17>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF18>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::UDIV18>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   // (not (bvult x (bvand (bvor x s) (bvshl t #b0001))))
   Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
@@ -810,9 +810,9 @@ Lemma<LemmaKind::UDIV_REF18>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF19>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::UDIV19>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   // (not (= (bvlshr x t) (bvor s t)))
   return d_nm.mk_node(
@@ -822,9 +822,9 @@ Lemma<LemmaKind::UDIV_REF19>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF20>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::UDIV20>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   // (not (= s (bvnot (bvlshr s (bvlshr t #b0001)))))
   Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
@@ -839,9 +839,9 @@ Lemma<LemmaKind::UDIV_REF20>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF21>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::UDIV21>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   // Lemma is only valid with the asserted restriction. This is assertion is
   // mainly for documentation purposes since we globally restrict the minimum
@@ -862,9 +862,9 @@ Lemma<LemmaKind::UDIV_REF21>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF23>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::UDIV22>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   // (not (bvult t (bvlshr (bvshl x #b0001) s)))
   Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
@@ -876,9 +876,9 @@ Lemma<LemmaKind::UDIV_REF23>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF24>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::UDIV23>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   // (not (bvult x (bvshl s (bvnot (bvor x t)))))
   return d_nm.mk_node(
@@ -892,9 +892,9 @@ Lemma<LemmaKind::UDIV_REF24>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF25>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::UDIV24>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   // (not (bvult x (bvshl t (bvnot (bvor x s)))))
   return d_nm.mk_node(
@@ -908,9 +908,9 @@ Lemma<LemmaKind::UDIV_REF25>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF26>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::UDIV25>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   // (not (bvult x (bvxor t (bvlshr t (bvlshr s #b0001)))))
   Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
@@ -926,9 +926,9 @@ Lemma<LemmaKind::UDIV_REF26>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF27>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::UDIV26>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   // (not (bvult x (bvxor s (bvlshr s (bvlshr t #b0001)))))
   Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
@@ -944,9 +944,9 @@ Lemma<LemmaKind::UDIV_REF27>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF28>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::UDIV27>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   // (not (bvult x (bvshl s (bvnot (bvxor x t)))))
   return d_nm.mk_node(
@@ -960,11 +960,11 @@ Lemma<LemmaKind::UDIV_REF28>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF29>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::UDIV28>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
-  //  UDIV_REF29, // (not (bvult x (bvshl t (bvnot (bvxor x s)))))
+  // (not (bvult x (bvshl t (bvnot (bvxor x s)))))
   return d_nm.mk_node(
       Kind::BV_UGE,
       {x,
@@ -976,9 +976,9 @@ Lemma<LemmaKind::UDIV_REF29>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF30>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::UDIV29>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   // (not (= x (bvadd t (bvor s (bvadd x s)))))
   return d_nm.mk_node(
@@ -992,9 +992,9 @@ Lemma<LemmaKind::UDIV_REF30>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF31>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::UDIV30>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   // Lemma is only valid with the asserted restriction. This is assertion is
   // mainly for documentation purposes since we globally restrict the minimum
@@ -1016,9 +1016,9 @@ Lemma<LemmaKind::UDIV_REF31>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF32>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::UDIV31>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   // (not (bvult s (bvlshr (bvadd x t) t)))
   return d_nm.mk_node(
@@ -1028,9 +1028,9 @@ Lemma<LemmaKind::UDIV_REF32>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF33>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::UDIV32>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   // Lemma is only valid with the asserted restriction. This is assertion is
   // mainly for documentation purposes since we globally restrict the minimum
@@ -1049,9 +1049,9 @@ Lemma<LemmaKind::UDIV_REF33>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF34>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::UDIV33>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   // (not (bvult (bvxor s (bvor x t)) (bvxor t #b0001)))
   Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
@@ -1063,9 +1063,9 @@ Lemma<LemmaKind::UDIV_REF34>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF36>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::UDIV34>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   // (not (bvult t (bvlshr x (bvsub s #b0001))))
   Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
@@ -1077,9 +1077,9 @@ Lemma<LemmaKind::UDIV_REF36>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF37>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::UDIV35>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   // (not (bvult (bvsub s #b0001) (bvlshr x t)))
   Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
@@ -1090,9 +1090,9 @@ Lemma<LemmaKind::UDIV_REF37>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UDIV_REF38>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::UDIV36>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   // Lemma is only valid with the asserted restriction. This is assertion is
   // mainly for documentation purposes since we globally restrict the minimum
@@ -1113,12 +1113,12 @@ Lemma<LemmaKind::UDIV_REF38>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UREM_POW2>::instance(const Node& val_x,
-                                      const Node& val_s,
-                                      const Node& val_t,
-                                      const Node& x,
-                                      const Node& s,
-                                      const Node& t) const
+Lemma<LemmaKind::UREM1_POW2>::instance(const Node& val_x,
+                                       const Node& val_s,
+                                       const Node& val_t,
+                                       const Node& x,
+                                       const Node& s,
+                                       const Node& t) const
 {
   (void) val_x;
   (void) val_t;
@@ -1147,9 +1147,9 @@ Lemma<LemmaKind::UREM_POW2>::instance(const Node& val_x,
 
 template <>
 Node
-Lemma<LemmaKind::UREM_REF1>::instance(const Node& x,
-                                      const Node& s,
-                                      const Node& t) const
+Lemma<LemmaKind::UREM2>::instance(const Node& x,
+                                  const Node& s,
+                                  const Node& t) const
 {
   // (=> (distinct s #b0000) (bvult t s))
   Node zero = d_nm.mk_value(BitVector::mk_zero(x.type().bv_size()));
@@ -1160,9 +1160,9 @@ Lemma<LemmaKind::UREM_REF1>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UREM_REF2>::instance(const Node& x,
-                                      const Node& s,
-                                      const Node& t) const
+Lemma<LemmaKind::UREM3>::instance(const Node& x,
+                                  const Node& s,
+                                  const Node& t) const
 {
   (void) s;
   // (=> (= x #b0000) (= t #b0000))
@@ -1174,9 +1174,9 @@ Lemma<LemmaKind::UREM_REF2>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UREM_REF3>::instance(const Node& x,
-                                      const Node& s,
-                                      const Node& t) const
+Lemma<LemmaKind::UREM4>::instance(const Node& x,
+                                  const Node& s,
+                                  const Node& t) const
 {
   // (=> (= s #b0000) (= t x))
   Node zero = d_nm.mk_value(BitVector::mk_zero(x.type().bv_size()));
@@ -1187,9 +1187,9 @@ Lemma<LemmaKind::UREM_REF3>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UREM_REF4>::instance(const Node& x,
-                                      const Node& s,
-                                      const Node& t) const
+Lemma<LemmaKind::UREM5>::instance(const Node& x,
+                                  const Node& s,
+                                  const Node& t) const
 {
   // (=> (= s x) (= t #b0000))
   Node zero = d_nm.mk_value(BitVector::mk_zero(x.type().bv_size()));
@@ -1200,9 +1200,9 @@ Lemma<LemmaKind::UREM_REF4>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UREM_REF5>::instance(const Node& x,
-                                      const Node& s,
-                                      const Node& t) const
+Lemma<LemmaKind::UREM6>::instance(const Node& x,
+                                  const Node& s,
+                                  const Node& t) const
 {
   // (=> (bvult x s) (= t x))
   return d_nm.mk_node(
@@ -1212,9 +1212,9 @@ Lemma<LemmaKind::UREM_REF5>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UREM_REF6>::instance(const Node& x,
-                                      const Node& s,
-                                      const Node& t) const
+Lemma<LemmaKind::UREM7>::instance(const Node& x,
+                                  const Node& s,
+                                  const Node& t) const
 {
   (void) x;
   // (bvuge (bvnot (bvneg s)) t)
@@ -1225,9 +1225,9 @@ Lemma<LemmaKind::UREM_REF6>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UREM_REF7>::instance(const Node& x,
-                                      const Node& s,
-                                      const Node& t) const
+Lemma<LemmaKind::UREM8>::instance(const Node& x,
+                                  const Node& s,
+                                  const Node& t) const
 {
   // (= x (bvand x (bvor s (bvor t (bvneg s)))))
   return d_nm.mk_node(
@@ -1245,9 +1245,9 @@ Lemma<LemmaKind::UREM_REF7>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UREM_REF8>::instance(const Node& x,
-                                      const Node& s,
-                                      const Node& t) const
+Lemma<LemmaKind::UREM9>::instance(const Node& x,
+                                  const Node& s,
+                                  const Node& t) const
 {
   // (not (bvult x (bvor t (bvand x s))))
   return d_nm.mk_node(
@@ -1257,9 +1257,9 @@ Lemma<LemmaKind::UREM_REF8>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UREM_REF9>::instance(const Node& x,
-                                      const Node& s,
-                                      const Node& t) const
+Lemma<LemmaKind::UREM10>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   // (not (= #b0001 (bvand t (bvnot (bvor x s)))))
   Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
@@ -1274,9 +1274,9 @@ Lemma<LemmaKind::UREM_REF9>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UREM_REF10>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::UREM11>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   // (not (= t (bvor (bvnot x) (bvneg s))))
   return d_nm.mk_node(Kind::DISTINCT,
@@ -1288,9 +1288,9 @@ Lemma<LemmaKind::UREM_REF10>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UREM_REF11>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::UREM12>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   // (not (bvult (bvand t (bvor x s)) (bvand t #b0001)))
   Node one = d_nm.mk_value(BitVector::mk_one(x.type().bv_size()));
@@ -1302,9 +1302,9 @@ Lemma<LemmaKind::UREM_REF11>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UREM_REF12>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::UREM13>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   // Lemma is only valid with the asserted restriction. This is assertion is
   // mainly for documentation purposes since we globally restrict the minimum
@@ -1324,9 +1324,9 @@ Lemma<LemmaKind::UREM_REF12>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UREM_REF13>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::UREM14>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   // (not (bvult (bvadd x (bvneg s)) t))
   return d_nm.mk_node(
@@ -1336,9 +1336,9 @@ Lemma<LemmaKind::UREM_REF13>::instance(const Node& x,
 
 template <>
 Node
-Lemma<LemmaKind::UREM_REF14>::instance(const Node& x,
-                                       const Node& s,
-                                       const Node& t) const
+Lemma<LemmaKind::UREM15>::instance(const Node& x,
+                                   const Node& s,
+                                   const Node& t) const
 {
   // (not (bvult (bvxor (bvneg s) (bvor x s)) t))
   return d_nm.mk_node(Kind::BV_UGE,

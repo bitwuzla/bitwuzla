@@ -11,83 +11,83 @@ namespace bzla::abstract {
 
 enum class LemmaKind : uint32_t
 {
-  MUL_POW2,      // 1*: (=> (= s 2^i) (= t (bvshl x i)))
-  MUL_NEG_POW2,  // 2*: (=> (= s -2^i) (= t (bvshl (bvneg x) i)))
-  MUL_IC,        // 3*: (= (bvand (bvor (bvneg s) s) t) t),
-  MUL_ODD,       // 4*: (= t (bvor t (bvand x (bvand s #b0001))))
-  MUL_REF1,      //  5: (not (= s (bvnot (bvor t (bvand #b0001 (bvor x s))))))
-  MUL_REF3,      //  6: (not (= (bvand x t) (bvor s (bvnot t))))
-  MUL_REFN3,     //  7: (not (= t (bvshl (bvor s #b0001) (bvshl t x))))
-  MUL_REFN4,     //  8: (= s (bvshl s (bvand x (bvlshr #b0001 t))))
-  MUL_REFN5,     //  9: (bvuge t (bvand #b0001 (bvlshr (bvand x s) #b0001)))
-  MUL_REFN6,     // 10: (not (= x (bvxor #b0001 (bvshl x (bvxor s t)))))
-  MUL_REF14,     // 11: (not (= t (bvor #b0001 (bvnot (bvxor x s)))))
-  MUL_REF15,     // 12: (not (= t (bvor (bvnot #b0001) (bvxor x s))))
-  MUL_REFN9,     // 13: (not (= x (bvsub (bvshl x (bvadd s t)) #b0001)))
-  MUL_REF18,     // 14: (not (= x (bvsub #b0001 (bvshl x (bvsub s t)))))
-  MUL_REFN11,    // 15: (not (= s (bvadd #b0001 (bvshl s (bvsub t x)))))
-  MUL_REFN12,    // 16: (not (= s (bvsub #b0001 (bvshl s (bvsub t x)))))
-  MUL_REFN13,    // 17: (not (= s (bvadd #b0001 (bvshl s (bvsub x t)))))
-  MUL_REF13,     // 18: (not (= t (bvor #b0001 (bvadd x s))))
-  MUL_REF12,     // 19: (not (= x (bvnot (bvshl x (bvadd s t)))))
+  MUL1_POW2,      // 1*: (=> (= s 2^i) (= t (bvshl x i)))
+  MUL2_NEG_POW2,  // 2*: (=> (= s -2^i) (= t (bvshl (bvneg x) i)))
+  MUL3_IC,        // 3*: (= (bvand (bvor (bvneg s) s) t) t),
+  MUL4_ODD,       // 4*: (= t (bvor t (bvand x (bvand s #b0001))))
+  MUL5,           //  5: (not (= s (bvnot (bvor t (bvand #b0001 (bvor x s))))))
+  MUL6,           //  6: (not (= (bvand x t) (bvor s (bvnot t))))
+  MUL7,           //  7: (not (= t (bvshl (bvor s #b0001) (bvshl t x))))
+  MUL8,           //  8: (= s (bvshl s (bvand x (bvlshr #b0001 t))))
+  MUL9,           //  9: (bvuge t (bvand #b0001 (bvlshr (bvand x s) #b0001)))
+  MUL10,          // 10: (not (= x (bvxor #b0001 (bvshl x (bvxor s t)))))
+  MUL11,          // 11: (not (= t (bvor #b0001 (bvnot (bvxor x s)))))
+  MUL12,          // 12: (not (= t (bvor (bvnot #b0001) (bvxor x s))))
+  MUL13,          // 13: (not (= x (bvsub (bvshl x (bvadd s t)) #b0001)))
+  MUL14,          // 14: (not (= x (bvsub #b0001 (bvshl x (bvsub s t)))))
+  MUL15,          // 15: (not (= s (bvadd #b0001 (bvshl s (bvsub t x)))))
+  MUL16,          // 16: (not (= s (bvsub #b0001 (bvshl s (bvsub t x)))))
+  MUL17,          // 17: (not (= s (bvadd #b0001 (bvshl s (bvsub x t)))))
+  MUL18,          // 18: (not (= t (bvor #b0001 (bvadd x s))))
+  MUL19,          // 19: (not (= x (bvnot (bvshl x (bvadd s t)))))
   MUL_VALUE,
 
-  UDIV_POW2,   // 1*: (=> (= s 2^i) (= t (bvlshr x i)))
-  UDIV_REF1,   //  -: (=> (= s #b0001) (= t x))
-  UDIV_REF2,   // 2*: (=> (and (= s x) (distinct s #b0000)) (= t #b0001))
-  UDIV_REF3,   // 3*: (=> (= s #b0000) (= t (bvnot #b0000)))
-  UDIV_REF4,   // 4*: (=> (and (= x #b0000) (distinct s #b0000)) (= t #b0000))
-  UDIV_REF5,   // 5*: (=> (distinct s #b0000) (bvule t x))
-  UDIV_REF6,   // 6*: (let ((_let_1 (bvnot #b0000)))
+  UDIV1_POW2,  // 1*: (=> (= s 2^i) (= t (bvlshr x i)))
+  UDIV37,      //  -: (=> (= s #b0001) (= t x))
+  UDIV2,       // 2*: (=> (and (= s x) (distinct s #b0000)) (= t #b0001))
+  UDIV3,       // 3*: (=> (= s #b0000) (= t (bvnot #b0000)))
+  UDIV4,       // 4*: (=> (and (= x #b0000) (distinct s #b0000)) (= t #b0000))
+  UDIV5,       // 5*: (=> (distinct s #b0000) (bvule t x))
+  UDIV6,       // 6*: (let ((_let_1 (bvnot #b0000)))
                //     (=> (and (= s _let_1) (distinct x _let_1)) (= t #b0000)))
-  UDIV_REF7,   //  7: (not (bvult x (bvneg (bvand (bvneg s) (bvneg t)))))
-  UDIV_REF8,   //  8: (not (bvult (bvneg (bvor s #b0001)) t))
-  UDIV_REF9,   //  9: (not (= t (bvneg (bvand s (bvnot x)))))
-  UDIV_REF10,  // 10: (not (= (bvor s t) (bvand x (bvnot #b0001))))
-  UDIV_REF11,  // 11: (not (= (bvor s #b0001) (bvand x (bvnot t))))
-  UDIV_REF12,  // 12: (not (bvult (bvand x (bvneg t)) (bvand s t)))
-  UDIV_REF13,  // 13: (not (bvult s (bvlshr x t)))
-  UDIV_REF14,  // 14: (not (bvult x (bvshl (bvlshr s (bvshl s t)) #b0001)))
-  UDIV_REF15,  // 15: (not (bvult x (bvlshr (bvshl t #b0001) (bvshl t s))))
-  UDIV_REF16,  // 16: (not (bvult t (bvshl (bvlshr x s) #b0001)))
-  UDIV_REF17,  // 17: (not (bvult x (bvand (bvor x t) (bvshl s #b0001))))
-  UDIV_REF18,  // 18: (not (bvult x (bvand (bvor x s) (bvshl t #b0001))))
-  UDIV_REF19,  // 19: (not (= (bvlshr x t) (bvor s t)))
-  UDIV_REF20,  // 20: (not (= s (bvnot (bvlshr s (bvlshr t #b0001)))))
-  UDIV_REF21,  // 21: (not (= x (bvnot (bvand x (bvshl t #b0001)))))
-  UDIV_REF23,  // 22: (not (bvult t (bvlshr (bvshl x #b0001) s)))
-  UDIV_REF24,  // 23: (not (bvult x (bvshl s (bvnot (bvor x t)))))
-  UDIV_REF25,  // 24: (not (bvult x (bvshl t (bvnot (bvor x s)))))
-  UDIV_REF26,  // 25: (not (bvult x (bvxor t (bvlshr t (bvlshr s #b0001)))))
-  UDIV_REF27,  // 26: (not (bvult x (bvxor s (bvlshr s (bvlshr t #b0001)))))
-  UDIV_REF28,  // 27: (not (bvult x (bvshl s (bvnot (bvxor x t)))))
-  UDIV_REF29,  // 28: (not (bvult x (bvshl t (bvnot (bvxor x s)))))
-  UDIV_REF30,  // 29: (not (= x (bvadd t (bvor s (bvadd x s)))))
-  UDIV_REF31,  // 30: (not (= x (bvadd t (bvadd #b0001 (bvshl #b0001 x)))))
-  UDIV_REF32,  // 31: (not (bvult s (bvlshr (bvadd x t) t)))
-  UDIV_REF33,  // 32: (not (= x (bvadd t (bvadd t (bvor x s)))))
-  UDIV_REF34,  // 33: (not (bvult (bvxor s (bvor x t)) (bvxor t #b0001)))
-  UDIV_REF36,  // 34: (not (bvult t (bvlshr x (bvsub s #b0001))))
-  UDIV_REF37,  // 35: (not (bvult (bvsub s #b0001) (bvlshr x t)))
-  UDIV_REF38,  // 36: (not (= x (bvsub #b0001 (bvshl x (bvsub x t)))))
+  UDIV7,       //  7: (not (bvult x (bvneg (bvand (bvneg s) (bvneg t)))))
+  UDIV8,       //  8: (not (bvult (bvneg (bvor s #b0001)) t))
+  UDIV9,       //  9: (not (= t (bvneg (bvand s (bvnot x)))))
+  UDIV10,      // 10: (not (= (bvor s t) (bvand x (bvnot #b0001))))
+  UDIV11,      // 11: (not (= (bvor s #b0001) (bvand x (bvnot t))))
+  UDIV12,      // 12: (not (bvult (bvand x (bvneg t)) (bvand s t)))
+  UDIV13,      // 13: (not (bvult s (bvlshr x t)))
+  UDIV14,      // 14: (not (bvult x (bvshl (bvlshr s (bvshl s t)) #b0001)))
+  UDIV15,      // 15: (not (bvult x (bvlshr (bvshl t #b0001) (bvshl t s))))
+  UDIV16,      // 16: (not (bvult t (bvshl (bvlshr x s) #b0001)))
+  UDIV17,      // 17: (not (bvult x (bvand (bvor x t) (bvshl s #b0001))))
+  UDIV18,      // 18: (not (bvult x (bvand (bvor x s) (bvshl t #b0001))))
+  UDIV19,      // 19: (not (= (bvlshr x t) (bvor s t)))
+  UDIV20,      // 20: (not (= s (bvnot (bvlshr s (bvlshr t #b0001)))))
+  UDIV21,      // 21: (not (= x (bvnot (bvand x (bvshl t #b0001)))))
+  UDIV22,      // 22: (not (bvult t (bvlshr (bvshl x #b0001) s)))
+  UDIV23,      // 23: (not (bvult x (bvshl s (bvnot (bvor x t)))))
+  UDIV24,      // 24: (not (bvult x (bvshl t (bvnot (bvor x s)))))
+  UDIV25,      // 25: (not (bvult x (bvxor t (bvlshr t (bvlshr s #b0001)))))
+  UDIV26,      // 26: (not (bvult x (bvxor s (bvlshr s (bvlshr t #b0001)))))
+  UDIV27,      // 27: (not (bvult x (bvshl s (bvnot (bvxor x t)))))
+  UDIV28,      // 28: (not (bvult x (bvshl t (bvnot (bvxor x s)))))
+  UDIV29,      // 29: (not (= x (bvadd t (bvor s (bvadd x s)))))
+  UDIV30,      // 30: (not (= x (bvadd t (bvadd #b0001 (bvshl #b0001 x)))))
+  UDIV31,      // 31: (not (bvult s (bvlshr (bvadd x t) t)))
+  UDIV32,      // 32: (not (= x (bvadd t (bvadd t (bvor x s)))))
+  UDIV33,      // 33: (not (bvult (bvxor s (bvor x t)) (bvxor t #b0001)))
+  UDIV34,      // 34: (not (bvult t (bvlshr x (bvsub s #b0001))))
+  UDIV35,      // 35: (not (bvult (bvsub s #b0001) (bvlshr x t)))
+  UDIV36,      // 36: (not (= x (bvsub #b0001 (bvshl x (bvsub x t)))))
   UDIV_VALUE,
 
-  UREM_POW2,   // 1*: (=> (= s 2^i)
+  UREM1_POW2,  // 1*: (=> (= s 2^i)
                //         (= t((_ zero_extend n-i) ((_ extract i-1 0) x))))
-  UREM_REF1,   // 2*: (=> (distinct s #b0000) (bvult t s))
-  UREM_REF2,   // 3*: (=> (= x #b0000) (= t #b0000))
-  UREM_REF3,   // 4*: (=> (= s #b0000) (= t x))
-  UREM_REF4,   // 5*: (=> (= s x) (= t #b0000))
-  UREM_REF5,   // 6*: (=> (bvult x s) (= t x))
-  UREM_REF6,   // 7*: (bvuge (bvnot (bvneg s)) t)
-  UREM_REF7,   //  8: (not (distinct x (bvand x (bvor s (bvor t (bvneg s))))))
-  UREM_REF8,   //  9: (not (bvult x (bvor t (bvand x s))))
-  UREM_REF9,   // 10: (not (= #b0001 (bvand t (bvnot (bvor x s)))))
-  UREM_REF10,  // 11: (not (= t (bvor (bvnot x) (bvneg s))))
-  UREM_REF11,  // 12: (not (bvult (bvand t (bvor x s)) (bvand t #b0001)))
-  UREM_REF12,  // 13: (not (= x (bvor (bvneg x) (bvneg (bvnot t)))))
-  UREM_REF13,  // 14: (not (bvult (bvadd x (bvneg s)) t))
-  UREM_REF14,  // 15: (not (bvult (bvxor (bvneg s) (bvor x s)) t))
+  UREM2,       // 2*: (=> (distinct s #b0000) (bvult t s))
+  UREM3,       // 3*: (=> (= x #b0000) (= t #b0000))
+  UREM4,       // 4*: (=> (= s #b0000) (= t x))
+  UREM5,       // 5*: (=> (= s x) (= t #b0000))
+  UREM6,       // 6*: (=> (bvult x s) (= t x))
+  UREM7,       // 7*: (bvuge (bvnot (bvneg s)) t)
+  UREM8,       //  8: (not (distinct x (bvand x (bvor s (bvor t (bvneg s))))))
+  UREM9,       //  9: (not (bvult x (bvor t (bvand x s))))
+  UREM10,      // 10: (not (= #b0001 (bvand t (bvnot (bvor x s)))))
+  UREM11,      // 11: (not (= t (bvor (bvnot x) (bvneg s))))
+  UREM12,      // 12: (not (bvult (bvand t (bvor x s)) (bvand t #b0001)))
+  UREM13,      // 13: (not (= x (bvor (bvneg x) (bvneg (bvnot t)))))
+  UREM14,      // 14: (not (bvult (bvadd x (bvneg s)) t))
+  UREM15,      // 15: (not (bvult (bvxor (bvneg s) (bvor x s)) t))
   UREM_VALUE,
 
   ADD_ZERO,    // (=> (= s #b0000) (= t x))
@@ -198,83 +198,83 @@ class Lemma : public AbstractionLemma
 
 // Multiplication lemmas
 
-LEMMA(MUL_IC);
-LEMMA(MUL_ODD);
-LEMMA_VAL(MUL_POW2);
-LEMMA_VAL(MUL_NEG_POW2);
-LEMMA(MUL_REF1);
-LEMMA(MUL_REF3);
-LEMMA(MUL_REFN3);
-LEMMA(MUL_REFN4);
-LEMMA(MUL_REFN5);
-LEMMA(MUL_REFN6);
-LEMMA(MUL_REFN9);
-LEMMA(MUL_REFN11);
-LEMMA(MUL_REF12);
-LEMMA(MUL_REFN12);
-LEMMA(MUL_REF13);
-LEMMA(MUL_REFN13);
-LEMMA(MUL_REF14);
-LEMMA(MUL_REF15);
-LEMMA(MUL_REF18);
+LEMMA(MUL3_IC);
+LEMMA(MUL4_ODD);
+LEMMA_VAL(MUL1_POW2);
+LEMMA_VAL(MUL2_NEG_POW2);
+LEMMA(MUL5);
+LEMMA(MUL6);
+LEMMA(MUL7);
+LEMMA(MUL8);
+LEMMA(MUL9);
+LEMMA(MUL10);
+LEMMA(MUL11);
+LEMMA(MUL12);
+LEMMA(MUL13);
+LEMMA(MUL14);
+LEMMA(MUL15);
+LEMMA(MUL16);
+LEMMA(MUL17);
+LEMMA(MUL18);
+LEMMA(MUL19);
 
 // Unsigned division lemmas
 
-LEMMA_VAL(UDIV_POW2);
-LEMMA(UDIV_REF1);
-LEMMA(UDIV_REF2);
-LEMMA(UDIV_REF3);
-LEMMA(UDIV_REF4);
-LEMMA(UDIV_REF5);
-LEMMA(UDIV_REF6);
-LEMMA(UDIV_REF7);
-LEMMA(UDIV_REF8);
-LEMMA(UDIV_REF9);
-LEMMA(UDIV_REF10);
-LEMMA(UDIV_REF11);
-LEMMA(UDIV_REF12);
-LEMMA(UDIV_REF13);
-LEMMA(UDIV_REF14);
-LEMMA(UDIV_REF15);
-LEMMA(UDIV_REF16);
-LEMMA(UDIV_REF17);
-LEMMA(UDIV_REF18);
-LEMMA(UDIV_REF19);
-LEMMA(UDIV_REF20);
-LEMMA(UDIV_REF21);
-LEMMA(UDIV_REF23);
-LEMMA(UDIV_REF24);
-LEMMA(UDIV_REF25);
-LEMMA(UDIV_REF26);
-LEMMA(UDIV_REF27);
-LEMMA(UDIV_REF28);
-LEMMA(UDIV_REF29);
-LEMMA(UDIV_REF30);
-LEMMA(UDIV_REF31);
-LEMMA(UDIV_REF32);
-LEMMA(UDIV_REF33);
-LEMMA(UDIV_REF34);
-LEMMA(UDIV_REF36);
-LEMMA(UDIV_REF37);
-LEMMA(UDIV_REF38);
+LEMMA_VAL(UDIV1_POW2);
+LEMMA(UDIV37);
+LEMMA(UDIV2);
+LEMMA(UDIV3);
+LEMMA(UDIV4);
+LEMMA(UDIV5);
+LEMMA(UDIV6);
+LEMMA(UDIV7);
+LEMMA(UDIV8);
+LEMMA(UDIV9);
+LEMMA(UDIV10);
+LEMMA(UDIV11);
+LEMMA(UDIV12);
+LEMMA(UDIV13);
+LEMMA(UDIV14);
+LEMMA(UDIV15);
+LEMMA(UDIV16);
+LEMMA(UDIV17);
+LEMMA(UDIV18);
+LEMMA(UDIV19);
+LEMMA(UDIV20);
+LEMMA(UDIV21);
+LEMMA(UDIV22);
+LEMMA(UDIV23);
+LEMMA(UDIV24);
+LEMMA(UDIV25);
+LEMMA(UDIV26);
+LEMMA(UDIV27);
+LEMMA(UDIV28);
+LEMMA(UDIV29);
+LEMMA(UDIV30);
+LEMMA(UDIV31);
+LEMMA(UDIV32);
+LEMMA(UDIV33);
+LEMMA(UDIV34);
+LEMMA(UDIV35);
+LEMMA(UDIV36);
 
 // Unsigned remainder lemmas
 
-LEMMA_VAL(UREM_POW2);
-LEMMA(UREM_REF1);
-LEMMA(UREM_REF2);
-LEMMA(UREM_REF3);
-LEMMA(UREM_REF4);
-LEMMA(UREM_REF5);
-LEMMA(UREM_REF6);
-LEMMA(UREM_REF7);
-LEMMA(UREM_REF8);
-LEMMA(UREM_REF9);
-LEMMA(UREM_REF10);
-LEMMA(UREM_REF11);
-LEMMA(UREM_REF12);
-LEMMA(UREM_REF13);
-LEMMA(UREM_REF14);
+LEMMA_VAL(UREM1_POW2);
+LEMMA(UREM2);
+LEMMA(UREM3);
+LEMMA(UREM4);
+LEMMA(UREM5);
+LEMMA(UREM6);
+LEMMA(UREM7);
+LEMMA(UREM8);
+LEMMA(UREM9);
+LEMMA(UREM10);
+LEMMA(UREM11);
+LEMMA(UREM12);
+LEMMA(UREM13);
+LEMMA(UREM14);
+LEMMA(UREM15);
 
 // Addition lemmas
 
