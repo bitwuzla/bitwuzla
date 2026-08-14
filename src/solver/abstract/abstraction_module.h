@@ -102,17 +102,6 @@ class AbstractionModule
   /** Send lemma, abstract terms in it. */
   bool lemma_abstract(const Node& lemma, LemmaKind lk);
 
-  /** Utility to compute score for lemma schema. */
-  void score_lemmas(node::Kind k,
-                    uint64_t bv_size,
-                    std::unordered_map<LemmaKind, uint64_t>& rank_map) const;
-  void rank_lemmas_by_circuit_size();
-  void rank_lemmas_by_score();
-
-#ifndef NDEBUG
-  void verify_lemmas() const;
-#endif
-
   Env& d_env;
   util::Logger& d_logger;
   SolverState& d_solver_state;
