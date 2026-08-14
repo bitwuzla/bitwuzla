@@ -377,7 +377,10 @@ AigCnfEncoder::set_encoded(const AigNode& aig)
   assert(encoded > 0);
   encoded *= -1;
   ++d_statistics.num_vars;
-  d_aig_encoded_ids.push_back(pos);
+  if (!d_aig_encoded_ids_control.empty())
+  {
+    d_aig_encoded_ids.push_back(pos);
+  }
 }
 
 }  // namespace bzla::bitblast
