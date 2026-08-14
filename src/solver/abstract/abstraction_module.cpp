@@ -509,8 +509,10 @@ AbstractionModule::check_term_abstraction(const Node& abstr)
     uint64_t limit = d_opt_value_inst_limit > 0
                          ? val_x.type().bv_size() / d_opt_value_inst_limit
                          : 0;
-    if (kind != Kind::EQUAL && d_value_insts[node] < limit)
+    if (d_value_insts[node] < limit)
     {
+      assert(kind == Kind::BV_MUL || kind == Kind::BV_UDIV
+             || kind == Kind::BV_UREM || kind == Kind::BV_ADD);
       LemmaKind lk = lemma_kind_value(kind);
       Log(2) << lk << " inconsistent";
       Node lemma =
