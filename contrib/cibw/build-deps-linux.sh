@@ -1,4 +1,14 @@
 #!/bin/bash
+###
+# Bitwuzla: Satisfiability Modulo Theories (SMT) solver.
+#
+# Copyright (C) 2026 by the authors listed in the AUTHORS file at
+# https://github.com/bitwuzla/bitwuzla/blob/main/AUTHORS
+#
+# This file is part of Bitwuzla under the MIT license. See COPYING for more
+# information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
+##
+
 # Build GMP and MPFR from source for manylinux wheel builds.
 # manylinux_2_28 ships versions too old for Bitwuzla.
 
