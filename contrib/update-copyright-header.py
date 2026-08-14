@@ -19,7 +19,9 @@ ap.add_argument('files', nargs='*')
 args = ap.parse_args()
 
 EXCLUDE_FILES = [
-    'docs/conf.py.in'
+    'docs/conf.py.in',
+    # Vendored upstream Gimsatul sources, not copyrighted by Bitwuzla.
+    'subprojects/packagefiles/gimsatul/'
 ]
 
 C_HEADER_TEMPLATE="""/***
@@ -44,13 +46,48 @@ PY_HEADER_TEMPLATE ="""###
 ##
 """
 
+def git(*args):
+    proc = subprocess.run(['git', *args], capture_output=True, check=True)
+    return proc.stdout.decode()
+
+
+def get_rename_source(commit, filename):
+    """Return the previous name of filename if commit renamed it, else None.
+
+    Only renames are followed, no copies. Following copies would wrongly
+    attribute the history of the source file to a file that was created by
+    copying it (e.g., a new SAT solver wrapper based on an existing one).
+    Note that this is what 'git log --follow' does, since it enables copy
+    detection.
+    """
+    for line in git('show', '-M', '--name-status', '--format=',
+                    commit).splitlines():
+        fields = line.split('\t')
+        if len(fields) == 3 and fields[0].startswith('R') \
+                and fields[2] == filename:
+            return fields[1]
+    return None
+
+
 def get_year(filename):
-    cmd = ['git', 'log', '--follow', '--format=%ad', '--date=format:%Y',
-           filename]
-    proc = subprocess.run(cmd, capture_output=True, check=True)
-    if not proc.stdout:
-        return datetime.date.today().year
-    return proc.stdout.split()[-1].decode()
+    """Return the year filename was introduced, following renames."""
+    years = []
+    path = filename
+    visited = set()
+    while path and path not in visited:
+        visited.add(path)
+        log = git('log', '--format=%H %ad', '--date=format:%Y', '--', path)
+        if not log.strip():
+            break
+        # git log lists commits in reverse chronological order, i.e., the
+        # oldest commit that touched path comes last.
+        commits = [line.split() for line in log.splitlines()]
+        years.extend(year for _, year in commits)
+        path = get_rename_source(commits[-1][0], path)
+
+    if not years:
+        return str(datetime.date.today().year)
+    return min(years)
 
 def update_header(filename):
 
