@@ -99,8 +99,6 @@ class AbstractionModule
 
   /** Send lemma but make sure not to abstract terms in it. */
   bool lemma_no_abstract(const Node& lemma, LemmaKind lk);
-  /** Send lemma, abstract terms in it. */
-  bool lemma_abstract(const Node& lemma, LemmaKind lk);
 
   Env& d_env;
   util::Logger& d_logger;

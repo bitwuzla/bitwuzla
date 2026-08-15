@@ -589,18 +589,6 @@ AbstractionModule::lemma_no_abstract(const Node& lemma, LemmaKind lk)
   return false;
 }
 
-bool
-AbstractionModule::lemma_abstract(const Node& lemma, LemmaKind lk)
-{
-  if (d_solver_state.lemma(lemma))
-  {
-    d_added_lemma = true;
-    d_stats.lemmas << lk;
-    return true;
-  }
-  return false;
-}
-
 AbstractionModule::Statistics::Statistics(util::Statistics& stats,
                                           const std::string& prefix)
     : num_terms(stats.new_stat<uint64_t>(prefix + "terms::total")),
