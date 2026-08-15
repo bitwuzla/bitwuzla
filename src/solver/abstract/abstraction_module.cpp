@@ -54,97 +54,20 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
   NodeManager& nm = d_env.nm();
   if (env.options().abstraction_bv_mul())
   {
-    auto& mul_abstr_lemmas = d_abstr_lemmas[Kind::BV_MUL];
-    mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL1_POW2>(nm));
-    mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL2_NEG_POW2>(nm));
-    mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL3_IC>(nm));
-    mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL4_ODD>(nm));
-    if (!opt_initial_lemmas)
-    {
-      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL5>(nm));
-      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL6>(nm));
-      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL7>(nm));
-      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL8>(nm));
-      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL9>(nm));
-      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL10>(nm));
-      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL11>(nm));
-      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL12>(nm));
-      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL13>(nm));
-      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL14>(nm));
-      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL15>(nm));
-      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL16>(nm));
-      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL17>(nm));
-      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL18>(nm));
-      mul_abstr_lemmas.emplace_back(new Lemma<LemmaKind::MUL19>(nm));
-    }
+    d_abstr_lemmas[Kind::BV_MUL] =
+        mk_lemmas(nm, Kind::BV_MUL, opt_initial_lemmas);
   }
 
   if (env.options().abstraction_bv_udiv())
   {
-    auto& udiv_abstr_lemmas = d_abstr_lemmas[Kind::BV_UDIV];
-    udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV1_POW2>(nm));
-    udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV37>(nm));
-    udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV2>(nm));
-    udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV3>(nm));
-    udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV4>(nm));
-    udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV5>(nm));
-    udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV6>(nm));
-    if (!opt_initial_lemmas)
-    {
-      udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV7>(nm));
-      udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV8>(nm));
-      udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV9>(nm));
-      udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV10>(nm));
-      udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV11>(nm));
-      udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV12>(nm));
-      udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV13>(nm));
-      udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV14>(nm));
-      udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV15>(nm));
-      udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV16>(nm));
-      udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV17>(nm));
-      udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV18>(nm));
-      udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV19>(nm));
-      udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV20>(nm));
-      udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV21>(nm));
-      udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV22>(nm));
-      udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV23>(nm));
-      udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV24>(nm));
-      udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV25>(nm));
-      udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV26>(nm));
-      udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV27>(nm));
-      udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV28>(nm));
-      udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV29>(nm));
-      udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV30>(nm));
-      udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV31>(nm));
-      udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV32>(nm));
-      udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV33>(nm));
-      udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV34>(nm));
-      udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV35>(nm));
-      udiv_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UDIV36>(nm));
-    }
+    d_abstr_lemmas[Kind::BV_UDIV] =
+        mk_lemmas(nm, Kind::BV_UDIV, opt_initial_lemmas);
   }
 
   if (env.options().abstraction_bv_urem())
   {
-    auto& urem_abstr_lemmas = d_abstr_lemmas[Kind::BV_UREM];
-    urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM1_POW2>(nm));
-    urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM2>(nm));
-    urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM3>(nm));
-    urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM4>(nm));
-    urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM5>(nm));
-    urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM6>(nm));
-    // urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM7>(nm));
-    if (!opt_initial_lemmas)
-    {
-      urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM8>(nm));
-      urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM9>(nm));
-      urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM10>(nm));
-      urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM11>(nm));
-      urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM12>(nm));
-      urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM13>(nm));
-      urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM14>(nm));
-      urem_abstr_lemmas.emplace_back(new Lemma<LemmaKind::UREM15>(nm));
-    }
+    d_abstr_lemmas[Kind::BV_UREM] =
+        mk_lemmas(nm, Kind::BV_UREM, opt_initial_lemmas);
   }
 
   if (env.options().abstraction_ite())
@@ -154,23 +77,8 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
 
   if (env.options().abstraction_bv_add())
   {
-    auto& add_abstr_lemmas = d_abstr_lemmas[Kind::BV_ADD];
-    add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_ZERO>(nm));
-    add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_SAME>(nm));
-    add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_INV>(nm));
-    add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_OVFL>(nm));
-    add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_NOOVFL>(nm));
-    add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_OR>(nm));
-    if (!opt_initial_lemmas)
-    {
-      add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_REF6>(nm));
-      add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_REF7>(nm));
-      add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_REF8>(nm));
-      add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_REF9>(nm));
-      add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_REF10>(nm));
-      add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_REF11>(nm));
-      add_abstr_lemmas.emplace_back(new Lemma<LemmaKind::ADD_REF12>(nm));
-    }
+    d_abstr_lemmas[Kind::BV_ADD] =
+        mk_lemmas(nm, Kind::BV_ADD, opt_initial_lemmas);
   }
 }
 

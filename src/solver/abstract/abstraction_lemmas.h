@@ -12,7 +12,9 @@
 #define BZLA_SOLVER_BV_ABSTRACTION_LEMMAS_H_INCLUDED
 
 #include <cstdint>
+#include <memory>
 #include <ostream>
+#include <vector>
 
 #include "node/node.h"
 #include "node/node_manager.h"
@@ -304,6 +306,19 @@ LEMMA(ADD_REF12);
 
 #undef LEMMA
 #undef LEMMA_VAL
+
+/**
+ * Create the abstraction lemma schemas for the given operator kind.
+ * @param nm             The associated node manager.
+ * @param kind           The operator kind, one of BV_ADD, BV_MUL, BV_UDIV and
+ *                       BV_UREM.
+ * @param initial_lemmas True to only create the set of initial lemma schemas.
+ * @return The lemma schemas for the given kind, in the order in which they are
+ *         applied.
+ */
+std::vector<std::unique_ptr<AbstractionLemma>> mk_lemmas(NodeManager& nm,
+                                                         node::Kind kind,
+                                                         bool initial_lemmas);
 
 }  // namespace bzla::abstract
 
