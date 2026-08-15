@@ -111,8 +111,6 @@ class AbstractionModule
   backtrack::vector<Node> d_active_term_abstractions;
   /** Currently registered (active) assertion abstractions. */
   backtrack::vector<Node> d_active_assertion_abstractions;
-  /** Maps abstracted terms (original) to abstractions. */
-  std::unordered_map<Node, Node> d_abstractions;
   /** Cache for process(). */
   std::unordered_map<Node, Node> d_abstraction_cache;
   /** Assertion cache, used for tracking unsat cores. */
