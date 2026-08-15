@@ -139,9 +139,9 @@ AbstractionModule::check()
   //   - bit-blasting lemmas
   if (!d_added_lemma)
   {
-    for (const auto& [node, lemma, lk] : d_lemma_buffer)
+    for (const auto& [node, lem, lk] : d_lemma_buffer)
     {
-      if (lemma_no_abstract(lemma, lk))
+      if (lemma(lem, lk))
       {
         // Increment counter for value instantiations
         if (is_lemma_kind_value(lk))
@@ -308,7 +308,7 @@ AbstractionModule::abstract(const Node& node) const
 }
 
 bool
-AbstractionModule::check_lemma(const AbstractionLemma* lem,
+AbstractionModule::check_lemma(const AbstractionLemma* abstr_lemma,
                                const Node& val_x,
                                const Node& val_s,
                                const Node& val_t,
@@ -316,35 +316,35 @@ AbstractionModule::check_lemma(const AbstractionLemma* lem,
                                const Node& s,
                                const Node& t)
 {
-  Node inst = lem->instance(val_x, val_s, val_t);
-  Node lemma;
+  Node inst = abstr_lemma->instance(val_x, val_s, val_t);
+  Node lem;
   if (!inst.is_null())
   {
     inst = d_rewriter.eval(inst);
     assert(inst.is_value());
     if (!inst.value<bool>())
     {
-      lemma = lem->instance(x, s, t);
+      lem = abstr_lemma->instance(x, s, t);
     }
   }
   else
   {
-    inst = lem->instance(val_x, val_s, val_t, val_x, val_s, val_t);
+    inst = abstr_lemma->instance(val_x, val_s, val_t, val_x, val_s, val_t);
     if (!inst.is_null())
     {
       inst = d_rewriter.eval(inst);
       assert(inst.is_value());
       if (!inst.value<bool>())
       {
-        lemma = lem->instance(val_x, val_s, val_t, x, s, t);
+        lem = abstr_lemma->instance(val_x, val_s, val_t, x, s, t);
       }
     }
   }
 
-  if (!lemma.is_null())
+  if (!lem.is_null())
   {
-    Log(2) << lem->kind() << " inconsistent";
-    return lemma_no_abstract(lemma, lem->kind());
+    Log(2) << abstr_lemma->kind() << " inconsistent";
+    return lemma(lem, abstr_lemma->kind());
   }
 
   return false;
@@ -524,16 +524,15 @@ AbstractionModule::check_term_abstraction_ite(const Node& abstr,
   NodeManager& nm = d_env.nm();
   if (cond)
   {
-    lemma_no_abstract(
-        nm.mk_node(Kind::IMPLIES, {c, nm.mk_node(Kind::EQUAL, {abstr, bt})}),
-        LemmaKind::ITE_EXPAND);
+    lemma(nm.mk_node(Kind::IMPLIES, {c, nm.mk_node(Kind::EQUAL, {abstr, bt})}),
+          LemmaKind::ITE_EXPAND);
   }
   else
   {
-    lemma_no_abstract(nm.mk_node(Kind::IMPLIES,
-                                 {nm.mk_node(Kind::NOT, {c}),
-                                  nm.mk_node(Kind::EQUAL, {abstr, bf})}),
-                      LemmaKind::ITE_EXPAND);
+    lemma(nm.mk_node(Kind::IMPLIES,
+                     {nm.mk_node(Kind::NOT, {c}),
+                      nm.mk_node(Kind::EQUAL, {abstr, bf})}),
+          LemmaKind::ITE_EXPAND);
   }
 }
 
@@ -558,8 +557,7 @@ AbstractionModule::check_assertion_abstractions()
     {
       Log(2) << "violated assertion: " << abstr;
       Log(2) << "abstr assertion:    " << assertion;
-      Node lemma = nm.mk_node(Kind::EQUAL, {assertion, abstr});
-      lemma_no_abstract(lemma, LemmaKind::ASSERTION);
+      lemma(nm.mk_node(Kind::EQUAL, {assertion, abstr}), LemmaKind::ASSERTION);
       d_assertion_abstractions_cache.insert(abstr);
       ++nadded;
       if (nadded >= d_opt_assertion_refinements)
@@ -572,7 +570,7 @@ AbstractionModule::check_assertion_abstractions()
 }
 
 bool
-AbstractionModule::lemma_no_abstract(const Node& lemma, LemmaKind lk)
+AbstractionModule::lemma(const Node& lemma, LemmaKind lk)
 {
   // Make sure that lemma is rewritten before adding to the cache.
   Node lem = d_rewriter.rewrite(lemma);
