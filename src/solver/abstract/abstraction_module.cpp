@@ -17,7 +17,6 @@
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
 #include "node/node_utils.h"
-// #include "solver/abstract/abstraction_lemma_scorer.h"
 #include "solver/abstract/abstraction_lemmas.h"
 #include "util/hash.h"
 
@@ -113,14 +112,6 @@ AbstractionModule::check()
   Log(1) << "*** check abstractions";
   util::Timer timer(d_stats.time_check);
   ++d_stats.num_checks;
-
-  // AbstractionLemmaScorer lemma_scorer(d_env, d_abstr_lemmas);
-  // lemma_scorer.verify_lemmas();
-  // lemma_scorer.score_lemmas(Kind::BV_MUL, 4);
-  // lemma_scorer.score_lemmas(Kind::BV_UDIV, 4);
-  // lemma_scorer.score_lemmas(Kind::BV_UREM, 4);
-  // lemma_scorer.rank_lemmas_by_score();
-  // lemma_scorer.rank_lemmas_by_circuit_size();
 
   d_added_lemma = false;
 

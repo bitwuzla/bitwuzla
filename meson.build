@@ -70,5 +70,10 @@ if get_option('docs')
   subdir('docs')
 endif
 
+# Optional development utilities, not built by default
+if is_sat_solver_configured
+  subdir('contrib/lemma_scorer')
+endif
+
 # Install public headers
 install_subdir('include/bitwuzla', install_dir: 'include')

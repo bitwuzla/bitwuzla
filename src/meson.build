@@ -258,7 +258,6 @@ sources = files([
   'sat/sat_solver_factory.cpp',
   'solver/array/array_solver.cpp',
   'solver/abstract/abstraction_lemmas.cpp',
-  'solver/abstract/abstraction_lemma_scorer.cpp',
   'solver/abstract/abstraction_module.cpp',
   'solver/bv/bv_bitblast_solver.cpp',
   'solver/bv/bv_interpolator.cpp',
