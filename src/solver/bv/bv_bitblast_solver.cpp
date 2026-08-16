@@ -536,6 +536,10 @@ BvBitblastSolver::update_statistics()
   d_stats.num_cnf_vars           = cnf_stats.num_vars;
   d_stats.num_cnf_clauses        = cnf_stats.num_clauses;
   d_stats.num_cnf_literals       = cnf_stats.num_literals;
+  d_stats.num_cnf_ites           = cnf_stats.num_ites;
+  d_stats.num_cnf_xors           = cnf_stats.num_xors;
+  d_stats.num_cnf_merged         = cnf_stats.num_merged;
+  d_stats.num_cnf_top_ors        = cnf_stats.num_top_ors;
 }
 
 BvBitblastSolver::Statistics::Statistics(util::Statistics& stats,
@@ -553,7 +557,11 @@ BvBitblastSolver::Statistics::Statistics(util::Statistics& stats,
           stats.new_stat<uint64_t>(prefix + "cnf::allocated_vars")),
       num_cnf_vars(stats.new_stat<uint64_t>(prefix + "cnf::num_vars")),
       num_cnf_clauses(stats.new_stat<uint64_t>(prefix + "cnf::num_clauses")),
-      num_cnf_literals(stats.new_stat<uint64_t>(prefix + "cnf::num_literals"))
+      num_cnf_literals(stats.new_stat<uint64_t>(prefix + "cnf::num_literals")),
+      num_cnf_ites(stats.new_stat<uint64_t>(prefix + "cnf::num_ites")),
+      num_cnf_xors(stats.new_stat<uint64_t>(prefix + "cnf::num_xors")),
+      num_cnf_merged(stats.new_stat<uint64_t>(prefix + "cnf::num_merged")),
+      num_cnf_top_ors(stats.new_stat<uint64_t>(prefix + "cnf::num_top_ors"))
 {
 }
 

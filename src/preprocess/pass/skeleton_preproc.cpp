@@ -147,9 +147,14 @@ PassSkeletonPreproc::apply(AssertionVector& assertions)
   // Encode Boolean skeleton
   {
     util::Timer timer(d_stats.time_encode);
+    // Bit-blast all assertions before encoding them to CNF since the encoder
+    // makes use of parents information.
     for (const Node& assertion : _assertions)
     {
       bitblaster.bitblast(assertion);
+    }
+    for (const Node& assertion : _assertions)
+    {
       const auto& bits = bitblaster.bits(assertion);
       cnf_encoder.encode(bits[0], true);
       // Top-level ANDs are not encoded (only their leafs).
