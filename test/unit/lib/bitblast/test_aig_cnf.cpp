@@ -9,6 +9,7 @@
  */
 
 #include <iostream>
+#include <unordered_map>
 
 #include "bitblast/aig/aig_cnf.h"
 #include "bitblast/aig_bitblaster.h"
@@ -53,9 +54,12 @@ class DummySatSolver : public bitblast::SatInterface
 
   bool value(int64_t lit) override
   {
-    (void) lit;
-    return false;
+    auto it = d_values.find(lit);
+    return it == d_values.end() ? false : it->second;
   }
+
+  /** Set the value the solver reports for `lit`. */
+  void set_value(int64_t lit, bool value) { d_values[lit] = value; }
 
   std::string to_dimacs() const
   {
@@ -78,6 +82,7 @@ class DummySatSolver : public bitblast::SatInterface
   std::vector<std::vector<int64_t>>& get_clauses() { return d_clauses; }
 
  private:
+  std::unordered_map<int64_t, bool> d_values;
   int64_t d_max_var = 1;
   std::vector<int64_t> d_clause;
   ClauseList d_clauses;
@@ -309,10 +314,9 @@ TEST_F(TestAigCnf, enc_or)
                         {or_id, enc.cnf_lit(a), enc.cnf_lit(b)}}));
 }
 
-#if 0
 TEST_F(TestAigCnf, enc_or_top)
 {
-  bitblast::AigManager aigmgr;
+  bitblast::BitInterface<bitblast::AigNode> aigmgr;
   DummySatSolver solver;
   bitblast::AigCnfEncoder enc(solver);
 
@@ -325,7 +329,7 @@ TEST_F(TestAigCnf, enc_or_top)
 
 TEST_F(TestAigCnf, enc_or_top2)
 {
-  bitblast::AigManager aigmgr;
+  bitblast::BitInterface<bitblast::AigNode> aigmgr;
   DummySatSolver solver;
   bitblast::AigCnfEncoder enc(solver);
 
@@ -340,7 +344,209 @@ TEST_F(TestAigCnf, enc_or_top2)
   ASSERT_EQ(solver.get_clauses(),
             ClauseList({{a.get_id(), b.get_id(), c.get_id(), d.get_id()}}));
 }
-#endif
+
+TEST_F(TestAigCnf, enc_nary_and)
+{
+  bitblast::BitInterface<bitblast::AigNode> aigmgr;
+  DummySatSolver solver;
+  bitblast::AigCnfEncoder enc(solver);
+
+  bitblast::AigNode a        = aigmgr.mk_bit();
+  bitblast::AigNode b        = aigmgr.mk_bit();
+  bitblast::AigNode c        = aigmgr.mk_bit();
+  bitblast::AigNode and_aig1 = aigmgr.mk_and(a, b);
+  bitblast::AigNode and_aig2 = aigmgr.mk_and(and_aig1, c);
+  // and_aig1 is only used by and_aig2, thus both are encoded as one n-ary AND
+  enc.encode(and_aig2, false);
+  auto x = enc.cnf_var(and_aig2);
+  ASSERT_FALSE(enc.is_encoded(and_aig1));
+  ASSERT_EQ(
+      solver.get_clauses(),
+      ClauseList({{-x, enc.cnf_lit(c)},
+                  {-x, enc.cnf_lit(a)},
+                  {-x, enc.cnf_lit(b)},
+                  {x, -enc.cnf_lit(c), -enc.cnf_lit(a), -enc.cnf_lit(b)}}));
+}
+
+TEST_F(TestAigCnf, enc_nary_and_encode_merged)
+{
+  bitblast::BitInterface<bitblast::AigNode> aigmgr;
+  DummySatSolver solver;
+  bitblast::AigCnfEncoder enc(solver);
+
+  bitblast::AigNode a        = aigmgr.mk_bit();
+  bitblast::AigNode b        = aigmgr.mk_bit();
+  bitblast::AigNode c        = aigmgr.mk_bit();
+  bitblast::AigNode and_aig1 = aigmgr.mk_and(a, b);
+  bitblast::AigNode and_aig2 = aigmgr.mk_and(and_aig1, c);
+  enc.encode(and_aig2, false);
+  ASSERT_FALSE(enc.is_encoded(and_aig1));
+  // A node that was merged into its parent still gets its own definition if
+  // it is encoded later on, e.g., because it occurs as an assumption.
+  enc.encode(and_aig1, false);
+  ASSERT_TRUE(enc.is_encoded(and_aig1));
+  auto x1      = enc.cnf_var(and_aig1);
+  auto clauses = solver.get_clauses();
+  ASSERT_EQ(clauses.size(), 7);
+  ASSERT_EQ(clauses[4], std::vector<int64_t>({-x1, enc.cnf_lit(a)}));
+  ASSERT_EQ(clauses[5], std::vector<int64_t>({-x1, enc.cnf_lit(b)}));
+  ASSERT_EQ(clauses[6],
+            std::vector<int64_t>({x1, -enc.cnf_lit(a), -enc.cnf_lit(b)}));
+}
+
+TEST_F(TestAigCnf, enc_nary_and_shared)
+{
+  bitblast::BitInterface<bitblast::AigNode> aigmgr;
+  DummySatSolver solver;
+  bitblast::AigCnfEncoder enc(solver);
+
+  bitblast::AigNode a        = aigmgr.mk_bit();
+  bitblast::AigNode b        = aigmgr.mk_bit();
+  bitblast::AigNode c        = aigmgr.mk_bit();
+  bitblast::AigNode and_aig1 = aigmgr.mk_and(a, b);
+  bitblast::AigNode and_aig2 = aigmgr.mk_and(and_aig1, c);
+  bitblast::AigNode and_aig3 = aigmgr.mk_and(and_aig1, aigmgr.mk_not(c));
+  // and_aig1 is shared, thus it is encoded separately
+  enc.encode(and_aig2, false);
+  enc.encode(and_aig3, false);
+  ASSERT_TRUE(enc.is_encoded(and_aig1));
+  auto x1 = enc.cnf_var(and_aig1);
+  auto x2 = enc.cnf_var(and_aig2);
+  auto x3 = enc.cnf_var(and_aig3);
+  ASSERT_EQ(solver.get_clauses(),
+            ClauseList({{-x1, enc.cnf_lit(a)},
+                        {-x1, enc.cnf_lit(b)},
+                        {x1, -enc.cnf_lit(a), -enc.cnf_lit(b)},
+                        {-x2, enc.cnf_lit(c)},
+                        {-x2, x1},
+                        {x2, -enc.cnf_lit(c), -x1},
+                        {-x3, -enc.cnf_lit(c)},
+                        {-x3, x1},
+                        {x3, enc.cnf_lit(c), -x1}}));
+}
+
+TEST_F(TestAigCnf, enc_require_cnf_var_and)
+{
+  bitblast::BitInterface<bitblast::AigNode> aigmgr;
+  DummySatSolver solver;
+  bitblast::AigCnfEncoder enc(solver);
+
+  bitblast::AigNode a        = aigmgr.mk_bit();
+  bitblast::AigNode b        = aigmgr.mk_bit();
+  bitblast::AigNode c        = aigmgr.mk_bit();
+  bitblast::AigNode and_aig1 = aigmgr.mk_and(a, b);
+  bitblast::AigNode and_aig2 = aigmgr.mk_and(and_aig1, c);
+  // A node that requires a CNF variable is not merged into its parent, even
+  // though it has a single parent, i.e., it is encoded exactly as it was before
+  // n-ary AND merging.
+  and_aig1.require_cnf_var();
+  enc.encode(and_aig2, false);
+  ASSERT_TRUE(enc.is_encoded(and_aig1));
+  auto x1 = enc.cnf_var(and_aig1);
+  auto x2 = enc.cnf_var(and_aig2);
+  ASSERT_EQ(solver.get_clauses(),
+            ClauseList({{-x1, enc.cnf_lit(a)},
+                        {-x1, enc.cnf_lit(b)},
+                        {x1, -enc.cnf_lit(a), -enc.cnf_lit(b)},
+                        {-x2, enc.cnf_lit(c)},
+                        {-x2, x1},
+                        {x2, -enc.cnf_lit(c), -x1}}));
+}
+
+TEST_F(TestAigCnf, enc_require_cnf_var_or_top)
+{
+  bitblast::BitInterface<bitblast::AigNode> aigmgr;
+  DummySatSolver solver;
+  bitblast::AigCnfEncoder enc(solver);
+
+  bitblast::AigNode a      = aigmgr.mk_bit();
+  bitblast::AigNode b      = aigmgr.mk_bit();
+  bitblast::AigNode or_aig = aigmgr.mk_or(a, b);
+  // A top-level OR that requires a CNF variable gets a variable and a unit
+  // clause instead of being emitted as a single clause over its leafs (cf.
+  // enc_or_top).
+  or_aig.require_cnf_var();
+  enc.encode(or_aig, true);
+  ASSERT_TRUE(enc.is_encoded(or_aig));
+  auto or_id = enc.cnf_var(or_aig);
+  ASSERT_EQ(solver.get_clauses(),
+            ClauseList({{-or_id, -enc.cnf_lit(a)},
+                        {-or_id, -enc.cnf_lit(b)},
+                        {or_id, enc.cnf_lit(a), enc.cnf_lit(b)},
+                        {enc.cnf_lit(or_aig)}}));
+}
+
+TEST_F(TestAigCnf, enc_require_cnf_var_ite_inner)
+{
+  bitblast::BitInterface<bitblast::AigNode> aigmgr;
+  DummySatSolver solver;
+  bitblast::AigCnfEncoder enc(solver);
+
+  bitblast::AigNode c   = aigmgr.mk_bit();
+  bitblast::AigNode a   = aigmgr.mk_bit();
+  bitblast::AigNode b   = aigmgr.mk_bit();
+  bitblast::AigNode z   = aigmgr.mk_bit();
+  bitblast::AigNode l   = aigmgr.mk_and(c, aigmgr.mk_not(a));
+  bitblast::AigNode r   = aigmgr.mk_and(aigmgr.mk_not(c), aigmgr.mk_not(b));
+  bitblast::AigNode ite = aigmgr.mk_and(aigmgr.mk_not(l), aigmgr.mk_not(r));
+  // Extracting the ITE would drop both inner AND nodes, so an inner node that
+  // requires a CNF variable refuses it. `ite` is then encoded as a plain AND,
+  // and is merged into its parent rather than keeping a variable it no longer
+  // needs.
+  l.require_cnf_var();
+  enc.encode(aigmgr.mk_and(ite, z), false);
+  ASSERT_EQ(enc.statistics().num_ites, 0u);
+  ASSERT_FALSE(enc.is_encoded(ite));
+  ASSERT_TRUE(enc.is_encoded(l));
+  ASSERT_TRUE(enc.is_encoded(r));
+}
+
+TEST_F(TestAigCnf, enc_ite_inner_cnf_var_not_required)
+{
+  bitblast::BitInterface<bitblast::AigNode> aigmgr;
+  DummySatSolver solver;
+  bitblast::AigCnfEncoder enc(solver);
+
+  bitblast::AigNode c   = aigmgr.mk_bit();
+  bitblast::AigNode a   = aigmgr.mk_bit();
+  bitblast::AigNode b   = aigmgr.mk_bit();
+  bitblast::AigNode z   = aigmgr.mk_bit();
+  bitblast::AigNode ite = aigmgr.mk_and(
+      aigmgr.mk_not(aigmgr.mk_and(c, aigmgr.mk_not(a))),
+      aigmgr.mk_not(aigmgr.mk_and(aigmgr.mk_not(c), aigmgr.mk_not(b))));
+  // Without the required CNF variable of enc_require_cnf_var_ite_inner the
+  // very same AIG is extracted.
+  enc.encode(aigmgr.mk_and(ite, z), false);
+  ASSERT_EQ(enc.statistics().num_ites, 1u);
+  ASSERT_TRUE(enc.is_encoded(ite));
+}
+
+TEST_F(TestAigCnf, value_merged)
+{
+  bitblast::BitInterface<bitblast::AigNode> aigmgr;
+  DummySatSolver solver;
+  bitblast::AigCnfEncoder enc(solver);
+
+  bitblast::AigNode a        = aigmgr.mk_bit();
+  bitblast::AigNode b        = aigmgr.mk_bit();
+  bitblast::AigNode c        = aigmgr.mk_bit();
+  bitblast::AigNode and_aig1 = aigmgr.mk_and(a, b);
+  bitblast::AigNode and_aig2 = aigmgr.mk_and(and_aig1, c);
+  enc.encode(and_aig2, false);
+  ASSERT_FALSE(enc.is_encoded(and_aig1));
+
+  // The value of a merged node is determined by its children.
+  solver.set_value(enc.cnf_var(a), true);
+  solver.set_value(enc.cnf_var(b), true);
+  solver.set_value(enc.cnf_var(c), false);
+  ASSERT_EQ(enc.value(and_aig1), 1);
+  ASSERT_EQ(enc.value(aigmgr.mk_not(and_aig1)), -1);
+  ASSERT_EQ(enc.value(and_aig2), -1);
+
+  solver.set_value(enc.cnf_var(b), false);
+  ASSERT_EQ(enc.value(and_aig1), -1);
+  ASSERT_EQ(enc.value(aigmgr.mk_not(and_aig1)), 1);
+}
 
 TEST_F(TestAigCnf, perf1_cadical)
 {

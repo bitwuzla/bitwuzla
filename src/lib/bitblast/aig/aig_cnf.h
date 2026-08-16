@@ -80,6 +80,10 @@ class AigCnfEncoder
     uint64_t num_vars       = 0;  // Number of currently encoded variables
     uint64_t num_clauses    = 0;  // Number of added clauses
     uint64_t num_literals   = 0;  // Number of added literals
+    uint64_t num_ites       = 0;  // Number of extracted ites (excluding xors)
+    uint64_t num_xors       = 0;  // Number of extracted xor/xnor gates
+    uint64_t num_merged     = 0;  // Number of AND nodes merged into an n-ary AND
+    uint64_t num_top_ors    = 0;  // Number of top-level ORs encoded as a clause
   };
 
   AigCnfEncoder(SatInterface& sat_solver);
@@ -124,11 +128,45 @@ class AigCnfEncoder
   const Statistics& statistics() const;
 
  private:
+  /** Maximum number of mergeable leafs collected for an n-ary AND gate. */
+  static constexpr size_t s_max_and_size = 64;
+  /** Maximum number of literals in the clause emitted for a top-level OR. */
+  static constexpr size_t s_max_top_or_size = 256;
+
   /** Lazily initializes d_true_var on the first encode() call. */
   void initialize();
 
   /** Encode AIG to CNF. */
   void _encode(const AigNode& node);
+  /**
+   * Determine whether the AND node `aig` can be merged into the n-ary AND/OR
+   * gate of its (unique) parent, i.e., whether it needs no CNF variable.
+   *
+   * @note Only considers the AND node itself, the caller has to check that
+   *       `aig` occurs with the polarity required for merging.
+   */
+  bool is_mergeable(const AigNode& aig) const;
+  /**
+   * Determine whether the AND node `aig` will be encoded as an extracted
+   * ite(c,a,b) gate, and if so collect its children. The single predicate that
+   * decides extraction, asked by both is_mergeable() and _encode().
+   *
+   * @param children If not null, the children of ite(c,a,b), added as c,~a,~b.
+   */
+  static bool extracts_as_ite(const AigNode& aig,
+                              std::vector<const AigNode*>* children);
+  /**
+   * Collect the leafs of the n-ary AND gate rooted at AND node `aig`, i.e.,
+   * recursively expand all mergeable AND children.
+   *
+   * @note Ignores the polarity of `aig` itself, an n-ary OR is collected by
+   *       calling this on a negated AND node and negating the leaf literals.
+   *
+   * @param max_size Maximum number of leafs to collect.
+   */
+  void collect_and(const AigNode& aig,
+                   std::vector<const AigNode*>& leafs,
+                   size_t max_size);
   /** Ensure that `d_aig_encoded` is big enough to store `aig`. */
   void resize(const AigNode& aig);
   /** Mark `aig` as encoded. */
@@ -149,6 +187,8 @@ class AigCnfEncoder
   std::vector<size_t> d_aig_encoded_ids;
   /** Tracks encoded AIGs by assertion level. */
   std::vector<size_t> d_aig_encoded_ids_control;
+  /** Stack of collect_and(), a member to save an allocation per call. */
+  std::vector<const AigNode*> d_visit;
   /** SAT solver. */
   SatInterface& d_sat_solver;
   /** Variable allocated for true/false. */

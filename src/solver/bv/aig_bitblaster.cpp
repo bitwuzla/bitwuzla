@@ -15,6 +15,22 @@
 
 namespace bzla::bv {
 
+namespace {
+
+/**
+ * Determine whether a word-level node of the given type belongs to the Boolean
+ * skeleton. In bool_bv1_mode 1-bit bit-vectors are treated as Booleans and are
+ * therefore part of the skeleton too.
+ */
+bool
+is_skeleton_type(const Type& type, bool bool_bv1_mode)
+{
+  return type.is_bool()
+         || (bool_bv1_mode && type.is_bv() && type.bv_size() == 1);
+}
+
+}  // namespace
+
 void
 AigBitblaster::bitblast(const Node& t)
 {
@@ -228,6 +244,14 @@ AigBitblaster::bitblast(const Node& t)
 
         // We should never reach other kinds.
         default: assert(false); break;
+      }
+      // Keep a CNF variable for every node of the Boolean skeleton, so that
+      // gate merging is confined to the AIG nodes internal to the bit-blasting
+      // of a word-level operator (see AigNode::require_cnf_var()).
+      if (is_skeleton_type(type, d_bool_bv1_mode))
+      {
+        assert(it->second.size() == 1);
+        it->second[0].require_cnf_var();
       }
     }
     visit.pop_back();

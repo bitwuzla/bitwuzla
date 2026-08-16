@@ -69,17 +69,45 @@ AigCnfEncoder::encode(const AigNode& node, bool top_level, uint32_t level)
       else
       {
         children.push_back(cur);
-        _encode(cur);
       }
     } while (!visit.empty());
     assert(!children.empty());
 
+    std::vector<const AigNode*> leafs;
     for (const AigNode& child : children)
     {
-      // leafs of top-level AIGs are associated with the top-most AIG
-      d_sat_solver.add_clause({cnf_lit(child)}, node.get_id());
-      ++d_statistics.num_clauses;
-      ++d_statistics.num_literals;
+      // A top-level leaf that is a negated AND is an asserted (n-ary) OR:
+      // encode it directly as a clause instead of introducing a variable for
+      // it (and for all AND nodes it is composed of).
+      if (child.is_and() && child.is_negated() && is_mergeable(child))
+      {
+        leafs.clear();
+        collect_and(child, leafs, s_max_top_or_size);
+        for (const AigNode* leaf : leafs)
+        {
+          _encode(*leaf);
+        }
+        // leafs of top-level AIGs are associated with the top-most AIG
+        for (const AigNode* leaf : leafs)
+        {
+          d_sat_solver.add(-cnf_lit(*leaf), node.get_id());
+        }
+        d_sat_solver.add(0, node.get_id());
+        ++d_statistics.num_clauses;
+        d_statistics.num_literals += leafs.size();
+        ++d_statistics.num_top_ors;
+        // The OR node itself and all AND nodes merged into it do not require
+        // a CNF variable.
+        d_statistics.num_merged += leafs.size() - 1;
+      }
+      else
+      {
+        _encode(child);
+        // leafs of top-level AIGs are associated with the top-most AIG
+        d_sat_solver.add_clause({cnf_lit(child)}, node.get_id());
+        ++d_statistics.num_clauses;
+        ++d_statistics.num_literals;
+      }
     }
   }
   else
@@ -100,10 +128,45 @@ AigCnfEncoder::value(const AigNode& aig)
     return -1;
   }
 
-  int32_t val = -1;
+  int32_t val;
   if (is_encoded(aig))
   {
     val = d_sat_solver.value(cnf_var(aig)) ? 1 : -1;
+  }
+  else if (aig.is_and())
+  {
+    // `aig` has no CNF variable of its own because it was merged into the gate
+    // of its parent. Evaluate the AND from its children, which are either
+    // encoded or merged themselves; the recursive call applies the negation of
+    // a child.
+    val = 1;
+    std::vector<const AigNode*> visit{&aig};
+    do
+    {
+      const AigNode* cur = visit.back();
+      visit.pop_back();
+      for (size_t i = 0; i < 2; ++i)
+      {
+        const AigNode& child = (*cur)[i];
+        if (child.is_and() && !child.is_negated() && !is_encoded(child))
+        {
+          visit.push_back(&child);
+        }
+        else if (value(child) < 0)
+        {
+          val = -1;
+          visit.clear();
+          break;
+        }
+      }
+    } while (!visit.empty());
+  }
+  else
+  {
+    // An AIG constant that does not occur in any encoded cone is
+    // unconstrained, return the default value.
+    assert(aig.is_const());
+    val = -1;
   }
 
   return aig.is_negated() ? -val : val;
@@ -161,27 +224,21 @@ namespace {
  * Check whether given two-level AIG encodes an ite(c,a,b).
  *
  * @param aig The AIG to check.
- * @param children The children of ite(c,a,b), added as c,~a,~b. Note that a
- *                 and b have to be negated when encoding the ite to CNF since
- *                 we do not push new negated nodes onto the vector, but use
- *                 the existing ones that occur in `aig`.
+ * @param children If not null, the children of ite(c,a,b), added as c,~a,~b.
+ *                 Note that a and b have to be negated when encoding the ite
+ *                 to CNF since we do not push new negated nodes onto the
+ *                 vector, but use the existing ones that occur in `aig`.
  *
  * @return True if given AIG is a if-then-else.
  */
 bool
-is_ite(const AigNode& aig, std::vector<const AigNode*>& children)
+is_ite(const AigNode& aig, std::vector<const AigNode*>* children = nullptr)
 {
   assert(aig.is_and());
-  assert(children.empty());
+  assert(children == nullptr || children->empty());
 
   const auto& l = aig[0];
   if (!l.is_negated() || !l.is_and())
-  {
-    return false;
-  }
-
-  // Do not extract ITE if it destroys sharing
-  if (l.parents() > 1)
   {
     return false;
   }
@@ -192,8 +249,8 @@ is_ite(const AigNode& aig, std::vector<const AigNode*>& children)
     return false;
   }
 
-  // Do not extract ITE if it destroys sharing
-  if (r.parents() > 1)
+  // Only extract ITE if both inner AND nodes are local to `aig`.
+  if (l.parents() > 1 || r.parents() > 1)
   {
     return false;
   }
@@ -209,33 +266,45 @@ is_ite(const AigNode& aig, std::vector<const AigNode*>& children)
   // ~(~b /\ ~c) /\  ~(c /\ ~a)
   if (-lr.get_id() == rl.get_id())
   {
-    children.push_back(&rl);  // c
-    children.push_back(&rr);  // ~a
-    children.push_back(&ll);  // ~b
+    if (children != nullptr)
+    {
+      children->push_back(&rl);  // c
+      children->push_back(&rr);  // ~a
+      children->push_back(&ll);  // ~b
+    }
     return true;
   }
   // ~(~c /\ ~b) /\ ~(c /\ ~a)
   if (-ll.get_id() == rl.get_id())
   {
-    children.push_back(&rl);  // c
-    children.push_back(&rr);  // ~a
-    children.push_back(&lr);  // ~b
+    if (children != nullptr)
+    {
+      children->push_back(&rl);  // c
+      children->push_back(&rr);  // ~a
+      children->push_back(&lr);  // ~b
+    }
     return true;
   }
   // ~(~b /\ ~c) /\  ~(~a /\ c)
   if (-lr.get_id() == rr.get_id())
   {
-    children.push_back(&rr);  // c
-    children.push_back(&rl);  // ~a
-    children.push_back(&ll);  // ~b
+    if (children != nullptr)
+    {
+      children->push_back(&rr);  // c
+      children->push_back(&rl);  // ~a
+      children->push_back(&ll);  // ~b
+    }
     return true;
   }
   // ~(~c /\ ~b) /\  ~(~a /\ c)
   if (-ll.get_id() == rr.get_id())
   {
-    children.push_back(&rr);  // c
-    children.push_back(&rl);  // ~a
-    children.push_back(&lr);  // ~b
+    if (children != nullptr)
+    {
+      children->push_back(&rr);  // c
+      children->push_back(&rl);  // ~a
+      children->push_back(&lr);  // ~b
+    }
     return true;
   }
 
@@ -244,11 +313,70 @@ is_ite(const AigNode& aig, std::vector<const AigNode*>& children)
 
 }  // namespace
 
+bool
+AigCnfEncoder::extracts_as_ite(const AigNode& aig,
+                               std::vector<const AigNode*>* children)
+{
+  assert(aig.is_and());
+  // Extraction drops the two inner AND nodes, but only if neither requires a
+  // CNF variable.
+  return !aig[0].requires_cnf_var() && !aig[1].requires_cnf_var()
+         && is_ite(aig, children);
+}
+
+bool
+AigCnfEncoder::is_mergeable(const AigNode& aig) const
+{
+  assert(aig.is_and());
+  // A node with more than one parent needs a CNF variable for its other
+  // parent(s). A node with no parent only gets here as a leaf of a top-level
+  // AND, where merging it into the asserted clause is fine.
+  if (aig.parents() > 1 || is_encoded(aig) || aig.requires_cnf_var())
+  {
+    return false;
+  }
+  // Merging an extracted ite would cost the two variables and 6 clauses of its
+  // inner AND nodes instead of one variable and 4 clauses. We need the same
+  // check as in _encode(): a node whose extraction is refused because an inner
+  // node requires a CNF variable is better merged than kept.
+  return !extracts_as_ite(aig, nullptr);
+}
+
+void
+AigCnfEncoder::collect_and(const AigNode& aig,
+                           std::vector<const AigNode*>& leafs,
+                           size_t max_size)
+{
+  assert(aig.is_and());
+  assert(leafs.empty());
+  assert(d_visit.empty());
+
+  d_visit.push_back(&aig[1]);
+  d_visit.push_back(&aig[0]);
+  do
+  {
+    const AigNode* cur = d_visit.back();
+    d_visit.pop_back();
+
+    if (cur->is_and() && !cur->is_negated() && is_mergeable(*cur)
+        && leafs.size() + d_visit.size() < max_size)
+    {
+      d_visit.push_back(&(*cur)[1]);
+      d_visit.push_back(&(*cur)[0]);
+    }
+    else
+    {
+      leafs.push_back(cur);
+    }
+  } while (!d_visit.empty());
+}
+
 void
 AigCnfEncoder::_encode(const AigNode& aig)
 {
   std::vector<const AigNode*> visit;
   std::unordered_set<const AigNode*> cache;
+  std::vector<const AigNode*> children;
   visit.push_back(&aig);
   do
   {
@@ -278,37 +406,32 @@ AigCnfEncoder::_encode(const AigNode& aig)
 
       auto [it, inserted] = cache.insert(cur);
 
-      std::vector<const AigNode*> children;
-      bool ite = is_ite(*cur, children);
+      children.clear();
+      bool ite = extracts_as_ite(*cur, &children);
+      if (!ite)
+      {
+        children.clear();
+        collect_and(*cur, children, s_max_and_size);
+      }
 
       if (inserted)
       {
-        if (ite)
-        {
-          visit.insert(visit.end(), children.begin(), children.end());
-        }
-        else
-        {
-          visit.push_back(&(*cur)[0]);
-          visit.push_back(&(*cur)[1]);
-        }
+        visit.insert(visit.end(), children.begin(), children.end());
       }
       else
       {
         visit.pop_back();
         set_encoded(*cur);
 
-        // TODO: and optimization: collect all children and encode one big and
-        // TODO: xor optimization: use native xor encoding
+        auto id = std::abs(cur->get_id());
+        auto x  = cnf_var(*cur);
 
         if (ite)
         {
           // Encode x <-> ite(c,a,b)
-          auto id = std::abs(cur->get_id());
-          auto x  = cnf_var(*cur);
-          auto c  = cnf_lit(*children[0]);   // cond
-          auto a  = -cnf_lit(*children[1]);  // then
-          auto b  = -cnf_lit(*children[2]);  // else
+          auto c = cnf_lit(*children[0]);   // cond
+          auto a = -cnf_lit(*children[1]);  // then
+          auto b = -cnf_lit(*children[2]);  // else
 
           d_sat_solver.add_clause({-x, -c, a}, id);
           d_sat_solver.add_clause({-x, c, b}, id);
@@ -316,23 +439,39 @@ AigCnfEncoder::_encode(const AigNode& aig)
           d_sat_solver.add_clause({x, c, -b}, id);
           d_statistics.num_clauses += 4;
           d_statistics.num_literals += 12;
+          // xor is the ite variant ite(c,a,~a)
+          if (children[1]->get_id() == -children[2]->get_id())
+          {
+            ++d_statistics.num_xors;
+          }
+          else
+          {
+            ++d_statistics.num_ites;
+          }
         }
         else
         {
-          // Encode binary AND
+          // Encode n-ary AND
           //
-          // x <-> a /\ b --> (~x \/ a) /\ (~x \/ b) /\ (x \/ ~a \/ ~b)
-
-          auto id = std::abs(cur->get_id());
-          auto x  = cnf_var(*cur);
-          auto a  = cnf_lit((*cur)[0]);
-          auto b  = cnf_lit((*cur)[1]);
-
-          d_sat_solver.add_clause({-x, a}, id);
-          d_sat_solver.add_clause({-x, b}, id);
-          d_sat_solver.add_clause({x, -a, -b}, id);
-          d_statistics.num_clauses += 3;
-          d_statistics.num_literals += 7;
+          // x <-> a1 /\ ... /\ an
+          //   --> (~x \/ a1) /\ ... /\ (~x \/ an)
+          //    /\ (x \/ ~a1 \/ ... \/ ~an)
+          assert(children.size() >= 2);
+          for (const AigNode* child : children)
+          {
+            d_sat_solver.add_clause({-x, cnf_lit(*child)}, id);
+          }
+          d_sat_solver.add(x, id);
+          for (const AigNode* child : children)
+          {
+            d_sat_solver.add(-cnf_lit(*child), id);
+          }
+          d_sat_solver.add(0, id);
+          d_statistics.num_clauses += children.size() + 1;
+          d_statistics.num_literals += 3 * children.size() + 1;
+          // A binary AND is the base case, every additional leaf saves the
+          // variable and 2 clauses of one merged AND node.
+          d_statistics.num_merged += children.size() - 2;
         }
       }
     }

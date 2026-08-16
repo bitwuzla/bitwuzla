@@ -9,6 +9,7 @@
  */
 
 #include "node/node_manager.h"
+#include "solver/bv/aig_bitblaster.h"
 #include "solving_context.h"
 #include "test/unit/test.h"
 
@@ -23,6 +24,31 @@ class TestBvSolver : public TestCommon
   option::Options d_options;
   sat::SatSolverFactory d_sat_factory;
 };
+
+TEST_F(TestBvSolver, bitblast_skeleton_requires_cnf_var)
+{
+  NodeManager nm;
+  Type bv8 = nm.mk_bv_type(8);
+  Node x   = nm.mk_const(bv8);
+  Node y   = nm.mk_const(bv8);
+  Node ult = nm.mk_node(Kind::BV_ULT, {x, y});
+  Node eq  = nm.mk_node(Kind::EQUAL, {x, y});
+  Node a   = nm.mk_node(Kind::AND, {ult, eq});
+  Node add = nm.mk_node(Kind::BV_ADD, {x, y});
+
+  bv::AigBitblaster bb;
+  bb.bitblast(a);
+  bb.bitblast(add);
+
+  // Every node of the Boolean skeleton keeps a CNF variable of its own, so that
+  // the SAT solver can decide on it and report it as fixed.
+  ASSERT_TRUE(bb.bits(a)[0].requires_cnf_var());
+  ASSERT_TRUE(bb.bits(ult)[0].requires_cnf_var());
+  ASSERT_TRUE(bb.bits(eq)[0].requires_cnf_var());
+  // AIG nodes internal to a word-level operator do not require a CNF variable,
+  // so they can be merged into the gate of their parent.
+  ASSERT_FALSE(bb.bits(add)[0].requires_cnf_var());
+}
 
 TEST_F(TestBvSolver, ctor_dtor)
 {

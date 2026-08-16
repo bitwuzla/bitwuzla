@@ -184,6 +184,10 @@ class BvBitblastSolver : public Solver,
     uint64_t& num_cnf_vars;
     uint64_t& num_cnf_clauses;
     uint64_t& num_cnf_literals;
+    uint64_t& num_cnf_ites;
+    uint64_t& num_cnf_xors;
+    uint64_t& num_cnf_merged;
+    uint64_t& num_cnf_top_ors;
   } d_stats;
 };
 
