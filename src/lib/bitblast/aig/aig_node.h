@@ -53,6 +53,22 @@ class AigNode
 
   uint32_t parents() const;
 
+  /**
+   * @return Whether this node keeps a CNF variable of its own, see
+   *         require_cnf_var().
+   */
+  bool requires_cnf_var() const;
+
+  /**
+   * Request that this node keeps a CNF variable of its own, i.e., that the CNF
+   * encoder does not merge it into the gate of its parent. A merged node has no
+   * CNF variable and is invisible to everything that maps between CNF and AIG.
+   * The request lives in the node data, so it survives resetting the encoder.
+   *
+   * @note No-op for anything but AND nodes, only those are ever merged.
+   */
+  void require_cnf_var() const;
+
   bool is_null() const { return d_data == 0; }
 
   std::string str() const;
@@ -110,9 +126,15 @@ class AigNodeData
   }
 
  private:
-  AigNodeData(AigManager* mgr) : d_mgr(mgr) {}
+  AigNodeData(AigManager* mgr) : d_mgr(mgr), d_parents(0), d_requires_cnf_var(0)
+  {
+  }
   AigNodeData(AigManager* mgr, const AigNode& left, const AigNode& right)
-      : d_mgr(mgr), d_left(left), d_right(right)
+      : d_mgr(mgr),
+        d_parents(0),
+        d_requires_cnf_var(0),
+        d_left(left),
+        d_right(right)
   {
   }
 
@@ -125,8 +147,16 @@ class AigNodeData
   int64_t d_id = 0;
   /** Reference count. */
   uint32_t d_refs = 0;
-  /** Number of parents. */
-  uint32_t d_parents = 0;
+  /**
+   * Number of parents. Shares its 4 bytes with d_requires_cnf_var, 2^31-1
+   * parents is far beyond anything reachable.
+   */
+  uint32_t d_parents : 31;
+  /**
+   * True if the node must not be merged into its parent's gate, see
+   * AigNode::require_cnf_var().
+   */
+  uint32_t d_requires_cnf_var : 1;
   /** Left child of AND gate. */
   AigNode d_left;
   /** Right child of AND gate. */
@@ -189,6 +219,26 @@ AigNode::parents() const
   assert(!is_null());
   return data()->d_parents;
 }
+
+inline bool
+AigNode::requires_cnf_var() const
+{
+  assert(!is_null());
+  return data()->d_requires_cnf_var;
+}
+
+inline void
+AigNode::require_cnf_var() const
+{
+  assert(!is_null());
+  if (is_and())
+  {
+    data()->d_requires_cnf_var = 1;
+  }
+}
+
+/** The AIG is the largest structure Bitwuzla builds, a node must not grow. */
+static_assert(sizeof(AigNodeData) == 48, "AigNodeData must stay 48 bytes");
 
 std::ostream& operator<<(std::ostream& out, const AigNode& aig);
 
