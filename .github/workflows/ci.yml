@@ -114,6 +114,11 @@ jobs:
           - name: debug
             config: debug --python --cryptominisat --kissat
 
+          - name: release-no-sat-solver
+            os: ubuntu-latest
+            config: --no-cadical --python
+            build-only: true
+
           - name: release-clang
             os: ubuntu-latest
             config: --testing --unit-testing --python --cryptominisat --kissat
@@ -192,6 +197,7 @@ jobs:
         working-directory: build
 
       - name: Examples
+        if: ${{ !matrix.build-only }}
         working-directory: examples
         run: |
           pkgconfigdir=$(find $(pwd)/../build/install/lib -name pkgconfig)

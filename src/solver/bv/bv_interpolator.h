@@ -21,6 +21,9 @@
 #include "solver/bv/bv_bitblast_solver.h"
 #include "solver/fp/word_blaster.h"
 #include "solver/solver.h"
+#ifndef BZLA_USE_CADICAL
+#include "util/exceptions.h"
+#endif
 #include "util/statistics.h"
 
 namespace bzla {
