@@ -5,6 +5,14 @@ This file collects a summary of important and/or user-visible changes.
 - Removed obsolete option `--pp-contr-ands`. This preprocessing pass was
   disabled by default and does not have an observable positive impact.
 
+- Added assertion levels to the experimental `bitwuzla::SatSolver` interface:
+  `push()`, `pop()` and `set_level()`. Implementing them is optional, they
+  default to no-ops, and back ends that ignore them behave as before (clauses
+  of popped levels are kept instead of being freed).
+  **Note:** this extends the vtable of `bitwuzla::SatSolver`. Out-of-tree
+  implementations of the interface do not need source changes, but must be
+  recompiled against the new header.
+
 ## News for version 0.9.1
 
 - Updated SymFPU to version 1.2.0.

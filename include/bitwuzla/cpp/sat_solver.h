@@ -89,24 +89,6 @@ class SatSolver
   virtual Result solve() = 0;
 
   /**
-   * Push assertion level.
-   *
-   * Implementing push()/pop()/set_level() is optional: all clauses sent to
-   * the SAT solver are globally valid (Tseitin definitions and theory-valid
-   * lemmas; assertions of non-zero levels are assumption-guarded), so
-   * backends may ignore assertion levels at the cost of accumulating clauses
-   * from popped levels. Backends that support it (e.g., via activation
-   * literals) can free popped clauses instead.
-   */
-  virtual void push() {};
-
-  /** Pop assertion level. */
-  virtual void pop() {};
-
-  /** Set assertion level for incoming clauses. */
-  virtual void set_level(uint32_t level) { (void) level; };
-
-  /**
    * Configure a termination callback function via a terminator.
    * @param terminator The terminator.
    */
@@ -123,6 +105,27 @@ class SatSolver
    * @return The version of the underly ing SAT solver.
    */
   virtual const char* get_version() const = 0;
+
+  /**
+   * Push assertion level.
+   *
+   * Implementing push()/pop()/set_level() is optional: all clauses sent to
+   * the SAT solver are globally valid (Tseitin definitions and theory-valid
+   * lemmas; assertions of non-zero levels are assumption-guarded), so
+   * backends may ignore assertion levels at the cost of accumulating clauses
+   * from popped levels. Backends that support it (e.g., via activation
+   * literals) can free popped clauses instead.
+   *
+   * @note Declared last so that adding them does not shift the vtable slots
+   *       of the preceding methods.
+   */
+  virtual void push() {}
+
+  /** Pop assertion level. */
+  virtual void pop() {}
+
+  /** Set assertion level for incoming clauses. */
+  virtual void set_level(uint32_t level) { (void) level; }
 };
 
 }  // namespace bitwuzla
