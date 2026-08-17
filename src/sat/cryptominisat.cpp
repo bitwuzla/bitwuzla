@@ -130,6 +130,10 @@ CryptoMiniSat::pop()
   d_activation_vars.pop_back();
   // Permanently disable this level by adding the activation literal as unit.
   d_solver->add_clause({import_lit(var)});
+  // The popped level is no longer a valid index into d_activation_vars. Reset
+  // to level 0 (no activation literal) so that clauses added before the next
+  // set_level() are permanent rather than attached to the disabled level.
+  d_clause_level = 0;
 }
 
 void
