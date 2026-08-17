@@ -2,6 +2,13 @@
 
 This file collects a summary of important and/or user-visible changes.
 
+- Improved MBQI engine by incorporating invertibility condition-based
+  instantiation for quantified bit-vector variables. This instantiation
+  strategy is based on a CEGQI-based technique presented in
+  [Aina Niemetz, Mathias Preiner, Andrew Reynolds, Clark Barrett, Cesare
+   Tinelli. Solving Quantified Bit-Vectors Using Invertibility Conditions.
+   CAV 2018, Springer, 2018](http://dx.doi.org/10.1007/978-3-319-96142-2_16).
+
 - Removed obsolete option `--pp-contr-ands`. This preprocessing pass was
   disabled by default and does not have an observable positive impact.
 
