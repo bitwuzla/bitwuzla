@@ -71,9 +71,11 @@ is_valid_bv_str(const std::string &value, uint8_t base)
 }
 
 bool
-is_valid_real_str(const std::string &value)
+is_valid_real_str(const std::string& value, bool non_zero)
 {
   bool found_dec_point = false;
+  bool found_digit     = false;
+  bool is_zero         = true;
   for (size_t i = 0, size = value.size(); i < size; ++i)
   {
     if (!is_digit(value[i]))
@@ -89,8 +91,17 @@ is_valid_real_str(const std::string &value)
       }
       return false;
     }
+    found_digit = true;
+    if (value[i] != '0')
+    {
+      is_zero = false;
+    }
   }
-  return true;
+  if (!found_digit)
+  {
+    return false;
+  }
+  return !non_zero || !is_zero;
 }
 
 }  // namespace bzla::util

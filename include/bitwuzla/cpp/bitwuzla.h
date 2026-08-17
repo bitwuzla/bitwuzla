@@ -1446,11 +1446,13 @@ class TermManager
    * @note Given rounding mode may be an arbitrary, non-value rounding mode
    * term. If it is a value, the returned term will be a floating-point value,
    *       else a non-value floating-point term.
+   * @note Given denominator must be non-zero.
    *
    * @param sort The sort of the value.
    * @param rm The rounding mode.
    * @param num The decimal string representing the numerator.
-   * @param den The decimal string representing the denominator.
+   * @param den The decimal string representing the denominator, must not
+   *            represent zero.
    *
    * @return A floating-point representation of the given rational string. If
    *         `rm` is of kind Kind::VALUE the floating-point will be of kind

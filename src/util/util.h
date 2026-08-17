@@ -54,10 +54,17 @@ bool is_valid_bv_str(const std::string &value, uint8_t base);
 
 /**
  * Determine if given string is a valid real value representation.
- * @param str  The value string.
- * @return True if given string is a valid string given the base.
+ *
+ * A valid string consists of an optional leading '-', at least one decimal
+ * digit, and at most one decimal point.
+ *
+ * @param value    The value string.
+ * @param non_zero True to require a non-zero string.
+ * @return True if given string is a valid (non-zero) real value string.
+ *         False if it is not a valid real value string, or if non_zero = true
+ *         but the string represents a zero value.
  */
-bool is_valid_real_str(const std::string &value);
+bool is_valid_real_str(const std::string& value, bool non_zero = false);
 
 }  // namespace bzla::util
 

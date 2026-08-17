@@ -2176,8 +2176,9 @@ TermManager::mk_fp_value(const Sort& sort,
   BITWUZLA_CHECK_TERM_IS_RM(rm);
   BITWUZLA_CHECK(bzla::util::is_valid_real_str(num))
       << "invalid real string for argument 'num'";
-  BITWUZLA_CHECK(bzla::util::is_valid_real_str(den))
-      << "invalid real string for argument 'den'";
+  BITWUZLA_CHECK(bzla::util::is_valid_real_str(den, true))
+      << "invalid real string for argument 'den', "
+      << "expected non-zero string";
   BITWUZLA_CHECK_SORT_TERM_MGR_FP(sort);
   BITWUZLA_CHECK_TERM_TERM_MGR(rm, "rounding mode");
 

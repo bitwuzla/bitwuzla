@@ -20,6 +20,7 @@
 #include "node/node_manager.h"
 #include "util/gmp_utils.h"
 #include "util/hash.h"
+#include "util/util.h"
 
 namespace {
 int64_t
@@ -166,6 +167,8 @@ FloatingPoint::from_rational(uint64_t exp_size,
                              const std::string& num,
                              const std::string& den)
 {
+  assert(util::is_valid_real_str(num));
+  assert(util::is_valid_real_str(den, true));
   FloatingPoint res(exp_size, sig_size);
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
   mpq_t mpq;

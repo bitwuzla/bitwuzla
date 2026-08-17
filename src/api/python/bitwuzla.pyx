@@ -1096,7 +1096,8 @@ cdef class TermManager:
            :param sort: Floating-point sort.
            :param rm: Rounding mode term.
            :param num: The decimal string representing the numerator.
-           :param den: The decimal string representing the denominator.
+           :param den: The decimal string representing the denominator, must
+                       not represent zero.
 
            :return: A term representing the floating-point value.
 

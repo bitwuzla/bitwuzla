@@ -5027,6 +5027,30 @@ TEST_F(TestApi, issue197)
   }
 }
 
+TEST_F(TestApi, fp_from_rational)
+{
+  ASSERT_THROW(d_tm.mk_fp_value(d_fp_sort16, d_rm_rne, "1", "0"),
+               bitwuzla::Exception);
+  ASSERT_THROW(d_tm.mk_fp_value(d_fp_sort16, d_rm_rne, "1", "0.0"),
+               bitwuzla::Exception);
+  ASSERT_THROW(d_tm.mk_fp_value(d_fp_sort16, d_rm_rne, "1", "-0"),
+               bitwuzla::Exception);
+  ASSERT_THROW(d_tm.mk_fp_value(d_fp_sort16, d_rm_rne, "1", ""),
+               bitwuzla::Exception);
+  ASSERT_THROW(d_tm.mk_fp_value(d_fp_sort16, d_rm_rne, "", "1"),
+               bitwuzla::Exception);
+  ASSERT_THROW(d_tm.mk_fp_value(d_fp_sort16, d_rm_rne, "-", "1"),
+               bitwuzla::Exception);
+  ASSERT_THROW(d_tm.mk_fp_value(d_fp_sort16, d_rm_rne, ".", "1"),
+               bitwuzla::Exception);
+  ASSERT_THROW(d_tm.mk_fp_value(d_fp_sort16, d_rm_rne, ""),
+               bitwuzla::Exception);
+  ASSERT_THROW(d_tm.mk_fp_value(d_fp_sort16, d_rm_rne, "-"),
+               bitwuzla::Exception);
+  ASSERT_THROW(d_tm.mk_fp_value(d_fp_sort16, d_rm_rne, "."),
+               bitwuzla::Exception);
+}
+
 /* -------------------------------------------------------------------------- */
 
 }  // namespace bzla::test

@@ -2650,6 +2650,8 @@ Parser::close_term_fp(ParsedItem& item)
     ParsedItem& prev = item_prev();
     prev.d_strs.insert(
         prev.d_strs.end(), item.d_strs.begin(), item.d_strs.end());
+    prev.d_strs_coo.insert(
+        prev.d_strs_coo.end(), item.d_strs_coo.begin(), item.d_strs_coo.end());
     prev.d_from_rational = true;
     assert(d_work.back().d_token == Token::REAL_DIV);
     d_work.pop_back();
@@ -3354,6 +3356,14 @@ Parser::pop_args(const ParsedItem& item, std::vector<bitwuzla::Term>& args)
                 + std::to_string(
                     cnt_args + (item.d_from_rational ? n_strs - 1 : n_strs)),
             item.d_coo);
+      }
+      assert(item.d_strs_coo.size() == n_strs);
+      if (item.d_from_rational
+          && !util::is_valid_real_str(item.d_strs[1], true))
+      {
+        return error(
+            "expected non-zero real string, got '" + item.d_strs[1] + "'",
+            item.d_strs_coo[1]);
       }
     }
     else if (cnt_args != 1 && cnt_args != 2)

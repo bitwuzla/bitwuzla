@@ -1,0 +1,1 @@
+regress/parser/smt2perr232.smt2:3:39: expected non-zero real string, got '0'

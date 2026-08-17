@@ -73,7 +73,8 @@ class FloatingPoint
    * @param sig_size The significand size (incl. sign bit)
    * @param rm       The rounding mode.
    * @param num      A string representing the numerator of the rational.
-   * @param den      A string representing the denominator of the rational.
+   * @param den      A string representing the denominator of the rational,
+   *                 must be non-zero.
    * @return A floating-point of given format converted from the given rational.
    */
   static FloatingPoint from_rational(uint64_t exp_size,

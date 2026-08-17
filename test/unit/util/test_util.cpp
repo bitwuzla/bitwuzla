@@ -42,6 +42,46 @@ TEST_F(TestUtil, is_valid_real_str)
   ASSERT_FALSE(is_valid_real_str("1a"));
   // A leading '-' is only valid at position 0.
   ASSERT_FALSE(is_valid_real_str("1-2"));
+  ASSERT_TRUE(is_valid_real_str("1."));
+  ASSERT_TRUE(is_valid_real_str(".1"));
+  ASSERT_TRUE(is_valid_real_str("-.1"));
+  // A valid real value string requires at least one digit.
+  ASSERT_FALSE(is_valid_real_str(""));
+  ASSERT_FALSE(is_valid_real_str("-"));
+  ASSERT_FALSE(is_valid_real_str("."));
+  ASSERT_FALSE(is_valid_real_str("-."));
+  ASSERT_FALSE(is_valid_real_str("", true));
+  ASSERT_FALSE(is_valid_real_str("-", true));
+  ASSERT_FALSE(is_valid_real_str(".", true));
+  ASSERT_FALSE(is_valid_real_str("-.", true));
+}
+
+TEST_F(TestUtil, is_valid_real_str_non_zero)
+{
+  ASSERT_FALSE(is_valid_real_str("0", true));
+  ASSERT_FALSE(is_valid_real_str("00", true));
+  ASSERT_FALSE(is_valid_real_str("-0", true));
+  ASSERT_FALSE(is_valid_real_str("0.0", true));
+  ASSERT_FALSE(is_valid_real_str("-0.0", true));
+  ASSERT_FALSE(is_valid_real_str("0.000", true));
+  ASSERT_FALSE(is_valid_real_str("0.", true));
+  ASSERT_FALSE(is_valid_real_str(".0", true));
+
+  ASSERT_TRUE(is_valid_real_str("1", true));
+  ASSERT_TRUE(is_valid_real_str("-1", true));
+  ASSERT_TRUE(is_valid_real_str("10", true));
+  ASSERT_TRUE(is_valid_real_str("1.0", true));
+  ASSERT_TRUE(is_valid_real_str("0.1", true));
+  ASSERT_TRUE(is_valid_real_str("-0.1", true));
+  ASSERT_TRUE(is_valid_real_str("0.001", true));
+
+  ASSERT_FALSE(is_valid_real_str("1a", true));
+  ASSERT_FALSE(is_valid_real_str("1.5.6", true));
+  ASSERT_FALSE(is_valid_real_str("0x0", true));
+
+  ASSERT_TRUE(is_valid_real_str("0"));
+  ASSERT_TRUE(is_valid_real_str("-0.0"));
+  ASSERT_TRUE(is_valid_real_str("0", false));
 }
 
 // Regression: is_valid_real_str() must not invoke isdigit() with a (signed)

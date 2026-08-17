@@ -12,6 +12,10 @@ This file collects a summary of important and/or user-visible changes.
 - Removed obsolete option `--pp-contr-ands`. This preprocessing pass was
   disabled by default and does not have an observable positive impact.
 
+- Fixed crash on floating-point from rational conversions with a zero
+  denominator, e.g., `((_ to_fp 5 11) RNE (/ 1 0))`. A zero denominator is now
+  rejected with an error.
+
 ## News for version 0.9.1
 
 - Updated SymFPU to version 1.2.0.
