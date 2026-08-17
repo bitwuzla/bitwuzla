@@ -31,8 +31,8 @@ class TestIncremental : public TestCommon
     Node one = d_nm.mk_value(BitVector::mk_true());
     Node cur = d_nm.mk_value(BitVector::mk_zero(size));
 
-    Node count = d_nm.mk_const(d_nm.mk_bv_type(size), "count@0");
-    ctx.assert_formula(d_nm.mk_node(Kind::EQUAL, {count, cur}));
+    Node count0 = d_nm.mk_const(d_nm.mk_bv_type(size), "count@0");
+    ctx.assert_formula(d_nm.mk_node(Kind::EQUAL, {count0, cur}));
 
     uint32_t i = 0;
     for (;;)

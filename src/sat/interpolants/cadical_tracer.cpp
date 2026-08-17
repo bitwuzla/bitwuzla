@@ -108,6 +108,8 @@ CadicalTracer::add_derived_clause(int64_t id,
                                   const std::vector<int32_t>& clause,
                                   const std::vector<int64_t>& antecedents)
 {
+  // The only RAT/witness producers in CaDiCaL are in factor.cpp (bounded
+  // variable addition), which CadicalInterpol disables via set("factor", 0).
   assert(witness == 0);  // No RAT clauses supported
   if (d_logger.is_log_enabled(2))
   {
@@ -127,6 +129,7 @@ CadicalTracer::add_derived_clause(int64_t id,
 
   (void) id;
   (void) redundant;
+  (void) witness;
   assert(!antecedents.empty());
   assert(static_cast<int64_t>(d_clauses.size()) == id);
   d_clauses.emplace_back(clause, ClauseType::DERIVED, 0, antecedents);

@@ -191,13 +191,6 @@ BvBitblastSolver::solve()
     }
   }
 
-  for (const Node& assumption : d_assumptions)
-  {
-    const auto& bits = d_bitblaster.bits(assumption);
-    assert(bits.size() == 1);
-    d_sat_solver->assume(d_cnf_encoder->cnf_lit(bits[0]));
-  }
-
   // Update CNF statistics
   update_statistics();
 
@@ -219,6 +212,13 @@ BvBitblastSolver::solve()
   // Register pending heuristics.
   process_pending_eq_heuristics();
   process_pending_distinct_heuristics();
+
+  for (const Node& assumption : d_assumptions)
+  {
+    const auto& bits = d_bitblaster.bits(assumption);
+    assert(bits.size() == 1);
+    d_sat_solver->assume(d_cnf_encoder->cnf_lit(bits[0]));
+  }
 
   util::Timer timer(d_stats.time_sat);
   d_last_result = d_sat_solver->solve();
