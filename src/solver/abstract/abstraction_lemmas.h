@@ -26,7 +26,8 @@ enum class LemmaKind : uint32_t
   MUL1_POW2,      // 1*: (=> (= s 2^i) (= t (bvshl x i)))
   MUL2_NEG_POW2,  // 2*: (=> (= s -2^i) (= t (bvshl (bvneg x) i)))
   MUL3_IC,        // 3*: (= (bvand (bvor (bvneg s) s) t) t),
-  MUL4_ODD,       // 4*: (= t (bvor t (bvand x (bvand s #b0001))))
+  MUL4_ODD,       // 4*: (= ((_ extract 0 0) t)
+                  //        (bvand ((_ extract 0 0) x) ((_ extract 0 0) s)))
   MUL5,           //  5: (not (= s (bvnot (bvor t (bvand #b0001 (bvor x s))))))
   MUL6,           //  6: (not (= (bvand x t) (bvor s (bvnot t))))
   MUL7,           //  7: (not (= t (bvshl (bvor s #b0001) (bvshl t x))))
