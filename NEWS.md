@@ -16,6 +16,9 @@ This file collects a summary of important and/or user-visible changes.
   denominator, e.g., `((_ to_fp 5 11) RNE (/ 1 0))`. A zero denominator is now
   rejected with an error.
 
+- Improved push/pop support in the SAT backends. Now uses activation variables
+  to remove clauses on pop().
+
 ## News for version 0.9.1
 
 - Updated SymFPU to version 1.2.0.
