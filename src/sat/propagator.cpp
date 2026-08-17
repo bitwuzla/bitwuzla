@@ -188,18 +188,16 @@ Propagator::watch(int32_t lit)
   auto& vi    = info(var);
   vi.watched  = true;
   d_solver->add_observed_var(var);
-  // Check whether this variable is fixed. The propagator is registered only
-  // when it is actually needed and may miss fixed notifications. Update the
-  // fixed flag on-demand when a variable is watched by one of the SAT
-  // propagators.
-  if (!vi.fixed)
+  // Propagators are registered on demand and may miss fixed notifications,
+  // hence query the fixed assignment here. Must not be guarded by `!vi.fixed`:
+  // notify_fixed_assignment() only records the flag, and CaDiCaL fires it for
+  // unobserved variables as well, so `fixed` may already be set while
+  // `assignment` is still 0.
+  int32_t v = d_solver->fixed(var);
+  if (v != 0)
   {
-    int32_t v = d_solver->fixed(var);
-    if (v != 0)
-    {
-      vi.assignment = v;
-      vi.fixed      = true;
-    }
+    vi.assignment = v;
+    vi.fixed      = true;
   }
   ++d_stats.num_observed;
   ++d_stats.num_watched;
