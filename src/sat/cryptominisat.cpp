@@ -130,6 +130,8 @@ CryptoMiniSat::pop()
   d_activation_vars.pop_back();
   // Permanently disable this level by adding the activation literal as unit.
   d_solver->add_clause({import_lit(var)});
+  // See Cadical::pop().
+  d_clause_level = 0;
 }
 
 void

@@ -168,6 +168,10 @@ Cadical::pop()
   // Permanently disable this level by adding the activation literal as unit.
   d_solver->add(var);
   d_solver->add(0);
+  // Popped level is no longer a valid index into d_activation_vars. Clauses
+  // added before the next set_level() are permanent, which is sound since all
+  // clauses are globally valid.
+  d_clause_level = 0;
 }
 
 void
