@@ -706,17 +706,16 @@ QuantSolver::mbqi_lemma(
     assert(!ic.is_null());
     cur = cur[1];
   }
+  Node inst = substitute(cur, map);
+  Node lem  = nm.mk_node(Kind::IMPLIES, {q, inst});
   // Inverse term instantiations are potentially conditional, we conjunct
   // these conditions to the instantiation lemma.
-  Node cond = nm.mk_value(true);
   if (!conditions.empty())
   {
-    cond = utils::mk_nary(nm, Kind::AND, conditions);
-    cond = substitute(cond, map);
+    Node cond = utils::mk_nary(nm, Kind::AND, conditions);
+    cond      = substitute(cond, map);
+    lem       = nm.mk_node(Kind::AND, {cond, lem});
   }
-  Node inst = substitute(cur, map);
-  Node lem =
-      nm.mk_node(Kind::AND, {cond, nm.mk_node(Kind::IMPLIES, {q, inst})});
   // This is mainly to document that this can never happen since we ensure
   // in inverse_term() that we use an inverse as is only under safe conditions,
   // and else introduce a fresh constant that the variable is mapped to.
