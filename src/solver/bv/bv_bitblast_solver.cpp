@@ -455,7 +455,8 @@ BvBitblastSolver::register_distinct_n(const Node& node)
   d_cnf_encoder->encode(bit, false);
   util::Integer card(node[0].value<BitVector>());
   std::unique_ptr<sat::DistinctNPropagator> distinct_n(
-      new sat::DistinctNPropagator(card, d_cnf_encoder->cnf_var(bit), bits));
+      new sat::DistinctNPropagator(
+          card, d_cnf_encoder->cnf_var(bit), bits, node.id()));
   d_sat_solver->register_propagator(std::move(distinct_n));
 #else
   (void) node;
@@ -469,6 +470,7 @@ BvBitblastSolver::process_pending_eq_heuristics()
   for (const auto& nodes : d_pending_eq_heuristics)
   {
     std::vector<std::vector<int32_t>> bits;
+    std::vector<uint64_t> node_ids;
     for (const auto& n : nodes)
     {
       assert(n.type().is_bv() || n.type().is_bool());
@@ -480,9 +482,10 @@ BvBitblastSolver::process_pending_eq_heuristics()
         ids.push_back(d_cnf_encoder->cnf_lit(bit));
       }
       bits.emplace_back(std::move(ids));
+      node_ids.push_back(n.id());
     }
     std::unique_ptr<sat::EqDecisionHeuristic> eqh(
-        new sat::EqDecisionHeuristic(bits));
+        new sat::EqDecisionHeuristic(bits, node_ids));
     d_sat_solver->register_propagator(std::move(eqh));
   }
 #endif
@@ -496,6 +499,7 @@ BvBitblastSolver::process_pending_distinct_heuristics()
   for (const auto& nodes : d_pending_distinct_heuristics)
   {
     std::vector<std::vector<int32_t>> bits;
+    std::vector<uint64_t> node_ids;
     for (const auto& n : nodes)
     {
       assert(n.type().is_bv() || n.type().is_bool());
@@ -507,9 +511,10 @@ BvBitblastSolver::process_pending_distinct_heuristics()
         ids.push_back(d_cnf_encoder->cnf_lit(bit));
       }
       bits.emplace_back(std::move(ids));
+      node_ids.push_back(n.id());
     }
     std::unique_ptr<sat::DistinctDecisionHeuristic> dih(
-        new sat::DistinctDecisionHeuristic(bits));
+        new sat::DistinctDecisionHeuristic(bits, node_ids));
     d_sat_solver->register_propagator(std::move(dih));
   }
 #endif

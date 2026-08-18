@@ -238,6 +238,15 @@ Propagator::add_clause(const std::vector<int32_t>& lits, bool is_forgettable)
 void
 Propagator::register_propagator(std::unique_ptr<SatPropagator> sp)
 {
+  // Propagators are never unregistered, but the caches that drive registration
+  // are backtrackable, so we are handed the same constraint again after every
+  // pop(). Keep the first one: duplicates only grow the list that every
+  // watched-literal event iterates over.
+  if (!d_sat_propagator_keys.insert(sp->key()).second)
+  {
+    ++d_stats.num_duplicate_propagators;
+    return;
+  }
   sp->attach_propagator(this);
   d_sat_propagators.emplace_back(std::move(sp));
 }
@@ -255,6 +264,9 @@ Propagator::print_stats() const
   std::cout << "num_fixed: " << d_stats.num_fixed << std::endl;
   std::cout << "num_observed: " << d_stats.num_observed << std::endl;
   std::cout << "num_watched: " << d_stats.num_watched << std::endl;
+  std::cout << "num_propagators: " << d_sat_propagators.size() << std::endl;
+  std::cout << "num_duplicate_propagators: "
+            << d_stats.num_duplicate_propagators << std::endl;
 }
 
 }  // namespace bzla::sat

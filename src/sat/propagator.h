@@ -18,6 +18,7 @@
 #include <cadical.hpp>
 #include <deque>
 #include <memory>
+#include <set>
 #include <unordered_set>
 
 #include "sat/distinct_n_propagator.h"
@@ -90,6 +91,10 @@ class Propagator : public CaDiCaL::ExternalPropagator,
   void add_clause(const std::vector<int32_t>& lits,
                   bool is_forgettable = false);
 
+  /**
+   * Register a SAT propagator. Propagators with an already registered key are
+   * dropped, see SatPropagator::key().
+   */
   void register_propagator(std::unique_ptr<SatPropagator> sp);
 
   void print_state() const;
@@ -103,6 +108,8 @@ class Propagator : public CaDiCaL::ExternalPropagator,
   std::deque<int32_t> d_decisions;
   std::vector<size_t> d_assignments_control;
   std::vector<std::unique_ptr<SatPropagator>> d_sat_propagators;
+  /** Keys of the registered propagators. */
+  std::set<std::vector<uint64_t>> d_sat_propagator_keys;
   std::deque<int32_t> d_external_clause;
   std::deque<bool> d_external_clause_forgettable;
 
@@ -113,6 +120,8 @@ class Propagator : public CaDiCaL::ExternalPropagator,
     uint64_t num_fixed     = 0;
     uint64_t num_observed  = 0;
     uint64_t num_watched   = 0;
+    /** Number of duplicate propagators dropped on registration. */
+    uint64_t num_duplicate_propagators = 0;
   } d_stats;
 };
 

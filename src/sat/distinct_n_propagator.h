@@ -72,8 +72,9 @@ class DistinctNPropagator : public SatPropagator
 {
  public:
   DistinctNPropagator(util::Integer& card,
-                int32_t var,
-                const std::vector<std::vector<int32_t>>& bvs);
+                      int32_t var,
+                      const std::vector<std::vector<int32_t>>& bvs,
+                      uint64_t node_id);
   /**
    * Attach propagator, required for querying variable info and sending
    * conflict clauses.

@@ -100,8 +100,10 @@ WatchedBV::str(const Propagator& propagator, std::ostream& os) const
 DistinctNPropagator::DistinctNPropagator(
     util::Integer& card,
     int32_t var,
-    const std::vector<std::vector<int32_t>>& bvs)
-    : d_propagator(nullptr),
+    const std::vector<std::vector<int32_t>>& bvs,
+    uint64_t node_id)
+    : SatPropagator(Kind::DISTINCT_N, {node_id}),
+      d_propagator(nullptr),
       d_var(var),
       d_cardinality(card),
       d_num_conflict_thres(bvs.size()),
