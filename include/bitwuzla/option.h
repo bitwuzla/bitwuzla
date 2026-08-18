@@ -964,7 +964,10 @@ enum ENUM(Option)
    */
   EVALUE(PP_QUANT),
   /*!
-   * **Preprocessing: Quantifiers.**
+   * **Preprocessing: Alpha Equivalence Processing for Quantified Formulas.**
+   *
+   * @note This is an optional preprocessing technique for quantified formulas,
+   *       and only effective if Option::PP_QUANT is enabled.
    *
    * *Values:*
    *  * **true**: enable [**default**]
