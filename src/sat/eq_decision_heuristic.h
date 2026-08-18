@@ -22,7 +22,8 @@ namespace bzla::sat {
 class EqDecisionHeuristic : public SatPropagator
 {
  public:
-  EqDecisionHeuristic(const std::vector<std::vector<int32_t>>& bvs);
+  EqDecisionHeuristic(const std::vector<std::vector<int32_t>>& bvs,
+                      const std::vector<uint64_t>& node_ids);
 
   void attach_propagator(Propagator* propagator) override;
   void assign(int32_t lit) override;

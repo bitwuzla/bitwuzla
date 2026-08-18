@@ -22,7 +22,8 @@ namespace bzla::sat {
 class DistinctDecisionHeuristic : public SatPropagator
 {
  public:
-  DistinctDecisionHeuristic(const std::vector<std::vector<int32_t>>& bvs);
+  DistinctDecisionHeuristic(const std::vector<std::vector<int32_t>>& bvs,
+                            const std::vector<uint64_t>& node_ids);
 
   void attach_propagator(Propagator* propagator) override;
   void assign(int32_t lit) override;
