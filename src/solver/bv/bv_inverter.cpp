@@ -15,6 +15,8 @@
 #include "node/node_kind.h"
 #include "node/node_utils.h"
 
+using namespace bzla::node;
+
 namespace bzla::bv {
 
 /* --- BvInverter public ---------------------------------------------------- */

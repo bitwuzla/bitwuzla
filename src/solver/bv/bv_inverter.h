@@ -17,8 +17,6 @@
 
 namespace bzla {
 
-using namespace node;
-
 namespace bv {
 
 class BvInverter
@@ -110,12 +108,12 @@ class BvInverter
                            size_t idx,
                            const std::unordered_map<Node, size_t>& path,
                            bool negate);
-  std::pair<Node, Node> ic(Kind predicate,
+  std::pair<Node, Node> ic(node::Kind predicate,
                            const Node& node,
                            size_t idx,
                            const Node& t,
                            const std::unordered_map<Node, size_t>& path);
-  Node ic(Kind predicate,
+  Node ic(node::Kind predicate,
           const Node& node,
           const Node& t,
           size_t idx,
@@ -132,7 +130,10 @@ class BvInverter
    * @param t         The right-hand-side of the predicate.
    * @param idx_x     The index of x.
    */
-  Node ic_and(Kind predicate, const Node& node, const Node& t, size_t idx_x);
+  Node ic_and(node::Kind predicate,
+              const Node& node,
+              const Node& t,
+              size_t idx_x);
   /**
    * Get invertibility condition (IC) for a predicate w.r.t. an OR node.
    *
@@ -144,7 +145,10 @@ class BvInverter
    * @param t         The right-hand-side of the predicate.
    * @param idx_x     The index of x.
    */
-  Node ic_or(Kind predicate, const Node& node, const Node& t, size_t idx_x);
+  Node ic_or(node::Kind predicate,
+             const Node& node,
+             const Node& t,
+             size_t idx_x);
   /**
    * Get invertibility condition (IC) for a predicate w.r.t. a BV_AND node.
    *
@@ -156,7 +160,10 @@ class BvInverter
    * @param t         The right-hand-side of the predicate.
    * @param idx_x     The index of x.
    */
-  Node ic_bv_and(Kind predicate, const Node& node, const Node& t, size_t idx_x);
+  Node ic_bv_and(node::Kind predicate,
+                 const Node& node,
+                 const Node& t,
+                 size_t idx_x);
   /**
    * Get invertibility condition (IC) for a predicate w.r.t. a BV_OR node.
    *
@@ -168,7 +175,10 @@ class BvInverter
    * @param t         The right-hand-side of the predicate.
    * @param idx_x     The index of x.
    */
-  Node ic_bv_or(Kind predicate, const Node& node, const Node& t, size_t idx_x);
+  Node ic_bv_or(node::Kind predicate,
+                const Node& node,
+                const Node& t,
+                size_t idx_x);
   /**
    * Get invertibility condition (IC) for a predicate w.r.t. a BV_ASHR node.
    *
@@ -180,7 +190,7 @@ class BvInverter
    * @param t         The right-hand-side of the predicate.
    * @param idx_x     The index of x.
    */
-  Node ic_bv_ashr(Kind predicate,
+  Node ic_bv_ashr(node::Kind predicate,
                   const Node& node,
                   const Node& t,
                   size_t idx_x);
@@ -195,7 +205,7 @@ class BvInverter
    * @param t         The right-hand-side of the predicate.
    * @param idx_x     The index of x.
    */
-  Node ic_bv_concat(Kind predicate,
+  Node ic_bv_concat(node::Kind predicate,
                     const Node& t,
                     const Node& node,
                     size_t idx_x);
@@ -210,7 +220,10 @@ class BvInverter
    * @param t         The right-hand-side of the predicate.
    * @param idx_x     The index of x.
    */
-  Node ic_bv_mul(Kind predicate, const Node& node, const Node& t, size_t idx_x);
+  Node ic_bv_mul(node::Kind predicate,
+                 const Node& node,
+                 const Node& t,
+                 size_t idx_x);
   /**
    * Get invertibility condition (IC) for a predicate w.r.t. a BV_SIGN_EXTEND
    * node.
@@ -224,7 +237,7 @@ class BvInverter
    * @param t         The right-hand-side of the predicate.
    * @param idx_x     The index of x.
    */
-  Node ic_bv_sext(Kind predicate,
+  Node ic_bv_sext(node::Kind predicate,
                   const Node& node,
                   const Node& t,
                   size_t idx_x);
@@ -239,7 +252,10 @@ class BvInverter
    * @param t         The right-hand-side of the predicate.
    * @param idx_x     The index of x.
    */
-  Node ic_bv_shl(Kind predicate, const Node& node, const Node& t, size_t idx_x);
+  Node ic_bv_shl(node::Kind predicate,
+                 const Node& node,
+                 const Node& t,
+                 size_t idx_x);
   /**
    * Get invertibility condition (IC) for a predicate w.r.t. a BV_SHR node.
    *
@@ -251,7 +267,10 @@ class BvInverter
    * @param t         The right-hand-side of the predicate.
    * @param idx_x     The index of x.
    */
-  Node ic_bv_shr(Kind predicate, const Node& node, const Node& t, size_t idx_x);
+  Node ic_bv_shr(node::Kind predicate,
+                 const Node& node,
+                 const Node& t,
+                 size_t idx_x);
   /**
    * Get invertibility condition (IC) for a predicate w.r.t. a BV_UDIV node.
    *
@@ -263,7 +282,7 @@ class BvInverter
    * @param t         The right-hand-side of the predicate.
    * @param idx_x     The index of x.
    */
-  Node ic_bv_udiv(Kind predicate,
+  Node ic_bv_udiv(node::Kind predicate,
                   const Node& node,
                   const Node& t,
                   size_t idx_x);
@@ -278,7 +297,7 @@ class BvInverter
    * @param t         The right-hand-side of the predicate.
    * @param idx_x     The index of x.
    */
-  Node ic_bv_urem(Kind predicate,
+  Node ic_bv_urem(node::Kind predicate,
                   const Node& node,
                   const Node& t,
                   size_t idx_x);
