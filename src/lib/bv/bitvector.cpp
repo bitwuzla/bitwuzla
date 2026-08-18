@@ -1600,8 +1600,9 @@ BitVector&
 BitVector::ibvnego(const BitVector& bv)
 {
   assert(!bv.is_null());
+  uint64_t val = bv.is_neg_overflow() ? 1 : 0;
   if (is_gmp()) mpz_clear(d_val_gmp);
-  d_val_uint64 = bv.is_neg_overflow() ? 1 : 0;
+  d_val_uint64 = val;
   d_size       = 1;
   return *this;
 }
