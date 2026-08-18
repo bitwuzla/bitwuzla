@@ -322,9 +322,10 @@ PassQuant::release_canonical_var(const Node& var)
   auto& vars = d_alpha_vars.at(type);
   for (size_t i = 0, size = vars.size(); i < size; ++i)
   {
-    if (vars[size - i - 1].second)
+    auto& v = vars[size - i - 1];
+    if (v.first == var && v.second)
     {
-      vars[size - i - 1].second = false;
+      v.second = false;
       return;
     }
   }

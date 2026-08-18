@@ -57,6 +57,7 @@ unit_tests = [
       'assertion_tracker',
       'pass_normalize',
       'pass_flatten_and',
+      'pass_quant',
       'pass_skeleton_preproc',
       'pass_variable_substitution',
       'preprocessor',
