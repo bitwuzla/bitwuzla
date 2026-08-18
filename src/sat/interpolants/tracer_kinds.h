@@ -26,7 +26,6 @@ enum class ClauseKind
 {
   A,
   B,
-  LEARNED,  // internal
 };
 
 std::ostream& operator<<(std::ostream& out, VariableKind kind);

@@ -35,7 +35,6 @@ operator<<(std::ostream& out, ClauseKind kind)
   {
     case ClauseKind::A: out << "A"; break;
     case ClauseKind::B: out << "B"; break;
-    default: assert(kind == ClauseKind::LEARNED); out << "LEARNED";
   }
   return out;
 }
