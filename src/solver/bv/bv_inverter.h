@@ -28,13 +28,13 @@ class BvInverter
    * Optionally configures inverter to produce under-determined inverses on
    * inverse() and invert() (`underdet` = true).
    *
-   * If configured, produces under-determined (lossy) inverses for BV_EXTRACT
-   * and BV_CONCAT. For extract, this concerns bits that were sliced away, which
-   * are reconstructed as fresh constants. For concat, instead of a conditional
-   * inverse, we compute an inverse while disregarding that it is conditional on
-   * s. These under-determined inverses may only be used for (quantifier)
-   * instantiation (any witness is Configures inverter as either always
-   * producing unique inverses (default).
+   * If configured, produces under-determined inverses for BV_EXTRACT and
+   * BV_CONCAT. For extract, bits that were sliced away are reconstructed as
+   * fresh constants. For concat, instead of a conditional inverse, we compute
+   * an inverse while disregarding that it is conditional on s.
+   *
+   * @note These under-determined inverses may only be used where it is not
+   *       required that inverses are exact, e.g., for quantifier instantiation.
    *
    * @param env      The associated environment.
    * @param underdet True to enable under-determined (lossy) inverses for
