@@ -25,7 +25,6 @@ class PassQuant : public PreprocessingPass
   Node process(const Node& node) override;
 
  private:
-  void alpha_normalize(AssertionVector& assertions);
   void alpha_normalize(const Node& node);
   Node eliminate(const Node& node);
   Node find_inverse(const Node& body, const Node& var, bool negated = true);
@@ -34,9 +33,6 @@ class PassQuant : public PreprocessingPass
 
   Node get_canonical_var(const Node& var);
   void release_canonical_var(const Node& var);
-  Node substitute(const Node& node,
-                  const std::unordered_map<Node, Node>& substitutions,
-                  std::unordered_map<Node, Node>& cache);
 
   bv::BvInverter d_bv_inverter;
   std::unordered_map<Node, Node> d_cache;

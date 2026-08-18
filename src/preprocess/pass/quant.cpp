@@ -331,50 +331,6 @@ PassQuant::release_canonical_var(const Node& var)
   }
 }
 
-Node
-PassQuant::substitute(const Node& node,
-                      const std::unordered_map<Node, Node>& substitutions,
-                      std::unordered_map<Node, Node>& cache)
-{
-  NodeManager& nm = d_env.nm();
-  node::node_ref_vector visit{node};
-
-  do
-  {
-    const Node& cur     = visit.back();
-    auto [it, inserted] = cache.emplace(cur, Node());
-    if (inserted)
-    {
-      visit.insert(visit.end(), cur.begin(), cur.end());
-      continue;
-    }
-    else if (it->second.is_null())
-    {
-      auto its = substitutions.find(cur);
-      if (its != substitutions.end() && its->second != cur)
-      {
-        it->second = its->second;
-      }
-      else
-      {
-        std::vector<Node> children;
-        for (const Node& child : cur)
-        {
-          auto itc = cache.find(child);
-          assert(itc != cache.end());
-          assert(!itc->second.is_null());
-          children.push_back(itc->second);
-        }
-        it->second = node::utils::rebuild_node(nm, cur, children);
-        assert(!it->second.is_null());
-      }
-    }
-    visit.pop_back();
-  } while (!visit.empty());
-  auto it = cache.find(node);
-  assert(it != cache.end());
-  return it->second;
-}
 void
 PassQuant::alpha_normalize(const Node& node)
 {
