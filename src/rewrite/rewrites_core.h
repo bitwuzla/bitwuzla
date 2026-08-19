@@ -52,8 +52,8 @@ Node RewriteRule<RewriteRuleKind::EQUAL_ITE_INVERTED>::_apply(
 
 // bcond_uneq_if_eq
 template <>
-Node RewriteRule<RewriteRuleKind::EQUAL_ITE_DIS_BV1>::_apply(Rewriter& rewriter,
-                                                             const Node& node);
+Node RewriteRule<RewriteRuleKind::EQUAL_ITE_DIS>::_apply(Rewriter& rewriter,
+                                                         const Node& node);
 
 template <>
 Node RewriteRule<RewriteRuleKind::EQUAL_ITE_LIFT_COND>::_apply(

@@ -589,39 +589,52 @@ RewriteRule<RewriteRuleKind::EQUAL_ITE_INVERTED>::_apply(Rewriter& rewriter,
 }
 
 /**
- * match:  (= d (ite c a b)) where a and d can be determined to be always
- *         disequal, (see rewrite::utils::is_always_disequal()
- * result: (and (not c) (= b d))
+ * match:  (= d (ite c a b)) where a and/or b can never be equal to d, see
+ *         rewrite::utils::is_disequal()
+ * result: false                  if neither a nor b can be equal to d
+ *         (and (not c) (= b d))  if only a cannot, and the ite is Boolean
+ *         (and c (= a d))        if only b cannot, and the ite is Boolean
  *
- * match:  (= d (ite c a b)) where b and d can be determined to be always
- *         disequal, (see rewrite::utils::is_always_disequal()
- * result: (and c (= a d))
+ * Note: Dropping a single infeasible case is restricted to Boolean ites, see
+ *       the comment in _rw_eq_ite_dis().
  */
 namespace {
 Node
-_rw_eq_ite_dis_bv1(Rewriter& rewriter, const Node& node, size_t idx)
+_rw_eq_ite_dis(Rewriter& rewriter, const Node& node, size_t idx)
 {
   assert(node.num_children() == 2);
   size_t idx0 = idx;
   size_t idx1 = 1 - idx;
-  if (node[idx0].kind() == Kind::ITE && node[idx0].type().is_bool())
+  if (node[idx0].kind() != Kind::ITE)
   {
-    if (rewrite::utils::is_always_disequal(
-            rewriter.nm(), node[idx0][1], node[idx1]))
-    {
-      return rewriter.mk_node(
-          Kind::AND,
-          {rewriter.invert_node(node[idx0][0]),
-           rewriter.mk_node(Kind::EQUAL, {node[idx0][2], node[idx1]})});
-    }
-    if (rewrite::utils::is_always_disequal(
-            rewriter.nm(), node[idx0][2], node[idx1]))
-    {
-      return rewriter.mk_node(
-          Kind::AND,
-          {node[idx0][0],
-           rewriter.mk_node(Kind::EQUAL, {node[idx0][1], node[idx1]})});
-    }
+    return node;
+  }
+  const Node& cond  = node[idx0][0];
+  const Node& t     = node[idx0][1];
+  const Node& e     = node[idx0][2];
+  const Node& other = node[idx1];
+  bool dis_t        = rewrite::utils::is_disequal(rewriter.nm(), t, other);
+  bool dis_e        = rewrite::utils::is_disequal(rewriter.nm(), e, other);
+  if (dis_t && dis_e)
+  {
+    return rewriter.nm().mk_value(false);
+  }
+  // Dropping a single case keeps the comparison, and so duplicates it whenever
+  // the ite is shared. Only worth doing while the operands are single bits.
+  if (!node[idx0].type().is_bool())
+  {
+    return node;
+  }
+  if (dis_t)
+  {
+    return rewriter.mk_node(Kind::AND,
+                            {rewriter.invert_node(cond),
+                             rewriter.mk_node(Kind::EQUAL, {e, other})});
+  }
+  if (dis_e)
+  {
+    return rewriter.mk_node(Kind::AND,
+                            {cond, rewriter.mk_node(Kind::EQUAL, {t, other})});
   }
   return node;
 }
@@ -629,13 +642,13 @@ _rw_eq_ite_dis_bv1(Rewriter& rewriter, const Node& node, size_t idx)
 
 template <>
 Node
-RewriteRule<RewriteRuleKind::EQUAL_ITE_DIS_BV1>::_apply(Rewriter& rewriter,
-                                                        const Node& node)
+RewriteRule<RewriteRuleKind::EQUAL_ITE_DIS>::_apply(Rewriter& rewriter,
+                                                    const Node& node)
 {
-  Node res = _rw_eq_ite_dis_bv1(rewriter, node, 0);
+  Node res = _rw_eq_ite_dis(rewriter, node, 0);
   if (res == node)
   {
-    res = _rw_eq_ite_dis_bv1(rewriter, node, 1);
+    res = _rw_eq_ite_dis(rewriter, node, 1);
   }
   return res;
 }
@@ -669,12 +682,12 @@ _rw_eq_ite_lift_bv1(Rewriter& rewriter, const Node& node, size_t idx0)
   }
   return node;
 }
-}
+}  // namespace
 
 template <>
 Node
 RewriteRule<RewriteRuleKind::EQUAL_ITE_LIFT_COND>::_apply(Rewriter& rewriter,
-                                                        const Node& node)
+                                                          const Node& node)
 {
   Node res = _rw_eq_ite_lift_bv1(rewriter, node, 0);
   if (res == node)
