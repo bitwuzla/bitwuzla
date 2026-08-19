@@ -122,6 +122,8 @@ class Propagator : public CaDiCaL::ExternalPropagator,
     uint64_t num_watched   = 0;
     /** Number of duplicate propagators dropped on registration. */
     uint64_t num_duplicate_propagators = 0;
+    /** Number of queued decisions dropped because their phase changed. */
+    uint64_t num_stale_decisions = 0;
   } d_stats;
 };
 

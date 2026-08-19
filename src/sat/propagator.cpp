@@ -94,15 +94,25 @@ Propagator::cb_decide()
   {
     int32_t d = d_decisions.front();
     d_decisions.pop_front();
-    const auto& vi = info(std::abs(d));
+    int32_t var    = std::abs(d);
+    const auto& vi = info(var);
     if (vi.fixed || vi.assignment)
     {
+      continue;
+    }
+    // Decisions are queued together with the phase they agree with, but
+    // force_unphase() may have cleared it since, or a later force_phase() may
+    // have overwritten it with the opposite polarity. Drop such stale entries
+    // lazily here instead of searching d_decisions on every phase update.
+    if (var * vi.phase != d)
+    {
+      ++d_stats.num_stale_decisions;
       continue;
     }
     return d;
   }
   return 0;
-};
+}
 
 int32_t
 Propagator::cb_propagate()
@@ -267,6 +277,8 @@ Propagator::print_stats() const
   std::cout << "num_propagators: " << d_sat_propagators.size() << std::endl;
   std::cout << "num_duplicate_propagators: "
             << d_stats.num_duplicate_propagators << std::endl;
+  std::cout << "num_stale_decisions: " << d_stats.num_stale_decisions
+            << std::endl;
 }
 
 }  // namespace bzla::sat
