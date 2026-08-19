@@ -100,4 +100,15 @@ is_always_disequal(NodeManager& nm, const Node& a, const Node& b)
   }
   return false;
 }
+
+bool
+is_disequal(NodeManager& nm, const Node& a, const Node& b)
+{
+  // Values are unique nodes, so two different values are never equal.
+  if (a.is_value() && b.is_value())
+  {
+    return a != b;
+  }
+  return is_always_disequal(nm, a, b);
+}
 }  // namespace bzla::rewrite::utils
