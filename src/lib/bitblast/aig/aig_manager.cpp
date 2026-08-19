@@ -23,17 +23,14 @@ AigNodeUniqueTable::AigNodeUniqueTable(AigManager& mgr) : d_mgr(mgr)
 }
 
 AigNodeData*
-AigNodeUniqueTable::lookup(const AigNode& left, const AigNode& right) const
+AigNodeUniqueTable::lookup(int32_t left, int32_t right) const
 {
-  int64_t left_id  = left.get_id();
-  int64_t right_id = right.get_id();
-
   // Check collision chain.
   uint32_t cur = d_buckets[hash(left, right)];
   while (cur != 0)
   {
     AigNodeData* d = d_mgr.node_data(cur);
-    if (d->d_left.get_id() == left_id && d->d_right.get_id() == right_id)
+    if (d->d_left == left && d->d_right == right)
     {
       return d;
     }
@@ -72,14 +69,12 @@ AigNodeUniqueTable::erase(const AigNodeData* d)
   }
 
   // Find data in collision chain.
-  int64_t left_id   = d->d_left.get_id();
-  int64_t right_id  = d->d_right.get_id();
   AigNodeData* prev = nullptr;
   AigNodeData* c    = nullptr;
   while (cur != 0)
   {
     c = d_mgr.node_data(cur);
-    if (c->d_left.get_id() == left_id && c->d_right.get_id() == right_id)
+    if (c->d_left == d->d_left && c->d_right == d->d_right)
     {
       break;
     }
@@ -101,10 +96,10 @@ AigNodeUniqueTable::erase(const AigNodeData* d)
 }
 
 size_t
-AigNodeUniqueTable::hash(const AigNode& left, const AigNode& right) const
+AigNodeUniqueTable::hash(int32_t left, int32_t right) const
 {
-  size_t lhs = static_cast<size_t>(std::abs(left.get_id()));
-  size_t rhs = static_cast<size_t>(std::abs(right.get_id()));
+  size_t lhs = static_cast<size_t>(std::abs(left));
+  size_t rhs = static_cast<size_t>(std::abs(right));
   size_t h   = 547789289u * lhs + 786695309u * rhs;
   // The number of buckets is always a power of two (see resize()), so size() -
   // 1 is an all-ones mask.
@@ -158,8 +153,8 @@ void*
 AigManager::new_slot()
 {
   assert(d_aig_id_counter > 0);
-  // Node ids are stored in 32 bits, see AigNodeData::d_id.
-  if (d_aig_id_counter > UINT32_MAX)
+  // Child ids are signed 32-bit integers, see AigNodeData::d_left.
+  if (d_aig_id_counter > INT32_MAX)
   {
     throw std::bad_alloc();
   }
@@ -175,9 +170,9 @@ AigManager::new_slot()
 }
 
 AigNodeData*
-AigManager::find_or_create_and(const AigNode& left, const AigNode& right)
+AigManager::find_or_create_and(int32_t left, int32_t right)
 {
-  assert(std::abs(left.get_id()) < std::abs(right.get_id()));
+  assert(std::abs(left) < std::abs(right));
   AigNodeData* d = d_unique_table.lookup(left, right);
   if (d != nullptr)
   {
@@ -187,8 +182,13 @@ AigManager::find_or_create_and(const AigNode& left, const AigNode& right)
 
   void* mem = new_slot();
   d         = new (mem) AigNodeData(next_id(), left, right);
-  ++d->d_left.data()->d_parents;
-  ++d->d_right.data()->d_parents;
+  // The children are ids and thus hold no reference of their own.
+  for (int32_t child : {left, right})
+  {
+    AigNodeData* c = node_data(std::abs(child));
+    c->inc_refs();
+    ++c->d_parents;
+  }
   d_unique_table.insert(d);
   ++d_statistics.num_ands;
   return d;
@@ -423,7 +423,8 @@ AigManager::rewrite_and(const AigNode& l, const AigNode& r)
   }
 
   // create AND with left, right
-  AigNodeData* d = find_or_create_and(get_node(left), get_node(right));
+  AigNodeData* d = find_or_create_and(static_cast<int32_t>(left),
+                                      static_cast<int32_t>(right));
   return AigNode(d);
 }
 
@@ -437,7 +438,7 @@ std::pair<int64_t, int64_t>
 AigManager::get_children(int64_t id) const
 {
   const AigNodeData* d = node_data(std::abs(id));
-  return {d->d_left.get_id(), d->d_right.get_id()};
+  return {d->d_left, d->d_right};
 }
 
 AigNodeData*
@@ -470,30 +471,25 @@ AigManager::garbage_collect(AigNodeData* d)
     assert(cur->d_refs == 0);
 
     // Decrement reference counts for children of AND nodes
-    if (!cur->d_left.is_null())
+    if (cur->d_left != 0)
     {
-      assert(!cur->d_right.is_null());
+      assert(cur->d_right != 0);
 
       // Erase node data from unique table before we modify children.
       d_unique_table.erase(cur);
 
-      data = cur->d_left.data();
-      --data->d_refs;
-      --data->d_parents;
-      cur->d_left.reset();
-      if (data->d_refs == 0)
+      for (int32_t child : {cur->d_left, cur->d_right})
       {
-        visit.push_back(data);
+        data = node_data(std::abs(child));
+        --data->d_refs;
+        --data->d_parents;
+        if (data->d_refs == 0)
+        {
+          visit.push_back(data);
+        }
       }
-
-      data = cur->d_right.data();
-      --data->d_refs;
-      --data->d_parents;
-      cur->d_right.reset();
-      if (data->d_refs == 0)
-      {
-        visit.push_back(data);
-      }
+      cur->d_left  = 0;
+      cur->d_right = 0;
       --d_statistics.num_ands;
     }
     else

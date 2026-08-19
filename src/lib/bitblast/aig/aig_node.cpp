@@ -85,6 +85,14 @@ AigNode::operator=(AigNode&& other) noexcept
   return *this;
 }
 
+AigNode
+AigNode::operator[](int index) const
+{
+  assert(is_and());
+  // Children are stored as ids, so look the node up in the manager.
+  return data()->mgr().get_node(child_id(index));
+}
+
 std::string
 AigNode::str() const
 {
@@ -108,16 +116,22 @@ AigNode::str() const
   }
   else
   {
-    ss << (*this)[0].get_id() << " " << (*this)[1].get_id();
+    ss << child_id(0) << " " << child_id(1);
   }
   return ss.str();
+}
+
+AigManager&
+AigNodeData::mgr() const
+{
+  // The manager is stored once per block instead of in every node.
+  return *AigManager::block_of(this)->d_mgr;
 }
 
 void
 AigNodeData::gc()
 {
-  // The manager is stored once per block instead of in every node.
-  AigManager::block_of(this)->d_mgr->garbage_collect(this);
+  mgr().garbage_collect(this);
 }
 
 std::ostream&
