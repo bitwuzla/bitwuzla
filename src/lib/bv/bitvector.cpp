@@ -319,12 +319,8 @@ BitVector::BitVector(uint64_t size, const mpz_t value, bool truncate)
   assert(truncate || fits_in_size(size, value));
 
   mpz_init_set(d_val_gmp, value);
-  if (mpz_sgn(value) < 0)
-  {
-    mpz_abs(d_val_gmp, d_val_gmp);
-    mpz_com(d_val_gmp, d_val_gmp);
-    mpz_add_ui(d_val_gmp, d_val_gmp, 1);
-  }
+  // No need to normalize negative values here, mpz_fdiv_r_2exp already yields
+  // the non-negative two's-complement remainder for negative inputs.
   mpz_fdiv_r_2exp_ull(d_val_gmp, d_val_gmp, size);
 
   // Can we use the native type?
