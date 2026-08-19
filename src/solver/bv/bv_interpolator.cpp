@@ -190,7 +190,7 @@ BvInterpolator::label_clauses(
     const std::vector<Node>& nodes,
     ClauseKind kind)
 {
-  bv::AigBitblaster::aig_node_ref_vector visit;
+  bv::AigBitblaster::aig_node_vector visit;
   std::unordered_set<int64_t> cache;
   for (const auto& node : nodes)
   {
@@ -205,8 +205,8 @@ BvInterpolator::label_clauses(
   }
   do
   {
-    const bitblast::AigNode& cur = visit.back();
-    int64_t id                   = cur.get_id();
+    bitblast::AigNode cur = visit.back();
+    int64_t id            = cur.get_id();
     visit.pop_back();
 
     auto [it, inserted] = cache.insert(id);
@@ -315,16 +315,16 @@ BvInterpolator::label_lemma(
   // Label SAT variables of the lemma's bit-blasted representation.
   const auto& bits = d_bitblaster.bits(lemma);
   assert(!bits.empty());
-  bv::AigBitblaster::aig_node_ref_vector visit;
+  bv::AigBitblaster::aig_node_vector visit;
   for (const auto& aig : bits)
   {
     visit.push_back(aig);
   }
   do
   {
-    const bitblast::AigNode& cur = visit.back();
-    int64_t id                   = cur.get_id();
-    int64_t var                  = std::abs(id);
+    bitblast::AigNode cur = visit.back();
+    int64_t id            = cur.get_id();
+    int64_t var           = std::abs(id);
 
     auto [it, inserted] = var_labels.emplace(var, VariableKind::NONE);
     if (inserted)
@@ -384,7 +384,7 @@ BvInterpolator::label_var(
     sat::interpolants::VariableKind kind)
 {
   assert(!bits.empty());
-  bv::AigBitblaster::aig_node_ref_vector visit;
+  bv::AigBitblaster::aig_node_vector visit;
   std::unordered_set<int64_t> cache;
   for (const auto& aig : bits)
   {
@@ -392,9 +392,9 @@ BvInterpolator::label_var(
   }
   do
   {
-    const bitblast::AigNode& cur = visit.back();
-    int64_t id                   = cur.get_id();
-    int64_t var                  = std::abs(id);
+    bitblast::AigNode cur = visit.back();
+    int64_t id            = cur.get_id();
+    int64_t var           = std::abs(id);
 
     {
       auto [it, inserted] = cache.insert(var);
@@ -582,7 +582,7 @@ BvInterpolator::label_vars(
   // Now, label all SAT vars while traversing from the bits of all nodes. This
   // is necessary to ensure that no AIGS associated with bits of consts that are
   // not shared between A and B get pulled into the interpolant.
-  bv::AigBitblaster::aig_node_ref_vector visit;
+  bv::AigBitblaster::aig_node_vector visit;
   std::unordered_map<int64_t, bool> cache;
   for (const auto& a : ppA)
   {
@@ -604,9 +604,9 @@ BvInterpolator::label_vars(
   }
   do
   {
-    const bitblast::AigNode& cur = visit.back();
-    int64_t id                   = cur.get_id();
-    int64_t var                  = std::abs(id);
+    bitblast::AigNode cur = visit.back();
+    int64_t id            = cur.get_id();
+    int64_t var           = std::abs(id);
 
     auto [it, inserted] = cache.emplace(var, true);
     if (inserted)

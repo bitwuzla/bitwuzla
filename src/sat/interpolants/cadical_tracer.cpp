@@ -563,14 +563,14 @@ CadicalTracer::get_interpolant_node(
   RevBitblasterCache rev_bb_cache = compute_rev_bb_cache();
 
   // Convert AIG interpolant to Node
-  bv::AigBitblaster::aig_node_ref_vector visit{interpolant.d_interpolant};
+  bv::AigBitblaster::aig_node_vector visit{interpolant.d_interpolant};
   std::unordered_map<int64_t, Node> vars_to_nodes;
   int64_t interpol_size = 0;
   do
   {
-    const bitblast::AigNode& cur = visit.back();
-    int64_t id                   = cur.get_id();
-    int64_t var                  = std::abs(id);
+    bitblast::AigNode cur = visit.back();
+    int64_t id            = cur.get_id();
+    int64_t var           = std::abs(id);
     assert(!cur.is_null());
     assert(id != 0);
 

@@ -29,13 +29,13 @@ class AigNodeUniqueTable
   AigNodeUniqueTable(AigManager& mgr);
 
   /** @return Node data of the AND gate with the given children, if it exists. */
-  AigNodeData* lookup(const AigNode& left, const AigNode& right) const;
+  AigNodeData* lookup(int32_t left, int32_t right) const;
   /** Insert node data of an AND gate that is not in the table yet. */
   void insert(AigNodeData* d);
   void erase(const AigNodeData* d);
 
  private:
-  size_t hash(const AigNode& left, const AigNode& right) const;
+  size_t hash(int32_t left, int32_t right) const;
   void resize();
 
   /** The manager owning the nodes, to resolve the ids of a collision chain. */
@@ -162,7 +162,7 @@ class AigManager
    * @return Pointer to existing node data or nullptr if AND gate was not yet
    * constructed.
    */
-  AigNodeData* find_or_create_and(const AigNode& left, const AigNode& right);
+  AigNodeData* find_or_create_and(int32_t left, int32_t right);
 
   /**
    * Implements two-level AIG rewriting from [1].
