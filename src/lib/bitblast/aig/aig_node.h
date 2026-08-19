@@ -126,32 +126,36 @@ class AigNodeData
   }
 
  private:
-  AigNodeData(AigManager* mgr, int64_t id)
-      : d_mgr(mgr), d_id(id), d_parents(0), d_requires_cnf_var(0)
+  AigNodeData(AigManager* mgr, uint32_t id)
+      : d_id(id), d_parents(0), d_requires_cnf_var(0), d_mgr(mgr)
   {
   }
   AigNodeData(AigManager* mgr,
-              int64_t id,
+              uint32_t id,
               const AigNode& left,
               const AigNode& right)
-      : d_mgr(mgr),
-        d_id(id),
+      : d_id(id),
+        d_left(left),
+        d_right(right),
         d_parents(0),
         d_requires_cnf_var(0),
-        d_left(left),
-        d_right(right)
+        d_mgr(mgr)
   {
   }
 
   void gc();
 
-  /** Pointer to AIG Manager to allow automatic deletion. */
-  AigManager* d_mgr = nullptr;
-
-  /** AIG node id. */
-  int64_t d_id = 0;
+  /**
+   * AIG node id, also the position of the node data, see AigManager. The
+   * manager refuses to create a node whose id does not fit.
+   */
+  uint32_t d_id = 0;
   /** Reference count. */
   uint32_t d_refs = 0;
+  /** Left child of AND gate. */
+  AigNode d_left;
+  /** Right child of AND gate. */
+  AigNode d_right;
   /**
    * Number of parents. Shares its 4 bytes with d_requires_cnf_var, 2^31-1
    * parents is far beyond anything reachable.
@@ -162,13 +166,10 @@ class AigNodeData
    * AigNode::require_cnf_var().
    */
   uint32_t d_requires_cnf_var : 1;
-  /** Left child of AND gate. */
-  AigNode d_left;
-  /** Right child of AND gate. */
-  AigNode d_right;
-
-  /** Next pointer for collision chain. */
-  AigNodeData* next = nullptr;
+  /** Id of the next node in the collision chain, 0 if this is the last one. */
+  uint32_t d_next = 0;
+  /** Pointer to AIG Manager to allow automatic deletion. */
+  AigManager* d_mgr = nullptr;
 };
 
 inline bool
@@ -215,7 +216,8 @@ AigNode::get_id() const
   {
     return 0;
   }
-  return is_negated() ? -data()->d_id : data()->d_id;
+  int64_t id = data()->d_id;
+  return is_negated() ? -id : id;
 }
 
 inline uint32_t
@@ -243,7 +245,7 @@ AigNode::require_cnf_var() const
 }
 
 /** The AIG is the largest structure Bitwuzla builds, a node must not grow. */
-static_assert(sizeof(AigNodeData) == 48, "AigNodeData must stay 48 bytes");
+static_assert(sizeof(AigNodeData) == 40, "AigNodeData must stay 40 bytes");
 
 std::ostream& operator<<(std::ostream& out, const AigNode& aig);
 

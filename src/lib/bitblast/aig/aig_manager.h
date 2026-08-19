@@ -25,7 +25,7 @@ namespace bzla::bitblast {
 class AigNodeUniqueTable
 {
  public:
-  AigNodeUniqueTable();
+  AigNodeUniqueTable(AigManager& mgr);
 
   /** @return Node data of the AND gate with the given children, if it exists. */
   AigNodeData* lookup(const AigNode& left, const AigNode& right) const;
@@ -37,13 +37,17 @@ class AigNodeUniqueTable
   size_t hash(const AigNode& left, const AigNode& right) const;
   void resize();
 
+  /** The manager owning the nodes, to resolve the ids of a collision chain. */
+  AigManager& d_mgr;
   size_t d_num_elements = 0;
-  std::vector<AigNodeData*> d_buckets;
+  /** Id of the first node of each collision chain, 0 if the chain is empty. */
+  std::vector<uint32_t> d_buckets;
 };
 
 class AigManager
 {
   friend class AigNodeData;
+  friend class AigNodeUniqueTable;
 
  public:
   struct Statistics
@@ -109,7 +113,7 @@ class AigManager
     assert(id < d_aig_id_counter);
     AigNodeData* d = slot(static_cast<size_t>(id) - 1);
     // Zero if the node was garbage collected, see garbage_collect().
-    assert(d->d_id == id);
+    assert(d->d_id == static_cast<uint32_t>(id));
     return d;
   }
 
@@ -126,7 +130,7 @@ class AigManager
   void* new_slot();
 
   /** @return The id to use for the next node. */
-  int64_t next_id() { return d_aig_id_counter++; }
+  uint32_t next_id() { return static_cast<uint32_t>(d_aig_id_counter++); }
 
   /**
    * Find already constructed and gate with given children.
