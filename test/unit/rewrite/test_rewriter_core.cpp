@@ -566,10 +566,14 @@ TEST_F(TestRewriterCore, core_equal_ite_inverted)
       Kind::EQUAL, {d_b, d_nm.mk_node(Kind::ITE, {d_c, d_a, d_b})}));
 }
 
-TEST_F(TestRewriterCore, core_equal_ite_dis_bv1)
+TEST_F(TestRewriterCore, core_equal_ite_dis)
 {
-  constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_ITE_DIS_BV1;
-  //// applies
+  constexpr RewriteRuleKind kind = RewriteRuleKind::EQUAL_ITE_DIS;
+  Node bv4_add1 = d_nm.mk_node(Kind::BV_ADD,
+                               {d_bv4_a, d_nm.mk_value(BitVector(4, "0001"))});
+  Node bv4_add2 = d_nm.mk_node(Kind::BV_ADD,
+                               {d_bv4_a, d_nm.mk_value(BitVector(4, "0010"))});
+  //// applies: one Boolean case is infeasible
   // (= (not a) a)
   test_rule<kind>(d_nm.mk_node(
       Kind::EQUAL,
@@ -584,11 +588,38 @@ TEST_F(TestRewriterCore, core_equal_ite_dis_bv1)
   test_rule<kind>(d_nm.mk_node(
       Kind::EQUAL,
       {d_b, d_nm.mk_node(Kind::ITE, {d_c, d_a, invert_node(d_nm, d_b)})}));
+  //// applies: both cases are infeasible, so the equality is false
+  // two distinct values
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_bv4_one, d_nm.mk_node(Kind::ITE, {d_c, d_bv4_zero, d_bv4_ones})}));
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_nm.mk_node(Kind::ITE, {d_c, d_bv4_zero, d_bv4_ones}), d_bv4_one}));
+  // structurally disequal bit-vector terms, which needs no value at all
+  test_rule<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {bv4_add1, d_nm.mk_node(Kind::ITE, {d_c, d_bv4_a, bv4_add2})}));
   //// does not apply
+  // only one case is infeasible and the ite is not Boolean
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_bv4_one, d_nm.mk_node(Kind::ITE, {d_c, d_bv4_zero, d_bv4_a})}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {bv4_add1, d_nm.mk_node(Kind::ITE, {d_c, d_bv4_a, d_bv4_b})}));
+  // no case is infeasible
   test_rule_does_not_apply<kind>(d_nm.mk_node(
       Kind::EQUAL, {d_a, d_nm.mk_node(Kind::ITE, {d_c, d_a, d_b})}));
   test_rule_does_not_apply<kind>(d_nm.mk_node(
       Kind::EQUAL, {d_b, d_nm.mk_node(Kind::ITE, {d_c, d_a, d_b})}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_bv4_zero, d_nm.mk_node(Kind::ITE, {d_c, d_bv4_zero, d_bv4_ones})}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::EQUAL,
+      {d_bv4_zero, d_nm.mk_node(Kind::ITE, {d_c, d_bv4_a, d_bv4_b})}));
+  // the ite is inverted, so the branches are not compared directly
   test_rule_does_not_apply<kind>(d_nm.mk_node(
       Kind::EQUAL,
       {invert_node(d_nm, d_a),
