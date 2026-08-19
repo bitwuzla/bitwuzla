@@ -126,11 +126,16 @@ class AigNodeData
   }
 
  private:
-  AigNodeData(AigManager* mgr) : d_mgr(mgr), d_parents(0), d_requires_cnf_var(0)
+  AigNodeData(AigManager* mgr, int64_t id)
+      : d_mgr(mgr), d_id(id), d_parents(0), d_requires_cnf_var(0)
   {
   }
-  AigNodeData(AigManager* mgr, const AigNode& left, const AigNode& right)
+  AigNodeData(AigManager* mgr,
+              int64_t id,
+              const AigNode& left,
+              const AigNode& right)
       : d_mgr(mgr),
+        d_id(id),
         d_parents(0),
         d_requires_cnf_var(0),
         d_left(left),

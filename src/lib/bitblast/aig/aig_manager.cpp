@@ -11,6 +11,7 @@
 #include "bitblast/aig/aig_manager.h"
 
 #include <cstdlib>
+#include <new>
 
 namespace bzla::bitblast {
 
@@ -18,35 +19,39 @@ namespace bzla::bitblast {
 
 AigNodeUniqueTable::AigNodeUniqueTable() { d_buckets.resize(16, nullptr); }
 
-std::pair<bool, AigNodeData*>
-AigNodeUniqueTable::insert(AigNodeData* d)
+AigNodeData*
+AigNodeUniqueTable::lookup(const AigNode& left, const AigNode& right) const
 {
-  size_t h         = hash(d->d_left, d->d_right);
-  AigNodeData* cur = d_buckets[h];
-  int64_t left_id  = d->d_left.get_id();
-  int64_t right_id = d->d_right.get_id();
+  AigNodeData* cur = d_buckets[hash(left, right)];
+  int64_t left_id  = left.get_id();
+  int64_t right_id = right.get_id();
 
   // Check collision chain.
   while (cur)
   {
     if (cur->d_left.get_id() == left_id && cur->d_right.get_id() == right_id)
     {
-      return std::make_pair(false, cur);
+      return cur;
     }
     cur = cur->next;
   }
+  return nullptr;
+}
 
+void
+AigNodeUniqueTable::insert(AigNodeData* d)
+{
+  assert(lookup(d->d_left, d->d_right) == nullptr);
   if (d_num_elements == d_buckets.size())
   {
     resize();
-    h = hash(d->d_left, d->d_right);
   }
+  size_t h = hash(d->d_left, d->d_right);
   assert(d->next == nullptr);
   d->next      = d_buckets[h];
   d_buckets[h] = d;
 
   ++d_num_elements;
-  return std::make_pair(true, d);
 }
 
 void
@@ -90,7 +95,7 @@ AigNodeUniqueTable::erase(const AigNodeData* d)
 }
 
 size_t
-AigNodeUniqueTable::hash(const AigNode& left, const AigNode& right)
+AigNodeUniqueTable::hash(const AigNode& left, const AigNode& right) const
 {
   size_t lhs = static_cast<size_t>(std::abs(left.get_id()));
   size_t rhs = static_cast<size_t>(std::abs(right.get_id()));
@@ -140,36 +145,35 @@ AigManager::statistics() const
   return d_statistics;
 }
 
-void
-AigManager::init_id(AigNodeData* d)
+void*
+AigManager::new_slot()
 {
+  assert(d_aig_id_counter > 0);
   assert(d_aig_id_counter < INT64_MAX);
-  assert(d != nullptr);
-  assert(d->d_id == 0);
-  d_node_data.emplace_back(d);
-  assert(d_node_data.size() == static_cast<size_t>(d_aig_id_counter));
-  d->d_id = d_aig_id_counter++;
-  if (!d->d_left.is_null())
+  size_t pos = static_cast<size_t>(d_aig_id_counter) - 1;
+  if (pos == d_blocks.size() * s_block_size)
   {
-    ++d->d_left.data()->d_parents;
-    ++d->d_right.data()->d_parents;
+    d_blocks.emplace_back(new std::byte[s_block_size * sizeof(AigNodeData)]);
   }
+  return slot(pos);
 }
 
 AigNodeData*
 AigManager::find_or_create_and(const AigNode& left, const AigNode& right)
 {
   assert(std::abs(left.get_id()) < std::abs(right.get_id()));
-  AigNodeData* d          = new AigNodeData(this, left, right);
-  auto [inserted, lookup] = d_unique_table.insert(d);
-  if (!inserted)
+  AigNodeData* d = d_unique_table.lookup(left, right);
+  if (d != nullptr)
   {
     ++d_statistics.num_shared;
-    delete d;
-    return lookup;
+    return d;
   }
 
-  init_id(d);
+  void* mem = new_slot();
+  d         = new (mem) AigNodeData(this, next_id(), left, right);
+  ++d->d_left.data()->d_parents;
+  ++d->d_right.data()->d_parents;
+  d_unique_table.insert(d);
   ++d_statistics.num_ands;
   return d;
 }
@@ -410,24 +414,21 @@ AigManager::rewrite_and(const AigNode& l, const AigNode& r)
 AigNode
 AigManager::get_node(int64_t id) const
 {
-  assert(static_cast<size_t>(std::abs(id)) <= d_node_data.size());
-  return AigNode(d_node_data[std::abs(id) - 1].get(), id < 0);
+  return AigNode(node_data(std::abs(id)), id < 0);
 }
 
 std::pair<int64_t, int64_t>
 AigManager::get_children(int64_t id) const
 {
-  assert(static_cast<size_t>(std::abs(id)) <= d_node_data.size());
-  const auto& d = d_node_data[std::abs(id) - 1];
+  const AigNodeData* d = node_data(std::abs(id));
   return {d->d_left.get_id(), d->d_right.get_id()};
 }
 
 AigNodeData*
 AigManager::new_data()
 {
-  AigNodeData* d = new AigNodeData(this);
-  init_id(d);
-  return d;
+  void* mem = new_slot();
+  return new (mem) AigNodeData(this, next_id());
 }
 
 void
@@ -484,10 +485,13 @@ AigManager::garbage_collect(AigNodeData* d)
       --d_statistics.num_consts;
     }
 
-    // Delete node data
+    // Mark the slot as dead, see node_data(). The node data is not destroyed
+    // and its slot is not reused: it owns no memory, its children were
+    // released above, and ids have to stay unique since, e.g., AigCnfEncoder
+    // maps them to CNF variables.
     assert(cur->d_id > 0);
-    assert(d_node_data[static_cast<size_t>(cur->d_id) - 1]->d_id == cur->d_id);
-    d_node_data[static_cast<size_t>(cur->d_id) - 1].reset(nullptr);
+    assert(node_data(cur->d_id) == cur);
+    cur->d_id = 0;
   } while (!visit.empty());
 
   d_gc_mode = false;
