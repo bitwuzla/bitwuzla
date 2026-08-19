@@ -210,15 +210,6 @@ BvSolver::unsat_core(std::vector<Node>& core) const
   }
 }
 
-void
-BvSolver::hint(const Node& node, const Node& value)
-{
-  if (d_cur_solver == option::BvSolver::BITBLAST)
-  {
-    d_bitblast_solver.hint(node, value);
-  }
-}
-
 /* --- BvSolver private ----------------------------------------------------- */
 
 Node

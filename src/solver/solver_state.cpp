@@ -35,12 +35,6 @@ SolverState::lemma(const Node& lemma)
 }
 
 void
-SolverState::hint(const Node& node, const Node& value)
-{
-  d_solver_engine.hint(node, value);
-}
-
-void
 SolverState::register_eq_heuristic(const std::vector<Node>& nodes)
 {
   d_solver_engine.register_eq_heuristic(nodes);

@@ -240,12 +240,6 @@ SolverEngine::lemma(const Node& lemma)
 }
 
 void
-SolverEngine::hint(const Node& node, const Node& value)
-{
-  d_bv_solver.hint(node, value);
-}
-
-void
 SolverEngine::register_eq_heuristic(const std::vector<Node>& nodes)
 {
   if (!nodes.empty())

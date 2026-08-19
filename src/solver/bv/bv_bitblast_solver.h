@@ -54,8 +54,6 @@ class BvBitblastSolver : public Solver,
   /** Get unsat core of last solve() call. */
   void unsat_core(std::vector<Node>& core) const override;
 
-  void hint(const Node& node, const Node& term) override;
-
   /** Get AIG bit-blaster instance. */
   AigBitblaster& bitblaster() { return d_bitblaster; }
 

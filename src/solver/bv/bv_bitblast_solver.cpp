@@ -340,25 +340,6 @@ BvBitblastSolver::interpolant(const std::vector<Node>& ppA,
   return d_bv_interpolator->interpolant(ppA, ppB);
 }
 
-void
-BvBitblastSolver::hint(const Node& node, const Node& value)
-{
-  if (!value.type().is_bv())
-  {
-    return;
-  }
-  const auto& v = value.value<BitVector>();
-  d_bitblaster.bitblast(node);
-  const auto& bits = d_bitblaster.bits(node);
-  for (uint64_t i = 0, size = bits.size(); i < size; ++i)
-  {
-    d_cnf_encoder->encode(bits[i], false);
-    int32_t id    = d_cnf_encoder->cnf_lit(bits[i]);
-    int32_t phase = v.bit(size - 1 - i) ? id : -id;
-    d_sat_solver->phase(phase);
-  }
-}
-
 /* --- BvBitblastSolver private --------------------------------------------- */
 
 void

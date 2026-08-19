@@ -93,8 +93,6 @@ class SolverEngine
    */
   bool lemma(const Node& lemma);
 
-  void hint(const Node& node, const Node& value);
-
   void register_eq_heuristic(const std::vector<Node>& nodes);
   void register_distinct_heuristic(const std::vector<Node>& nodes);
 

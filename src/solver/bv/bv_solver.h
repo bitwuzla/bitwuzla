@@ -80,8 +80,6 @@ class BvSolver : public Solver, public BvSolverInterface
    */
   Node interpolant(const std::vector<Node>& ppA, const std::vector<Node>& ppB);
 
-  void hint(const Node& node, const Node& value) override;
-
   /** Get overall BV solver statistics. */
   const auto& statistics() const { return d_stats; }
 
