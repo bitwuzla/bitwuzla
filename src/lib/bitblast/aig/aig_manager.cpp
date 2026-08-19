@@ -17,23 +17,27 @@ namespace bzla::bitblast {
 
 // AigNodeUniqueTable
 
-AigNodeUniqueTable::AigNodeUniqueTable() { d_buckets.resize(16, nullptr); }
+AigNodeUniqueTable::AigNodeUniqueTable(AigManager& mgr) : d_mgr(mgr)
+{
+  d_buckets.resize(16, 0);
+}
 
 AigNodeData*
 AigNodeUniqueTable::lookup(const AigNode& left, const AigNode& right) const
 {
-  AigNodeData* cur = d_buckets[hash(left, right)];
   int64_t left_id  = left.get_id();
   int64_t right_id = right.get_id();
 
   // Check collision chain.
-  while (cur)
+  uint32_t cur = d_buckets[hash(left, right)];
+  while (cur != 0)
   {
-    if (cur->d_left.get_id() == left_id && cur->d_right.get_id() == right_id)
+    AigNodeData* d = d_mgr.node_data(cur);
+    if (d->d_left.get_id() == left_id && d->d_right.get_id() == right_id)
     {
-      return cur;
+      return d;
     }
-    cur = cur->next;
+    cur = d->d_next;
   }
   return nullptr;
 }
@@ -47,9 +51,9 @@ AigNodeUniqueTable::insert(AigNodeData* d)
     resize();
   }
   size_t h = hash(d->d_left, d->d_right);
-  assert(d->next == nullptr);
-  d->next      = d_buckets[h];
-  d_buckets[h] = d;
+  assert(d->d_next == 0);
+  d->d_next    = d_buckets[h];
+  d_buckets[h] = d->d_id;
 
   ++d_num_elements;
 }
@@ -57,39 +61,41 @@ AigNodeUniqueTable::insert(AigNodeData* d)
 void
 AigNodeUniqueTable::erase(const AigNodeData* d)
 {
-  size_t h          = hash(d->d_left, d->d_right);
-  AigNodeData* cur  = d_buckets[h];
-  AigNodeData* prev = nullptr;
-  assert(cur != nullptr);
+  size_t h     = hash(d->d_left, d->d_right);
+  uint32_t cur = d_buckets[h];
+  assert(cur != 0);
 
   // Should not happen
-  if (cur == nullptr)
+  if (cur == 0)
   {
     return;
   }
 
   // Find data in collision chain.
-  int64_t left_id  = d->d_left.get_id();
-  int64_t right_id = d->d_right.get_id();
-  while (cur)
+  int64_t left_id   = d->d_left.get_id();
+  int64_t right_id  = d->d_right.get_id();
+  AigNodeData* prev = nullptr;
+  AigNodeData* c    = nullptr;
+  while (cur != 0)
   {
-    if (cur->d_left.get_id() == left_id && cur->d_right.get_id() == right_id)
+    c = d_mgr.node_data(cur);
+    if (c->d_left.get_id() == left_id && c->d_right.get_id() == right_id)
     {
       break;
     }
-    prev = cur;
-    cur  = cur->next;
+    prev = c;
+    cur  = c->d_next;
   }
-  assert(cur);
+  assert(cur != 0);
 
   // Update collision chain.
   if (prev == nullptr)
   {
-    d_buckets[h] = cur->next;
+    d_buckets[h] = c->d_next;
   }
   else
   {
-    prev->next = cur->next;
+    prev->d_next = c->d_next;
   }
   --d_num_elements;
 }
@@ -112,18 +118,19 @@ AigNodeUniqueTable::resize()
 
   d_buckets.clear();
   // Double the number of buckets, keeping it a power of two.
-  d_buckets.resize(buckets.size() * 2, nullptr);
+  d_buckets.resize(buckets.size() * 2, 0);
 
   // Rehash elements.
-  for (auto cur : buckets)
+  for (uint32_t cur : buckets)
   {
-    while (cur)
+    while (cur != 0)
     {
-      size_t h     = hash(cur->d_left, cur->d_right);
-      auto next    = cur->next;
-      cur->next    = d_buckets[h];
-      d_buckets[h] = cur;
-      cur          = next;
+      AigNodeData* d = d_mgr.node_data(cur);
+      size_t h       = hash(d->d_left, d->d_right);
+      uint32_t next  = d->d_next;
+      d->d_next      = d_buckets[h];
+      d_buckets[h]   = cur;
+      cur            = next;
     }
   }
 }
@@ -131,7 +138,9 @@ AigNodeUniqueTable::resize()
 // BitNodeInterface<AigNode>
 
 AigManager::AigManager()
-    : d_true(new_data(), false), d_false(d_true.data(), true)
+    : d_unique_table(*this),
+      d_true(new_data(), false),
+      d_false(d_true.data(), true)
 {
   assert(d_true.get_id() == AigNode::s_true_id);
   assert(d_false.get_id() == -AigNode::s_true_id);
@@ -149,7 +158,11 @@ void*
 AigManager::new_slot()
 {
   assert(d_aig_id_counter > 0);
-  assert(d_aig_id_counter < INT64_MAX);
+  // Node ids are stored in 32 bits, see AigNodeData::d_id.
+  if (d_aig_id_counter > UINT32_MAX)
+  {
+    throw std::bad_alloc();
+  }
   size_t pos = static_cast<size_t>(d_aig_id_counter) - 1;
   if (pos == d_blocks.size() * s_block_size)
   {
