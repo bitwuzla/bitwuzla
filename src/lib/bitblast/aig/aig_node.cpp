@@ -116,7 +116,8 @@ AigNode::str() const
 void
 AigNodeData::gc()
 {
-  d_mgr->garbage_collect(this);
+  // The manager is stored once per block instead of in every node.
+  AigManager::block_of(this)->d_mgr->garbage_collect(this);
 }
 
 std::ostream&
