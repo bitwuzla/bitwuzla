@@ -27,12 +27,14 @@ class AigNodeUniqueTable
  public:
   AigNodeUniqueTable();
 
-  // AigNodeData* lookup(const AigNode& left, const AigNode& right);
-  std::pair<bool, AigNodeData*> insert(AigNodeData* d);
+  /** @return Node data of the AND gate with the given children, if it exists. */
+  AigNodeData* lookup(const AigNode& left, const AigNode& right) const;
+  /** Insert node data of an AND gate that is not in the table yet. */
+  void insert(AigNodeData* d);
   void erase(const AigNodeData* d);
 
  private:
-  size_t hash(const AigNode& left, const AigNode& right);
+  size_t hash(const AigNode& left, const AigNode& right) const;
   void resize();
 
   size_t d_num_elements = 0;
@@ -86,11 +88,45 @@ class AigManager
   const Statistics& statistics() const;
 
  private:
+  /**
+   * Number of node data slots per block of `d_blocks`.
+   *
+   * Node data is allocated from these blocks instead of individually, which
+   * saves the 16 bytes of allocator overhead a single node costs and makes the
+   * id of a node its position, so that no map from id to node data is needed.
+   * A block is small enough to not waste memory on the short-lived managers
+   * that only bit-blast a few nodes, e.g. for AIG scores.
+   */
+  static constexpr size_t s_block_size = 512;
+
   /** Counter for AIG ids. */
   int64_t d_aig_id_counter = AigNode::s_true_id;
 
-  /** Returns the next free AIG id. */
-  void init_id(AigNodeData* d);
+  /** @return Node data of the node with the given positive id. */
+  AigNodeData* node_data(int64_t id) const
+  {
+    assert(id > 0);
+    assert(id < d_aig_id_counter);
+    AigNodeData* d = slot(static_cast<size_t>(id) - 1);
+    // Zero if the node was garbage collected, see garbage_collect().
+    assert(d->d_id == id);
+    return d;
+  }
+
+  /** @return The node data slot at the given position. */
+  AigNodeData* slot(size_t pos) const
+  {
+    assert(pos / s_block_size < d_blocks.size());
+    std::byte* block = d_blocks[pos / s_block_size].get();
+    return reinterpret_cast<AigNodeData*>(
+        block + (pos % s_block_size) * sizeof(AigNodeData));
+  }
+
+  /** @return An uninitialized slot for the next id. */
+  void* new_slot();
+
+  /** @return The id to use for the next node. */
+  int64_t next_id() { return d_aig_id_counter++; }
 
   /**
    * Find already constructed and gate with given children.
@@ -123,8 +159,8 @@ class AigManager
    */
   void garbage_collect(AigNodeData* d);
 
-  /** Maps node id to node data and stores all created node data. */
-  std::vector<std::unique_ptr<AigNodeData>> d_node_data;
+  /** Blocks of `s_block_size` node data slots, indexed by node id. */
+  std::vector<std::unique_ptr<std::byte[]>> d_blocks;
   /** AND gate cache used for hash consing. */
   AigNodeUniqueTable d_unique_table;
 
