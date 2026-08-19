@@ -11,6 +11,7 @@
 #ifndef BZLA__BITBLAST_BITBLASTER_H
 #define BZLA__BITBLAST_BITBLASTER_H
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstddef>
@@ -343,7 +344,17 @@ class BitblasterInterface
 
   virtual Bits bv_mul(const Bits& a, const Bits& b)
   {
-    // Normalize operands s.t. operands with fixed bits come first
+    // mul_helper() emits one accumulate row per bit of its second operand that
+    // is not statically false, so the operand with more false bits goes there.
+    T false_bit = d_bit_mgr.mk_false();
+    auto fa     = std::ranges::count(a, false_bit);
+    auto fb     = std::ranges::count(b, false_bit);
+    if (fa != fb)
+    {
+      return fa > fb ? mul_helper(b, a) : mul_helper(a, b);
+    }
+    // Neither operand saves a row, so order canonically to share the circuit
+    // between a*b and b*a.
     if (a > b)
     {
       return mul_helper(b, a);
