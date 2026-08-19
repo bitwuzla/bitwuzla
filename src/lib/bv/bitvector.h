@@ -833,8 +833,7 @@ class BitVector
   BitVector bvror(const BitVector& n) const;
 
   /**
-   * Calculate modular inverse for this bit-vector by means of the Extended
-   * Euclidean Algorithm.
+   * Calculate modular inverse for this bit-vector.
    *
    * @note Bit-vector must be odd. The greatest common divisor gcd (c, 2^bw)
    *       must be (and is, in this case) always 1.
@@ -2147,8 +2146,7 @@ class BitVector
   BitVector& ibvite(const BitVector& c, const BitVector& t, const BitVector& e);
 
   /**
-   * Calculate modular inverse of the given bit-vector by means of the Extended
-   * Euclidean Algorithm (in-place).
+   * Calculate modular inverse of the given bit-vector (in-place).
    *
    * @note Bit-vector `bv` must be odd. The greatest common divisor
    *       gcd (c, 2^bw) must be (and is, in this case) always 1.
@@ -2161,8 +2159,7 @@ class BitVector
    */
   BitVector& ibvmodinv(const BitVector& bv);
   /**
-   * Calculate modular inverse of this bit-vector by means of the Extended
-   * Euclidean Algorithm (in-place).
+   * Calculate modular inverse of this bit-vector (in-place).
    *
    * @note This bit-vector must be odd. The greatest common divisor
    *       gcd (c, 2^bw) must be (and is, in this case) always 1.

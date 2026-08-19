@@ -3347,40 +3347,21 @@ BitVector::ibvmodinv(const BitVector& bv)
       {
         mpz_clear(d_val_gmp);
       }
-      /* a = 2^bw
-       * b = bv
-       * lx * a + ly * b = gcd (a, b) = 1
-       * -> lx * a = lx * 2^bw = 0 (2^bw_[bw] = 0)
-       * -> ly * b = bv^-1 * bv = 1
-       * -> ly is modular inverse of bv */
-      uint64_t esize = size + 1;
-      BitVector a(esize), b(esize);
-
-      a.set_bit(size, 1); /* 2^d_size */
-      /* b is this bit-vector extended to esize */
-      if (esize > s_native_size)
+      /* Newton-Raphson (Hensel lifting) iteration x = x * (2 - a * x), which
+       * computes the inverse of odd `a` modulo 2^64. Unsigned wrap-around
+       * arithmetic is exact modulo 2^64, and reducing modulo 2^size (with
+       * size <= s_native_size <= 64) yields the inverse modulo 2^size.
+       * x = a is correct modulo 2^3 for odd a, and each iteration doubles the
+       * number of correct bits (3 -> 6 -> 12 -> 24 -> 48 -> 96), thus 5
+       * iterations suffice. */
+      uint64_t a = pb->d_val_uint64;
+      assert(a & 1);
+      uint64_t x = a;
+      for (uint32_t i = 0; i < 5; ++i)
       {
-        mpz_set_ui(b.d_val_gmp, pb->d_val_uint64);
+        x *= 2 - a * x;
       }
-      else
-      {
-        b.d_val_uint64 = pb->d_val_uint64;
-      }
-
-      BitVector y = mk_one(esize), ty, yq;
-      BitVector ly(esize);
-      BitVector q, r;
-      while (!b.is_zero())
-      {
-        a.bvudivurem(b, &q, &r);
-        a  = b;
-        b  = r;
-        ty = y;
-        yq = y.bvmul(q);
-        y  = ly.bvsub(yq);
-        ly = ty;
-      }
-      d_val_uint64 = ly.bvextract(size - 1, 0).d_val_uint64;
+      d_val_uint64 = uint64_fdiv_r_2exp(size, x);
     }
   }
   d_size = size;
