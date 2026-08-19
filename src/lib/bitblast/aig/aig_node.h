@@ -47,7 +47,14 @@ class AigNode
 
   bool is_negated() const { return d_data & 1; }
 
-  const AigNode& operator[](int index) const;
+  /**
+   * @return The given child of an AND node. Children are stored as ids, so
+   *         this looks the node up in the manager and returns it by value.
+   */
+  AigNode operator[](int index) const;
+
+  /** @return The id of the given child of an AND node. */
+  int64_t child_id(int index) const;
 
   int64_t get_id() const;
 
@@ -78,8 +85,6 @@ class AigNode
 
   // Should only be constructed via AigManager
   AigNode(AigNodeData* data, bool negated = false);
-
-  void reset() { d_data = 0; }
 
   AigNodeData* data() const
   {
@@ -127,7 +132,7 @@ class AigNodeData
 
  private:
   AigNodeData(uint32_t id) : d_id(id), d_parents(0), d_requires_cnf_var(0) {}
-  AigNodeData(uint32_t id, const AigNode& left, const AigNode& right)
+  AigNodeData(uint32_t id, int32_t left, int32_t right)
       : d_id(id),
         d_left(left),
         d_right(right),
@@ -138,6 +143,9 @@ class AigNodeData
 
   void gc();
 
+  /** @return The manager owning this node, which is stored per block. */
+  AigManager& mgr() const;
+
   /**
    * AIG node id, also the position of the node data, see AigManager. The
    * manager refuses to create a node whose id does not fit.
@@ -145,10 +153,10 @@ class AigNodeData
   uint32_t d_id = 0;
   /** Reference count. */
   uint32_t d_refs = 0;
-  /** Left child of AND gate. */
-  AigNode d_left;
-  /** Right child of AND gate. */
-  AigNode d_right;
+  /** Id of the left child of an AND gate, 0 if this is not an AND gate. */
+  int32_t d_left = 0;
+  /** Id of the right child of an AND gate, 0 if this is not an AND gate. */
+  int32_t d_right = 0;
   /**
    * Number of parents. Shares its 4 bytes with d_requires_cnf_var, 2^31-1
    * parents is far beyond anything reachable.
@@ -178,7 +186,7 @@ AigNode::is_false() const
 inline bool
 AigNode::is_and() const
 {
-  return !data()->d_left.is_null();
+  return data()->d_left != 0;
 }
 
 inline bool
@@ -187,16 +195,12 @@ AigNode::is_const() const
   return !is_and() && !is_true() && !is_false();
 }
 
-inline const AigNode&
-AigNode::operator[](int index) const
+inline int64_t
+AigNode::child_id(int index) const
 {
   assert(is_and());
-  if (index == 0)
-  {
-    return data()->d_left;
-  }
-  assert(index == 1);
-  return data()->d_right;
+  assert(index == 0 || index == 1);
+  return index == 0 ? data()->d_left : data()->d_right;
 }
 
 inline int64_t
@@ -236,7 +240,7 @@ AigNode::require_cnf_var() const
 }
 
 /** The AIG is the largest structure Bitwuzla builds, a node must not grow. */
-static_assert(sizeof(AigNodeData) == 32, "AigNodeData must stay 32 bytes");
+static_assert(sizeof(AigNodeData) == 24, "AigNodeData must stay 24 bytes");
 
 std::ostream& operator<<(std::ostream& out, const AigNode& aig);
 

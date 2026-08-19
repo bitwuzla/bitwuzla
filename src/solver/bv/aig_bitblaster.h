@@ -22,8 +22,7 @@ namespace bzla::bv {
 class AigBitblaster
 {
  public:
-  using aig_node_ref_vector =
-      std::vector<std::reference_wrapper<const bitblast::AigNode>>;
+  using aig_node_vector = std::vector<bitblast::AigNode>;
   using unordered_aig_node_ref_set =
       std::unordered_set<std::reference_wrapper<const bitblast::AigNode>,
                          std::hash<bitblast::AigNode>>;

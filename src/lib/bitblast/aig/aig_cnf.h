@@ -154,7 +154,7 @@ class AigCnfEncoder
    * @param children If not null, the children of ite(c,a,b), added as c,~a,~b.
    */
   static bool extracts_as_ite(const AigNode& aig,
-                              std::vector<const AigNode*>* children);
+                              std::vector<AigNode>* children);
   /**
    * Collect the leafs of the n-ary AND gate rooted at AND node `aig`, i.e.,
    * recursively expand all mergeable AND children.
@@ -165,7 +165,7 @@ class AigCnfEncoder
    * @param max_size Maximum number of leafs to collect.
    */
   void collect_and(const AigNode& aig,
-                   std::vector<const AigNode*>& leafs,
+                   std::vector<AigNode>& leafs,
                    size_t max_size);
   /** Ensure that `d_aig_encoded` is big enough to store `aig`. */
   void resize(const AigNode& aig);
@@ -188,7 +188,7 @@ class AigCnfEncoder
   /** Tracks encoded AIGs by assertion level. */
   std::vector<size_t> d_aig_encoded_ids_control;
   /** Stack of collect_and(), a member to save an allocation per call. */
-  std::vector<const AigNode*> d_visit;
+  std::vector<AigNode> d_visit;
   /** SAT solver. */
   SatInterface& d_sat_solver;
   /** Variable allocated for true/false. */

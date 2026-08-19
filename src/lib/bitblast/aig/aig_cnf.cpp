@@ -48,11 +48,11 @@ AigCnfEncoder::encode(const AigNode& node, bool top_level, uint32_t level)
   {
     // flatten, thus only add leafs of top-level AIGs
     std::unordered_set<int64_t> cache;
-    std::vector<std::reference_wrapper<const AigNode>> visit{node};
-    std::vector<std::reference_wrapper<const AigNode>> children;
+    std::vector<AigNode> visit{node};
+    std::vector<AigNode> children;
     do
     {
-      const AigNode& cur = visit.back();
+      AigNode cur = visit.back();
       visit.pop_back();
 
       auto [it, inserted] = cache.insert(cur.get_id());
@@ -73,7 +73,7 @@ AigCnfEncoder::encode(const AigNode& node, bool top_level, uint32_t level)
     } while (!visit.empty());
     assert(!children.empty());
 
-    std::vector<const AigNode*> leafs;
+    std::vector<AigNode> leafs;
     for (const AigNode& child : children)
     {
       // A top-level leaf that is a negated AND is an asserted (n-ary) OR:
@@ -83,14 +83,14 @@ AigCnfEncoder::encode(const AigNode& node, bool top_level, uint32_t level)
       {
         leafs.clear();
         collect_and(child, leafs, s_max_top_or_size);
-        for (const AigNode* leaf : leafs)
+        for (const AigNode& leaf : leafs)
         {
-          _encode(*leaf);
+          _encode(leaf);
         }
         // leafs of top-level AIGs are associated with the top-most AIG
-        for (const AigNode* leaf : leafs)
+        for (const AigNode& leaf : leafs)
         {
-          d_sat_solver.add(-cnf_lit(*leaf), node.get_id());
+          d_sat_solver.add(-cnf_lit(leaf), node.get_id());
         }
         d_sat_solver.add(0, node.get_id());
         ++d_statistics.num_clauses;
@@ -140,17 +140,17 @@ AigCnfEncoder::value(const AigNode& aig)
     // encoded or merged themselves; the recursive call applies the negation of
     // a child.
     val = 1;
-    std::vector<const AigNode*> visit{&aig};
+    std::vector<AigNode> visit{aig};
     do
     {
-      const AigNode* cur = visit.back();
+      AigNode cur = visit.back();
       visit.pop_back();
-      for (size_t i = 0; i < 2; ++i)
+      for (int i = 0; i < 2; ++i)
       {
-        const AigNode& child = (*cur)[i];
+        AigNode child = cur[i];
         if (child.is_and() && !child.is_negated() && !is_encoded(child))
         {
-          visit.push_back(&child);
+          visit.push_back(child);
         }
         else if (value(child) < 0)
         {
@@ -232,18 +232,18 @@ namespace {
  * @return True if given AIG is a if-then-else.
  */
 bool
-is_ite(const AigNode& aig, std::vector<const AigNode*>* children = nullptr)
+is_ite(const AigNode& aig, std::vector<AigNode>* children = nullptr)
 {
   assert(aig.is_and());
   assert(children == nullptr || children->empty());
 
-  const auto& l = aig[0];
+  const AigNode l = aig[0];
   if (!l.is_negated() || !l.is_and())
   {
     return false;
   }
 
-  const auto& r = aig[1];
+  const AigNode r = aig[1];
   if (!r.is_negated() || !r.is_and())
   {
     return false;
@@ -258,52 +258,52 @@ is_ite(const AigNode& aig, std::vector<const AigNode*>* children = nullptr)
   // ite(c,a,b) == (c -> a) /\ (~c -> b)
   // Check all commutative cases of: ~(c /\ ~a) /\ ~(~c /\ ~b)
   //                                   ll   lr       rl    rr
-  const auto& ll = l[0];
-  const auto& lr = l[1];
-  const auto& rl = r[0];
-  const auto& rr = r[1];
+  int64_t ll = l.child_id(0);
+  int64_t lr = l.child_id(1);
+  int64_t rl = r.child_id(0);
+  int64_t rr = r.child_id(1);
 
   // ~(~b /\ ~c) /\  ~(c /\ ~a)
-  if (-lr.get_id() == rl.get_id())
+  if (-lr == rl)
   {
     if (children != nullptr)
     {
-      children->push_back(&rl);  // c
-      children->push_back(&rr);  // ~a
-      children->push_back(&ll);  // ~b
+      children->push_back(r[0]);  // c
+      children->push_back(r[1]);  // ~a
+      children->push_back(l[0]);  // ~b
     }
     return true;
   }
   // ~(~c /\ ~b) /\ ~(c /\ ~a)
-  if (-ll.get_id() == rl.get_id())
+  if (-ll == rl)
   {
     if (children != nullptr)
     {
-      children->push_back(&rl);  // c
-      children->push_back(&rr);  // ~a
-      children->push_back(&lr);  // ~b
+      children->push_back(r[0]);  // c
+      children->push_back(r[1]);  // ~a
+      children->push_back(l[1]);  // ~b
     }
     return true;
   }
   // ~(~b /\ ~c) /\  ~(~a /\ c)
-  if (-lr.get_id() == rr.get_id())
+  if (-lr == rr)
   {
     if (children != nullptr)
     {
-      children->push_back(&rr);  // c
-      children->push_back(&rl);  // ~a
-      children->push_back(&ll);  // ~b
+      children->push_back(r[1]);  // c
+      children->push_back(r[0]);  // ~a
+      children->push_back(l[0]);  // ~b
     }
     return true;
   }
   // ~(~c /\ ~b) /\  ~(~a /\ c)
-  if (-ll.get_id() == rr.get_id())
+  if (-ll == rr)
   {
     if (children != nullptr)
     {
-      children->push_back(&rr);  // c
-      children->push_back(&rl);  // ~a
-      children->push_back(&lr);  // ~b
+      children->push_back(r[1]);  // c
+      children->push_back(r[0]);  // ~a
+      children->push_back(l[1]);  // ~b
     }
     return true;
   }
@@ -315,7 +315,7 @@ is_ite(const AigNode& aig, std::vector<const AigNode*>* children = nullptr)
 
 bool
 AigCnfEncoder::extracts_as_ite(const AigNode& aig,
-                               std::vector<const AigNode*>* children)
+                               std::vector<AigNode>* children)
 {
   assert(aig.is_and());
   // Extraction drops the two inner AND nodes, but only if neither requires a
@@ -344,25 +344,25 @@ AigCnfEncoder::is_mergeable(const AigNode& aig) const
 
 void
 AigCnfEncoder::collect_and(const AigNode& aig,
-                           std::vector<const AigNode*>& leafs,
+                           std::vector<AigNode>& leafs,
                            size_t max_size)
 {
   assert(aig.is_and());
   assert(leafs.empty());
   assert(d_visit.empty());
 
-  d_visit.push_back(&aig[1]);
-  d_visit.push_back(&aig[0]);
+  d_visit.push_back(aig[1]);
+  d_visit.push_back(aig[0]);
   do
   {
-    const AigNode* cur = d_visit.back();
+    AigNode cur = d_visit.back();
     d_visit.pop_back();
 
-    if (cur->is_and() && !cur->is_negated() && is_mergeable(*cur)
+    if (cur.is_and() && !cur.is_negated() && is_mergeable(cur)
         && leafs.size() + d_visit.size() < max_size)
     {
-      d_visit.push_back(&(*cur)[1]);
-      d_visit.push_back(&(*cur)[0]);
+      d_visit.push_back(cur[1]);
+      d_visit.push_back(cur[0]);
     }
     else
     {
@@ -374,44 +374,43 @@ AigCnfEncoder::collect_and(const AigNode& aig,
 void
 AigCnfEncoder::_encode(const AigNode& aig)
 {
-  std::vector<const AigNode*> visit;
-  std::unordered_set<const AigNode*> cache;
-  std::vector<const AigNode*> children;
-  visit.push_back(&aig);
+  std::vector<AigNode> visit;
+  std::unordered_set<int64_t> cache;
+  std::vector<AigNode> children;
+  visit.push_back(aig);
   do
   {
-    auto cur = visit.back();
-    if (is_encoded(*cur))
+    AigNode cur = visit.back();
+    if (is_encoded(cur))
     {
       visit.pop_back();
       continue;
     }
 
-    if (!cur->is_and())
+    if (!cur.is_and())
     {
-      assert(cur->is_const() || cur->is_true() || cur->is_false());
+      assert(cur.is_const() || cur.is_true() || cur.is_false());
       visit.pop_back();
-      set_encoded(*cur);
+      set_encoded(cur);
 
-      if (cur->is_true() || cur->is_false())
+      if (cur.is_true() || cur.is_false())
       {
-        d_sat_solver.add_clause({cnf_var(*cur)}, std::abs(cur->get_id()));
+        d_sat_solver.add_clause({cnf_var(cur)}, std::abs(cur.get_id()));
         ++d_statistics.num_clauses;
         ++d_statistics.num_literals;
       }
     }
     else
     {
-      assert(cur->is_and());
-
-      auto [it, inserted] = cache.insert(cur);
+      assert(cur.is_and());
+      auto [it, inserted] = cache.insert(cur.get_id());
 
       children.clear();
-      bool ite = extracts_as_ite(*cur, &children);
+      bool ite = extracts_as_ite(cur, &children);
       if (!ite)
       {
         children.clear();
-        collect_and(*cur, children, s_max_and_size);
+        collect_and(cur, children, s_max_and_size);
       }
 
       if (inserted)
@@ -421,17 +420,17 @@ AigCnfEncoder::_encode(const AigNode& aig)
       else
       {
         visit.pop_back();
-        set_encoded(*cur);
+        set_encoded(cur);
 
-        auto id = std::abs(cur->get_id());
-        auto x  = cnf_var(*cur);
+        auto id = std::abs(cur.get_id());
+        auto x  = cnf_var(cur);
 
         if (ite)
         {
           // Encode x <-> ite(c,a,b)
-          auto c = cnf_lit(*children[0]);   // cond
-          auto a = -cnf_lit(*children[1]);  // then
-          auto b = -cnf_lit(*children[2]);  // else
+          auto c = cnf_lit(children[0]);   // cond
+          auto a = -cnf_lit(children[1]);  // then
+          auto b = -cnf_lit(children[2]);  // else
 
           d_sat_solver.add_clause({-x, -c, a}, id);
           d_sat_solver.add_clause({-x, c, b}, id);
@@ -440,7 +439,7 @@ AigCnfEncoder::_encode(const AigNode& aig)
           d_statistics.num_clauses += 4;
           d_statistics.num_literals += 12;
           // xor is the ite variant ite(c,a,~a)
-          if (children[1]->get_id() == -children[2]->get_id())
+          if (children[1].get_id() == -children[2].get_id())
           {
             ++d_statistics.num_xors;
           }
@@ -457,14 +456,14 @@ AigCnfEncoder::_encode(const AigNode& aig)
           //   --> (~x \/ a1) /\ ... /\ (~x \/ an)
           //    /\ (x \/ ~a1 \/ ... \/ ~an)
           assert(children.size() >= 2);
-          for (const AigNode* child : children)
+          for (const AigNode& child : children)
           {
-            d_sat_solver.add_clause({-x, cnf_lit(*child)}, id);
+            d_sat_solver.add_clause({-x, cnf_lit(child)}, id);
           }
           d_sat_solver.add(x, id);
-          for (const AigNode* child : children)
+          for (const AigNode& child : children)
           {
-            d_sat_solver.add(-cnf_lit(*child), id);
+            d_sat_solver.add(-cnf_lit(child), id);
           }
           d_sat_solver.add(0, id);
           d_statistics.num_clauses += children.size() + 1;
