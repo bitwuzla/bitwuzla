@@ -126,20 +126,13 @@ class AigNodeData
   }
 
  private:
-  AigNodeData(AigManager* mgr, uint32_t id)
-      : d_id(id), d_parents(0), d_requires_cnf_var(0), d_mgr(mgr)
-  {
-  }
-  AigNodeData(AigManager* mgr,
-              uint32_t id,
-              const AigNode& left,
-              const AigNode& right)
+  AigNodeData(uint32_t id) : d_id(id), d_parents(0), d_requires_cnf_var(0) {}
+  AigNodeData(uint32_t id, const AigNode& left, const AigNode& right)
       : d_id(id),
         d_left(left),
         d_right(right),
         d_parents(0),
-        d_requires_cnf_var(0),
-        d_mgr(mgr)
+        d_requires_cnf_var(0)
   {
   }
 
@@ -168,8 +161,6 @@ class AigNodeData
   uint32_t d_requires_cnf_var : 1;
   /** Id of the next node in the collision chain, 0 if this is the last one. */
   uint32_t d_next = 0;
-  /** Pointer to AIG Manager to allow automatic deletion. */
-  AigManager* d_mgr = nullptr;
 };
 
 inline bool
@@ -245,7 +236,7 @@ AigNode::require_cnf_var() const
 }
 
 /** The AIG is the largest structure Bitwuzla builds, a node must not grow. */
-static_assert(sizeof(AigNodeData) == 40, "AigNodeData must stay 40 bytes");
+static_assert(sizeof(AigNodeData) == 32, "AigNodeData must stay 32 bytes");
 
 std::ostream& operator<<(std::ostream& out, const AigNode& aig);
 

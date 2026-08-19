@@ -166,7 +166,10 @@ AigManager::new_slot()
   size_t pos = static_cast<size_t>(d_aig_id_counter) - 1;
   if (pos == d_blocks.size() * s_block_size)
   {
-    d_blocks.emplace_back(new std::byte[s_block_size * sizeof(AigNodeData)]);
+    std::byte* block = static_cast<std::byte*>(
+        ::operator new(s_block_bytes, std::align_val_t(s_block_bytes)));
+    new (block) Block{this};
+    d_blocks.emplace_back(block);
   }
   return slot(pos);
 }
@@ -183,7 +186,7 @@ AigManager::find_or_create_and(const AigNode& left, const AigNode& right)
   }
 
   void* mem = new_slot();
-  d         = new (mem) AigNodeData(this, next_id(), left, right);
+  d         = new (mem) AigNodeData(next_id(), left, right);
   ++d->d_left.data()->d_parents;
   ++d->d_right.data()->d_parents;
   d_unique_table.insert(d);
@@ -441,7 +444,7 @@ AigNodeData*
 AigManager::new_data()
 {
   void* mem = new_slot();
-  return new (mem) AigNodeData(this, next_id());
+  return new (mem) AigNodeData(next_id());
 }
 
 void
