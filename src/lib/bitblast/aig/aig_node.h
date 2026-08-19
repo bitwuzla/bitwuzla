@@ -12,6 +12,7 @@
 #define BZLA__BITBLAST_AIG_NODE_H
 
 #include <cassert>
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <string>
@@ -20,6 +21,33 @@ namespace bzla::bitblast {
 
 class AigManager;
 class AigNodeData;
+
+/**
+ * Header of a block of node data.
+ *
+ * Node data is not allocated individually but in blocks that are aligned to
+ * their size, so that a node finds the block it is stored in, and with it its
+ * manager and its id, by masking its own address. See AigManager for the
+ * allocation of the blocks.
+ */
+struct AigNodeBlock
+{
+  /** Size of a block in bytes. A block is aligned to its size. */
+  static constexpr size_t s_bytes = 1 << 20;
+
+  /** @return The block the given node data is stored in. */
+  static AigNodeBlock* of(const AigNodeData* d)
+  {
+    return reinterpret_cast<AigNodeBlock*>(
+        reinterpret_cast<uintptr_t>(d)
+        & ~(static_cast<uintptr_t>(s_bytes) - 1));
+  }
+
+  /** The manager that owns the node data of this block. */
+  AigManager* d_mgr;
+  /** Id of the first node data slot of this block. */
+  uint32_t d_base_id;
+};
 
 /**
  * Wrapper around AigNodeData with automatic reference counting on
@@ -116,7 +144,6 @@ class AigNodeData
   friend class AigNodeUniqueTable;
 
  public:
-  AigNodeData() = delete;
   ~AigNodeData() { assert(d_refs == 0); }
 
   void inc_refs() { ++d_refs; }
@@ -131,26 +158,35 @@ class AigNodeData
   }
 
  private:
-  AigNodeData(uint32_t id) : d_id(id), d_parents(0), d_requires_cnf_var(0) {}
-  AigNodeData(uint32_t id, int32_t left, int32_t right)
-      : d_id(id),
-        d_left(left),
+  AigNodeData() : d_parents(0), d_requires_cnf_var(0), d_dead(0) {}
+  AigNodeData(int32_t left, int32_t right)
+      : d_left(left),
         d_right(right),
         d_parents(0),
-        d_requires_cnf_var(0)
+        d_requires_cnf_var(0),
+        d_dead(0)
   {
   }
 
   void gc();
 
   /** @return The manager owning this node, which is stored per block. */
-  AigManager& mgr() const;
+  AigManager& mgr() const { return *AigNodeBlock::of(this)->d_mgr; }
 
   /**
-   * AIG node id, also the position of the node data, see AigManager. The
-   * manager refuses to create a node whose id does not fit.
+   * @return The id of this node, which is the position of its slot. The id is
+   *         not stored but derived from the address of the node.
    */
-  uint32_t d_id = 0;
+  uint32_t id() const
+  {
+    const AigNodeBlock* block = AigNodeBlock::of(this);
+    uintptr_t offset          = reinterpret_cast<uintptr_t>(this)
+                       - reinterpret_cast<uintptr_t>(block)
+                       - sizeof(AigNodeBlock);
+    return block->d_base_id
+           + static_cast<uint32_t>(offset / sizeof(AigNodeData));
+  }
+
   /** Reference count. */
   uint32_t d_refs = 0;
   /** Id of the left child of an AND gate, 0 if this is not an AND gate. */
@@ -158,15 +194,17 @@ class AigNodeData
   /** Id of the right child of an AND gate, 0 if this is not an AND gate. */
   int32_t d_right = 0;
   /**
-   * Number of parents. Shares its 4 bytes with d_requires_cnf_var, 2^31-1
-   * parents is far beyond anything reachable.
+   * Number of parents. Shares its 4 bytes with the flags below, 2^30-1 parents
+   * is far beyond anything reachable.
    */
-  uint32_t d_parents : 31;
+  uint32_t d_parents : 30;
   /**
    * True if the node must not be merged into its parent's gate, see
    * AigNode::require_cnf_var().
    */
   uint32_t d_requires_cnf_var : 1;
+  /** True if the node was garbage collected, see AigManager::node_data(). */
+  uint32_t d_dead : 1;
   /** Id of the next node in the collision chain, 0 if this is the last one. */
   uint32_t d_next = 0;
 };
@@ -174,13 +212,13 @@ class AigNodeData
 inline bool
 AigNode::is_true() const
 {
-  return data()->d_id == AigNode::s_true_id && !is_negated();
+  return data()->id() == AigNode::s_true_id && !is_negated();
 }
 
 inline bool
 AigNode::is_false() const
 {
-  return data()->d_id == AigNode::s_true_id && is_negated();
+  return data()->id() == AigNode::s_true_id && is_negated();
 }
 
 inline bool
@@ -211,7 +249,7 @@ AigNode::get_id() const
   {
     return 0;
   }
-  int64_t id = data()->d_id;
+  int64_t id = data()->id();
   return is_negated() ? -id : id;
 }
 
@@ -240,7 +278,7 @@ AigNode::require_cnf_var() const
 }
 
 /** The AIG is the largest structure Bitwuzla builds, a node must not grow. */
-static_assert(sizeof(AigNodeData) == 24, "AigNodeData must stay 24 bytes");
+static_assert(sizeof(AigNodeData) == 20, "AigNodeData must stay 20 bytes");
 
 std::ostream& operator<<(std::ostream& out, const AigNode& aig);
 

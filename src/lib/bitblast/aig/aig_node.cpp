@@ -121,13 +121,6 @@ AigNode::str() const
   return ss.str();
 }
 
-AigManager&
-AigNodeData::mgr() const
-{
-  // The manager is stored once per block instead of in every node.
-  return *AigManager::block_of(this)->d_mgr;
-}
-
 void
 AigNodeData::gc()
 {

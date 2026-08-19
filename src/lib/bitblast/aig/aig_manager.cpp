@@ -50,7 +50,7 @@ AigNodeUniqueTable::insert(AigNodeData* d)
   size_t h = hash(d->d_left, d->d_right);
   assert(d->d_next == 0);
   d->d_next    = d_buckets[h];
-  d_buckets[h] = d->d_id;
+  d_buckets[h] = d->id();
 
   ++d_num_elements;
 }
@@ -161,11 +161,12 @@ AigManager::new_slot()
   size_t pos = static_cast<size_t>(d_aig_id_counter) - 1;
   if (pos == d_blocks.size() * s_block_size)
   {
-    std::byte* block = static_cast<std::byte*>(
-        ::operator new(s_block_bytes, std::align_val_t(s_block_bytes)));
-    new (block) Block{this};
+    std::byte* block = static_cast<std::byte*>(::operator new(
+        AigNodeBlock::s_bytes, std::align_val_t(AigNodeBlock::s_bytes)));
+    new (block) AigNodeBlock{this, static_cast<uint32_t>(d_aig_id_counter)};
     d_blocks.emplace_back(block);
   }
+  ++d_aig_id_counter;
   return slot(pos);
 }
 
@@ -181,7 +182,7 @@ AigManager::find_or_create_and(int32_t left, int32_t right)
   }
 
   void* mem = new_slot();
-  d         = new (mem) AigNodeData(next_id(), left, right);
+  d         = new (mem) AigNodeData(left, right);
   // The children are ids and thus hold no reference of their own.
   for (int32_t child : {left, right})
   {
@@ -445,7 +446,7 @@ AigNodeData*
 AigManager::new_data()
 {
   void* mem = new_slot();
-  return new (mem) AigNodeData(next_id());
+  return new (mem) AigNodeData();
 }
 
 void
@@ -501,9 +502,8 @@ AigManager::garbage_collect(AigNodeData* d)
     // and its slot is not reused: it owns no memory, its children were
     // released above, and ids have to stay unique since, e.g., AigCnfEncoder
     // maps them to CNF variables.
-    assert(cur->d_id > 0);
-    assert(node_data(cur->d_id) == cur);
-    cur->d_id = 0;
+    assert(!cur->d_dead);
+    cur->d_dead = 1;
   } while (!visit.empty());
 
   d_gc_mode = false;

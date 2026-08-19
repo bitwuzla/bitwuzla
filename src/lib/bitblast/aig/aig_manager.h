@@ -94,36 +94,17 @@ class AigManager
 
  private:
   /**
-   * Size of a node data block in bytes.
+   * Number of node data slots per block, see AigNodeBlock.
    *
    * Node data is allocated from blocks instead of individually, which saves
    * the 16 bytes of allocator overhead a single node costs and makes the id of
-   * a node its position, so that no map from id to node data is needed. A
-   * block is aligned to its size, which lets a node find its block by masking
-   * its address, so that the manager is stored once per block and not in every
-   * node, see block_of(). Only the pages a block actually uses are touched,
-   * which keeps it cheap for the short-lived managers that only bit-blast a
-   * few nodes, e.g. for AIG scores.
+   * a node its position, so that neither a map from id to node data nor an id
+   * in the node data is needed. Only the pages a block actually uses are
+   * touched, which keeps a block cheap for the short-lived managers that only
+   * bit-blast a few nodes, e.g. for AIG scores.
    */
-  static constexpr size_t s_block_bytes = 1 << 20;
-
-  /** Header of a node data block, the node data slots follow it. */
-  struct Block
-  {
-    AigManager* d_mgr;
-  };
-
-  /** Number of node data slots per block. */
   static constexpr size_t s_block_size =
-      (s_block_bytes - sizeof(Block)) / sizeof(AigNodeData);
-
-  /** @return The block the given node data is stored in. */
-  static Block* block_of(const AigNodeData* d)
-  {
-    return reinterpret_cast<Block*>(
-        reinterpret_cast<uintptr_t>(d)
-        & ~(static_cast<uintptr_t>(s_block_bytes) - 1));
-  }
+      (AigNodeBlock::s_bytes - sizeof(AigNodeBlock)) / sizeof(AigNodeData);
 
   /** Counter for AIG ids. */
   int64_t d_aig_id_counter = AigNode::s_true_id;
@@ -134,8 +115,8 @@ class AigManager
     assert(id > 0);
     assert(id < d_aig_id_counter);
     AigNodeData* d = slot(static_cast<size_t>(id) - 1);
-    // Zero if the node was garbage collected, see garbage_collect().
-    assert(d->d_id == static_cast<uint32_t>(id));
+    assert(d->id() == static_cast<uint32_t>(id));
+    assert(!d->d_dead);
     return d;
   }
 
@@ -145,14 +126,12 @@ class AigManager
     assert(pos / s_block_size < d_blocks.size());
     std::byte* block = d_blocks[pos / s_block_size].get();
     return reinterpret_cast<AigNodeData*>(
-        block + sizeof(Block) + (pos % s_block_size) * sizeof(AigNodeData));
+        block + sizeof(AigNodeBlock)
+        + (pos % s_block_size) * sizeof(AigNodeData));
   }
 
   /** @return An uninitialized slot for the next id. */
   void* new_slot();
-
-  /** @return The id to use for the next node. */
-  uint32_t next_id() { return static_cast<uint32_t>(d_aig_id_counter++); }
 
   /**
    * Find already constructed and gate with given children.
@@ -190,7 +169,7 @@ class AigManager
   {
     void operator()(std::byte* block) const
     {
-      ::operator delete(block, std::align_val_t(s_block_bytes));
+      ::operator delete(block, std::align_val_t(AigNodeBlock::s_bytes));
     }
   };
 
