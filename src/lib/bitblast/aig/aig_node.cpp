@@ -122,6 +122,40 @@ AigNode::str() const
 }
 
 void
+AigNodeData::spill_refs()
+{
+  assert(d_refs == s_max_refs);
+  uint32_t id = this->id();
+  if (id == AigNode::s_true_id)
+  {
+    return;
+  }
+  ++mgr().d_refs_overflow[id];
+}
+
+void
+AigNodeData::unspill_refs()
+{
+  assert(d_refs == s_max_refs);
+  uint32_t id = this->id();
+  if (id == AigNode::s_true_id)
+  {
+    return;
+  }
+  auto& overflow = mgr().d_refs_overflow;
+  auto it        = overflow.find(id);
+  if (it == overflow.end())
+  {
+    --d_refs;
+    return;
+  }
+  if (--it->second == 0)
+  {
+    overflow.erase(it);
+  }
+}
+
+void
 AigNodeData::gc()
 {
   mgr().garbage_collect(this);

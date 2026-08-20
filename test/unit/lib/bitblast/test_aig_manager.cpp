@@ -590,4 +590,76 @@ TEST_F(TestAigMgr, copy_assign_self)
   ASSERT_FALSE(a.is_null());
 }
 
+TEST_F(TestAigMgr, ref_count_spill)
+{
+  // A node counts only AigNodeData::s_max_refs references itself and spills the
+  // excess to the manager. Hold more references than fit and release them one
+  // by one: the node has to be garbage collected exactly when the last one
+  // goes.
+  bitblast::AigManager mgr;
+  const size_t num_refs = (1u << 19) + 100;
+
+  std::vector<bitblast::AigNode> refs;
+  refs.reserve(num_refs);
+  refs.push_back(mgr.mk_const());
+  int64_t id = refs.back().get_id();
+  for (size_t i = 1; i < num_refs; ++i)
+  {
+    refs.push_back(refs[0]);
+  }
+  ASSERT_EQ(mgr.statistics().num_consts, 1u);
+
+  // The node stays alive as long as any reference is left.
+  while (refs.size() > 1)
+  {
+    refs.pop_back();
+    ASSERT_EQ(refs[0].get_id(), id);
+    ASSERT_EQ(mgr.statistics().num_consts, 1u);
+  }
+  refs.pop_back();
+  ASSERT_EQ(mgr.statistics().num_consts, 0u);
+}
+
+TEST_F(TestAigMgr, parent_count_saturates)
+{
+  // The parent count saturates instead of spilling: it is only ever compared
+  // against one, and a node whose count saturated is simply never merged into
+  // the gate of a parent.
+  bitblast::AigManager mgr;
+  const uint32_t max_parents = (1u << 11) - 1;
+
+  auto shared = mgr.mk_const();
+  std::vector<bitblast::AigNode> ands;
+  for (uint32_t i = 0; i < max_parents + 10; ++i)
+  {
+    ands.push_back(mgr.mk_and(shared, mgr.mk_const()));
+  }
+  ASSERT_EQ(shared.parents(), max_parents);
+}
+
+TEST_F(TestAigMgr, constant_not_ref_counted)
+{
+  // The node of true/false is not reference counted. More handles to it than a
+  // node counts itself come and go, repeatedly, and it has to survive all of
+  // them: a count that still dropped would free it.
+  bitblast::AigManager mgr;
+  const size_t num_refs = (1u << 19) + 100;
+
+  auto x = mgr.mk_const();
+  for (size_t round = 0; round < 2; ++round)
+  {
+    std::vector<bitblast::AigNode> refs;
+    refs.reserve(num_refs);
+    for (size_t i = 0; i < num_refs; ++i)
+    {
+      refs.push_back(i % 2 ? mgr.mk_true() : mgr.mk_false());
+    }
+  }
+  ASSERT_EQ(mgr.statistics().num_consts, 1u);
+  ASSERT_TRUE(mgr.mk_true().is_true());
+  ASSERT_TRUE(mgr.mk_false().is_false());
+  ASSERT_EQ(mgr.mk_and(x, mgr.mk_true()), x);
+  ASSERT_TRUE(mgr.mk_and(x, mgr.mk_false()).is_false());
+}
+
 }  // namespace bzla::test

@@ -139,6 +139,11 @@ AigManager::AigManager()
 {
   assert(d_true.get_id() == AigNode::s_true_id);
   assert(d_false.get_id() == -AigNode::s_true_id);
+  // Every constant bit references the node of true/false, which would keep its
+  // count above the limit and send every copy of a constant through
+  // d_refs_overflow. The manager holds the node until it is destroyed itself,
+  // so it needs no count: saturate it for good, see AigNodeData::spill_refs().
+  d_true.data()->d_refs = AigNodeData::s_max_refs;
 }
 
 AigManager::~AigManager() {}
@@ -188,7 +193,7 @@ AigManager::find_or_create_and(int32_t left, int32_t right)
   {
     AigNodeData* c = node_data(std::abs(child));
     c->inc_refs();
-    ++c->d_parents;
+    c->inc_parents();
   }
   d_unique_table.insert(d);
   ++d_statistics.num_ands;
@@ -482,9 +487,8 @@ AigManager::garbage_collect(AigNodeData* d)
       for (int32_t child : {cur->d_left, cur->d_right})
       {
         data = node_data(std::abs(child));
-        --data->d_refs;
-        --data->d_parents;
-        if (data->d_refs == 0)
+        data->dec_parents();
+        if (data->release())
         {
           visit.push_back(data);
         }
