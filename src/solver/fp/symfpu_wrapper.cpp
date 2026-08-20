@@ -57,11 +57,6 @@ SymFpuBV<is_signed>::SymFpuBV(const BitVector& bv)
 }
 
 template <bool is_signed>
-SymFpuBV<is_signed>::~SymFpuBV()
-{
-}
-
-template <bool is_signed>
 std::string
 SymFpuBV<is_signed>::str() const
 {
@@ -555,8 +550,6 @@ SymFpuSymProp::SymFpuSymProp(const SymFpuSymProp& other) : d_node(other.d_node)
   assert(check_node(other.d_node));
 }
 
-SymFpuSymProp::~SymFpuSymProp() {}
-
 SymFpuSymProp&
 SymFpuSymProp::operator=(const SymFpuSymProp& other)
 {
@@ -674,11 +667,6 @@ SymFpuSymBV<is_signed>::SymFpuSymBV(const SymFpuBV<is_signed>& bv)
     : d_node(SymFpuNM::get().mk_value(bv.d_bv))
 {
   assert(!bv.d_bv.is_null());
-}
-
-template <bool is_signed>
-SymFpuSymBV<is_signed>::~SymFpuSymBV()
-{
 }
 
 template <bool is_signed>
@@ -1126,8 +1114,6 @@ SymFpuSymRM::SymFpuSymRM(const SymFpuSymRM& other) : d_node(other.d_node)
 {
   assert(check_node(other.d_node));
 }
-
-SymFpuSymRM::~SymFpuSymRM() {}
 
 std::string
 SymFpuSymRM::str() const

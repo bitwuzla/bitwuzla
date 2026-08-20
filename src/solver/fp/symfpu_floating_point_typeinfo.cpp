@@ -40,8 +40,6 @@ SymFPUFloatingPointTypeInfo::SymFPUFloatingPointTypeInfo(
   d_type = other.d_type;
 }
 
-SymFPUFloatingPointTypeInfo::~SymFPUFloatingPointTypeInfo() {}
-
 const Type&
 SymFPUFloatingPointTypeInfo::type() const
 {

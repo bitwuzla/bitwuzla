@@ -36,8 +36,18 @@ class SymFPUFloatingPointTypeInfo
   SymFPUFloatingPointTypeInfo(uint32_t esize, uint32_t ssize);
   /** Copy constructor. */
   SymFPUFloatingPointTypeInfo(const SymFPUFloatingPointTypeInfo& other);
+  /** Move constructor. */
+  SymFPUFloatingPointTypeInfo(SymFPUFloatingPointTypeInfo&& other) noexcept =
+      default;
   /** Destructor. */
-  ~SymFPUFloatingPointTypeInfo();
+  ~SymFPUFloatingPointTypeInfo() = default;
+
+  /** Copy assignment. */
+  SymFPUFloatingPointTypeInfo& operator=(
+      const SymFPUFloatingPointTypeInfo& other) = default;
+  /** Move assignment. */
+  SymFPUFloatingPointTypeInfo& operator=(
+      SymFPUFloatingPointTypeInfo&& other) noexcept = default;
 
   /** @return The associated floating-point type. */
   const Type& type() const;

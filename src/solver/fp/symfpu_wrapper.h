@@ -75,7 +75,9 @@ class SymFpuBV
   SymFpuBV(const SymFpuBV<is_signed>& other);
   SymFpuBV(const SymFpuBV<!is_signed>& other);
   SymFpuBV(const BitVector& bv);
-  ~SymFpuBV();
+  /** Move constructor. */
+  SymFpuBV(SymFpuBV<is_signed>&& other) noexcept = default;
+  ~SymFpuBV()                                    = default;
 
   std::string str() const;
 
@@ -93,6 +95,9 @@ class SymFpuBV
   static SymFpuBV<is_signed> minValue(const uint32_t& bw);
 
   SymFpuBV<is_signed>& operator=(const SymFpuBV<is_signed>& other);
+  /** Move assignment. */
+  SymFpuBV<is_signed>& operator=(SymFpuBV<is_signed>&& other) noexcept =
+      default;
 
   /*** Operators ***/
   SymFpuBV<is_signed> operator<<(const SymFpuBV<is_signed>& op) const;
@@ -214,13 +219,17 @@ class SymFpuSymProp
   SymFpuSymProp(const Node& node);
   SymFpuSymProp(bool v);
   SymFpuSymProp(const SymFpuSymProp& other);
-  ~SymFpuSymProp();
+  /** Move constructor. */
+  SymFpuSymProp(SymFpuSymProp&& other) noexcept = default;
+  ~SymFpuSymProp()                              = default;
 
   std::string str() const;
 
   const Node& getNode() const { return d_node; }
 
   SymFpuSymProp& operator=(const SymFpuSymProp& other);
+  /** Move assignment. */
+  SymFpuSymProp& operator=(SymFpuSymProp&& other) noexcept = default;
 
   SymFpuSymProp operator!(void) const;
   SymFpuSymProp operator&&(const SymFpuSymProp& op) const;
@@ -262,12 +271,17 @@ class SymFpuSymBV
   SymFpuSymBV(const SymFpuBV<is_signed>& bv);
   /** Construrs for Boolean nodes. */
   SymFpuSymBV(bool v);
+  /** Move constructor. */
+  SymFpuSymBV(SymFpuSymBV<is_signed>&& other) noexcept = default;
   /** Destructor. */
-  ~SymFpuSymBV();
+  ~SymFpuSymBV() = default;
 
   std::string str() const;
 
   SymFpuSymBV<is_signed>& operator=(const SymFpuSymBV<is_signed>& other);
+  /** Move assignment. */
+  SymFpuSymBV<is_signed>& operator=(SymFpuSymBV<is_signed>&& other) noexcept =
+      default;
 
   uint32_t getWidth(void) const;
   const Node& getNode(void) const { return d_node; }
@@ -366,8 +380,15 @@ class SymFpuSymRM
   SymFpuSymRM(const Node& node);
   SymFpuSymRM(const RoundingMode rm);
   SymFpuSymRM(const SymFpuSymRM& other);
+  /** Move constructor. */
+  SymFpuSymRM(SymFpuSymRM&& other) noexcept = default;
   /* Destructor. */
-  ~SymFpuSymRM();
+  ~SymFpuSymRM() = default;
+
+  /* Copy assignment. */
+  SymFpuSymRM& operator=(const SymFpuSymRM& other) = default;
+  /* Move assignment. */
+  SymFpuSymRM& operator=(SymFpuSymRM&& other) noexcept = default;
 
   std::string str() const;
 
