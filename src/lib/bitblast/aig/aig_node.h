@@ -16,6 +16,7 @@
 #include <cstdint>
 #include <functional>
 #include <string>
+#include <type_traits>
 
 namespace bzla::bitblast {
 
@@ -56,6 +57,7 @@ struct AigNodeBlock
 class AigNode
 {
   friend AigManager;
+  friend class AigNodeData;
 
  public:
   AigNode() = default;
@@ -144,28 +146,96 @@ class AigNodeData
   friend class AigNodeUniqueTable;
 
  public:
-  ~AigNodeData() { assert(d_refs == 0); }
-
-  void inc_refs() { ++d_refs; }
+  void inc_refs()
+  {
+    if (d_refs == s_max_refs)
+    {
+      spill_refs();
+    }
+    else
+    {
+      ++d_refs;
+    }
+  }
   void dec_refs()
   {
-    assert(d_refs > 0);
-    --d_refs;
-    if (d_refs == 0)
+    if (release())
     {
       gc();
     }
   }
 
  private:
-  AigNodeData() : d_parents(0), d_requires_cnf_var(0), d_dead(0) {}
+  /**
+   * Largest reference count a node stores itself, the excess goes to the
+   * manager, see spill_refs(). A node is referenced by its parents and by every
+   * AigNode that holds it, and the latter dominates by orders of magnitude.
+   * Most of the 32 bits go here because a node above the limit spills on every
+   * single reference it gains or loses, not once. Unlike the parent count below
+   * this one has to stay exact: it decides when a node is freed, so a lost
+   * reference is a use after free and a surplus one a node that never dies.
+   */
+  static constexpr uint32_t s_max_refs = (1u << 19) - 1;
+  /**
+   * Largest number of parents a node counts. This one saturates instead of
+   * spilling, and stays saturated once it is: parents() is only ever asked
+   * whether it is greater than one, so a node that keeps answering yes is
+   * merely never merged into the gate of a parent and never dropped by ite
+   * extraction, which is the conservative answer and costs it a CNF variable.
+   */
+  static constexpr uint32_t s_max_parents = (1u << 11) - 1;
+
+  AigNodeData() : d_refs(0), d_parents(0), d_requires_cnf_var(0), d_dead(0) {}
   AigNodeData(int32_t left, int32_t right)
-      : d_left(left),
-        d_right(right),
+      : d_refs(0),
         d_parents(0),
         d_requires_cnf_var(0),
-        d_dead(0)
+        d_dead(0),
+        d_left(left),
+        d_right(right)
   {
+  }
+
+  /**
+   * Move a reference that does not fit d_refs to the manager. The references of
+   * a node are d_refs plus what the manager holds for it, and the manager holds
+   * something only while d_refs is saturated. The node of true/false is not
+   * counted, its d_refs stays saturated, see AigManager::AigManager().
+   */
+  void spill_refs();
+  /**
+   * Take a spilled reference back, or lower d_refs if none was spilled. No-op
+   * for the node of true/false.
+   */
+  void unspill_refs();
+
+  /** @return True if the last reference was released. */
+  bool release()
+  {
+    assert(d_refs > 0);
+    if (d_refs == s_max_refs)
+    {
+      unspill_refs();
+      return false;
+    }
+    return --d_refs == 0;
+  }
+
+  /** Count one more parent, saturating at s_max_parents. */
+  void inc_parents()
+  {
+    if (d_parents < s_max_parents)
+    {
+      ++d_parents;
+    }
+  }
+  /** Count one less parent, unless the count saturated. */
+  void dec_parents()
+  {
+    if (d_parents < s_max_parents)
+    {
+      --d_parents;
+    }
   }
 
   void gc();
@@ -187,17 +257,10 @@ class AigNodeData
            + static_cast<uint32_t>(offset / sizeof(AigNodeData));
   }
 
-  /** Reference count. */
-  uint32_t d_refs = 0;
-  /** Id of the left child of an AND gate, 0 if this is not an AND gate. */
-  int32_t d_left = 0;
-  /** Id of the right child of an AND gate, 0 if this is not an AND gate. */
-  int32_t d_right = 0;
-  /**
-   * Number of parents. Shares its 4 bytes with the flags below, 2^30-1 parents
-   * is far beyond anything reachable.
-   */
-  uint32_t d_parents : 30;
+  /** Reference count, spilling to the manager above s_max_refs. */
+  uint32_t d_refs : 19;
+  /** Number of parents, saturating at s_max_parents. */
+  uint32_t d_parents : 11;
   /**
    * True if the node must not be merged into its parent's gate, see
    * AigNode::require_cnf_var().
@@ -205,6 +268,10 @@ class AigNodeData
   uint32_t d_requires_cnf_var : 1;
   /** True if the node was garbage collected, see AigManager::node_data(). */
   uint32_t d_dead : 1;
+  /** Id of the left child of an AND gate, 0 if this is not an AND gate. */
+  int32_t d_left = 0;
+  /** Id of the right child of an AND gate, 0 if this is not an AND gate. */
+  int32_t d_right = 0;
   /** Id of the next node in the collision chain, 0 if this is the last one. */
   uint32_t d_next = 0;
 };
@@ -278,7 +345,13 @@ AigNode::require_cnf_var() const
 }
 
 /** The AIG is the largest structure Bitwuzla builds, a node must not grow. */
-static_assert(sizeof(AigNodeData) == 20, "AigNodeData must stay 20 bytes");
+static_assert(sizeof(AigNodeData) == 16, "AigNodeData must stay 16 bytes");
+/**
+ * A block is freed without destroying the node data in it, see
+ * AigManager::BlockDeleter, so node data must not own anything.
+ */
+static_assert(std::is_trivially_destructible_v<AigNodeData>,
+              "AigNodeData must be trivially destructible");
 
 std::ostream& operator<<(std::ostream& out, const AigNode& aig);
 
