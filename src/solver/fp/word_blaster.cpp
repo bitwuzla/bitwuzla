@@ -353,8 +353,8 @@ WordBlaster::_word_blast(const Node& node)
                != d_internal->d_unpacked_float_map.end());
 
         // Construct ITEs over unpacked float components
-        auto uf1 = d_internal->d_unpacked_float_map.at(cur[1]);
-        auto uf2 = d_internal->d_unpacked_float_map.at(cur[2]);
+        const auto& uf1 = d_internal->d_unpacked_float_map.at(cur[1]);
+        const auto& uf2 = d_internal->d_unpacked_float_map.at(cur[2]);
 
         Node nan = nm.mk_node(
             node::Kind::ITE,
