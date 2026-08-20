@@ -237,6 +237,7 @@ FloatingPoint::fpfp(const BitVector& sign,
 FloatingPoint::FloatingPoint(uint64_t exp_size, uint64_t sig_size)
     : d_exp_size(exp_size), d_sig_size(sig_size)
 {
+  assert(is_valid());
   // MPFR needs +1 for the value of the exponent due to its internal
   // representation, thus we can only allow a maximum exponent size of 30-bit
   // (for 32 bit architecture) and 62 bit (for 64 bit architecture).
@@ -304,7 +305,7 @@ FloatingPoint::FloatingPoint(uint64_t exp_size,
                              const FloatingPoint& fp)
     : FloatingPoint(exp_size, sig_size)
 {
-  assert(!fp.is_null());
+  assert(fp.is_valid());
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
   int32_t i          = 0;
   if (rm == RoundingMode::RNA)
@@ -373,16 +374,12 @@ FloatingPoint::operator=(const FloatingPoint& other)
 {
   if (&other == this) return *this;
 
-  assert(other.d_exp_size && other.d_sig_size);
-  if (is_null())
+  assert(is_valid());
+  assert(other.is_valid());
+  if (d_sig_size != other.d_sig_size)
   {
-    mpfr_reset_format();
     // MPFR precision includes the hidden bit (not the sign bit), we can use
     // significand size (which is also +1 because of the sign bit).
-    mpfr_init2(d_mpfr, other.d_sig_size);
-  }
-  else if (d_sig_size != other.d_sig_size)
-  {
     mpfr_set_prec(d_mpfr, other.d_sig_size);
   }
   d_exp_size = other.d_exp_size;
@@ -397,9 +394,10 @@ FloatingPoint::operator=(FloatingPoint&& other) noexcept
 {
   if (&other == this) return *this;
 
-  assert(other.d_exp_size && other.d_sig_size);
-  d_exp_size = other.d_exp_size;
-  d_sig_size = other.d_sig_size;
+  assert(is_valid());
+  assert(other.is_valid());
+  std::swap(d_exp_size, other.d_exp_size);
+  std::swap(d_sig_size, other.d_sig_size);
   mpfr_swap(d_mpfr, other.d_mpfr);
   return *this;
 }
@@ -409,10 +407,7 @@ FloatingPoint::~FloatingPoint() { mpfr_clear(d_mpfr); }
 size_t
 FloatingPoint::hash() const
 {
-  if (is_null())
-  {
-    return 0;
-  }
+  assert(is_valid());
 
   int32_t sign = fpisneg() ? -1 : 1;
 
@@ -481,10 +476,7 @@ std::string
 FloatingPoint::str(uint8_t bv_format) const
 {
   assert(bv_format == 2 || bv_format == 10);
-  if (is_null())
-  {
-    return "(null)";
-  }
+  assert(is_valid());
   std::stringstream ss;
   BitVector sign, exp, sig;
   FloatingPoint::ieee_bv_as_bvs(
@@ -506,10 +498,7 @@ FloatingPoint::str(uint8_t bv_format) const
 std::string
 FloatingPoint::to_real_str() const
 {
-  if (is_null())
-  {
-    return "(null)";
-  }
+  assert(is_valid());
   if (fpisnan())
   {
     return "(fp.to_real (_ NaN " + std::to_string(d_exp_size) + " "
@@ -544,10 +533,8 @@ FloatingPoint::to_real_str() const
 bool
 FloatingPoint::operator==(const FloatingPoint &other) const
 {
-  if (is_null())
-  {
-    return other.is_null();
-  }
+  assert(is_valid());
+  assert(other.is_valid());
   if (d_exp_size != other.d_exp_size || d_sig_size != other.d_sig_size)
   {
     return false;
@@ -576,52 +563,59 @@ FloatingPoint::operator!=(const FloatingPoint &other) const
 bool
 FloatingPoint::fpiszero() const
 {
-  return !is_null() && mpfr_zero_p(d_mpfr) > 0;
+  assert(is_valid());
+  return mpfr_zero_p(d_mpfr) > 0;
 }
 
 bool
 FloatingPoint::fpisnormal() const
 {
-  return !is_null() && mpfr_regular_p(d_mpfr)
+  assert(is_valid());
+  return mpfr_regular_p(d_mpfr)
          && mpfr_get_exp(d_mpfr) > sub_threshold(d_exp_size);
 }
 
 bool
 FloatingPoint::fpissubnormal() const
 {
-  return !is_null() && mpfr_regular_p(d_mpfr)
+  assert(is_valid());
+  return mpfr_regular_p(d_mpfr)
          && mpfr_get_exp(d_mpfr) <= sub_threshold(d_exp_size);
 }
 
 bool
 FloatingPoint::fpisnan() const
 {
-  return !is_null() && mpfr_nan_p(d_mpfr) > 0;
+  assert(is_valid());
+  return mpfr_nan_p(d_mpfr) > 0;
 }
 
 bool
 FloatingPoint::fpisinf() const
 {
-  return !is_null() && mpfr_inf_p(d_mpfr) > 0;
+  assert(is_valid());
+  return mpfr_inf_p(d_mpfr) > 0;
 }
 
 bool
 FloatingPoint::fpisneg() const
 {
-  return !is_null() && !fpisnan() && mpfr_signbit(d_mpfr) != 0;
+  assert(is_valid());
+  return !fpisnan() && mpfr_signbit(d_mpfr) != 0;
 }
 
 bool
 FloatingPoint::fpispos() const
 {
-  return !is_null() && !fpisnan() && mpfr_signbit(d_mpfr) == 0;
+  assert(is_valid());
+  return !fpisnan() && mpfr_signbit(d_mpfr) == 0;
 }
 
 bool
 FloatingPoint::fpeq(const FloatingPoint &fp) const
 {
-  assert(!is_null());
-  assert(!fp.is_null());
+  assert(is_valid());
+  assert(fp.is_valid());
   assert(d_exp_size == fp.d_exp_size && d_sig_size == fp.d_sig_size);
   return mpfr_equal_p(d_mpfr, fp.d_mpfr);
 }
@@ -629,8 +623,8 @@ FloatingPoint::fpeq(const FloatingPoint &fp) const
 bool
 FloatingPoint::fplt(const FloatingPoint &fp) const
 {
-  assert(!is_null());
-  assert(!fp.is_null());
+  assert(is_valid());
+  assert(fp.is_valid());
   assert(d_exp_size == fp.d_exp_size && d_sig_size == fp.d_sig_size);
   return mpfr_less_p(d_mpfr, fp.d_mpfr);
 }
@@ -638,8 +632,8 @@ FloatingPoint::fplt(const FloatingPoint &fp) const
 bool
 FloatingPoint::fple(const FloatingPoint &fp) const
 {
-  assert(!is_null());
-  assert(!fp.is_null());
+  assert(is_valid());
+  assert(fp.is_valid());
   assert(d_exp_size == fp.d_exp_size && d_sig_size == fp.d_sig_size);
   return mpfr_lessequal_p(d_mpfr, fp.d_mpfr);
 }
@@ -647,8 +641,8 @@ FloatingPoint::fple(const FloatingPoint &fp) const
 bool
 FloatingPoint::fpgt(const FloatingPoint &fp) const
 {
-  assert(!is_null());
-  assert(!fp.is_null());
+  assert(is_valid());
+  assert(fp.is_valid());
   assert(d_exp_size == fp.d_exp_size && d_sig_size == fp.d_sig_size);
   return mpfr_greater_p(d_mpfr, fp.d_mpfr);
 }
@@ -656,8 +650,8 @@ FloatingPoint::fpgt(const FloatingPoint &fp) const
 bool
 FloatingPoint::fpge(const FloatingPoint &fp) const
 {
-  assert(!is_null());
-  assert(!fp.is_null());
+  assert(is_valid());
+  assert(fp.is_valid());
   assert(d_exp_size == fp.d_exp_size && d_sig_size == fp.d_sig_size);
   return mpfr_greaterequal_p(d_mpfr, fp.d_mpfr);
 }
@@ -667,8 +661,8 @@ FloatingPoint::fpmin(const FloatingPoint &fp) const
 {
   // Note: The +/- zero case is unspecified as per SMT-LIB but MPFR always
   //       returns -zero.
-  assert(!is_null());
-  assert(!fp.is_null());
+  assert(is_valid());
+  assert(fp.is_valid());
   assert(d_exp_size == fp.d_exp_size && d_sig_size == fp.d_sig_size);
   FloatingPoint res(d_exp_size, d_sig_size);
   mpfr_min(res.d_mpfr, d_mpfr, fp.d_mpfr, MPFR_RNDN);
@@ -680,8 +674,8 @@ FloatingPoint::fpmax(const FloatingPoint &fp) const
 {
   // Note: The +/- zero case is unspecified as per SMT-LIB but MPFR always
   //       returns -zero.
-  assert(!is_null());
-  assert(!fp.is_null());
+  assert(is_valid());
+  assert(fp.is_valid());
   assert(d_exp_size == fp.d_exp_size && d_sig_size == fp.d_sig_size);
   FloatingPoint res(d_exp_size, d_sig_size);
   mpfr_max(res.d_mpfr, d_mpfr, fp.d_mpfr, MPFR_RNDN);
@@ -691,7 +685,7 @@ FloatingPoint::fpmax(const FloatingPoint &fp) const
 FloatingPoint
 FloatingPoint::fpabs() const
 {
-  assert(!is_null());
+  assert(is_valid());
   FloatingPoint res(d_exp_size, d_sig_size);
   mpfr_abs(res.d_mpfr, d_mpfr, MPFR_RNDN);
   return res;
@@ -700,7 +694,7 @@ FloatingPoint::fpabs() const
 FloatingPoint
 FloatingPoint::fpneg() const
 {
-  assert(!is_null());
+  assert(is_valid());
   FloatingPoint res(d_exp_size, d_sig_size);
   mpfr_neg(res.d_mpfr, d_mpfr, MPFR_RNDN);
   return res;
@@ -709,7 +703,7 @@ FloatingPoint::fpneg() const
 FloatingPoint
 FloatingPoint::fpsqrt(const RoundingMode rm) const
 {
-  assert(!is_null());
+  assert(is_valid());
   FloatingPoint res(d_exp_size, d_sig_size);
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
   int32_t i          = 0;
@@ -728,7 +722,7 @@ FloatingPoint::fpsqrt(const RoundingMode rm) const
 FloatingPoint
 FloatingPoint::fprti(const RoundingMode rm) const
 {
-  assert(!is_null());
+  assert(is_valid());
   FloatingPoint res(d_exp_size, d_sig_size);
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
   int32_t i          = 0;
@@ -747,8 +741,8 @@ FloatingPoint::fprti(const RoundingMode rm) const
 FloatingPoint
 FloatingPoint::fprem(const FloatingPoint &fp) const
 {
-  assert(!is_null());
-  assert(!fp.is_null());
+  assert(is_valid());
+  assert(fp.is_valid());
   assert(d_exp_size == fp.d_exp_size && d_sig_size == fp.d_sig_size);
   FloatingPoint res(d_exp_size, d_sig_size);
   int32_t i = mpfr_remainder(res.d_mpfr, d_mpfr, fp.d_mpfr, MPFR_RNDN);
@@ -759,8 +753,8 @@ FloatingPoint::fprem(const FloatingPoint &fp) const
 FloatingPoint
 FloatingPoint::fpadd(const RoundingMode rm, const FloatingPoint &fp) const
 {
-  assert(!is_null());
-  assert(!fp.is_null());
+  assert(is_valid());
+  assert(fp.is_valid());
   assert(d_exp_size == fp.d_exp_size && d_sig_size == fp.d_sig_size);
   FloatingPoint res(d_exp_size, d_sig_size);
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
@@ -780,8 +774,8 @@ FloatingPoint::fpadd(const RoundingMode rm, const FloatingPoint &fp) const
 FloatingPoint
 FloatingPoint::fpmul(const RoundingMode rm, const FloatingPoint &fp) const
 {
-  assert(!is_null());
-  assert(!fp.is_null());
+  assert(is_valid());
+  assert(fp.is_valid());
   assert(d_exp_size == fp.d_exp_size && d_sig_size == fp.d_sig_size);
   FloatingPoint res(d_exp_size, d_sig_size);
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
@@ -801,8 +795,8 @@ FloatingPoint::fpmul(const RoundingMode rm, const FloatingPoint &fp) const
 FloatingPoint
 FloatingPoint::fpdiv(const RoundingMode rm, const FloatingPoint& fp) const
 {
-  assert(!is_null());
-  assert(!fp.is_null());
+  assert(is_valid());
+  assert(fp.is_valid());
   assert(d_exp_size == fp.d_exp_size && d_sig_size == fp.d_sig_size);
   FloatingPoint res(d_exp_size, d_sig_size);
   mpfr_rnd_t rm_mpfr = rm2mpfr(rm);
@@ -824,9 +818,9 @@ FloatingPoint::fpfma(const RoundingMode rm,
                      const FloatingPoint& fp0,
                      const FloatingPoint& fp1) const
 {
-  assert(!is_null());
-  assert(!fp0.is_null());
-  assert(!fp1.is_null());
+  assert(is_valid());
+  assert(fp0.is_valid());
+  assert(fp1.is_valid());
   assert(d_exp_size == fp0.d_exp_size && d_sig_size == fp0.d_sig_size);
   assert(d_exp_size == fp1.d_exp_size && d_sig_size == fp1.d_sig_size);
   FloatingPoint res(d_exp_size, d_sig_size);
@@ -848,7 +842,7 @@ FloatingPoint::fpfma(const RoundingMode rm,
 BitVector
 FloatingPoint::as_bv() const
 {
-  assert(!is_null());
+  assert(is_valid());
   if (fpisnan())
   {
     // We use single representation for NaN, the same as SymFPU uses.

@@ -15,7 +15,6 @@
 
 #include <array>
 #include <cstdint>
-#include <memory>
 
 #include "bv/bitvector.h"
 #include "solver/fp/rounding_mode.h"
@@ -184,8 +183,6 @@ class FloatingPoint
   /** Destructor. */
   ~FloatingPoint();
 
-  /** @return True if this is an uninitialized floating-point. */
-  bool is_null() const { return d_exp_size == 0 && d_sig_size == 0; }
   /** @return The exponent size of this floating-point. */
   uint64_t exp_size() const { return d_exp_size; }
   /** @return The significand size of this floating-point. */
@@ -363,6 +360,9 @@ class FloatingPoint
   BitVector as_bv() const;
 
  private:
+  /** @return True if this floating-point has a valid format. */
+  bool is_valid() const { return d_exp_size > 1 && d_sig_size > 1; }
+
   static inline std::array<uint32_t, 6> s_hash_primes = {
       333444569u, 111130391u, 22237357u, 33355519u, 456790003u, 76891121u};
 
