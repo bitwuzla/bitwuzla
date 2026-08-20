@@ -16,6 +16,7 @@
 #include <cstdint>
 #include <memory>
 #include <new>
+#include <unordered_map>
 #include <vector>
 
 #include "bitblast/aig/aig_node.h"
@@ -175,6 +176,11 @@ class AigManager
 
   /** Blocks of `s_block_size` node data slots, indexed by node id. */
   std::vector<std::unique_ptr<std::byte[], BlockDeleter>> d_blocks;
+  /**
+   * Reference counts that do not fit the 19 bits of a node, keyed by node id,
+   * see AigNodeData::s_max_refs.
+   */
+  std::unordered_map<uint32_t, uint32_t> d_refs_overflow;
   /** AND gate cache used for hash consing. */
   AigNodeUniqueTable d_unique_table;
 
