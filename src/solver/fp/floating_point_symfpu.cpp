@@ -32,9 +32,6 @@
 #include "solver/fp/symfpu_wrapper.h"
 #include "util/gmp_utils.h"
 
-template <bool T>
-class SymFpuSymBV;
-
 namespace bzla {
 using namespace node;
 
