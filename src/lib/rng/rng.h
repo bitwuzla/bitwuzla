@@ -45,7 +45,14 @@ class RNG
   /** Destructor. */
   ~RNG();
 
-  /** Pick an integral number with type T. */
+  /**
+   * Pick an integral number with type T.
+   *
+   * @note The sequence of produced values for a given seed is reproducible
+   *       across standard library implementations for types that do not
+   *       require narrowing an engine draw since the algorithm for doing so
+   *       is unspecified in the standard.
+   */
   template <typename T,
             typename std::enable_if<std::is_integral<T>::value, int>::type = 0>
   T pick()
@@ -56,6 +63,11 @@ class RNG
 
   /**
    * Pick an integral number with type T between 'from' and 'to' (inclusive).
+   *
+   * @note The sequence of values this produces for a given seed is *not*
+   *       reproducible across standard library implementations since the
+   *       algorithm of the bounded std::uniform_int_distribution is
+   *       unspecified and thus differs across implementations.
    */
   template <typename T,
             typename std::enable_if<std::is_integral<T>::value, int>::type = 0>
