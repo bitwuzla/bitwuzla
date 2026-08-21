@@ -47,6 +47,31 @@ TEST(TestRng, copy_assignment)
   // the aliased GMP allocation.
 }
 
+TEST(TestRng, copy_assignment_after_gmp_state_use)
+{
+  // The GMP randstate is only seeded on first use, so copying an RNG whose
+  // randstate has already been seeded and advanced is a distinct case from
+  // copying one whose randstate is still unseeded (see copy_assignment): the
+  // copy must not re-seed and thereby discard the state it just copied.
+  RNG a(42);
+  mpz_t r;
+  mpz_init(r);
+  mpz_urandomb(r, *a.get_gmp_state(), 64);  // seeds and advances a's randstate
+
+  RNG b(7);
+  b = a;
+
+  mpz_t ra, rb;
+  mpz_init(ra);
+  mpz_init(rb);
+  mpz_urandomb(ra, *a.get_gmp_state(), 64);
+  mpz_urandomb(rb, *b.get_gmp_state(), 64);
+  ASSERT_EQ(mpz_cmp(ra, rb), 0);
+  mpz_clear(ra);
+  mpz_clear(rb);
+  mpz_clear(r);
+}
+
 TEST(TestRng, self_assignment)
 {
   RNG a(123);

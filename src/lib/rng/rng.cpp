@@ -16,15 +16,24 @@
 
 namespace bzla {
 
-RNG::RNG(uint32_t seed) : d_seed(seed)
+RNG::RNG(uint32_t seed) : d_seed(seed), d_gmp_seeded(false)
 {
   d_rng.seed(d_seed);
   gmp_randinit_mt(d_gmp_randstate);
-  gmp_randseed_ui(d_gmp_randstate, pick<uint32_t>());
+  // Drawn eagerly, even though the randstate is only seeded on first use, so
+  // that the Mersenne Twister stream does not depend on whether or when the
+  // randstate is used.
+  d_gmp_seed = pick<uint32_t>();
 }
 
-RNG::RNG(const RNG& other) : d_seed(other.d_seed), d_rng(other.d_rng)
+RNG::RNG(const RNG& other)
+    : d_seed(other.d_seed),
+      d_rng(other.d_rng),
+      d_gmp_seed(other.d_gmp_seed),
+      d_gmp_seeded(other.d_gmp_seeded)
 {
+  // gmp_randinit_set() duplicates the state of other as it is, seeded or not,
+  // so d_gmp_seeded has to be copied along with it.
   gmp_randinit_set(d_gmp_randstate, other.d_gmp_randstate);
 }
 
@@ -35,14 +44,24 @@ RNG::operator=(const RNG& other)
   {
     return *this;
   }
-  d_seed = other.d_seed;
-  d_rng  = other.d_rng;
+  d_seed       = other.d_seed;
+  d_rng        = other.d_rng;
+  d_gmp_seed   = other.d_gmp_seed;
+  d_gmp_seeded = other.d_gmp_seeded;
   gmp_randclear(d_gmp_randstate);
   gmp_randinit_set(d_gmp_randstate, other.d_gmp_randstate);
   return *this;
 }
 
 RNG::~RNG() { gmp_randclear(d_gmp_randstate); }
+
+void
+RNG::seed_gmp_state()
+{
+  assert(!d_gmp_seeded);
+  gmp_randseed_ui(d_gmp_randstate, d_gmp_seed);
+  d_gmp_seeded = true;
+}
 
 bool
 RNG::pick_with_prob(uint32_t prob)
