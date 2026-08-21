@@ -113,14 +113,39 @@ class RNG
   template <typename TSet, typename TPicked>
   TPicked pick_from_set(const TSet& data);
 
-  /** Get a pointer to the gmp_randstate_t. */
-  gmp_randstate_t* get_gmp_state() { return &d_gmp_randstate; }
+  /**
+   * Get a pointer to the gmp_randstate_t.
+   *
+   * Seeds the randstate if it has not been seeded yet, and is thus not safe to
+   * call concurrently on a shared RNG. Note that this was never safe: the
+   * returned randstate is advanced by GMP on every draw.
+   */
+  gmp_randstate_t* get_gmp_state()
+  {
+    if (!d_gmp_seeded) seed_gmp_state();
+    return &d_gmp_randstate;
+  }
 
  private:
+  /**
+   * Seed the GMP randstate.
+   *
+   * This is deferred until the randstate is first used to avoid seeding when
+   * no GMP RNG engine draws are needed (GMP RNG seeding is costly).
+   *
+   * @note Lazy seeding is mainly required for unit tests where many
+   *       (de)constructions of RNG happen but no GMP RNG draws are necessary.
+   */
+  void seed_gmp_state();
+
   /** The seed of the random number generator. */
   uint32_t d_seed;
   /** The underlying RNG Mersenne Twister engine. */
   std::mt19937 d_rng;
+  /** The seed for the GMP randstate, applied on first use. */
+  uint32_t d_gmp_seed;
+  /** True if the GMP randstate has been seeded. */
+  bool d_gmp_seeded;
   /** The GMP randstate. */
   gmp_randstate_t d_gmp_randstate;
 };
