@@ -55,7 +55,7 @@ operator<<(std::ostream& out, SatSolver solver)
   {
     case SatSolver::CADICAL: out << "CADICAL"; break;
     case SatSolver::CRYPTOMINISAT: out << "CRYPTOMINISAT"; break;
-    case SatSolver::GIMSATUL: out << ""; break;
+    case SatSolver::GIMSATUL: out << "GIMSATUL"; break;
     case SatSolver::KISSAT: out << "KISSAT"; break;
 #if !defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
     case SatSolver::NONE: out << "NONE"; break;
@@ -1085,6 +1085,7 @@ to_string(bzla::option::SatSolver sat_solver)
     case bzla::option::SatSolver::CADICAL: return "cadical";
     case bzla::option::SatSolver::CRYPTOMINISAT: return "cryptominisat";
     case bzla::option::SatSolver::KISSAT: return "kissat";
+    case bzla::option::SatSolver::GIMSATUL: return "gimsatul";
     default:
 #if !defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
       assert(sat_solver == bzla::option::SatSolver::NONE);
