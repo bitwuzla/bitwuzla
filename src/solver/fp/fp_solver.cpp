@@ -170,6 +170,7 @@ FpSolver::value(const Node& term)
     if (term.type().is_rm())
     {
       uint64_t rm = bv.to_uint64();
+      assert(rm < static_cast<uint64_t>(RoundingMode::NUM_RM));
       return nm.mk_value(static_cast<RoundingMode>(rm));
     }
     assert(term.type().is_fp());
