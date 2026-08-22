@@ -274,7 +274,7 @@ TestLsBv::test_move_binary(NodeKind kind, uint32_t pos_x)
             uint64_t nmoves = 0;
             do
             {
-              res = ls.move();
+              res    = ls.move();
               nmoves = ls.statistics().num_moves;
             } while (res == Result::UNKNOWN
                      && nmoves < (TEST_SLOW ? NMOVES_SLOW : NMOVES_FAST));
@@ -430,7 +430,7 @@ TestLsBv::test_move_ite(uint32_t pos_x)
                 uint64_t nmoves = 0;
                 do
                 {
-                  res = ls.move();
+                  res    = ls.move();
                   nmoves = ls.statistics().num_moves;
                 } while (res == Result::UNKNOWN
                          && nmoves < (TEST_SLOW ? NMOVES_SLOW : NMOVES_FAST));
@@ -529,7 +529,7 @@ TestLsBv::test_move_extract()
             uint64_t op_x = ls.mk_node(rx_val, x);
             uint64_t op   = ls.mk_node(
                 NodeKind::BV_EXTRACT, BitVectorDomain(bw_t), {op_x}, {hi, lo});
-            uint64_t t  = ls.mk_node(t_val, BitVectorDomain(t_val));
+            uint64_t t = ls.mk_node(t_val, BitVectorDomain(t_val));
             uint64_t root =
                 ls.mk_node(NodeKind::EQ, BitVectorDomain(1), {op, t});
             ls.register_root(root);
@@ -581,7 +581,7 @@ TestLsBv::test_move_sext()
         uint64_t op_x = ls.mk_node(rx_val, x);
         uint64_t op =
             ls.mk_node(NodeKind::BV_SEXT, BitVectorDomain(bw_t), {op_x}, {n});
-        uint64_t t = ls.mk_node(t_val, BitVectorDomain(t_val));
+        uint64_t t    = ls.mk_node(t_val, BitVectorDomain(t_val));
         uint64_t root = ls.mk_node(NodeKind::EQ, BitVectorDomain(1), {op, t});
         ls.register_root(root);
         Result res = ls.move();
@@ -888,8 +888,7 @@ TEST_F(TestLsBv, pop_shared_inequality_child)
   // Level 0: register the inequality directly as a top-level root.
   ls.register_root(ult);
   ASSERT_TRUE(ls.is_ineq_root(ls.get_node(ult)));
-  ASSERT_EQ(ls.d_roots_ineq.at(ls.get_node(ult)),
-            LocalSearchBV::s_ineq_pos);
+  ASSERT_EQ(ls.d_roots_ineq.at(ls.get_node(ult)), LocalSearchBV::s_ineq_pos);
 
   // Level 1: register the negated inequality, whose child is the same ULT node.
   ls.push();
@@ -908,8 +907,7 @@ TEST_F(TestLsBv, pop_shared_inequality_child)
   // ...so it must still be recognized as an inequality root, with only the
   // positive polarity flag remaining.
   ASSERT_TRUE(ls.is_ineq_root(ls.get_node(ult)));
-  ASSERT_EQ(ls.d_roots_ineq.at(ls.get_node(ult)),
-            LocalSearchBV::s_ineq_pos);
+  ASSERT_EQ(ls.d_roots_ineq.at(ls.get_node(ult)), LocalSearchBV::s_ineq_pos);
 }
 
 TEST_F(TestLsBv, compute_bounds_negated_inequality_root)
@@ -933,8 +931,7 @@ TEST_F(TestLsBv, compute_bounds_negated_inequality_root)
 
     // The inner ULT node is registered as a negated inequality root.
     ASSERT_TRUE(ls.is_ineq_root(ls.get_node(ult)));
-    ASSERT_EQ(ls.d_roots_ineq.at(ls.get_node(ult)),
-              LocalSearchBV::s_ineq_neg);
+    ASSERT_EQ(ls.d_roots_ineq.at(ls.get_node(ult)), LocalSearchBV::s_ineq_neg);
     ASSERT_TRUE(ls.get_assignment(ult).is_false());
 
     ls.compute_bounds(ls.get_node(ult));
@@ -959,8 +956,7 @@ TEST_F(TestLsBv, compute_bounds_negated_inequality_root)
     ls.compute_initial_assignment();
 
     ASSERT_TRUE(ls.is_ineq_root(ls.get_node(ult)));
-    ASSERT_EQ(ls.d_roots_ineq.at(ls.get_node(ult)),
-              LocalSearchBV::s_ineq_pos);
+    ASSERT_EQ(ls.d_roots_ineq.at(ls.get_node(ult)), LocalSearchBV::s_ineq_pos);
     ASSERT_TRUE(ls.get_assignment(ult).is_true());
 
     ls.compute_bounds(ls.get_node(ult));
