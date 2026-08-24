@@ -1548,6 +1548,7 @@ tests_smt2 = [
   ['solver/quant/issue97.smt2'],
   ['solver/quant/issue185.smt2'],
   ['solver/quant/issue202.smt2'],
+  ['solver/quant/issue209.smt2'],
   ['solver/quant/murxla-1bf2af511aa131a8.min.smt2'],
   ['solver/quant/quant_ic_bounds_regr0.smt2'],
   ['solver/quant/quant_ic_coupled_inverses.smt2'],
