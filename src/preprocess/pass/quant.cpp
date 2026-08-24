@@ -334,6 +334,8 @@ PassQuant::release_canonical_var(const Node& var)
 void
 PassQuant::alpha_normalize(const Node& node)
 {
+  util::Timer timer(d_stats.time_alpha_elim);
+
   NodeManager& nm = d_env.nm();
   std::unordered_map<Node, Node> substs;
   std::unordered_set<Node> top_quants;
