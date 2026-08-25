@@ -1423,17 +1423,15 @@ PassNormalize::process(const Node& node)
         Node prev_res1, prev_res2, prev_res3, prev_res4;
 
         std::unordered_set<Node> norm_cache;
-        // Apply normalization until fixed point.
+        // Apply normalization until fixed point. The branches below are not
+        // jointly confluent. We use norm_cache to break normalization cycles.
         while (true)
         {
-#ifndef NDEBUG
-          assert(norm_cache.insert(res).second);  // Fixed point issue
-#else
           if (!norm_cache.insert(res).second)
           {
+            d_stats.num_normalization_cycles += 1;
             break;
           }
-#endif
           // normalize: sum = sum
           // normalize: product = product
           if (prev_res1 != res && res.kind() == Kind::EQUAL
@@ -1445,8 +1443,7 @@ PassNormalize::process(const Node& node)
             if (norm)
             {
               d_stats.num_normalizations += 1;
-              res = d_rewriter.rewrite(res);
-              assert(prev_res1 != res);
+              res       = d_rewriter.rewrite(res);
               prev_res1 = res;
               continue;
             }
@@ -1461,8 +1458,7 @@ PassNormalize::process(const Node& node)
             if (norm)
             {
               d_stats.num_normalizations += 1;
-              res = d_rewriter.rewrite(res);
-              assert(prev_res2 != res);
+              res       = d_rewriter.rewrite(res);
               prev_res2 = res;
               continue;
             }
@@ -1480,8 +1476,7 @@ PassNormalize::process(const Node& node)
             if (norm)
             {
               d_stats.num_normalizations += 1;
-              res = d_rewriter.rewrite(res);
-              assert(prev_res3 != res);
+              res       = d_rewriter.rewrite(res);
               prev_res3 = res;
               continue;
             }
@@ -1497,8 +1492,7 @@ PassNormalize::process(const Node& node)
             if (norm)
             {
               d_stats.num_normalizations += 1;
-              res = d_rewriter.rewrite(res);
-              assert(prev_res4 != res);
+              res       = d_rewriter.rewrite(res);
               prev_res4 = res;
               continue;
             }
@@ -1768,6 +1762,8 @@ PassNormalize::Statistics::Statistics(util::Statistics& stats,
       time_score(stats.new_stat<util::TimerStatistic>(prefix + "time_score")),
       num_normalizations(
           stats.new_stat<uint64_t>(prefix + "num_normalizations")),
+      num_normalization_cycles(
+          stats.new_stat<uint64_t>(prefix + "num_normalization_cycles")),
       num_common_normalizations(
           stats.new_stat<uint64_t>(prefix + "num_common_normalizations")),
       num_normalized_assertions(

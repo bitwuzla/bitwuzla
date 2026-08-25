@@ -1,0 +1,8 @@
+(set-logic QF_BV)
+(set-info :status sat)
+(declare-const v0 (_ BitVec 4))
+(declare-const v1 (_ BitVec 4))
+(declare-const v3 (_ BitVec 4))
+(assert (= v3 (bvneg (bvmul (bvadd v0 v0) (bvadd v1 v0)))))
+(assert (= (bvnot (bvadd v3 v1)) (bvadd v3 (_ bv7 4))))
+(check-sat)

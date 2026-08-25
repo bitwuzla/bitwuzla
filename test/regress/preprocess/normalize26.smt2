@@ -1,0 +1,8 @@
+(set-logic QF_BV)
+(set-info :status sat)
+(declare-const v0 (_ BitVec 4))
+(declare-const v2 (_ BitVec 4))
+(declare-const v3 (_ BitVec 4))
+(assert (= (bvand (_ bv7 4) v2) (bvsub v0 (_ bv3 4))))
+(assert (= v3 (bvshl (bvsub v0 v3) v0)))
+(check-sat)
