@@ -356,6 +356,11 @@ substitute(NodeManager& nm,
            const std::unordered_map<Node, Node>& substitutions,
            std::unordered_map<Node, Node>& cache)
 {
+  if (substitutions.empty())
+  {
+    return node;
+  }
+
   node::node_ref_vector visit{node};
 
   do
