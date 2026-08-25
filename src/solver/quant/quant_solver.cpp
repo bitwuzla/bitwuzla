@@ -862,29 +862,27 @@ QuantSolver::project(const Node& q,
       kind = Kind::EQUAL;
       std::vector<Node> children{s, t};
       res = nm.mk_node(kind, children);
-      if (cur != res)
+      assert(cur != res);
+      while (!work.empty())
       {
-        while (!work.empty())
+        cur = work.back();
+        work.pop_back();
+        children.clear();
+        auto idx = path.at(cur);
+        for (size_t i = 0, num = cur.num_children(); i < num; ++i)
         {
-          cur = work.back();
-          work.pop_back();
-          children.clear();
-          auto idx = path.at(cur);
-          for (size_t i = 0, num = cur.num_children(); i < num; ++i)
+          if (i == idx)
           {
-            if (i == idx)
-            {
-              children.push_back(res);
-            }
-            else
-            {
-              children.push_back(cur[i]);
-            }
+            children.push_back(res);
           }
-          res = utils::rebuild_node(nm, cur, children);
+          else
+          {
+            children.push_back(cur[i]);
+          }
         }
-        path = d_bv_inverter.compute_path(res, var);
+        res = utils::rebuild_node(nm, cur, children);
       }
+      path = d_bv_inverter.compute_path(res, var);
     }
   }
 
