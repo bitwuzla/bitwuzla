@@ -1,0 +1,80 @@
+/***
+ * Bitwuzla: Satisfiability Modulo Theories (SMT) solver.
+ *
+ * Copyright (C) 2025 by the authors listed in AUTHORS file.
+ *
+ * This file is part of Bitwuzla under the MIT license. See COPYING for more
+ * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
+ *
+ * ---
+ *
+ * Rename the external symbols of CaDiCaL's bundled copy of Kitten.
+ *
+ * Kissat ships its own, independently evolving copy of `kitten.c` that
+ * exports the same symbol names.  Linking both solvers into one binary --
+ * which Bitwuzla does when configured with Cadical and Kissat enabled --
+ * therefore fails with duplicate symbol definitions.  Prefixing CaDiCaL's
+ * copy keeps the two copies apart.
+ *
+ * Included from `kitten.h` (see 0002-prefix-bundled-kitten-symbols.patch) so
+ * that every CaDiCaL translation unit consistently sees the renamed symbols.
+ *
+ * Remove together with the patch once CaDiCaL prefixes these symbols upstream.
+ */
+
+#ifndef _cadical_kitten_prefix_h_INCLUDED
+#define _cadical_kitten_prefix_h_INCLUDED
+
+#define kitten_add_prime_implicant cadical_kitten_add_prime_implicant
+#define kitten_assume cadical_kitten_assume
+#define kitten_assume_signed cadical_kitten_assume_signed
+#define kitten_binary cadical_kitten_binary
+#define kitten_clause cadical_kitten_clause
+#define kitten_clause_with_id_and_exception \
+  cadical_kitten_clause_with_id_and_exception
+#define kitten_clear cadical_kitten_clear
+#define kitten_compute_clausal_core cadical_kitten_compute_clausal_core
+#define kitten_compute_prime_implicant cadical_kitten_compute_prime_implicant
+#define kitten_current_ticks cadical_kitten_current_ticks
+#define kitten_failed cadical_kitten_failed
+#define kitten_fixed cadical_kitten_fixed
+#define kitten_fixed_signed cadical_kitten_fixed_signed
+#define kitten_flip_and_implicant_for_signed_literal \
+  cadical_kitten_flip_and_implicant_for_signed_literal
+#define kitten_flip_literal cadical_kitten_flip_literal
+#define kitten_flip_phases cadical_kitten_flip_phases
+#define kitten_flip_signed_literal cadical_kitten_flip_signed_literal
+#define kitten_init cadical_kitten_init
+#define kitten_no_terminator cadical_kitten_no_terminator
+#define kitten_no_ticks_limit cadical_kitten_no_ticks_limit
+#define kitten_randomize_phases cadical_kitten_randomize_phases
+#define kitten_release cadical_kitten_release
+#define kitten_set_logging cadical_kitten_set_logging
+#define kitten_set_terminator cadical_kitten_set_terminator
+#define kitten_set_ticks_limit cadical_kitten_set_ticks_limit
+#define kitten_shrink_to_clausal_core cadical_kitten_shrink_to_clausal_core
+#define kitten_shuffle_clauses cadical_kitten_shuffle_clauses
+#define kitten_signed_value cadical_kitten_signed_value
+#define kitten_solve cadical_kitten_solve
+#define kitten_status cadical_kitten_status
+#define kitten_trace_core cadical_kitten_trace_core
+#define kitten_track_antecedents cadical_kitten_track_antecedents
+#define kitten_traverse_core_clauses cadical_kitten_traverse_core_clauses
+#define kitten_traverse_core_clauses_with_id \
+  cadical_kitten_traverse_core_clauses_with_id
+#define kitten_traverse_core_ids cadical_kitten_traverse_core_ids
+#define kitten_unit cadical_kitten_unit
+#define kitten_value cadical_kitten_value
+
+#define citten_clause_with_id cadical_citten_clause_with_id
+#define citten_clause_with_id_and_equivalence \
+  cadical_citten_clause_with_id_and_equivalence
+#define citten_clause_with_id_and_exception \
+  cadical_citten_clause_with_id_and_exception
+
+/* Non-static helpers local to `kitten.c`. */
+#define completely_backtrack_to_root_level \
+  cadical_completely_backtrack_to_root_level
+#define new_learned_klause cadical_new_learned_klause
+
+#endif
