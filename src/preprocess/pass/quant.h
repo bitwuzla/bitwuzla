@@ -25,8 +25,50 @@ class PassQuant : public PreprocessingPass
   Node process(const Node& node) override;
 
  private:
+  /**
+   * Alpha-normalize given node.
+   * @param node The node to process.
+   */
   void alpha_normalize(const Node& node);
+  /**
+   * Eliminate quantifier based on inverse computation.
+   *
+   * Given a formula (forall x. (or (not A) B)). If there is a non-negated
+   * equality a = b in A (where x appears in either a or b) for which we can
+   * derive an inverse x = t and x does not occur in t, we replace the body C
+   * with C[x/t].
+   *
+   * This is a more general version of destructive equality resolution (DER)
+   * where a body (or (not (= x t) B) can be simplified to B[x/t] if x does
+   * not occur in t.
+   *
+   * @note Currently, we only have inverse computation for bool/bit-vectors.
+   *       However, this also handles the common DER case for non-BV vars.
+   *
+   * @param node The node to process.
+   * @return The resulting node with quantified variable x eliminated, or
+   *         the original node if no elimination was possible.
+   */
   Node eliminate(const Node& node);
+  /**
+   * Helper for eliminate. Try to compute an unconditional inverse for an
+   * equalite a = b in `body` where `var` occurs in either a or b.
+   *
+   * Given a formula (forall x. (or (not A) B)), if we find a non-negated
+   * equality x = t in A  and x does not occur in t, we can replace the body
+   * C with C[x/t]. This is also referred to as destructive equality resolution
+   * (DER) in the literature.
+   *
+   * If x is a bit-vector variable, we can generalize by means of inverse
+   * computation: if we find a non-negated equality a = b in A (where x appears
+   * in either a or b) and can derive an inverse x = t for this equality and x
+   * does not occur in t, we can replace the body C with C[x/t].
+   *
+   * @param body The body of a quantifer to process.
+   * @param var  The quantified variable of the quantifier.
+   * @return The unconditional inverse, if there is one, and a null node
+   *         otherwise.
+   */
   Node find_inverse(const Node& body, const Node& var, bool negated = true);
   std::pair<bool, std::unordered_set<Node>> has_free_vars(
       const Node& node, const std::unordered_set<Node>& closed_quants) const;
@@ -34,6 +76,7 @@ class PassQuant : public PreprocessingPass
   Node get_canonical_var(const Node& var);
   void release_canonical_var(const Node& var);
 
+  /** The associated bit-vector inverter instance. */
   bv::BvInverter d_bv_inverter;
   std::unordered_map<Node, Node> d_cache;
 
