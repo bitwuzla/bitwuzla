@@ -97,13 +97,13 @@ PassQuant::apply(AssertionVector& assertions)
     const Node& assertion = assertions[i];
     if (!processed(assertion))
     {
+      cache_assertion(assertion);
       if (assertion.node_info().quantifier)
       {
         const Node& processed = process(assertion);
         assertions.replace(i, processed);
         cache_assertion(processed);
       }
-      cache_assertion(assertion);
     }
   }
   d_cache.clear();
