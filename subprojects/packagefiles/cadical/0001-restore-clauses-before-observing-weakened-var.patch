@@ -1,0 +1,76 @@
+--- a/src/external.hpp
++++ b/src/external.hpp
+@@ -129,6 +129,7 @@
+   unordered_map<uint64_t, vector<int>> forgettable_original;
+ 
+   void add_observed_var (int elit);
++  void restore_before_observing (int elit);
+   void remove_observed_var (int elit);
+   void reset_observed_vars ();
+ 
+--- a/src/external.cpp
++++ b/src/external.cpp
+@@ -413,6 +413,49 @@
+   propagator->notify_assignment (assigned);
+ }
+ 
++// A variable weakened by variable elimination (or any other technique which
++// pushes witness literals on the extension stack) can not be observed right
++// away: the external propagator would see assignments of a variable which is
++// not fully constrained by the clauses currently in the solver, since some of
++// its clauses only live on the extension stack.
++//
++// Tainting both phases forces 'restore_clauses' to restore every weakened
++// clause which has this variable as witness literal, after which the variable
++// is clean and may be observed.  This implements the 'TODO' in
++// 'add_observed_var' above.
++//
++// Restoring requires root level, therefore 'Solver::add_observed_var' only
++// calls this when not solving.
++//
++void External::restore_before_observing (int elit) {
++  assert (propagator); // REQ is in Solver::add_observed_var
++  assert (elit);
++  assert (elit != INT_MIN);
++
++  const int eidx = abs (elit);
++  if (eidx > max_var)
++    return;
++  if (!marked (witness, elit) && !marked (witness, -elit))
++    return;
++
++  LOG ("restoring clauses of weakened variable %d before observing it", eidx);
++  reset_extended (); // tainting!
++
++  if (internal->level)
++    internal->backtrack (0);
++
++  // 'internalize' taints a literal if its negation occurs as witness literal
++  // on the extension stack, and reactivates it if necessary.  Internalizing
++  // both phases therefore taints exactly the phases needed to restore all
++  // clauses witnessed by this variable.
++  internalize (elit);
++  internalize (-elit);
++
++  (void) internal->restore_clauses ();
++
++  assert (!marked (witness, elit) && !marked (witness, -elit));
++}
++
+ void External::remove_observed_var (int elit) {
+   assert (propagator); // REQ is in Solver::remove_observed_var
+ 
+--- a/src/solver.cpp
++++ b/src/solver.cpp
+@@ -1121,6 +1121,11 @@
+   REQUIRE_VALID_LIT (idx);
+   REQUIRE (external->propagator,
+            "can not observe variables without a connected propagator");
++  // Restoring the clauses of a variable weakened by variable elimination
++  // requires root level and thus can not be done from within a propagator
++  // callback, i.e., while solving.
++  if (state () != SOLVING)
++    external->restore_before_observing (idx);
+   external->add_observed_var (idx);
+   LOG_API_CALL_END ("observe", idx);
+ }

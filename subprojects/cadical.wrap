@@ -6,7 +6,7 @@ source_filename = cadical-3.0.1.tar.gz
 source_hash = 0a8ea563b5a25f5aa064634814edab45cc0e45111ea0f5d412a565f806fd7e11
 
 patch_directory = cadical
-diff_files = cadical/0001-allow-observing-eliminated-var-at-root.patch,
+diff_files = cadical/0001-restore-clauses-before-observing-weakened-var.patch,
              cadical/0002-prefix-bundled-kitten-symbols.patch
 
 [provide]
