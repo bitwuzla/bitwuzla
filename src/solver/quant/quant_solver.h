@@ -82,9 +82,10 @@ class QuantSolver : public Solver
       const std::unordered_map<Node, std::vector<Node>>& ground_terms);
 
   /**
-   * Try to find an inverse term instantiation for var.
+   * Try to find an inverse term instantiation for the variable of `q_cur`.
    * @param q            The active quantified formula.
-   * @param var          The variable to find the instantiation for.
+   * @param q_cur        The quantifier for whose variable to find an
+   *                     instantiation.
    * @param body         The body of the quantified formula.
    * @param inst         The instantiation term determined via symbolic_term().
    * @param model_values The current model values of the currently active
@@ -103,7 +104,7 @@ class QuantSolver : public Solver
    * @return The inverse term.
    */
   Node inverse_term(const Node& q,
-                    const Node& var,
+                    const Node& q_cur,
                     const Node& body,
                     const Node& inst,
                     const std::unordered_map<Node, Node>& model_values,
@@ -163,9 +164,9 @@ class QuantSolver : public Solver
   std::unordered_map<Node, Node> d_mbqi_inst;
   backtrack::unordered_set<Node> d_lemma_cache;
 
-  /** Maps the number of value instantiations per quantified variable. */
+  /** Maps the number of value instantiations per quantifier. */
   std::unordered_map<Node, uint64_t> d_value_insts;
-  /** Cache quantified variables for which we have created an IC inst. */
+  /** Cache quantifiers for whose variables we have created an IC inst. */
   backtrack::unordered_set<Node> d_inv_cache;
 
   bool d_added_lemma;

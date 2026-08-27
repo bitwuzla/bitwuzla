@@ -664,19 +664,18 @@ QuantSolver::mbqi_lemma(
       // logic to actually try to find this inverse is encoded in inverse_term.
       std::unordered_set<Node> deps;
       std::vector<Node> conds;
-      Node inv =
-          inverse_term(q, cur[0], body, value, model_values, deps, conds);
+      Node inv = inverse_term(q, cur, body, value, model_values, deps, conds);
       if (!inv.is_null())
       {
         // Accept the inverse only if closing its references keeps the
-        // conditions acyclic over the fresh instantiation constants: no
-        // referenced variable may (transitively) reference this variable
-        // through an already accepted inverse. Else the conditions of
-        // multiple variables may form a cyclic system of constraints over
-        // their fresh instantiation constants, which is potentially
-        // unsatisfiable and thus unsound to assert. A rejected inverse is
-        // not cached so that the variable may retry in a later round (when
-        // the referencing inverse is blocked by the cache).
+        // conditions acyclic over the fresh instantiation constants.
+        // That is, no referenced variable may (transitively) reference this
+        // variable through an already accepted inverse. A cyclic system of
+        // constraints over fresh instantiation constants is potentially
+        // unsatisfiable and yields an unsound lemma. Note that a rejected
+        // inverse is not cached so that we may retry for the variable later
+        // (when the referencing inverse is blocked by the cache and thus
+        // no cycling system is produced).
         bool acyclic = true;
         for (const auto& fv : deps)
         {
@@ -688,7 +687,7 @@ QuantSolver::mbqi_lemma(
         }
         if (acyclic)
         {
-          d_inv_cache.insert(cur[0]);
+          d_inv_cache.insert(cur);
           value      = inv;
           lemma_kind = QuantSolver::LemmaKind::MBQI_INST_INV;
           conditions.insert(conditions.end(), conds.begin(), conds.end());
@@ -699,7 +698,7 @@ QuantSolver::mbqi_lemma(
     // Cache the number of value instantations per quantifier.
     if (value.is_value())
     {
-      d_value_insts[cur[0]] += 1;
+      d_value_insts[cur] += 1;
     }
     // Map instantiation.
     map.emplace(cur[0], value);
@@ -891,23 +890,27 @@ QuantSolver::project(const Node& q,
 
 Node
 QuantSolver::inverse_term(const Node& q,
-                          const Node& var,
+                          const Node& q_cur,
                           const Node& body,
                           const Node& value,
                           const std::unordered_map<Node, Node>& model_values,
                           std::unordered_set<Node>& deps,
                           std::vector<Node>& conditions)
 {
+  assert(q.kind() == Kind::FORALL);
+  assert(q_cur.kind() == Kind::FORALL);
+  // The variable to find an instantiation for.
+  const Node& var = q_cur[0];
   // Only try to compute IC-based lemma for bit-vector variables, and only
   // if default strategy does not find a symbolic instantiation.
   if (value.is_value() && value.type().is_bv()
       && !body.is_value()
       // Also, only if we have tried d_opt_quant_ic_value_limit value
       // instantiations for this quantifier first.
-      && d_value_insts[var] >= d_opt_quant_ic_value_limit)
+      && d_value_insts[q_cur] >= d_opt_quant_ic_value_limit)
   {
-    // Also, only generate one per quantified variable.
-    if (d_inv_cache.find(var) != d_inv_cache.end())
+    // Also, only generate one per quantifier.
+    if (d_inv_cache.find(q_cur) != d_inv_cache.end())
     {
       return Node();
     }
@@ -935,7 +938,7 @@ QuantSolver::inverse_term(const Node& q,
       // returned inverses are cached by the caller if accepted.
       if (filtered)
       {
-        d_inv_cache.insert(var);
+        d_inv_cache.insert(q_cur);
       }
       else
       {
