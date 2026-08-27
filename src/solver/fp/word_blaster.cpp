@@ -68,6 +68,7 @@ Node
 WordBlaster::word_blast(const Node& node)
 {
   assert(!node.is_null());
+  node::Kind kind = node.kind();
   {
     auto it = d_internal->d_packed_float_map.find(node);
     if (it != d_internal->d_packed_float_map.end())
@@ -91,13 +92,28 @@ WordBlaster::word_blast(const Node& node)
       return it->second.getNode();
     }
   }
+  if (kind == node::Kind::FP_TO_SBV)
+  {
+    auto it = d_internal->d_sbv_map.find(node);
+    if (it != d_internal->d_sbv_map.end())
+    {
+      return it->second.getNode();
+    }
+  }
+  if (kind == node::Kind::FP_TO_UBV)
+  {
+    auto it = d_internal->d_ubv_map.find(node);
+    if (it != d_internal->d_ubv_map.end())
+    {
+      return it->second.getNode();
+    }
+  }
   {
     auto it = d_internal->d_unpacked_float_map.find(node);
     if (it != d_internal->d_unpacked_float_map.end())
     {
       auto [iit, inserted] = d_internal->d_packed_float_map.emplace(
-          node,
-          symfpu::pack(node.type(), d_internal->d_unpacked_float_map.at(node)));
+          node, symfpu::pack(node.type(), it->second));
       return iit->second.getNode();
     }
   }
@@ -107,6 +123,15 @@ WordBlaster::word_blast(const Node& node)
 bool
 WordBlaster::is_word_blasted(const Node& node) const
 {
+  node::Kind kind = node.kind();
+
+  // We never call is_word_blasted on partial operators we have already
+  // word-blasted.
+  assert(kind != node::Kind::FP_TO_SBV
+         || d_internal->d_sbv_map.find(node) == d_internal->d_sbv_map.end());
+  assert(kind != node::Kind::FP_TO_UBV
+         || d_internal->d_ubv_map.find(node) == d_internal->d_ubv_map.end());
+
   {
     auto it = d_internal->d_packed_float_map.find(node);
     if (it != d_internal->d_packed_float_map.end())
