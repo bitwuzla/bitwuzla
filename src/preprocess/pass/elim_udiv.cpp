@@ -38,9 +38,9 @@ PassElimUdiv::apply(AssertionVector& assertions)
     Node assertion = assertions[i];
     if (!processed(assertion))
     {
-      cache_assertion(assertion);
       Node processed = process(assertion);
       assertions.replace(i, processed);
+      cache_assertion(processed);
     }
   }
 }

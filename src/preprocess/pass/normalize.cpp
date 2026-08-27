@@ -1369,10 +1369,9 @@ PassNormalize::apply(AssertionVector& assertions)
     for (size_t i = 0, size = assertions.size(); i < size; ++i)
     {
       Node norm_assertion = d_env.rewriter().rewrite(assertions_normalized[i]);
-      cache_assertion(assertions[i]);
+      cache_assertion(norm_assertion);
       if (assertions[i] != norm_assertion)
       {
-        cache_assertion(norm_assertion);
         assertions.replace(i, norm_assertion);
         ++d_stats.num_normalized_assertions;
       }

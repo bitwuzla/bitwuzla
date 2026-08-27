@@ -94,15 +94,19 @@ PassQuant::apply(AssertionVector& assertions)
   // Then try to further simplify.
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
-    const Node& assertion = assertions[i];
+    Node assertion = assertions[i];
     if (!processed(assertion))
     {
-      cache_assertion(assertion);
       if (assertion.node_info().quantifier)
       {
-        const Node& processed = process(assertion);
+        Node processed = process(assertion);
         assertions.replace(i, processed);
+        // Cache the result, not the original, else duplicates are skipped.
         cache_assertion(processed);
+      }
+      else
+      {
+        cache_assertion(assertion);
       }
     }
   }

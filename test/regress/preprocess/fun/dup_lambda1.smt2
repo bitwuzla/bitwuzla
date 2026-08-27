@@ -1,0 +1,8 @@
+(set-logic QF_UFBV)
+(set-info :status sat)
+(declare-const x (_ BitVec 4))
+(declare-const y (_ BitVec 4))
+(define-fun f ((a (_ BitVec 4))) (_ BitVec 4) (bvadd a #b0001))
+(assert (bvult (f x) (f y)))
+(assert (bvult (f x) (f y)))
+(check-sat)

@@ -34,17 +34,14 @@ PassElimLambda::apply(AssertionVector& assertions)
   d_cache.clear();
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
-    const Node& assertion = assertions[i];
-    if (!processed(assertion))
+    Node assertion = assertions[i];
+    if (assertion.node_info().lambda)
     {
-      if (assertion.node_info().lambda)
-      {
-        const Node& processed = process(assertion);
-        assertions.replace(i, processed);
-        cache_assertion(processed);
-      }
-      cache_assertion(assertion);
+      Node processed = process(assertion);
+      assertions.replace(i, processed);
     }
+    // No need to cache assertions, lambda node flag is sufficient here since
+    // processed assertions do not contain any lambda terms.
   }
   d_cache.clear();
 }

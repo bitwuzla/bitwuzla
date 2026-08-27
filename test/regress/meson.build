@@ -417,6 +417,8 @@ tests_smt2 = [
   ['preprocess/bv/ultsubst9.btor.smt2', ['-rwl=2']],
   ['preprocess/fun/lambda_elim1.smt2'],
   ['preprocess/fun/lambda_elim2.smt2'],
+  ['preprocess/fun/dup_lambda1.smt2'],
+  ['preprocess/fun/dup_lambda2.smt2'],
   ['preprocess/elimudiv1.smt2'],
   ['preprocess/embedded1.smt2'],
   ['preprocess/murxla-60e16cc072cca364.min.smt2'],
@@ -1600,6 +1602,9 @@ tests_smt2 = [
 
 tests_smt2_no_unsat_core = [
   ['preprocess/normalize23.smt2', ['--pp-only', '-p']],
+  ['preprocess/dup_normalize1.smt2', ['--pp-only', '-p']],
+  ['preprocess/quant/dup_quant1.smt2',
+   ['--pp-only', '-p', '--pp-embedded=false']],
 ]
 
 tests_smt2_get_interpolant = [
@@ -1839,7 +1844,7 @@ if get_option('b_sanitize') == 'none'
   tests_smt2 += [['solver/bv/prop/prop_bvurem.smt2', ['--bv-solver=preprop']]]
 endif
 
-tests_smt2_no_unsat_core = [
+tests_smt2_no_unsat_core += [
   ## times out with produce-unsat-cores
   ['solver/quant/quant_ic_underdet.smt2'],
 ]

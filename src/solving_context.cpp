@@ -298,11 +298,10 @@ SolvingContext::check_no_free_variables() const
 {
   std::vector<Node> visit;
   std::unordered_map<Node, bool> cache;
-  std::unordered_map<Node, uint64_t> bound_vars;
+  std::unordered_map<Node, std::unordered_set<Node>> free_vars;
 
   for (size_t i = 0; i < d_assertions.size(); ++i)
   {
-    std::unordered_map<Node, std::unordered_set<Node>> free_vars;
     const Node& assertion = d_assertions[i];
     visit.push_back(assertion);
     do
