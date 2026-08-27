@@ -462,6 +462,7 @@ tests_smt2 = [
   ['preprocess/quant/alpha6.smt2'],
   ['preprocess/quant/der-rm.smt2', ['-p']],
   ['preprocess/quant/red-ir-smscir_io.c.smt2'],
+  ['preprocess/quant/red-llvm13-smtlib-09.smt2'],
   ['preprocess/regrinc1.smt2'],
   ['preprocess/rewrite1.smt2'],
   ['preprocess/rewrite2.smt2'],

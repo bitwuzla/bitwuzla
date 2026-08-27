@@ -11,6 +11,7 @@
 #ifndef BZLA_PREPROCESS_PASS_QUANT_H_INCLUDED
 #define BZLA_PREPROCESS_PASS_QUANT_H_INCLUDED
 
+#include "backtrack/unordered_set.h"
 #include "preprocess/preprocessing_pass.h"
 #include "solver/bv/bv_inverter.h"
 #include "type/type.h"
@@ -25,6 +26,17 @@ class PassQuant : public PreprocessingPass
   Node process(const Node& node) override;
 
  private:
+  /**
+   * Make binding of quantified variables unique, i.e., no binders are shared,
+   * neither nested nor across assertions.
+   *
+   * @note This is already guaranteed through the parser, but via the API,
+   *       sharing binders is not disallowed.
+   *
+   * @params assertions The current set of assertions.
+   */
+  void uniquify_variables(AssertionVector& assertions);
+  void uniquify_variable(const Node& node, const Node& fresh_var);
   /**
    * Alpha-normalize given node.
    * @param node The node to process.
@@ -70,6 +82,7 @@ class PassQuant : public PreprocessingPass
    *         otherwise.
    */
   Node find_inverse(const Node& body, const Node& var, bool negated = true);
+
   std::pair<bool, std::unordered_set<Node>> has_free_vars(
       const Node& node, const std::unordered_set<Node>& closed_quants) const;
 
@@ -78,9 +91,14 @@ class PassQuant : public PreprocessingPass
 
   /** The associated bit-vector inverter instance. */
   bv::BvInverter d_bv_inverter;
-  std::unordered_map<Node, Node> d_cache;
 
+  /** Traversal cache (not persistent across calls to apply()). */
+  std::unordered_map<Node, Node> d_cache;
+  /** Alpha variable cache (not persistent across calls to apply()). */
   std::unordered_map<Type, std::vector<std::pair<Node, bool>>> d_alpha_vars;
+
+  /** Cache which variables are already bound in assertions. */
+  backtrack::unordered_set<uint64_t> d_bound_vars;
 
   struct Statistics
   {

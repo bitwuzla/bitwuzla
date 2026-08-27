@@ -30,6 +30,29 @@ class TestPassQuant : public TestPreprocessingPass
     d_bv2 = d_nm.mk_bv_type(2);
   };
 
+  std::unordered_map<Node, std::unordered_set<Node>> collect_binders(
+      const std::vector<Node>& roots)
+  {
+    std::unordered_map<Node, std::unordered_set<Node>> binders;
+    std::unordered_set<Node> cache;
+    std::vector<Node> visit(roots);
+    while (!visit.empty())
+    {
+      Node cur = visit.back();
+      visit.pop_back();
+      if (!cache.insert(cur).second)
+      {
+        continue;
+      }
+      if (cur.kind() == Kind::FORALL)
+      {
+        binders[cur[0]].insert(cur);
+      }
+      visit.insert(visit.end(), cur.begin(), cur.end());
+    }
+    return binders;
+  }
+
  protected:
   option::Options d_options;
   sat::SatSolverFactory d_sat_factory;
@@ -38,10 +61,508 @@ class TestPassQuant : public TestPreprocessingPass
   Type d_bv2;
 };
 
+TEST_F(TestPassQuant, uniquify_binders_nested1)
+{
+  d_options.pp_quant_alpha.set(false);
+  sat::SatSolverFactory sat_factory(d_options);
+  Env env(d_nm, sat_factory, d_options);
+  preprocess::pass::PassQuant pass(env, &d_bm);
+
+  Node c = d_nm.mk_const(d_bv2, "c");
+  Node x = d_nm.mk_var(d_bv2, "x");
+
+  // (forall x. (forall x. (bvule x c))) -- x bound by two binders.
+  Node q1 = d_nm.mk_node(
+      Kind::FORALL,
+      {x, d_nm.mk_node(Kind::FORALL, {x, d_nm.mk_node(Kind::BV_ULE, {x, c})})});
+
+  d_as.push_back(q1);
+  ASSERT_EQ(d_as.size(), 1);
+
+  preprocess::AssertionVector assertions(d_as.view());
+  pass.apply(assertions);
+
+  // Every variable must now be bound by exactly one binder.
+  auto binders = collect_binders({assertions[0]});
+  for (const auto& [var, bs] : binders)
+  {
+    ASSERT_EQ(bs.size(), 1u);
+  }
+}
+
+TEST_F(TestPassQuant, uniquify_binders_nested2)
+{
+  d_options.pp_quant_alpha.set(false);
+  sat::SatSolverFactory sat_factory(d_options);
+  Env env(d_nm, sat_factory, d_options);
+  preprocess::pass::PassQuant pass(env, &d_bm);
+
+  Node c = d_nm.mk_const(d_bv2, "c");
+  Node x = d_nm.mk_var(d_bv2, "x");
+  Node y = d_nm.mk_var(d_bv2, "y");
+
+  // (forall x. (and (forall x. (bvule x c)) (forall y. (bvule y x)
+  Node q1 = d_nm.mk_node(
+      Kind::FORALL,
+      {x,
+       d_nm.mk_node(
+           Kind::AND,
+           {d_nm.mk_node(Kind::FORALL, {x, d_nm.mk_node(Kind::BV_ULE, {x, c})}),
+            d_nm.mk_node(Kind::FORALL,
+                         {y, d_nm.mk_node(Kind::BV_ULE, {y, x})})})});
+
+  d_as.push_back(q1);
+  ASSERT_EQ(d_as.size(), 1);
+
+  preprocess::AssertionVector assertions(d_as.view());
+  pass.apply(assertions);
+
+  // Every variable must now be bound by exactly one binder.
+  auto binders = collect_binders({assertions[0]});
+  for (const auto& [var, bs] : binders)
+  {
+    ASSERT_EQ(bs.size(), 1u);
+  }
+}
+
+TEST_F(TestPassQuant, uniquify_binders_nested3)
+{
+  d_options.pp_quant_alpha.set(false);
+  sat::SatSolverFactory sat_factory(d_options);
+  Env env(d_nm, sat_factory, d_options);
+  preprocess::pass::PassQuant pass(env, &d_bm);
+
+  Node c = d_nm.mk_const(d_bv2, "c");
+  Node x = d_nm.mk_var(d_bv2, "x");
+
+  // (forall x. (forall x. (forall x. (bvule x c)))) -- x shadowed down to the
+  // innermost binder.
+  Node q1 = d_nm.mk_node(
+      Kind::FORALL,
+      {x,
+       d_nm.mk_node(Kind::FORALL,
+                    {x,
+                     d_nm.mk_node(Kind::FORALL,
+                                  {x, d_nm.mk_node(Kind::BV_ULE, {x, c})})})});
+
+  d_as.push_back(q1);
+  ASSERT_EQ(d_as.size(), 1);
+
+  preprocess::AssertionVector assertions(d_as.view());
+  pass.apply(assertions);
+
+  // Every variable must now be bound by exactly one binder.
+  auto binders = collect_binders({assertions[0]});
+  ASSERT_EQ(binders.size(), 3);
+  for (const auto& [var, bs] : binders)
+  {
+    ASSERT_EQ(bs.size(), 1u);
+  }
+}
+
+TEST_F(TestPassQuant, uniquify_binders_nested3_shared_body)
+{
+  d_options.pp_quant_alpha.set(false);
+  sat::SatSolverFactory sat_factory(d_options);
+  Env env(d_nm, sat_factory, d_options);
+  preprocess::pass::PassQuant pass(env, &d_bm);
+
+  Node c = d_nm.mk_const(d_bv2, "c");
+  Node x = d_nm.mk_var(d_bv2, "x");
+
+  // The same node `(bvule x c)` occurs at all three levels, i.e., it must be
+  // mapped to a different node for each of the three binders of `x`.
+  Node b  = d_nm.mk_node(Kind::BV_ULE, {x, c});
+  Node q1 = d_nm.mk_node(
+      Kind::FORALL,
+      {x,
+       d_nm.mk_node(
+           Kind::AND,
+           {b,
+            d_nm.mk_node(
+                Kind::FORALL,
+                {x,
+                 d_nm.mk_node(Kind::AND,
+                              {b, d_nm.mk_node(Kind::FORALL, {x, b})})})})});
+
+  d_as.push_back(q1);
+  ASSERT_EQ(d_as.size(), 1);
+
+  preprocess::AssertionVector assertions(d_as.view());
+  pass.apply(assertions);
+
+  // Every variable must now be bound by exactly one binder.
+  auto binders = collect_binders({assertions[0]});
+  ASSERT_EQ(binders.size(), 3);
+  for (const auto& [var, bs] : binders)
+  {
+    ASSERT_EQ(bs.size(), 1u);
+  }
+}
+
+TEST_F(TestPassQuant, uniquify_binders_shared_shadowing_binder)
+{
+  d_options.pp_quant_alpha.set(false);
+  sat::SatSolverFactory sat_factory(d_options);
+  Env env(d_nm, sat_factory, d_options);
+  preprocess::pass::PassQuant pass(env, &d_bm);
+
+  Node c = d_nm.mk_const(d_bv2, "c");
+  Node d = d_nm.mk_const(d_bv2, "d");
+  Node e = d_nm.mk_const(d_bv2, "e");
+  Node x = d_nm.mk_var(d_bv2, "x");
+
+  // Shadowing binder, shared by two parents.
+  Node n  = d_nm.mk_node(Kind::FORALL, {x, d_nm.mk_node(Kind::BV_ULE, {x, c})});
+  Node q1 = d_nm.mk_node(
+      Kind::FORALL,
+      {x,
+       d_nm.mk_node(
+           Kind::AND,
+           {d_nm.mk_node(Kind::OR, {n, d_nm.mk_node(Kind::BV_ULE, {x, d})}),
+            d_nm.mk_node(Kind::OR, {n, d_nm.mk_node(Kind::BV_ULE, {x, e})})})});
+
+  d_as.push_back(q1);
+  ASSERT_EQ(d_as.size(), 1);
+
+  preprocess::AssertionVector assertions(d_as.view());
+  pass.apply(assertions);
+
+  // Every variable must now be bound by exactly one binder.
+  auto binders = collect_binders({assertions[0]});
+  ASSERT_EQ(binders.size(), 2);
+  for (const auto& [var, bs] : binders)
+  {
+    ASSERT_EQ(bs.size(), 1u);
+  }
+}
+
+TEST_F(TestPassQuant, uniquify_binders_shadowing_binder_two_parents)
+{
+  d_options.pp_quant_alpha.set(false);
+  sat::SatSolverFactory sat_factory(d_options);
+  Env env(d_nm, sat_factory, d_options);
+  preprocess::pass::PassQuant pass(env, &d_bm);
+
+  Node c = d_nm.mk_const(d_bv2, "c");
+  Node d = d_nm.mk_const(d_bv2, "d");
+  Node e = d_nm.mk_const(d_bv2, "e");
+  Node x = d_nm.mk_var(d_bv2, "x");
+
+  // Shadowing binder `n`, shared by two distinct parents (i1 and i2), i.e.,
+  // it is visited twice while determining which nodes reference `x`.
+  Node n  = d_nm.mk_node(Kind::FORALL, {x, d_nm.mk_node(Kind::BV_ULE, {x, c})});
+  Node i1 = d_nm.mk_node(Kind::ITE, {n, d, e});
+  Node i2 = d_nm.mk_node(Kind::ITE, {n, e, d});
+  Node q1 = d_nm.mk_node(
+      Kind::FORALL,
+      {x,
+       d_nm.mk_node(Kind::AND,
+                    {d_nm.mk_node(Kind::BV_ULE,
+                                  {d_nm.mk_node(Kind::BV_ADD, {i1, x}), c}),
+                     d_nm.mk_node(Kind::BV_ULE,
+                                  {d_nm.mk_node(Kind::BV_ADD, {i2, x}), d})})});
+
+  d_as.push_back(q1);
+  ASSERT_EQ(d_as.size(), 1);
+
+  preprocess::AssertionVector assertions(d_as.view());
+  pass.apply(assertions);
+
+  // Every variable must now be bound by exactly one binder.
+  auto binders = collect_binders({assertions[0]});
+  ASSERT_EQ(binders.size(), 2);
+  for (const auto& [var, bs] : binders)
+  {
+    ASSERT_EQ(bs.size(), 1u);
+  }
+}
+
+TEST_F(TestPassQuant, uniquify_binders_across)
+{
+  d_options.pp_quant_alpha.set(false);
+  sat::SatSolverFactory sat_factory(d_options);
+  Env env(d_nm, sat_factory, d_options);
+  preprocess::pass::PassQuant pass(env, &d_bm);
+
+  Node c = d_nm.mk_const(d_bv2, "c");
+  Node x = d_nm.mk_var(d_bv2, "x");
+
+  // Nested: (forall x. (forall x. (bvule x c))) -- x bound by two binders.
+  Node q1 = d_nm.mk_node(Kind::FORALL, {x, d_nm.mk_node(Kind::BV_ULE, {x, c})});
+  // Across assertions: another binder of the same variable node x.
+  Node q2 = d_nm.mk_node(Kind::FORALL, {x, d_nm.mk_node(Kind::BV_ULE, {c, x})});
+
+  d_as.push_back(q1);
+  d_as.push_back(q2);
+  ASSERT_EQ(d_as.size(), 2);
+
+  preprocess::AssertionVector assertions(d_as.view());
+  pass.apply(assertions);
+
+  // Every variable must now be bound by exactly one binder.
+  auto binders = collect_binders({assertions[0], assertions[1]});
+  for (const auto& [var, bs] : binders)
+  {
+    ASSERT_EQ(bs.size(), 1u);
+  }
+}
+
+TEST_F(TestPassQuant, uniquify_binders_nested_across)
+{
+  d_options.pp_quant_alpha.set(false);
+  sat::SatSolverFactory sat_factory(d_options);
+  Env env(d_nm, sat_factory, d_options);
+  preprocess::pass::PassQuant pass(env, &d_bm);
+
+  Node c = d_nm.mk_const(d_bv2, "c");
+  Node x = d_nm.mk_var(d_bv2, "x");
+
+  // Nested: (forall x. (forall x. (bvule x c))) -- x bound by two binders.
+  Node q1 = d_nm.mk_node(
+      Kind::FORALL,
+      {x, d_nm.mk_node(Kind::FORALL, {x, d_nm.mk_node(Kind::BV_ULE, {x, c})})});
+  // Across assertions: another binder of the same variable node x.
+  Node q2 = d_nm.mk_node(Kind::FORALL, {x, d_nm.mk_node(Kind::BV_ULE, {c, x})});
+
+  d_as.push_back(q1);
+  d_as.push_back(q2);
+  ASSERT_EQ(d_as.size(), 2);
+
+  preprocess::AssertionVector assertions(d_as.view());
+  pass.apply(assertions);
+
+  // Every variable must now be bound by exactly one binder.
+  auto binders = collect_binders({assertions[0], assertions[1]});
+  for (const auto& [var, bs] : binders)
+  {
+    ASSERT_EQ(bs.size(), 1u);
+  }
+}
+
+TEST_F(TestPassQuant, uniquify_binders_across_deep_body)
+{
+  d_options.pp_quant_alpha.set(false);
+  sat::SatSolverFactory sat_factory(d_options);
+  Env env(d_nm, sat_factory, d_options);
+  preprocess::pass::PassQuant pass(env, &d_bm);
+
+  Node c = d_nm.mk_const(d_bv2, "c");
+  Node x = d_nm.mk_var(d_bv2, "x");
+
+  Node q1 = d_nm.mk_node(Kind::FORALL, {x, d_nm.mk_node(Kind::BV_ULE, {x, c})});
+  // Across assertions: another binder of the same variable node x. Its body
+  // contains an interior node (bvadd x c), which is more than one level below
+  // the binder and thus never visited (and cached) by the outer traversal.
+  Node q2 = d_nm.mk_node(
+      Kind::FORALL,
+      {x, d_nm.mk_node(Kind::BV_ULE, {d_nm.mk_node(Kind::BV_ADD, {x, c}), c})});
+
+  d_as.push_back(q1);
+  d_as.push_back(q2);
+  ASSERT_EQ(d_as.size(), 2);
+
+  preprocess::AssertionVector assertions(d_as.view());
+  pass.apply(assertions);
+
+  // Every variable must now be bound by exactly one binder.
+  auto binders = collect_binders({assertions[0], assertions[1]});
+  for (const auto& [var, bs] : binders)
+  {
+    ASSERT_EQ(bs.size(), 1u);
+  }
+}
+TEST_F(TestPassQuant, uniquify_binders_shared_open_subterm)
+{
+  d_options.pp_quant_alpha.set(false);
+  sat::SatSolverFactory sat_factory(d_options);
+  Env env(d_nm, sat_factory, d_options);
+  preprocess::pass::PassQuant pass(env, &d_bm);
+
+  Node c1 = d_nm.mk_const(d_bv2, "c1");
+  Node c2 = d_nm.mk_const(d_bv2, "c2");
+  Node v  = d_nm.mk_var(d_bv2, "v");
+  Node w  = d_nm.mk_var(d_bv2, "w");
+
+  // Open subterm, shared by q1 and q2, referencing the shared binder variable
+  // `v`. Uniquifying `v` copies `n`, i.e., its binder must be uniquified, too.
+  Node n = d_nm.mk_node(Kind::FORALL, {w, d_nm.mk_node(Kind::BV_ULE, {v, w})});
+
+  Node q1 = d_nm.mk_node(
+      Kind::FORALL,
+      {v, d_nm.mk_node(Kind::OR, {n, d_nm.mk_node(Kind::BV_ULE, {c1, v})})});
+  Node q2 = d_nm.mk_node(
+      Kind::FORALL,
+      {v, d_nm.mk_node(Kind::OR, {n, d_nm.mk_node(Kind::BV_ULE, {c2, v})})});
+
+  d_as.push_back(q1);
+  d_as.push_back(q2);
+  ASSERT_EQ(d_as.size(), 2);
+
+  preprocess::AssertionVector assertions(d_as.view());
+  pass.apply(assertions);
+
+  // Every variable must now be bound by exactly one binder.
+  auto binders = collect_binders({assertions[0], assertions[1]});
+  for (const auto& [var, bs] : binders)
+  {
+    ASSERT_EQ(bs.size(), 1u);
+  }
+}
+
+TEST_F(TestPassQuant, uniquify_binders_sibling_shared_nested)
+{
+  d_options.pp_quant_alpha.set(false);
+  sat::SatSolverFactory sat_factory(d_options);
+  Env env(d_nm, sat_factory, d_options);
+  preprocess::pass::PassQuant pass(env, &d_bm);
+
+  Node c = d_nm.mk_const(d_bv2, "c");
+  Node v = d_nm.mk_var(d_bv2, "v");
+  Node w = d_nm.mk_var(d_bv2, "w");
+
+  // Sibling binders of the same variable node `w`, both referencing `v`.
+  Node n1 = d_nm.mk_node(Kind::FORALL, {w, d_nm.mk_node(Kind::BV_ULE, {v, w})});
+  Node n2 = d_nm.mk_node(Kind::FORALL, {w, d_nm.mk_node(Kind::BV_ULE, {w, v})});
+
+  // q1 registers binder variable `v` first, i.e., the binder of q2 is the one
+  // that is uniquified -- which copies both sibling binders of `w`.
+  Node q1 = d_nm.mk_node(Kind::FORALL, {v, d_nm.mk_node(Kind::BV_ULE, {c, v})});
+  Node q2 = d_nm.mk_node(Kind::FORALL, {v, d_nm.mk_node(Kind::AND, {n1, n2})});
+
+  d_as.push_back(q1);
+  d_as.push_back(q2);
+  ASSERT_EQ(d_as.size(), 2);
+
+  preprocess::AssertionVector assertions(d_as.view());
+  pass.apply(assertions);
+
+  // Every variable must now be bound by exactly one binder.
+  auto binders = collect_binders({assertions[0], assertions[1]});
+  for (const auto& [var, bs] : binders)
+  {
+    ASSERT_EQ(bs.size(), 1u);
+  }
+}
+
+TEST_F(TestPassQuant, uniquify_binders_across_inner_rename)
+{
+  d_options.pp_quant_alpha.set(false);
+  sat::SatSolverFactory sat_factory(d_options);
+  Env env(d_nm, sat_factory, d_options);
+  preprocess::pass::PassQuant pass(env, &d_bm);
+
+  Node c = d_nm.mk_const(d_bv2, "c");
+  Node v = d_nm.mk_var(d_bv2, "v");
+  Node w = d_nm.mk_var(d_bv2, "w");
+
+  // q1 binds variable `v` first (asserted first, processed first). Thus, the
+  // binder of q2 is the one that is uniquified, and as a consequence, `w` is
+  // rebound, too. The second conjunct of q2's body does not reference `v`, but
+  // must still be rebuilt with the fresh variable of `w`.
+  Node q1 = d_nm.mk_node(Kind::FORALL, {v, d_nm.mk_node(Kind::BV_ULE, {c, v})});
+  Node q2 = d_nm.mk_node(
+      Kind::FORALL,
+      {v,
+       d_nm.mk_node(Kind::FORALL,
+                    {w,
+                     d_nm.mk_node(Kind::AND,
+                                  {d_nm.mk_node(Kind::BV_ULE, {v, c}),
+                                   d_nm.mk_node(Kind::BV_ULE, {w, c})})})});
+
+  d_as.push_back(q1);
+  d_as.push_back(q2);
+  ASSERT_EQ(d_as.size(), 2);
+
+  preprocess::AssertionVector assertions(d_as.view());
+  pass.apply(assertions);
+
+  // Every variable must now be bound by exactly one binder.
+  auto binders = collect_binders({assertions[0], assertions[1]});
+  for (const auto& [var, bs] : binders)
+  {
+    ASSERT_EQ(bs.size(), 1u);
+  }
+  // No occurrence must be left on the original variable of `w`, which would
+  // be free in the result (and its fresh variable unused).
+}
+
+TEST_F(TestPassQuant, uniquify_binders_sibling_inner_rename)
+{
+  d_options.pp_quant_alpha.set(false);
+  sat::SatSolverFactory sat_factory(d_options);
+  Env env(d_nm, sat_factory, d_options);
+  preprocess::pass::PassQuant pass(env, &d_bm);
+
+  Node c = d_nm.mk_const(d_bv2, "c");
+  Node d = d_nm.mk_const(d_bv2, "d");
+  Node v = d_nm.mk_var(d_bv2, "v");
+  Node w = d_nm.mk_var(d_bv2, "w");
+
+  // As above, but both binders of `v` are in the same assertion, i.e.,
+  // uniquification within one assertion is already sufficient to trigger this.
+  Node q1 = d_nm.mk_node(Kind::FORALL, {v, d_nm.mk_node(Kind::BV_ULE, {c, v})});
+  Node q2 = d_nm.mk_node(
+      Kind::FORALL,
+      {v,
+       d_nm.mk_node(Kind::FORALL,
+                    {w,
+                     d_nm.mk_node(Kind::AND,
+                                  {d_nm.mk_node(Kind::BV_ULE, {v, c}),
+                                   d_nm.mk_node(Kind::BV_ULE, {w, c})})})});
+  d_as.push_back(
+      d_nm.mk_node(Kind::ITE, {d_nm.mk_node(Kind::BV_ULE, {c, d}), q2, q1}));
+  ASSERT_EQ(d_as.size(), 1);
+
+  preprocess::AssertionVector assertions(d_as.view());
+  pass.apply(assertions);
+
+  // Every variable must now be bound by exactly one binder.
+  auto binders = collect_binders({assertions[0]});
+  for (const auto& [var, bs] : binders)
+  {
+    ASSERT_EQ(bs.size(), 1u);
+  }
+}
+
+TEST_F(TestPassQuant, uniquify_binders_shadowing_binder_below_inner_rename)
+{
+  d_options.pp_quant_alpha.set(false);
+  sat::SatSolverFactory sat_factory(d_options);
+  Env env(d_nm, sat_factory, d_options);
+  preprocess::pass::PassQuant pass(env, &d_bm);
+
+  Node c = d_nm.mk_const(d_bv2, "c");
+  Node d = d_nm.mk_const(d_bv2, "d");
+  Node x = d_nm.mk_var(d_bv2, "x");
+  Node y = d_nm.mk_var(d_bv2, "y");
+
+  // Shadowing binder of `x` below a binder (`y`) that references the outer `x`
+  // and is therefore uniquified.
+  Node shadow =
+      d_nm.mk_node(Kind::FORALL, {x, d_nm.mk_node(Kind::BV_ULE, {x, d})});
+  Node q = d_nm.mk_node(
+      Kind::FORALL,
+      {x,
+       d_nm.mk_node(
+           Kind::FORALL,
+           {y,
+            d_nm.mk_node(Kind::AND,
+                         {d_nm.mk_node(Kind::BV_ULE, {x, c}), shadow})})});
+  d_as.push_back(q);
+  preprocess::AssertionVector assertions(d_as.view());
+  pass.apply(assertions);
+  auto binders = collect_binders({assertions[0]});
+  for (const auto& [var, bs] : binders)
+  {
+    ASSERT_EQ(bs.size(), 1u);
+  }
+}
+
 // Corresponds to test regress/preprocess/quant/alpha6.smt2 and serves as an
 // isolated test case (only the quant preprocessing pass is applied, no SAT
 // solver involved).
-TEST_F(TestPassQuant, alpha_no_merge_of_non_equivalent_quants)
+TEST_F(TestPassQuant, alpha6_no_merge_of_non_equivalent_quants)
 {
   Node body;
   Node g = d_nm.mk_const(d_bv2, "g");
@@ -98,6 +619,107 @@ TEST_F(TestPassQuant, alpha_no_merge_of_non_equivalent_quants)
 
   // forall_x and forall_x2 are not alpha-equivalent and must not be merged.
   ASSERT_NE(assertions[0], assertions[1]);
+
+  // No variable bound by more than one binder.
+  auto binders = collect_binders({assertions[0], assertions[1]});
+  for (const auto& [var, bs] : binders)
+  {
+    ASSERT_EQ(bs.size(), 1u);
+  }
 }
 
+TEST_F(TestPassQuant, alpha_shared_binder1)
+{
+  Node c = d_nm.mk_const(d_bv2, "c");
+  Node z = d_nm.mk_var(d_bv2, "z");
+  Node v = d_nm.mk_var(d_bv2, "v");
+  Node u = d_nm.mk_var(d_bv2, "u");
+
+  // closed_v and closed_u are alpha equivalent.
+  Node closed_v =
+      d_nm.mk_node(Kind::FORALL, {v, d_nm.mk_node(Kind::BV_ULE, {v, c})});
+  Node closed_u =
+      d_nm.mk_node(Kind::FORALL, {u, d_nm.mk_node(Kind::BV_ULE, {u, c})});
+
+  // body_z and closed_v share the binder variable node `v`.
+  Node body_z =
+      d_nm.mk_node(Kind::FORALL, {v, d_nm.mk_node(Kind::BV_ULE, {v, z})});
+  Node q = d_nm.mk_node(
+      Kind::FORALL,
+      {z,
+       d_nm.mk_node(Kind::AND,
+                    {d_nm.mk_node(Kind::AND, {closed_v, closed_u}), body_z})});
+
+  d_as.push_back(q);
+  ASSERT_EQ(d_as.size(), 1);
+
+  preprocess::AssertionVector assertions(d_as.view());
+  Node before = d_env.rewriter().rewrite(assertions[0]);
+  std::cout << "before:" << std::endl;
+  for (size_t i = 0; i < d_as.size(); ++i)
+  {
+    std::cout << "- " << d_as[i] << std::endl;
+  }
+  d_pass.apply(assertions);
+  std::cout << "after:" << std::endl;
+  for (size_t i = 0; i < d_as.size(); ++i)
+  {
+    std::cout << "- " << d_as[i] << std::endl;
+  }
+  ASSERT_NE(before, assertions[0]);
+  ASSERT_EQ(d_env.statistics().new_or_get_stat<uint64_t>(
+                "preprocess::quant::num_alpha_elim"),
+            1);
+
+  // No variable bound by more than one binder.
+  auto binders = collect_binders({assertions[0]});
+  for (const auto& [var, bs] : binders)
+  {
+    ASSERT_EQ(bs.size(), 1u);
+  }
+}
+
+TEST_F(TestPassQuant, alpha_shared_binder2)
+{
+  Node c1 = d_nm.mk_const(d_bv2, "c1");
+  Node c2 = d_nm.mk_const(d_bv2, "c2");
+  Node v  = d_nm.mk_var(d_bv2, "v");
+  Node a  = d_nm.mk_var(d_bv2, "a");
+  Node b  = d_nm.mk_var(d_bv2, "b");
+  Node w  = d_nm.mk_var(d_bv2, "w");
+
+  Node n = d_nm.mk_node(Kind::FORALL, {w, d_nm.mk_node(Kind::BV_ULE, {v, w})});
+
+  Node q1 = d_nm.mk_node(
+      Kind::FORALL,
+      {v, d_nm.mk_node(Kind::OR, {n, d_nm.mk_node(Kind::BV_ULE, {c1, v})})});
+  Node q2 = d_nm.mk_node(
+      Kind::FORALL,
+      {v, d_nm.mk_node(Kind::OR, {n, d_nm.mk_node(Kind::BV_ULE, {c2, v})})});
+  Node q3 = d_nm.mk_node(
+      Kind::FORALL,
+      {a,
+       d_nm.mk_node(
+           Kind::OR,
+           {d_nm.mk_node(Kind::FORALL, {b, d_nm.mk_node(Kind::BV_ULE, {b, b})}),
+            d_nm.mk_node(Kind::BV_ULE, {c2, a})})});
+
+  d_as.push_back(q1);
+  d_as.push_back(q2);
+  d_as.push_back(q3);
+
+  preprocess::AssertionVector assertions(d_as.view());
+  Node q3_before = d_env.rewriter().rewrite(assertions[2]);
+  d_pass.apply(assertions);
+
+  // q3 must NOT be replaced by (the non-equivalent) q2.
+  ASSERT_EQ(assertions[2], q3_before);
+
+  // No variable bound by more than one binder.
+  auto binders = collect_binders({assertions[0], assertions[1], assertions[2]});
+  for (const auto& [var, bs] : binders)
+  {
+    ASSERT_EQ(bs.size(), 1u);
+  }
+}
 }  // namespace bzla::test
