@@ -14,6 +14,13 @@
 namespace bzla::config {
 
 static constexpr bool is_debug_build = @is_debug_build@;
+/**
+ * True if linked against our patched, bundled CaDiCaL. False for a system-wide
+ * CaDiCaL, which lacks the patch that allows observing variables weakened by
+ * variable elimination. Features relying on CaDiCaL's external propagator
+ * interface must stay disabled in that case.
+ */
+static constexpr bool cadical_patched = @cadical_patched@;
 static constexpr const char* git_id  = "@git_id@";
 static constexpr const char* version =
     @is_dev_version@ && @is_git_version@ ? "@version@-@git_id@" : "@version@";

@@ -11,13 +11,14 @@
 #include "solver/bv/bv_bitblast_solver.h"
 
 #include "bv/bitvector.h"
+#include "config.h"
 #include "env.h"
 #include "node/node_manager.h"
 #include "node/node_utils.h"
 #include "option/option.h"
-#include "sat/distinct_n_propagator.h"
 #include "sat/cadical.h"
 #include "sat/distinct_decision_heuristic.h"
+#include "sat/distinct_n_propagator.h"
 #include "sat/eq_decision_heuristic.h"
 #include "sat/interpolants/tracer.h"
 #include "sat/sat_solver_factory.h"
@@ -444,6 +445,15 @@ BvBitblastSolver::register_distinct_n(const Node& node)
 void
 BvBitblastSolver::process_pending_eq_heuristics()
 {
+  // The decision heuristics observe SAT variables, which requires the
+  // restore-before-observing patch of our bundled CaDiCaL. They only provide
+  // decision and phase hints, so dropping them is sound, we merely lose the
+  // guidance.
+  if constexpr (!config::cadical_patched)
+  {
+    d_pending_eq_heuristics.clear();
+    return;
+  }
 #ifdef BZLA_USE_CADICAL
   for (const auto& nodes : d_pending_eq_heuristics)
   {
@@ -473,6 +483,15 @@ BvBitblastSolver::process_pending_eq_heuristics()
 void
 BvBitblastSolver::process_pending_distinct_heuristics()
 {
+  // The decision heuristics observe SAT variables, which requires the
+  // restore-before-observing patch of our bundled CaDiCaL. They only provide
+  // decision and phase hints, so dropping them is sound, we merely lose the
+  // guidance.
+  if constexpr (!config::cadical_patched)
+  {
+    d_pending_distinct_heuristics.clear();
+    return;
+  }
 #ifdef BZLA_USE_CADICAL
   for (const auto& nodes : d_pending_distinct_heuristics)
   {

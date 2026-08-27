@@ -935,6 +935,13 @@ Options::finalize()
   // solver engine.
   adc_sat_propagator.set(false);
 #endif
+  // A system-wide CaDiCaL lacks our restore-before-observing patch, where
+  // observing a variable weakened by variable elimination violates CaDiCaL's
+  // API contract while solving. Fall back to theory-level handling as above.
+  if constexpr (!config::cadical_patched)
+  {
+    adc_sat_propagator.set(false);
+  }
   // Sat propagator is only compatible with the bit-blast solver
   if (adc_sat_propagator() && bv_solver() != BvSolver::BITBLAST)
   {

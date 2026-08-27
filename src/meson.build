@@ -34,6 +34,20 @@ if not cadical_dep.found()
   cadical_dep = dependency('cadical', required: get_option('cadical'))
 endif
 
+# Our bundled CaDiCaL is patched (see subprojects/packagefiles/cadical), a
+# system-wide CaDiCaL is not. Without the patch, observing a variable that
+# CaDiCaL weakened by variable elimination violates its API contract while
+# solving, so the features relying on the external propagator interface have to
+# be disabled. Note that this can not be expressed via '--force-fallback-for',
+# since CaDiCaL ships no pkg-config file and is therefore looked up with
+# 'find_library', which is not part of Meson's wrap machinery.
+cadical_patched = cadical_dep.found() and cadical_dep.type_name() == 'internal'
+if cadical_dep.found() and not cadical_patched
+  warning('Using a system-wide CaDiCaL, which lacks the patches in ' +
+          'subprojects/packagefiles/cadical. The ADC SAT propagator and the ' +
+          'SAT decision heuristics will be disabled.')
+endif
+
 cms_dep = dependency('cryptominisat5',
                      version: '5.11.21',
                      static: build_static,
@@ -141,6 +155,7 @@ conf_data.set('version', meson.project_version())
 conf_data.set('is_debug_build', (get_option('buildtype') == 'debug').to_string())
 conf_data.set('is_dev_version', meson.project_version().endswith('-dev').to_string())
 conf_data.set('is_git_version', is_git_version.to_string())
+conf_data.set('cadical_patched', cadical_patched.to_string())
 config_h = configure_file(input: 'config.h.in',
                output: output_h,
                configuration: conf_data)
