@@ -15,7 +15,7 @@
 #ifdef BZLA_USE_CADICAL
 /*----------------------------------------------------------------------------*/
 
-#include <cadical.hpp>
+#include <cadical/cadical.hpp>
 #include <deque>
 #include <memory>
 #include <set>
