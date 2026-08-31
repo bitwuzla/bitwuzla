@@ -10,6 +10,7 @@
 
 #include "bv/bitvector.h"
 
+#include <bit>
 #include <bitset>
 #include <cassert>
 #include <iostream>
@@ -1571,21 +1572,9 @@ BitVector&
 BitVector::ibvredxor(const BitVector& bv)
 {
   assert(!bv.is_null());
-  uint64_t val = 0;
-  if (bv.is_gmp())
-  {
-    val = mpz_popcount(bv.d_val_gmp) % 2 > 0 ? 1 : 0;
-  }
-  else if (bv.d_val_uint64 != 0)
-  {
-    for (uint64_t i = 0; i < bv.d_size; ++i)
-    {
-      if (bv.bit(i))
-      {
-        val ^= 1;
-      }
-    }
-  }
+  uint64_t val = (bv.is_gmp() ? mpz_popcount(bv.d_val_gmp)
+                              : std::popcount(bv.d_val_uint64))
+                 & 1;
   if (is_gmp()) mpz_clear(d_val_gmp);
   d_val_uint64 = val;
   d_size       = 1;
