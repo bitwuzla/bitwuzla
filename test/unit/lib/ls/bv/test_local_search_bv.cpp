@@ -226,8 +226,15 @@ TestLsBv::test_move_binary(NodeKind kind, uint32_t pos_x)
             BitVector rx_val = genrx.has_random() ? genrx.random() : x.lo();
 
             LocalSearchBV ls(1, 1);
-            uint64_t op_s = ls.mk_node(s_val, s);
-            uint64_t op_x = ls.mk_node(rx_val, x);
+            // We want to test deterministically, but by default, we pick
+            // consistent values with `1000 - prob_pick_inv_value`.
+            // Consistent values only guarantee consistency with the domain of
+            // x (it is not necessarily possible to find a satisfying assignment
+            // here within one move), thus we always pick an inverse value if
+            // the invertibility condition holds.
+            ls.d_options.prob_pick_inv_value = 1000;
+            uint64_t op_s                    = ls.mk_node(s_val, s);
+            uint64_t op_x                    = ls.mk_node(rx_val, x);
             uint64_t op =
                 pos_x == 0
                     ? ls.mk_node(kind, BitVectorDomain(bw_t), {op_x, op_s})
