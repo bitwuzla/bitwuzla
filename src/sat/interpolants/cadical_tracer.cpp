@@ -59,8 +59,8 @@ get_clause_label(const std::vector<int64_t>& cnf2aig,
                  const std::unordered_map<int64_t, ClauseKind>& clause_labels,
                  int64_t lit)
 {
-  int32_t cnf_id = cnf2aig[std::abs(lit)];
-  auto it        = clause_labels.find(lit < 0 ? -cnf_id : cnf_id);
+  int64_t aig_id = cnf2aig[std::abs(lit)];
+  auto it        = clause_labels.find(lit < 0 ? -aig_id : aig_id);
   assert(it != clause_labels.end());
   return it->second;
 }
