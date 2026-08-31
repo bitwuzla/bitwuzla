@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <cassert>
 #include <iostream>
+#include <unordered_set>
 
 #include "bv/bitvector.h"
 #include "bv/bounds/bitvector_bounds.h"
@@ -295,11 +296,45 @@ BitVectorDomain::get_factor(RNG* rng,
   if (!factors.empty())
   {
     size_t n_factors = factors.size();
-    if (rng)
+    // A single factor allows for exactly one combination.
+    if (rng && n_factors > 1)
     {
-      /* To determine all possible combinations can be very expensive. We'll
-       * try for a limited number of times, and if none matches, we return 0. */
-      for (size_t cnt = 0; cnt < 1000; ++cnt)
+      // Max number of retries.
+      constexpr size_t n_retries = 1000;
+      // Max number of distinct cached combinations we keep track of.
+      constexpr size_t max_cached = 64;
+
+      // The factorizer yields the prime factors in non-decreasing order, thus
+      // the combinations below yield exactly prod(multiplicity(f) + 1) - 1
+      // distinct values, i.e., the divisors of the product of all factors,
+      // excluding 1. If that number is small enough, we record the values we
+      // tried to skip already tried checks and stop as soon as the search
+      // space is exhausted.
+      assert(std::is_sorted(factors.begin(),
+                            factors.end(),
+                            [](const BitVector& a, const BitVector& b) {
+                              return a.compare(b) < 0;
+                            }));
+      size_t n_combinations = 1;
+      size_t mult           = 1;
+      for (size_t i = 0; i < n_factors; ++i)
+      {
+        if (i + 1 < n_factors && factors[i].compare(factors[i + 1]) == 0)
+        {
+          mult += 1;
+          continue;
+        }
+        n_combinations *= mult + 1;
+        mult = 1;
+        if (n_combinations > max_cached) break;
+      }
+      bool cache_tried = n_combinations <= max_cached;
+      n_combinations -= 1;
+
+      std::unordered_set<BitVector> tried;
+      if (cache_tried) tried.reserve(n_combinations);
+
+      for (size_t cnt = 0; cnt < n_retries; ++cnt)
       {
         /* number of factors to combine */
         size_t n = rng->pick<size_t>(1, n_factors);
@@ -317,12 +352,9 @@ BitVectorDomain::get_factor(RNG* rng,
           if (!mul.is_zero())
           {
             assert(!factors[i].is_umul_overflow(mul));
-            BitVector tmp = factors[i].bvmul(mul);
-            if (tmp.compare(num) > 0)
-            {
-              continue;
-            }
-            mul.iset(tmp);
+            mul.ibvmul(factors[i]);
+            // Any combination of factors of 'num' divides 'num'.
+            assert(mul.compare(num) <= 0);
           }
           else
           {
@@ -330,10 +362,15 @@ BitVectorDomain::get_factor(RNG* rng,
           }
         }
         assert(!mul.is_null());
+        /* Already ruled out in a previous iteration. */
+        if (cache_tried && !tried.insert(mul).second) continue;
         if (match_fixed_bits(mul) && bounds.contains(mul))
         {
           return mul;
         }
+        /* All possible combinations tried, none matched. */
+        assert(!cache_tried || tried.size() <= n_combinations);
+        if (cache_tried && tried.size() == n_combinations) break;
       }
     }
     else
