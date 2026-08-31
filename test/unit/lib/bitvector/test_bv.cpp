@@ -221,6 +221,7 @@ class TestBitVector : public TestCommon
                                  const std::string& s2,
                                  bool expected);
   void test_is_smul_overflow(uint64_t size);
+  void test_is_signed_overflow_ref(uint64_t size);
   void test_is_sdiv_overflow_aux(uint64_t size,
                                  const std::string& s1,
                                  const std::string& s2,
@@ -1629,6 +1630,49 @@ TestBitVector::test_is_smul_overflow(uint64_t size)
           true);
       break;
     default: assert(false);
+  }
+}
+
+void
+TestBitVector::test_is_signed_overflow_ref(uint64_t size)
+{
+  util::Integer pow2(2);
+  pow2.ipow(size);
+  util::Integer half(2);
+  half.ipow(size - 1);
+  util::Integer min = -half;
+  util::Integer max = half - util::Integer(1);
+
+  /* The signed value represented by the given bit-vector. */
+  auto sval = [&pow2](const BitVector& bv) {
+    util::Integer res(bv);
+    return bv.msb() ? res - pow2 : res;
+  };
+
+  std::vector<BitVector> vals = {BitVector::mk_zero(size),
+                                 BitVector::mk_one(size),
+                                 BitVector::mk_ones(size),
+                                 BitVector::mk_min_signed(size),
+                                 BitVector::mk_max_signed(size)};
+  for (uint32_t i = 0; i < 10; ++i)
+  {
+    vals.push_back(BitVector(size, *d_rng));
+  }
+
+  for (const BitVector& bv0 : vals)
+  {
+    util::Integer i0 = sval(bv0);
+    for (const BitVector& bv1 : vals)
+    {
+      util::Integer i1  = sval(bv1);
+      util::Integer add = i0 + i1, sub = i0 - i1, mul = i0 * i1;
+      ASSERT_EQ(bv0.is_sadd_overflow(bv1), add < min || add > max);
+      ASSERT_EQ(bv0.is_ssub_overflow(bv1), sub < min || sub > max);
+      ASSERT_EQ(bv0.is_smul_overflow(bv1), mul < min || mul > max);
+    }
+    /* Self application, guards for bv1 == *this. */
+    util::Integer mul = i0 * i0;
+    ASSERT_EQ(bv0.is_smul_overflow(bv0), mul < min || mul > max);
   }
 }
 
@@ -5862,6 +5906,30 @@ TEST_F(TestBitVector, is_smul_overflow)
   test_is_smul_overflow(64);
   test_is_smul_overflow(65);
   test_is_smul_overflow(127);
+}
+
+TEST_F(TestBitVector, is_signed_overflow_ref)
+{
+  // Cross check is_sadd/is_ssub/is_smul_overflow against an arbitrary precision
+  // reference for bit-widths that straddle the boundary between the native
+  // and the GMP representation.
+  constexpr uint64_t n = BitVector::s_native_size;
+  for (uint64_t size : {UINT64_C(1),
+                        UINT64_C(2),
+                        UINT64_C(7),
+                        n / 2 - 1,
+                        n / 2,
+                        n / 2 + 1,
+                        n - 1,
+                        n,
+                        n + 1,
+                        n + 2,
+                        2 * n,
+                        2 * n + 1,
+                        3 * n + 7})
+  {
+    test_is_signed_overflow_ref(size);
+  }
 }
 
 TEST_F(TestBitVector, is_sdiv_overflow)

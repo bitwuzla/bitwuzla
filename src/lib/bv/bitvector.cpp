@@ -63,6 +63,22 @@ is_valid_hex_str(const std::string& str)
 }
 #endif
 
+#if defined(__SIZEOF_INT128__)
+/**
+ * Sign extend a natively stored bit-vector value to 128 bit.
+ * @param val  The value, zero extended to 64 bit.
+ * @param size The bit-width of the value, must be in [1, 64].
+ */
+__int128_t
+sext_native(uint64_t val, uint64_t size)
+{
+  assert(size >= 1);
+  assert(size <= 64);
+  const unsigned shift = 64 - static_cast<unsigned>(size);
+  return static_cast<__int128_t>(static_cast<int64_t>(val << shift) >> shift);
+}
+#endif
+
 #if !defined(__GNUC__) && !defined(__clang__)
 static uint64_t
 clz_limb(uint64_t nbits_per_limb, mp_limb_t limb)
@@ -1048,6 +1064,18 @@ BitVector::is_smul_overflow(const BitVector& bv) const
     return is_one() && bv.is_one();
   }
 
+#if defined(__SIZEOF_INT128__)
+  if (!is_gmp())
+  {
+    // The full product of two signed values of d_size <= s_native_size <= 64
+    // bits fits in 128 bits. Overflow occurs iff the product is not in
+    // [-2^(d_size-1), 2^(d_size-1)-1].
+    __int128_t mul   = sext_native(d_val_uint64, d_size)
+                       * sext_native(bv.d_val_uint64, d_size);
+    __int128_t bound = static_cast<__int128_t>(1) << (d_size - 1);
+    return mul < -bound || mul >= bound;
+  }
+#endif
   BitVector mul(bvsext(d_size)); /* copy to guard for bv1 == *this */
   mul.ibvmul(bv.bvsext(d_size));
   return mul.signed_compare(BitVector::mk_min_signed(d_size).ibvsext(d_size))
