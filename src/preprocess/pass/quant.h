@@ -39,9 +39,22 @@ class PassQuant : public PreprocessingPass
   void uniquify_variable(const Node& node, const Node& fresh_var);
   /**
    * Alpha-normalize given node.
-   * @param node The node to process.
+   *
+   * Two quantifiers are alpha-equivalent iff they are equal up to renaming of
+   * their bound variables. We determine this by computing their alpha-normal
+   * form, i.e., by renaming the variable of every binder to the canonical
+   * variable of its type. All quantifiers with the same alpha-normal form are
+   * mapped to the first one encountered.
+   *
+   * @note `node` does not have to be a quantifier itself, it may be any node
+   *       with quantifiers below it. It must, however, be closed: the
+   *       alpha-normal form of `node` is registered in d_alpha_reps, and
+   *       has_free_vars() relies on the nodes registered there being closed.
+   *
+   * @param node The closed node to process.
+   * @return The representative of the alpha-equivalence class of `node`.
    */
-  void alpha_normalize(const Node& node);
+  Node alpha_normalize(const Node& node);
   /**
    * Eliminate quantifier based on inverse computation.
    *
@@ -83,8 +96,18 @@ class PassQuant : public PreprocessingPass
    */
   Node find_inverse(const Node& body, const Node& var, bool negated = true);
 
+  /**
+   * Determine whether given node has free variables.
+   *
+   * @note Does not descend into nodes cached in d_alpha_reps (except `node`
+   *       itself), which are already normalized.
+   *
+   * @param node The node to check.
+   * @return A pair of a flag for whether `node` has free variables, and the set
+   *         of variables bound below `node` (empty if it has free variables).
+   */
   std::pair<bool, std::unordered_set<Node>> has_free_vars(
-      const Node& node, const std::unordered_set<Node>& closed_quants) const;
+      const Node& node) const;
 
   Node get_canonical_var(const Node& var);
   void release_canonical_var(const Node& var);
@@ -92,13 +115,37 @@ class PassQuant : public PreprocessingPass
   /** The associated bit-vector inverter instance. */
   bv::BvInverter d_bv_inverter;
 
-  /** Traversal cache (not persistent across calls to apply()). */
+  /**
+   * Traversal cache.
+   * @note Not persistent across calls to apply().
+   */
   std::unordered_map<Node, Node> d_cache;
-  /** Alpha variable cache (not persistent across calls to apply()). */
+
+  /**
+   * Maps node to its alpha-normal form.
+   * @note Not persistent across calls to apply().
+   */
+  std::unordered_map<Node, Node> d_alpha_cache;
+  /**
+   * Alpha variable cache.
+   * The pool of canonical variables per type, with a flag for whether a
+   * variable is currently in use by a binder.
+   * @note Persistent across calls to apply().
+   */
   std::unordered_map<Type, std::vector<std::pair<Node, bool>>> d_alpha_vars;
+  /**
+   * Map alpha-normalized assertions and quantifiers to their representative.
+   * @note All registered alpha-normal forms are closed, has_free_vars()
+   *       relies on this.
+   * @note Not persistent across calls to apply().
+   */
+  std::unordered_map<Node, Node> d_alpha_reps;
 
   /** Cache which variables are already bound in assertions. */
   backtrack::unordered_set<uint64_t> d_bound_vars;
+
+  /** Cache option to enable alpha equivalence processing. */
+  bool d_opt_quant_alpha;
 
   struct Statistics
   {

@@ -10,6 +10,7 @@
 
 #include <gtest/gtest.h>
 
+#include "node/node_utils.h"
 #include "preprocess/pass/quant.h"
 #include "sat/sat_solver_factory.h"
 #include "test/unit/preprocess/test_preprocess_pass.h"
@@ -655,17 +656,7 @@ TEST_F(TestPassQuant, alpha_shared_binder1)
 
   preprocess::AssertionVector assertions(d_as.view());
   Node before = d_env.rewriter().rewrite(assertions[0]);
-  std::cout << "before:" << std::endl;
-  for (size_t i = 0; i < d_as.size(); ++i)
-  {
-    std::cout << "- " << d_as[i] << std::endl;
-  }
   d_pass.apply(assertions);
-  std::cout << "after:" << std::endl;
-  for (size_t i = 0; i < d_as.size(); ++i)
-  {
-    std::cout << "- " << d_as[i] << std::endl;
-  }
   ASSERT_NE(before, assertions[0]);
   ASSERT_EQ(d_env.statistics().new_or_get_stat<uint64_t>(
                 "preprocess::quant::num_alpha_elim"),
@@ -677,6 +668,7 @@ TEST_F(TestPassQuant, alpha_shared_binder1)
   {
     ASSERT_EQ(bs.size(), 1u);
   }
+  ASSERT_EQ(binders.size(), 3u);
 }
 
 TEST_F(TestPassQuant, alpha_shared_binder2)
@@ -721,5 +713,137 @@ TEST_F(TestPassQuant, alpha_shared_binder2)
   {
     ASSERT_EQ(bs.size(), 1u);
   }
+}
+
+TEST_F(TestPassQuant, has_free_vars)
+{
+  Node c = d_nm.mk_const(d_bv2, "c");
+  Node d = d_nm.mk_const(d_bv2, "d");
+
+  Node w = d_nm.mk_var(d_bv2, "w");
+  Node y = d_nm.mk_var(d_bv2, "y");
+  Node b = d_nm.mk_var(d_bv2, "b");
+
+  Node o = d_nm.mk_node(Kind::FORALL, {b, d_nm.mk_node(Kind::BV_ULE, {b, w})});
+  Node m = d_nm.mk_node(
+      Kind::FORALL,
+      {y, d_nm.mk_node(Kind::AND, {d_nm.mk_node(Kind::BV_ULE, {y, c}), o})});
+  Node q = d_nm.mk_node(
+      Kind::FORALL,
+      {w, d_nm.mk_node(Kind::AND, {d_nm.mk_node(Kind::BV_ULE, {w, d}), m})});
+
+  d_as.push_back(q);
+  ASSERT_EQ(d_as.size(), 1);
+
+  preprocess::AssertionVector assertions(d_as.view());
+  // Note: Unlike apply(), process() does not clear the alpha caches.
+  d_pass.process(assertions[0]);
+
+  const Node& norm_m = d_pass.d_alpha_cache.at(d_pass.d_cache.at(m));
+  // `w` is free in the alpha-normal form of `m`: it is only renamed when the
+  // binder of `w` is normalized, one level further up.
+  ASSERT_TRUE(utils::has_x(norm_m, w));
+  ASSERT_TRUE(d_pass.has_free_vars(norm_m).first);
+
+  // All three binders of the alpha-normal form of `q` are nested, so each must
+  // have its own canonical variable.
+  const Node& norm_q = d_pass.d_alpha_cache.at(d_pass.d_cache.at(q));
+  ASSERT_EQ(collect_binders({norm_q}).size(), 3u);
+}
+
+TEST_F(TestPassQuant, alpha_nested1)
+{
+  Node c = d_nm.mk_const(d_bv2, "c");
+  Node d = d_nm.mk_const(d_bv2, "d");
+  Node e = d_nm.mk_const(d_bv2, "e");
+
+  // X: closed, asserted by itself and a subterm of Q
+  //    -> its canonical var is acquired + released once
+  Node a = d_nm.mk_var(d_bv2, "a");
+  Node X = d_nm.mk_node(Kind::FORALL, {a, d_nm.mk_node(Kind::BV_ULE, {a, c})});
+
+  // B: open in variable y
+  //    -> reacquires the (now free) canonical var of X
+  Node y = d_nm.mk_var(d_bv2, "y");
+  Node b = d_nm.mk_var(d_bv2, "b");
+  Node B = d_nm.mk_node(Kind::FORALL, {b, d_nm.mk_node(Kind::BV_ULE, {y, b})});
+
+  // Q: closed, contains X
+  //    -> has_free_vars() must skip already normalized nodes to not release
+  //       canonical variables of closed quants that are atm reacquired by
+  //       an open quantifier
+  Node qv = d_nm.mk_var(d_bv2, "q");
+  Node Q  = d_nm.mk_node(
+      Kind::FORALL,
+      {qv, d_nm.mk_node(Kind::AND, {X, d_nm.mk_node(Kind::BV_ULE, {qv, d})})});
+
+  Node C = d_nm.mk_node(
+      Kind::FORALL,
+      {y, d_nm.mk_node(Kind::ITE, {d_nm.mk_node(Kind::BV_ULE, {y, e}), Q, B})});
+
+  Node y2 = d_nm.mk_var(d_bv2, "y2");
+  Node b2 = d_nm.mk_var(d_bv2, "b2");
+  Node B2 =
+      d_nm.mk_node(Kind::FORALL, {b2, d_nm.mk_node(Kind::BV_ULE, {b2, b2})});
+  Node C2 = d_nm.mk_node(
+      Kind::FORALL,
+      {y2,
+       d_nm.mk_node(Kind::ITE, {d_nm.mk_node(Kind::BV_ULE, {y2, e}), Q, B2})});
+
+  d_as.push_back(X);
+  d_as.push_back(C);
+  d_as.push_back(C2);
+
+  preprocess::AssertionVector assertions(d_as.view());
+  d_pass.apply(assertions);
+
+  // C and C2 are NOT alpha-equivalent and must not be merged.
+  ASSERT_NE(assertions[1], assertions[2]);
+}
+
+TEST_F(TestPassQuant, alpha_nested2)
+{
+  Node c = d_nm.mk_const(d_bv2, "c");
+  Node d = d_nm.mk_const(d_bv2, "d");
+  Node v = d_nm.mk_var(d_bv2, "v");
+  Node u = d_nm.mk_var(d_bv2, "u");
+
+  Node qv = d_nm.mk_node(Kind::FORALL, {v, d_nm.mk_node(Kind::BV_ULE, {v, c})});
+  Node qu = d_nm.mk_node(Kind::FORALL, {u, d_nm.mk_node(Kind::BV_ULE, {u, c})});
+
+  d_as.push_back(d_nm.mk_node(Kind::NOT, {qv}));
+  d_as.push_back(
+      d_nm.mk_node(Kind::AND, {qu, d_nm.mk_node(Kind::BV_ULE, {c, d})}));
+  ASSERT_EQ(d_as.size(), 2);
+
+  preprocess::AssertionVector assertions(d_as.view());
+  d_pass.apply(assertions);
+
+  ASSERT_EQ(d_env.statistics().new_or_get_stat<uint64_t>(
+                "preprocess::quant::num_alpha_elim"),
+            1);
+  // Both assertions must now refer to the same quantifier.
+  ASSERT_EQ(collect_binders({assertions[0], assertions[1]}).size(), 1u);
+}
+
+TEST_F(TestPassQuant, alpha_stats)
+{
+  Node c = d_nm.mk_const(d_bv2, "c");
+  Node v = d_nm.mk_var(d_bv2, "v");
+  Node u = d_nm.mk_var(d_bv2, "u");
+
+  d_as.push_back(
+      d_nm.mk_node(Kind::FORALL, {v, d_nm.mk_node(Kind::BV_ULE, {v, c})}));
+  d_as.push_back(
+      d_nm.mk_node(Kind::FORALL, {u, d_nm.mk_node(Kind::BV_ULE, {u, c})}));
+  ASSERT_EQ(d_as.size(), 2);
+
+  preprocess::AssertionVector assertions(d_as.view());
+  d_pass.apply(assertions);
+
+  ASSERT_EQ(assertions[0], assertions[1]);
+  ASSERT_EQ(d_env.statistics().new_or_get_stat<uint64_t>(
+                "preprocess::quant::num_alpha_elim"),
+            1);
 }
 }  // namespace bzla::test

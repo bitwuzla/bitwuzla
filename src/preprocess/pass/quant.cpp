@@ -10,8 +10,6 @@
 
 #include "preprocess/pass/quant.h"
 
-#include <set>
-
 #include "node/node.h"
 #include "node/node_ref_vector.h"
 #include "node/node_utils.h"
@@ -26,6 +24,7 @@ PassQuant::PassQuant(Env& env, backtrack::BacktrackManager* backtrack_mgr)
     : PreprocessingPass(env, backtrack_mgr, "q", "quant"),
       d_bv_inverter(env),
       d_bound_vars(backtrack_mgr),
+      d_opt_quant_alpha(env.options().pp_quant_alpha()),
       d_stats(env.statistics())
 {
 }
@@ -36,61 +35,8 @@ PassQuant::apply(AssertionVector& assertions)
   util::Timer timer(d_stats_pass.time_apply);
   // First, ensure that each variable is uniquely bound.
   uniquify_variables(assertions);
-  // Next, alpha normalize all assertions, if enabled.
-  if (d_env.options().pp_quant_alpha())
-  {
-    d_cache.clear();
-    for (size_t i = 0, size = assertions.size(); i < size; ++i)
-    {
-      const Node& assertion = assertions[i];
-      if (!processed(assertion) && assertion.node_info().quantifier)
-      {
-        alpha_normalize(assertion);
-      }
-    }
-    std::unordered_map<Node, std::set<Node>> alpha_quants;
-    std::vector<Node> quants;
-    for (const auto& c : d_cache)
-    {
-      if (c.first.kind() == Kind::FORALL)
-      {
-        auto [it, _] = alpha_quants.emplace(c.second, std::set<Node>{});
-        it->second.insert(c.first);
-        quants.push_back(c.first);
-        if (it->second.size() > 1)
-        {
-          d_stats.num_alpha_elim += 1;
-        }
-      }
-    }
-    d_stats.num_quants += quants.size();
-    std::unordered_map<Node, Node> substs;
-    for (auto& q : quants)
-    {
-      const Node& norm = d_cache.at(q);
-      auto it          = alpha_quants.find(norm);
-      assert(it != alpha_quants.end());
-      if (it->second.size() > 1)
-      {
-        substs.emplace(q, *it->second.begin());
-      }
-    }
-    std::unordered_map<Node, Node> subst_cache;
-    for (size_t i = 0, size = assertions.size(); i < size; ++i)
-    {
-      const Node& assertion = assertions[i];
-      if (!processed(assertion))
-      {
-        if (assertion.node_info().quantifier)
-        {
-          const Node& subst =
-              utils::substitute(d_env.nm(), assertion, substs, subst_cache);
-          assertions.replace(i, subst);
-        }
-      }
-    }
-  }
-  // Then try to further simplify.
+  // Then share alpha-equivalent quantifiers and eliminate quantified variables
+  // via inverse computation.
   d_cache.clear();
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
@@ -111,6 +57,8 @@ PassQuant::apply(AssertionVector& assertions)
     }
   }
   d_cache.clear();
+  d_alpha_cache.clear();
+  d_alpha_reps.clear();
 }
 
 Node
@@ -130,23 +78,30 @@ PassQuant::process(const Node& node)
     }
     else if (it->second.is_null())
     {
-      it->second = d_env.rewriter().rewrite(
+      Node res = d_env.rewriter().rewrite(
           utils::rebuild_node(d_env.nm(), cur, d_cache));
-      if (it->second.kind() == Kind::FORALL)
+      if (res.kind() == Kind::FORALL)
       {
-        Node elim = eliminate(it->second);
-        if (elim != it->second)
+        Node elim = eliminate(res);
+        if (elim != res)
         {
           assert(!elim.is_null());
-          it->second = elim;
+          res = elim;
           ++d_stats.num_inv_elim;
         }
       }
+      it->second = res;
     }
 
     visit.pop_back();
   } while (!visit.empty());
 
+  auto it = d_cache.find(node);
+  assert(it != d_cache.end());
+  if (d_opt_quant_alpha && it->second.node_info().quantifier)
+  {
+    it->second = alpha_normalize(it->second);
+  }
   return d_cache.at(node);
 }
 
@@ -192,6 +147,7 @@ PassQuant::uniquify_variables(AssertionVector& assertions)
         {
           if (cur.kind() == Kind::FORALL)
           {
+            d_stats.num_quants += 1;
             auto [_, vinserted] = d_bound_vars.insert(cur[0].id());
             if (vinserted)
             {
@@ -209,7 +165,7 @@ PassQuant::uniquify_variables(AssertionVector& assertions)
               uniquify_variable(cur, fresh_var);
               assert(!it->second.is_null());
               assert(it->second.kind() == Kind::FORALL);
-              assert(cur != assertion || !has_free_vars(it->second, {}).first);
+              assert(cur != assertion || !has_free_vars(it->second).first);
             }
           }
           else
@@ -364,10 +320,8 @@ PassQuant::uniquify_variable(const Node& node, const Node& fresh_var)
 }
 
 std::pair<bool, std::unordered_set<Node>>
-PassQuant::has_free_vars(const Node& node,
-                         const std::unordered_set<Node>& closed_quants) const
+PassQuant::has_free_vars(const Node& node) const
 {
-  assert(node.kind() == Kind::FORALL);
   std::unordered_set<Node> quants;
   std::vector<Node> vars;
   std::vector<Node> visit{node};
@@ -376,7 +330,7 @@ PassQuant::has_free_vars(const Node& node,
   {
     auto cur = visit.back();
     visit.pop_back();
-    if (closed_quants.find(cur) != closed_quants.end())
+    if (cur != node && d_alpha_reps.find(cur) != d_alpha_reps.end())
     {
       continue;
     }
@@ -546,21 +500,22 @@ PassQuant::release_canonical_var(const Node& var)
   }
 }
 
-void
+Node
 PassQuant::alpha_normalize(const Node& node)
 {
   util::Timer timer(d_stats.time_alpha_elim);
 
-  NodeManager& nm = d_env.nm();
+  NodeManager& nm    = d_env.nm();
   Rewriter& rewriter = d_env.rewriter();
   std::unordered_map<Node, Node> substs;
+  std::unordered_map<Node, Node> repr_substs;
   std::unordered_set<Node> top_quants;
-  std::unordered_set<Node> closed_quants;
   std::vector<Node> visit{node};
+
   do
   {
     auto cur            = visit.back();
-    auto [it, inserted] = d_cache.emplace(cur, Node());
+    auto [it, inserted] = d_alpha_cache.emplace(cur, Node());
 
     if (inserted)
     {
@@ -594,13 +549,24 @@ PassQuant::alpha_normalize(const Node& node)
         // Substitute and cache.
         std::unordered_map<Node, Node> subst_cache;
         Node norm = rewriter.rewrite(
-            utils::substitute(nm, d_cache.at(body), substs, subst_cache));
+            utils::substitute(nm, d_alpha_cache.at(body), substs, subst_cache));
         args.push_back(norm);
         it->second              = utils::mk_nary(nm, Kind::FORALL, args);
-        auto [has_free, quants] = has_free_vars(it->second, closed_quants);
+        auto [has_free, quants] = has_free_vars(it->second);
         if (!has_free)
         {
-          closed_quants.insert(cur);
+          // Alpha equivalent quantifiers are mapped to the first one
+          // encountered. Note: `node` is registered below, after substituting
+          // the alpha-equivalent quants in its body with their representatives.
+          if (cur != node)
+          {
+            auto [ait, ainserted] = d_alpha_reps.emplace(it->second, cur);
+            if (!ainserted && ait->second != cur)
+            {
+              repr_substs.emplace(cur, ait->second);
+              d_stats.num_alpha_elim += 1;
+            }
+          }
           for (const auto& q : quants)
           {
             release_canonical_var(q);
@@ -609,12 +575,25 @@ PassQuant::alpha_normalize(const Node& node)
       }
       else
       {
-        it->second =
-            rewriter.rewrite(utils::rebuild_node(d_env.nm(), cur, d_cache));
+        it->second = rewriter.rewrite(
+            utils::rebuild_node(d_env.nm(), cur, d_alpha_cache));
       }
     }
     visit.pop_back();
   } while (!visit.empty());
+
+  const Node& norm = d_alpha_cache.at(node);
+  assert(!has_free_vars(norm).first);
+  // Substitute alpha-equivalent quantifiers with their representatives.
+  std::unordered_map<Node, Node> subst_cache;
+  Node res =
+      rewriter.rewrite(utils::substitute(nm, node, repr_substs, subst_cache));
+  auto [it, inserted] = d_alpha_reps.emplace(norm, res);
+  if (!inserted && it->second != res)
+  {
+    d_stats.num_alpha_elim += 1;
+  }
+  return it->second;
 }
 
 PassQuant::Statistics::Statistics(util::Statistics& stats)
