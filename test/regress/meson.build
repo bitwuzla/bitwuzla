@@ -302,7 +302,6 @@ tests_smt2 = [
   ['parser/smt2perr231.smt2'],
   ['parser/smt2perr232.smt2'],
   ## preprocess
-  #['preprocess/array/nondestr_subst1.smt2'], # TODO slow
   ['preprocess/array/nondestr_subst10.smt2', ['--print-model']],
   ['preprocess/array/nondestr_subst11.smt2'],
   ['preprocess/array/nondestr_subst12.smt2'],
@@ -778,10 +777,10 @@ tests_smt2 = [
   ['rewrite/bv/rw45.btor.smt2', ['-rwl=1']],
   ['rewrite/bv/rw46.btor.smt2'],
   ['rewrite/bv/rw47.btor.smt2'],
-  #['rewrite/bv/rw48.btor.smt2'], # TODO too slow (32s)
-  #['rewrite/bv/rw49.btor.smt2'], # TODO too slow (145s)
+  ['rewrite/bv/rw48.btor.smt2'],
+  ['rewrite/bv/rw49.btor.smt2'],
   ['rewrite/bv/rw5.btor.smt2'],
-  #['rewrite/bv/rw50.btor.smt2'], # TODO too slow (timeout after 150s)
+  ['rewrite/bv/rw50.btor.smt2'],
   ['rewrite/bv/rw51.btor.smt2'],
   ['rewrite/bv/rw52.btor.smt2', ['-rwl=0']],
   ['rewrite/bv/rw52.btor.smt2', ['-rwl=1']],
@@ -800,7 +799,7 @@ tests_smt2 = [
   ['rewrite/bv/rw59.btor.smt2', ['-rwl=0']],
   ['rewrite/bv/rw59.btor.smt2'],
   ['rewrite/bv/rw6.btor.smt2'],
-  #['rewrite/bv/rw60.btor.smt2'], # TODO too slow (timeout after 150s)
+  ['rewrite/bv/rw60.btor.smt2'],
   ['rewrite/bv/rw61.btor.smt2', ['-rwl=0']],
   ['rewrite/bv/rw61.btor.smt2', ['-rwl=1']],
   ['rewrite/bv/rw62.btor.smt2', ['-rwl=0']],
@@ -919,7 +918,7 @@ tests_smt2 = [
   ['solver/array/dubreva002ue.smt2'],
   ['solver/array/duplicatelemma1.smt2'],
   ['solver/array/duplicatelemma2.smt2'],
-  #['solver/array/duplicatelemma3.smt2'], # TODO: disabled because of equality over constant arrays
+  ['solver/array/duplicatelemma3.smt2'],
   ['solver/array/ext1.btor.smt2'],
   ['solver/array/ext10.btor.smt2'],
   ['solver/array/ext11.btor.smt2'],
@@ -1349,16 +1348,16 @@ tests_smt2 = [
   ['solver/bv/smtaxiombvslt7.smt2'],
   ['solver/bv/smtaxiombvslt8.smt2'],
   ['solver/bv/smtaxiombvsmod1.smt2'],
+  ['solver/bv/smtaxiombvsmod16.smt2'],
   ['solver/bv/smtaxiombvsmod2.smt2'],
   ['solver/bv/smtaxiombvsmod3.smt2'],
+  ['solver/bv/smtaxiombvsmod32.smt2'],
   ['solver/bv/smtaxiombvsmod4.smt2'],
   ['solver/bv/smtaxiombvsmod5.smt2'],
   ['solver/bv/smtaxiombvsmod6.smt2'],
+  ['solver/bv/smtaxiombvsmod64.smt2'],
   ['solver/bv/smtaxiombvsmod7.smt2'],
   ['solver/bv/smtaxiombvsmod8.smt2'],
-  #['solver/bv/smtaxiombvsmod16.smt2'], # hard (slow)
-  #['solver/bv/smtaxiombvsmod32.smt2'], # hard (slow)
-  #['solver/bv/smtaxiombvsmod64.smt2'], # hard (slow)
   ['solver/bv/smtaxiombvsrem1.smt2'],
   ['solver/bv/smtaxiombvsrem2.smt2'],
   ['solver/bv/smtaxiombvsrem3.smt2'],
@@ -1577,7 +1576,7 @@ tests_smt2 = [
   ['solver/quant/quant_regr23.smt2'],
   ['solver/quant/quant_regr24.smt2'],
   ['solver/quant/quant_regr25.smt2'],
-  #['solver/quant/quant_regr26.smt2'], # TODO: timeout
+  ['solver/quant/quant_regr26.smt2'],
   ['solver/quant/quant_regr27.smt2'],
   ['solver/quant/quant_regr28.smt2'],
   ['solver/quant/quant_regr29.smt2'],
@@ -1593,7 +1592,7 @@ tests_smt2 = [
   ['solver/quant/red-ARI118-1.smt2'],
   ['solver/quant/regrnormquant.smt2'],
   ['solver/quant/regsmtparselet.smt2'],
-  #['solver/murxla-fb7c754b7b2abd73.min.smt2'], # TODO: disabled because of equality over constant arrays
+  ['solver/murxla-fb7c754b7b2abd73.min.smt2'],
   ['solver/murxla-f9e9ae3e50883097.min.smt2'],
   ['solver/murxla-a8c3bd9681982556.min.smt2'],
   ['solver/murxla-6812513959742a22.min.smt2'],
@@ -1625,9 +1624,6 @@ tests_smt2_get_interpolant = [
   ['get-interpolant/incr-interp.smt2'],
   ['get-interpolant/incr-interp.lift.smt2'],
   ['get-interpolant/incr-interp.pudlak.smt2'],
-  #
-  ['get-interpolant/loop3.interp.smt2'],
-  ['get-interpolant/loop3.interp.lift.smt2'],
   #
   ['get-interpolant/murxla-14f02a0715edabfd.min.smt2'],
   ['get-interpolant/murxla-14f02a0715edabfd.min.lift.smt2'],
@@ -1788,6 +1784,19 @@ tests_smt2_get_interpolant = [
   ['get-interpolant/fp/murxla-396ce269d6b46a2e.min.smt2'],
   ['get-interpolant/fp/red-murxla-30ef1f6dc227aa3d.min.smt2'],
 ]
+
+# Tests that are too slow for debug builds on CI
+if get_option('buildtype') == 'release'
+
+  tests_smt2 += [
+    ['preprocess/array/nondestr_subst1.smt2'],
+  ]
+
+  tests_smt2_get_interpolant += [
+    ['get-interpolant/loop3.interp.smt2'],
+    ['get-interpolant/loop3.interp.lift.smt2'],
+  ]
+endif
 
 if get_option('cadical')
   tests_smt2 += tests_smt2_get_interpolant
@@ -2065,10 +2074,10 @@ tests_btor2_sat = [
 ]
 
 tests_btor2_unsat = [
-  #['rewrite/bv/rw48.btor2'], # TODO too slow
-  #['rewrite/bv/rw49.btor2'], # TODO too slow
-  #['rewrite/bv/rw50.btor2'], # TODO too slow (timeout after 150s)
-  #['rewrite/bv/rw60.btor2'], # TODO too slow (timeout after 150s)
+  ['rewrite/bv/rw48.btor2'],
+  ['rewrite/bv/rw49.btor2'],
+  ['rewrite/bv/rw50.btor2'],
+  ['rewrite/bv/rw60.btor2'],
   ['preprocess/array/regrembeddedconstraint1.btor2'],
   ['preprocess/array/regrembeddedconstraint12.btor2', ['-rwl=0']],
   ['preprocess/array/regrembeddedconstraint12.btor2', ['-rwl=1']],
