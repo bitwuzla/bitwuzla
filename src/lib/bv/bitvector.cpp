@@ -955,14 +955,22 @@ BitVector::is_sadd_overflow(const BitVector& bv) const
 {
   assert(!is_null());
   assert(d_size == bv.d_size);
-  bool is_signed_bv0 = msb();
-  bool is_signed_bv1 = bv.msb();
-  bool is_signed_add = bvadd(bv).msb();
   // Overflow occurs if
   //  1) negative + negative = positive
   //  2) positive + positive = negative
-  return (is_signed_bv0 && is_signed_bv1 && !is_signed_add)
-         || (!is_signed_bv0 && !is_signed_bv1 && is_signed_add);
+  // i.e., iff both operands have the same sign and the sum has the other.
+  if (is_gmp())
+  {
+    bool is_signed_bv0 = msb();
+    return is_signed_bv0 == bv.msb() && is_signed_bv0 != bvadd(bv).msb();
+  }
+
+  const uint64_t msb_idx = d_size - 1;
+  bool is_signed_bv0     = (d_val_uint64 >> msb_idx) & 1;
+  bool is_signed_bv1     = (bv.d_val_uint64 >> msb_idx) & 1;
+  uint64_t sum           = d_val_uint64 + bv.d_val_uint64;
+  return is_signed_bv0 == is_signed_bv1
+         && is_signed_bv0 != ((sum >> msb_idx) & 1);
 }
 
 bool
@@ -978,14 +986,23 @@ BitVector::is_ssub_overflow(const BitVector& bv) const
 {
   assert(!is_null());
   assert(d_size == bv.d_size);
-  bool is_signed_bv0 = msb();
-  bool is_signed_bv1 = bv.msb();
-  bool is_signed_sub = bvsub(bv).msb();
   // Overflow occurs if
   //  1) negative - positive = positive
   //  2) positive - negative = negative
-  return (is_signed_bv0 && !is_signed_bv1 && !is_signed_sub)
-         || (!is_signed_bv0 && is_signed_bv1 && is_signed_sub);
+  // i.e., iff both operands have different signs and the subtrahend has the
+  // same sign as the result.
+  if (is_gmp())
+  {
+    bool is_signed_bv0 = msb();
+    return is_signed_bv0 != bv.msb() && is_signed_bv0 != bvsub(bv).msb();
+  }
+
+  const uint64_t msb_idx = d_size - 1;
+  bool is_signed_bv0     = (d_val_uint64 >> msb_idx) & 1;
+  bool is_signed_bv1     = (bv.d_val_uint64 >> msb_idx) & 1;
+  uint64_t sub           = d_val_uint64 - bv.d_val_uint64;
+  return is_signed_bv0 != is_signed_bv1
+         && is_signed_bv0 != ((sub >> msb_idx) & 1);
 }
 
 bool
