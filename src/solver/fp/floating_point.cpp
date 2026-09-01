@@ -673,7 +673,7 @@ FloatingPoint
 FloatingPoint::fpmax(const FloatingPoint &fp) const
 {
   // Note: The +/- zero case is unspecified as per SMT-LIB but MPFR always
-  //       returns -zero.
+  //       returns +zero.
   assert(is_valid());
   assert(fp.is_valid());
   assert(d_exp_size == fp.d_exp_size && d_sig_size == fp.d_sig_size);
