@@ -35,6 +35,15 @@ class SatSolver
   /** Destructor. */
   virtual ~SatSolver() {};
 
+  /** Disallow copy construction. */
+  SatSolver(const SatSolver& solver) = delete;
+  /** Disallow copy assignment. */
+  SatSolver& operator=(const SatSolver& solver) = delete;
+  /** Disallow move construction. */
+  SatSolver(SatSolver&& solver) = delete;
+  /** Disallow move assignment. */
+  SatSolver& operator=(SatSolver&& solver) = delete;
+
   /**
    * Allocate new variable in SAT solver.
    * @return Fresh variable.
