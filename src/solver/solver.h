@@ -11,10 +11,10 @@
 #ifndef BZLA_SOLVER_SOLVER_H_INCLUDED
 #define BZLA_SOLVER_SOLVER_H_INCLUDED
 
-#include <unordered_map>
+#include <cassert>
+#include <vector>
 
 #include "node/node.h"
-#include "solver/result.h"
 #include "solver/solver_state.h"
 
 namespace bzla {
@@ -63,32 +63,8 @@ class Solver
   Env& d_env;
   /** Logger instance. */
   util::Logger& d_logger;
-
   /** Associated solver state. */
   SolverState& d_solver_state;
-
-  /**
-   * Store value for term.
-   *
-   * @param term Term to store the cached value for.
-   * @param value The value to cache.
-   */
-  void cache_value(const Node& term, const Node& value);
-
-  /**
-   * Get cached value for term.
-   *
-   * @param term Term to get the cached value for.
-   * @return Cached value if term was cached, otherwise null term.
-   */
-  const Node& get_cached_value(const Node& term) const;
-
-  /** Reset value cache. */
-  void reset_cached_values();
-
- private:
-  /** Cache to store computed values. */
-  std::unordered_map<Node, Node> d_value_cache;
 };
 
 }  // namespace bzla

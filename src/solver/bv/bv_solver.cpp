@@ -118,7 +118,6 @@ BvSolver::solve()
   }
 
   ++d_stats.num_checks;
-  reset_cached_values();
   switch (d_env.options().bv_solver())
   {
     case option::BvSolver::BITBLAST:

@@ -58,7 +58,6 @@ FpSolver::check()
   Log(1);
   Log(1) << "*** check fp";
 
-  reset_cached_values();
   NodeManager& nm = d_env.nm();
 
   // In the incremental case, it can happen that validity constraints (added as
