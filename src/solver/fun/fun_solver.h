@@ -40,9 +40,6 @@ class FunSolver : public Solver
   /** Adds function congruence lemma between function applications a and b. */
   void add_function_congruence_lemma(const Node& a, const Node& b);
 
-  /** Beta-reduce function application on lambda term. */
-  Node beta_reduce(const Node& apply);
-
   /** Construct per-term unique value for term of uninterpreted sort. */
   Node unique_uninterpreted_value(const Node& term);
 
