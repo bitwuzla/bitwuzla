@@ -19,7 +19,7 @@ This file collects a summary of important and/or user-visible changes.
 - Improved push/pop support in the SAT backends. Now uses activation variables
   to remove clauses on pop().
 
-- Bumped **CaDiCaL** to version 3.0.1.
+- Bumped **CaDiCaL** to version 3.0.1, CaDiCaL >= 3.0 is now required.
 
 ## News for version 0.9.1
 

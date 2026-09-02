@@ -34,6 +34,19 @@ if not cadical_dep.found()
   cadical_dep = dependency('cadical', required: get_option('cadical'))
 endif
 
+# Check version of system CaDiCaL. Query semantic version macros defined in the
+# CaDiCaL header introduced with version 3.0.
+if cadical_dep.found() and cadical_dep.type_name() != 'internal'
+  cadical_major = cpp_compiler.get_define(
+                    'CADICAL_MAJOR',
+                    prefix: '#include <cadical/cadical.hpp>',
+                    dependencies: cadical_dep)
+  if cadical_major == '' or cadical_major.to_int() < 3
+    error('Found a system-wide CaDiCaL older than 3.0. Bitwuzla requires the ' +
+          'proof tracer and variable declaration API introduced with 3.0.')
+  endif
+endif
+
 # Our bundled CaDiCaL is patched (see subprojects/packagefiles/cadical), a
 # system-wide CaDiCaL is not. Without the patch, observing a variable that
 # CaDiCaL weakened by variable elimination violates its API contract while

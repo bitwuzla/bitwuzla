@@ -30,7 +30,7 @@ Building Bitwuzla on Linux and macOS
   * `pkg-config <https://www.freedesktop.org/wiki/Software/pkg-config/>`_
   * `GMP >= v6.3 (GNU Multi-Precision arithmetic library) <https://gmplib.org>`_
   * `MPFR >= v4.2.1 (GNU Multiple Precision Floating-Point Reliable Library) <https://www.mpfr.org>`_
-  * `CaDiCaL >= 1.5.0 <https://github.com/arminbiere/cadical>`_
+  * `CaDiCaL >= 3.0.0 <https://github.com/arminbiere/cadical>`_
   * `SymFPU <https://github.com/martin-cs/symfpu>`_
   * `googletest <https://github.com/google/googletest>`_ (debug, testing)
 
