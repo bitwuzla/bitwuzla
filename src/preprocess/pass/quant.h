@@ -27,16 +27,16 @@ class PassQuant : public PreprocessingPass
 
  private:
   /**
-   * Make binding of quantified variables unique, i.e., no binders are shared,
-   * neither nested nor across assertions.
+   * Rebuild given quantifier with `fresh_var` in place of its variable.
    *
-   * @note This is already guaranteed through the parser, but via the API,
-   *       sharing binders is not disallowed.
+   * @note Expects the body of `node` to be cached in d_cache.
    *
-   * @params assertions The current set of assertions.
+   * @param node      The quantifier whose variable is already bound elsewhere.
+   * @param fresh_var The variable to bind instead, of the same type as the
+   *                  variable of `node`.
+   * @return `node` with its variable replaced by `fresh_var`.
    */
-  void uniquify_variables(AssertionVector& assertions);
-  void uniquify_variable(const Node& node, const Node& fresh_var);
+  Node uniquify_variable(const Node& node, const Node& fresh_var);
   /**
    * Alpha-normalize given node.
    *

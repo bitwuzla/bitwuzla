@@ -33,11 +33,9 @@ void
 PassQuant::apply(AssertionVector& assertions)
 {
   util::Timer timer(d_stats_pass.time_apply);
-  // First, ensure that each variable is uniquely bound.
-  uniquify_variables(assertions);
-  // Then share alpha-equivalent quantifiers and eliminate quantified variables
-  // via inverse computation.
   d_cache.clear();
+  d_alpha_cache.clear();
+  d_alpha_reps.clear();
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
     Node assertion = assertions[i];
@@ -61,9 +59,20 @@ PassQuant::apply(AssertionVector& assertions)
   d_alpha_reps.clear();
 }
 
+namespace {
+Node
+mk_fresh_var(NodeManager& nm, const Node& var)
+{
+  assert(var.kind() == Kind::VARIABLE);
+  return nm.mk_var(var.type(), var.symbol());
+}
+}  // namespace
+
 Node
 PassQuant::process(const Node& node)
 {
+  NodeManager& nm    = d_env.nm();
+  Rewriter& rewriter = d_env.rewriter();
   node_ref_vector visit{node};
 
   do
@@ -78,8 +87,32 @@ PassQuant::process(const Node& node)
     }
     else if (it->second.is_null())
     {
-      Node res = d_env.rewriter().rewrite(
-          utils::rebuild_node(d_env.nm(), cur, d_cache));
+      Node res = rewriter.rewrite(utils::rebuild_node(nm, cur, d_cache));
+
+      // Make binding of quantified variables unique, i.e., no binders are
+      // shared, neither nested nor across assertions. Note that unique binders
+      // are already guaranteed through the parser, but via the API, sharing
+      // binders is not disallowed.
+      if (cur.kind() == Kind::FORALL)
+      {
+        d_stats.num_quants += 1;
+        auto [_, vinserted] = d_bound_vars.insert(cur[0].id());
+        if (!vinserted)
+        {
+          // Shared binder, uniquify.
+          // Note: The fresh variable must not be mapped to d_cache[cur[0]].
+          //       The mapping is only valid below this binder, whereas
+          //       d_cache[cur[0]] is used to rebuild the nodes of the
+          //       binder that keeps the original variable.
+          Node fresh_var = mk_fresh_var(nm, cur[0]);
+          d_bound_vars.insert(fresh_var.id());
+          res            = uniquify_variable(cur, fresh_var);
+          assert(!res.is_null());
+          assert(res.kind() == Kind::FORALL);
+          assert(cur != node || !has_free_vars(res).first);
+        }
+      }
+
       if (res.kind() == Kind::FORALL)
       {
         Node elim = eliminate(res);
@@ -107,87 +140,7 @@ PassQuant::process(const Node& node)
 
 /* --- PassQuant private ---------------------------------------------------- */
 
-namespace {
 Node
-mk_fresh_var(NodeManager& nm, const Node& var)
-{
-  assert(var.kind() == Kind::VARIABLE);
-  return nm.mk_var(var.type(), var.symbol());
-}
-}  // namespace
-
-void
-PassQuant::uniquify_variables(AssertionVector& assertions)
-{
-  d_cache.clear();
-  NodeManager& nm    = d_env.nm();
-  Rewriter& rewriter = d_env.rewriter();
-  for (size_t i = 0, n = assertions.size(); i < n; ++i)
-  {
-    const Node& assertion = assertions[i];
-    if (!processed(assertion) && assertion.node_info().quantifier)
-    {
-      std::vector<Node> visit{assertions[i]};
-      do
-      {
-        auto cur            = visit.back();
-        auto [it, inserted] = d_cache.emplace(cur, Node());
-
-        if (inserted)
-        {
-          if (cur.node_info().quantifier)
-          {
-            visit.insert(visit.end(), cur.begin(), cur.end());
-            continue;
-          }
-          // No quantifier below, map node to itself.
-          it->second = cur;
-        }
-        else if (it->second.is_null())
-        {
-          if (cur.kind() == Kind::FORALL)
-          {
-            d_stats.num_quants += 1;
-            auto [_, vinserted] = d_bound_vars.insert(cur[0].id());
-            if (vinserted)
-            {
-              it->second = rewriter.rewrite(
-                  utils::rebuild_node(d_env.nm(), cur, d_cache));
-            }
-            else
-            {
-              // Shared binder, uniquify.
-              // Note: The fresh variable must not be mapped to d_cache[cur[0]].
-              //       The mapping is only valid below this binder, whereas
-              //       d_cache[cur[0]] is used to rebuild the nodes of the
-              //       binder that keeps the original variable.
-              Node fresh_var = mk_fresh_var(nm, cur[0]);
-              uniquify_variable(cur, fresh_var);
-              assert(!it->second.is_null());
-              assert(it->second.kind() == Kind::FORALL);
-              assert(cur != assertion || !has_free_vars(it->second).first);
-            }
-          }
-          else
-          {
-            it->second =
-                rewriter.rewrite(utils::rebuild_node(d_env.nm(), cur, d_cache));
-          }
-        }
-        visit.pop_back();
-      } while (!visit.empty());
-
-      const Node& res = d_cache.at(assertion);
-      if (res != assertion)
-      {
-        assertions.replace(i, res);
-      }
-    }
-  }
-  d_cache.clear();
-}
-
-void
 PassQuant::uniquify_variable(const Node& node, const Node& fresh_var)
 {
   assert(node.kind() == Kind::FORALL);
@@ -203,10 +156,10 @@ PassQuant::uniquify_variable(const Node& node, const Node& fresh_var)
   //       occurrence of `var` below such a binder is bound by that binder, and
   //       substituting it would move it into the scope of `fresh_var`, changing
   //       the semantics of `node` (not shadowing anymore).
-  //       Shadowed subterms are thus unaffected by the substitution and are not
-  //       rebuilt with `fresh_var`. Shadowing binders are uniquified by
-  //       uniquify_variables(), which uniquifies every binder whose
-  //       variable is already bound elsewhere.
+  //       Shadowed subterms are thus unaffected by the substitution and are
+  //       not rebuilt with `fresh_var`. Shadowing binders are uniquified by
+  //       process(), which uniquifies every binder whose variable is already
+  //       bound elsewhere.
   std::unordered_map<Node, bool> references;
   std::vector<Node> visit{body};
   do
@@ -313,10 +266,8 @@ PassQuant::uniquify_variable(const Node& node, const Node& fresh_var)
     visit.pop_back();
   } while (!visit.empty());
 
-  auto dit = d_cache.find(node);
-  assert(dit != d_cache.end());
-  dit->second =
-      rewriter.rewrite(nm.mk_node(Kind::FORALL, {fresh_var, cache.at(body)}));
+  return rewriter.rewrite(
+      nm.mk_node(Kind::FORALL, {fresh_var, cache.at(body)}));
 }
 
 std::pair<bool, std::unordered_set<Node>>
@@ -575,8 +526,8 @@ PassQuant::alpha_normalize(const Node& node)
       }
       else
       {
-        it->second = rewriter.rewrite(
-            utils::rebuild_node(d_env.nm(), cur, d_alpha_cache));
+        it->second =
+            rewriter.rewrite(utils::rebuild_node(nm, cur, d_alpha_cache));
       }
     }
     visit.pop_back();

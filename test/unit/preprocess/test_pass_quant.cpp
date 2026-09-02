@@ -25,7 +25,7 @@ class TestPassQuant : public TestPreprocessingPass
  public:
   TestPassQuant()
       : d_sat_factory(d_options),
-        d_env(d_nm, d_sat_factory),
+        d_env(d_nm, d_sat_factory, d_options),
         d_pass(d_env, &d_bm)
   {
     d_bv2 = d_nm.mk_bv_type(2);
@@ -486,6 +486,7 @@ TEST_F(TestPassQuant, uniquify_binders_across_inner_rename)
   }
   // No occurrence must be left on the original variable of `w`, which would
   // be free in the result (and its fresh variable unused).
+  ASSERT_FALSE(pass.has_free_vars(assertions[1]).first);
 }
 
 TEST_F(TestPassQuant, uniquify_binders_sibling_inner_rename)
@@ -524,6 +525,7 @@ TEST_F(TestPassQuant, uniquify_binders_sibling_inner_rename)
   {
     ASSERT_EQ(bs.size(), 1u);
   }
+  ASSERT_FALSE(pass.has_free_vars(assertions[0]).first);
 }
 
 TEST_F(TestPassQuant, uniquify_binders_shadowing_binder_below_inner_rename)
@@ -558,6 +560,7 @@ TEST_F(TestPassQuant, uniquify_binders_shadowing_binder_below_inner_rename)
   {
     ASSERT_EQ(bs.size(), 1u);
   }
+  ASSERT_FALSE(pass.has_free_vars(assertions[0]).first);
 }
 
 // Corresponds to test regress/preprocess/quant/alpha6.smt2 and serves as an
