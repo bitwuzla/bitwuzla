@@ -15,6 +15,7 @@
 #include <ostream>
 #include <sstream>
 
+#include "solver/fp/floating_point.h"
 #include "util/exceptions.h"
 #include "util/ostream_voider.h"
 
@@ -355,22 +356,28 @@ class BitwuzlaOptionExceptionStream
       << "Note that there are known issues with experimental formats in "     \
          "SymFPU, use at your own risk.";
 
-#define BITWUZLA_CHECK_FP_EXP_SIZE(exp_size)                   \
-  if (mp_bits_per_limb == 32)                                  \
-  {                                                            \
-    BITWUZLA_CHECK(exp_size <= 30)                             \
-        << "expected floating-point exponent size <= 30, got " \
-           "'"                                                 \
-        << exp_size << "'";                                    \
-  }                                                            \
-  else                                                         \
-  {                                                            \
-    assert(mp_bits_per_limb == 64);                            \
-    BITWUZLA_CHECK(exp_size <= 62)                             \
-        << "expected floating-point exponent size <= 62, got " \
-           "'"                                                 \
-        << exp_size << "'";                                    \
-  }
+#define BITWUZLA_CHECK_FP_EXP_SIZE(exp_size)                      \
+  BITWUZLA_CHECK(exp_size <= bzla::FloatingPoint::max_exp_size()) \
+      << "expected floating-point exponent size <= "              \
+      << bzla::FloatingPoint::max_exp_size() << ", got '" << exp_size << "'";
+
+#define BITWUZLA_CHECK_FP_SIG_SIZE(sig_size)                      \
+  BITWUZLA_CHECK(sig_size <= bzla::FloatingPoint::max_sig_size()) \
+      << "expected floating-point significand size <= "           \
+      << bzla::FloatingPoint::max_sig_size() << ", got '" << sig_size << "'";
+
+/**
+ * Same as BITWUZLA_CHECK_FP_SIG_SIZE, but for a significand given as a
+ * bit-vector without the hidden bit, i.e., the resulting significand size is
+ * `bv_size + 1`. Checking `bv_size` rather than `bv_size + 1` additionally
+ * guards against overflow (a bit-vector may be of size UINT64_MAX).
+ * @note Argument `bv_size` is evaluated more than once, it must not have side
+ *       effects.
+ */
+#define BITWUZLA_CHECK_FP_SIG_BV_SIZE(bv_size)                         \
+  BITWUZLA_CHECK(bv_size < bzla::FloatingPoint::max_sig_size())        \
+      << "expected size of bit-vector representing the significand < " \
+      << bzla::FloatingPoint::max_sig_size() << ", got '" << bv_size << "'";
 
 /* -------------------------------------------------------------------------- */
 

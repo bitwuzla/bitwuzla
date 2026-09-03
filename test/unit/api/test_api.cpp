@@ -21,6 +21,7 @@
 #include "sat/cryptominisat.h"
 #include "sat/gimsatul.h"
 #include "sat/kissat.h"
+#include "solver/fp/floating_point.h"
 #include "test/unit/test.h"
 
 #define ASSERT_EXCEPTION(try_block, exception_type, msg)                    \
@@ -502,15 +503,12 @@ TEST_F(TestApi, mk_fp_sort)
   ASSERT_THROW(d_tm.mk_fp_sort(5, 0), bitwuzla::Exception);
   ASSERT_THROW(d_tm.mk_fp_sort(1, 2), bitwuzla::Exception);
   ASSERT_THROW(d_tm.mk_fp_sort(2, 1), bitwuzla::Exception);
-  if (mp_bits_per_limb == 32)
-  {
-    ASSERT_THROW(d_tm.mk_fp_sort(32, 150), bitwuzla::Exception);
-  }
-  else
-  {
-    assert(mp_bits_per_limb == 64);
-    ASSERT_THROW(d_tm.mk_fp_sort(64, 150), bitwuzla::Exception);
-  }
+  uint64_t max_exp_size = bzla::FloatingPoint::max_exp_size();
+  uint64_t max_sig_size = bzla::FloatingPoint::max_sig_size();
+  ASSERT_THROW(d_tm.mk_fp_sort(max_exp_size + 1, 150), bitwuzla::Exception);
+  ASSERT_THROW(d_tm.mk_fp_sort(5, max_sig_size + 1), bitwuzla::Exception);
+  ASSERT_THROW(d_tm.mk_fp_sort(max_exp_size + 1, max_sig_size + 1),
+               bitwuzla::Exception);
 }
 
 TEST_F(TestApi, mk_fun_sort)
@@ -655,6 +653,65 @@ TEST_F(TestApi, mk_fp_value)
                bitwuzla::Exception);
   ASSERT_THROW(d_tm.mk_fp_value(d_bv_one1, d_bv_zero8, d_bv_const8),
                bitwuzla::Exception);
+}
+
+TEST_F(TestApi, mk_term_check_fp_format)
+{
+  uint64_t max_exp_size = bzla::FloatingPoint::max_exp_size();
+  uint64_t max_sig_size = bzla::FloatingPoint::max_sig_size();
+  for (auto kind : {bitwuzla::Kind::FP_TO_FP_FROM_FP,
+                    bitwuzla::Kind::FP_TO_FP_FROM_SBV,
+                    bitwuzla::Kind::FP_TO_FP_FROM_UBV})
+  {
+    std::vector<bitwuzla::Term> args{
+        d_rm_rne,
+        kind == bitwuzla::Kind::FP_TO_FP_FROM_FP ? d_fp_const16 : d_bv_const8};
+    ASSERT_THROW(d_tm.mk_term(kind, args, {max_exp_size + 1, 11}),
+                 bitwuzla::Exception);
+    ASSERT_THROW(d_tm.mk_term(kind, args, {5, max_sig_size + 1}),
+                 bitwuzla::Exception);
+    ASSERT_NO_THROW(d_tm.mk_term(kind, args, {5, 11}));
+  }
+  // Note: the exponent and significand size are checked before the
+  // (exp_size + sig_size == bv_size) check, thus the size of the given
+  // bit-vector is irrelevant here.
+  ASSERT_THROW(d_tm.mk_term(bitwuzla::Kind::FP_TO_FP_FROM_BV,
+                            {d_bv_const8},
+                            {max_exp_size + 1, 11}),
+               bitwuzla::Exception);
+  ASSERT_THROW(d_tm.mk_term(bitwuzla::Kind::FP_TO_FP_FROM_BV,
+                            {d_bv_const8},
+                            {5, max_sig_size + 1}),
+               bitwuzla::Exception);
+  ASSERT_NO_THROW(d_tm.mk_term(bitwuzla::Kind::FP_TO_FP_FROM_BV,
+                               {d_tm.mk_const(d_bv_sort16, "bv16")},
+                               {5, 11}));
+  // The exponent and significand size of the floating-point created via FP_FP
+  // are determined by the sizes of the given bit-vectors (+1 for the hidden
+  // bit).
+  bitwuzla::Term exp_too_large =
+      d_tm.mk_const(d_tm.mk_bv_sort(max_exp_size + 1), "e");
+  bitwuzla::Term sig_too_large =
+      d_tm.mk_const(d_tm.mk_bv_sort(max_sig_size), "m");
+  ASSERT_THROW(
+      d_tm.mk_term(bitwuzla::Kind::FP_FP,
+                   {d_bv_const1, exp_too_large, d_tm.mk_const(d_bv_sort8)}),
+      bitwuzla::Exception);
+  ASSERT_THROW(
+      d_tm.mk_term(bitwuzla::Kind::FP_FP,
+                   {d_bv_const1, d_tm.mk_const(d_bv_sort8), sig_too_large}),
+      bitwuzla::Exception);
+  // A bit-vector of size UINT64_MAX must not overflow the (size + 1) hidden
+  // bit adjustment.
+  ASSERT_THROW(d_tm.mk_term(bitwuzla::Kind::FP_FP,
+                            {d_bv_const1,
+                             d_tm.mk_const(d_bv_sort8),
+                             d_tm.mk_const(d_tm.mk_bv_sort(UINT64_MAX))}),
+               bitwuzla::Exception);
+  ASSERT_NO_THROW(d_tm.mk_term(bitwuzla::Kind::FP_FP,
+                               {d_bv_const1,
+                                d_tm.mk_const(d_bv_sort8),
+                                d_tm.mk_const(d_bv_sort23, "bv23")}));
 }
 
 TEST_F(TestApi, mk_term_check_null)

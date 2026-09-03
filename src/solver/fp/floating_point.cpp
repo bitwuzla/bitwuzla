@@ -234,18 +234,26 @@ FloatingPoint::fpfp(const BitVector& sign,
 
 /* --- FloatingPoint public ------------------------------------------------- */
 
+uint64_t
+FloatingPoint::max_exp_size()
+{
+  assert(mp_bits_per_limb == 32 || mp_bits_per_limb == 64);
+  return static_cast<uint64_t>(mp_bits_per_limb - 2);
+}
+
+uint64_t
+FloatingPoint::max_sig_size()
+{
+  return static_cast<uint64_t>(MPFR_PREC_MAX);
+}
+
 FloatingPoint::FloatingPoint(uint64_t exp_size, uint64_t sig_size)
     : d_exp_size(exp_size), d_sig_size(sig_size)
 {
   assert(is_valid());
-  // MPFR needs +1 for the value of the exponent due to its internal
-  // representation, thus we can only allow a maximum exponent size of 30-bit
-  // (for 32 bit architecture) and 62 bit (for 64 bit architecture).
-  assert(exp_size <= static_cast<uint64_t>(mp_bits_per_limb - 2));
-
+  assert(exp_size <= max_exp_size());
+  assert(sig_size <= max_sig_size());
   mpfr_reset_format();
-  // MPFR precision includes the hidden bit (not the sign bit), we can use
-  // significand size (which is also +1 because of the sign bit).
   mpfr_init2(d_mpfr, sig_size);
   mpfr_set_eminmax_for_format(exp_size, sig_size);
 }

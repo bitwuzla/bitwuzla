@@ -1,0 +1,1 @@
+regress/parser/smt2perr237.smt2:4:25: expected floating-point exponent size <= {{\d+}}, got '100'

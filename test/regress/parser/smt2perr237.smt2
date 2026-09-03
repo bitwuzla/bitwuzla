@@ -1,0 +1,5 @@
+(declare-const s (_ BitVec 1))
+(declare-const e (_ BitVec 100))
+(declare-const m (_ BitVec 27))
+(assert (fp.isNaN (fp s e m)))
+(check-sat)

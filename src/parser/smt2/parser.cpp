@@ -13,10 +13,57 @@
 #include <algorithm>
 #include <iostream>
 
+#include "solver/fp/floating_point.h"
 #include "util/util.h"
 
 namespace bzla {
 namespace parser::smt2 {
+
+namespace {
+
+/**
+ * Determine error message for floating-point exponent sizes that exceed the
+ * maximum supported exponent size.
+ * @param size The given exponent size.
+ * @return The error message.
+ */
+std::string
+error_msg_fp_exp_size(uint64_t size)
+{
+  return "expected floating-point exponent size <= "
+         + std::to_string(FloatingPoint::max_exp_size()) + ", got '"
+         + std::to_string(size) + "'";
+}
+
+/**
+ * Determine error message for floating-point significand sizes that exceed
+ * the maximum supported significand size.
+ * @param size The given significand size.
+ * @return The error message.
+ */
+std::string
+error_msg_fp_sig_size(uint64_t size)
+{
+  return "expected floating-point significand size <= "
+         + std::to_string(FloatingPoint::max_sig_size()) + ", got '"
+         + std::to_string(size) + "'";
+}
+
+/**
+ * Determine error message for significands given as bit-vector (without the
+ * hidden bit) that exceed the maximum supported significand size.
+ * @param size The size of the given bit-vector.
+ * @return The error message.
+ */
+std::string
+error_msg_fp_sig_bv_size(uint64_t size)
+{
+  return "expected size of bit-vector representing the significand < "
+         + std::to_string(FloatingPoint::max_sig_size()) + ", got '"
+         + std::to_string(size) + "'";
+}
+
+}  // namespace
 
 /* Parser public ------------------------------------------------------------ */
 
@@ -1880,6 +1927,28 @@ Parser::parse_open_term_indexed()
       return error("expected index > " + std::to_string(min - 1) + ", got '"
                    + std::to_string(idx) + "'");
     }
+    if (token == Token::FP_TO_FP || token == Token::FP_TO_FP_UNSIGNED
+        || token == Token::FP_NOTANUMBER || token == Token::FP_NEG_INF
+        || token == Token::FP_NEG_ZERO || token == Token::FP_POS_INF
+        || token == Token::FP_POS_ZERO)
+    {
+      // Index 0 determines the exponent, index 1 the significand size of the
+      // floating-point format. Lower bounds are already covered by `min`.
+      assert(nidxs == 2);
+      assert(min == 2);
+      if (i == 0)
+      {
+        if (idx > FloatingPoint::max_exp_size())
+        {
+          return error(error_msg_fp_exp_size(idx));
+        }
+      }
+      else if (idx > FloatingPoint::max_sig_size())
+      {
+        return error(error_msg_fp_sig_size(idx));
+      }
+    }
+
     item.d_uints.push_back(idx);
     item.d_uints_coo.emplace_back(d_lexer->coo());
   }
@@ -2975,6 +3044,10 @@ Parser::parse_sort_bv_fp(bitwuzla::Sort& sort)
       return error("invalid exponent size '" + std::to_string(esize)
                    + "', must be > 1");
     }
+    if (esize > FloatingPoint::max_exp_size())
+    {
+      return error(error_msg_fp_exp_size(esize));
+    }
     uint64_t ssize = 0;
     if (!parse_uint64(ssize))
     {
@@ -2984,6 +3057,10 @@ Parser::parse_sort_bv_fp(bitwuzla::Sort& sort)
     {
       return error("invalid significand size '" + std::to_string(ssize)
                    + "', must be > 1");
+    }
+    if (ssize > FloatingPoint::max_sig_size())
+    {
+      return error(error_msg_fp_sig_size(ssize));
     }
     if (!parse_rpar())
     {
@@ -3603,10 +3680,23 @@ Parser::pop_args(const ParsedItem& item, std::vector<bitwuzla::Term>& args)
                 + std::to_string(token) + "'",
             arg_coo(idx + 1));
       }
+      // The exponent and significand size of the floating-point created from
+      // the given bit-vectors are determined by the size of args[1] and
+      // args[2] (+1 for the hidden bit).
+      if (args[1].sort().bv_size() > FloatingPoint::max_exp_size())
+      {
+        return error(error_msg_fp_exp_size(args[1].sort().bv_size()),
+                     arg_coo(idx + 1));
+      }
       if (!args[2].sort().is_bv())
       {
         return error("expected bit-vector term at index 2 as argument to '"
                          + std::to_string(token) + "'",
+                     arg_coo(idx + 2));
+      }
+      if (args[2].sort().bv_size() >= FloatingPoint::max_sig_size())
+      {
+        return error(error_msg_fp_sig_bv_size(args[2].sort().bv_size()),
                      arg_coo(idx + 2));
       }
       break;

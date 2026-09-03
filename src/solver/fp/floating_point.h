@@ -35,6 +35,21 @@ class FloatingPoint
 
  public:
   /**
+   * @return The maximum supported exponent size.
+   * @note MPFR needs +1 for the value of the exponent due to its internal
+   *       representation, thus we can only allow a maximum exponent size of
+   *       30 bit (for 32 bit architectures) and 62 bit (for 64 bit
+   *       architectures).
+   */
+  static uint64_t max_exp_size();
+  /**
+   * @return The maximum supported significand size (incl. sign bit).
+   * @note MPFR precision includes the hidden bit (not the sign bit), thus the
+   *       significand size (which is also +1 because of the sign bit) is
+   *       bounded by the maximum precision supported by MPFR.
+   */
+  static uint64_t max_sig_size();
+  /**
    * Convenience helper to split an IEEE-754 bit-vector into its components
    * (sign, exponent, significand).
    * @param exp_size The exponent size.

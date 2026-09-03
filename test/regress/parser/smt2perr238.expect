@@ -1,0 +1,1 @@
+regress/parser/smt2perr238.smt2:4:27: expected size of bit-vector representing the significand < {{\d+}}, got '18446744073709551615'

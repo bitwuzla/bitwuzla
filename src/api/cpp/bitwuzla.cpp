@@ -1870,6 +1870,7 @@ TermManager::mk_fp_sort(uint64_t exp_size, uint64_t sig_size)
   BITWUZLA_CHECK_GREATER_ONE(exp_size);
   BITWUZLA_CHECK_GREATER_ONE(sig_size);
   BITWUZLA_CHECK_FP_EXP_SIZE(exp_size);
+  BITWUZLA_CHECK_FP_SIG_SIZE(sig_size);
 #ifndef BZLA_USE_FPEXP
   BITWUZLA_CHECK_FP_FORMAT(exp_size, sig_size);
 #endif
@@ -2074,6 +2075,7 @@ TermManager::mk_fp_value(const Term& bv_sign,
   BITWUZLA_CHECK_TERM_IS_BV_VALUE(bv_exponent);
   BITWUZLA_CHECK_FP_EXP_SIZE(bv_exponent.sort().d_type->bv_size());
   BITWUZLA_CHECK_TERM_IS_BV_VALUE(bv_significand);
+  BITWUZLA_CHECK_FP_SIG_BV_SIZE(bv_significand.sort().d_type->bv_size());
   BITWUZLA_CHECK(bv_sign.d_node->type().bv_size() == 1)
       << "invalid bit-vector size for argument 'bv_sign', expected size 1";
   BITWUZLA_CHECK(bv_exponent.d_node->type().bv_size() > 1)
@@ -2482,6 +2484,8 @@ TermManager::mk_term(Kind kind,
           BITWUZLA_CHECK_MK_TERM_ARGS(args, 0, is_bv, false);
           BITWUZLA_CHECK(args[0].d_node->type().bv_size() == 1)
               << "expected bit-vector term of size 1 at index 0";
+          BITWUZLA_CHECK_FP_EXP_SIZE(args[1].d_node->type().bv_size());
+          BITWUZLA_CHECK_FP_SIG_BV_SIZE(args[2].d_node->type().bv_size());
 #ifndef BZLA_USE_FPEXP
           BITWUZLA_CHECK_FP_FORMAT(args[1].d_node->type().bv_size(),
                                    args[2].d_node->type().bv_size() + 1);
@@ -2571,6 +2575,8 @@ TermManager::mk_term(Kind kind,
           BITWUZLA_CHECK_MK_TERM_ARGS(args, 0, is_bv, true);
           BITWUZLA_CHECK_GREATER_ONE(indices[0]);
           BITWUZLA_CHECK_GREATER_ONE(indices[1]);
+          BITWUZLA_CHECK_FP_EXP_SIZE(indices[0]);
+          BITWUZLA_CHECK_FP_SIG_SIZE(indices[1]);
           BITWUZLA_CHECK(indices[0] + indices[1]
                          == args[0].d_node->type().bv_size())
               << "size of bit-vector does not match given floating-point "
@@ -2595,6 +2601,8 @@ TermManager::mk_term(Kind kind,
       BITWUZLA_CHECK_MK_TERM_IDXC(kind, 2, indices.size());
       BITWUZLA_CHECK_GREATER_ONE(indices[0]);
       BITWUZLA_CHECK_GREATER_ONE(indices[1]);
+      BITWUZLA_CHECK_FP_EXP_SIZE(indices[0]);
+      BITWUZLA_CHECK_FP_SIG_SIZE(indices[1]);
       switch (kind)
       {
         case Kind::FP_TO_FP_FROM_FP:

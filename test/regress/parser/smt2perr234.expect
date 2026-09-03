@@ -1,0 +1,1 @@
+regress/parser/smt2perr234.smt2:1:23: expected floating-point significand size <= {{\d+}}, got '9223372036854775552'
