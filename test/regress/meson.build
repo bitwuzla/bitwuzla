@@ -54,7 +54,6 @@ tests_smt2 = [
   ['options/bv_output_format_overflow.smt2', ['--bv-output-format', '258']],
   ## parser
   ['parser/echo.smt2'],
-  ['parser/get_interpolants_sat.smt2'],
   ['parser/issue59-1.smt2'],
   ['parser/issue59-2.smt2'],
   ['parser/issue59-3.smt2'],
@@ -1621,6 +1620,7 @@ tests_smt2_no_unsat_core = [
 ]
 
 tests_smt2_get_interpolant = [
+  ['parser/get_interpolants_sat.smt2'],
   ## get-interpolant
   # different configs
   ['get-interpolant/a16-p018.dar.smt2'],
