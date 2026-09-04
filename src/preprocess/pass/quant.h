@@ -155,6 +155,9 @@ class PassQuant : public PreprocessingPass
     uint64_t& num_quants;
     util::TimerStatistic& time_alpha_elim;
     util::TimerStatistic& time_inv_elim;
+    util::TimerStatistic& time_inv_elim_find_inv;
+    util::TimerStatistic& time_inv_elim_subst;
+    util::TimerStatistic& time_uniquify;
   } d_stats;
 };
 

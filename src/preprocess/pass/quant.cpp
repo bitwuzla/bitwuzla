@@ -143,6 +143,8 @@ PassQuant::process(const Node& node)
 Node
 PassQuant::uniquify_variable(const Node& node, const Node& fresh_var)
 {
+  util::Timer timer(d_stats.time_uniquify);
+
   assert(node.kind() == Kind::FORALL);
 
   NodeManager& nm    = d_env.nm();
@@ -312,6 +314,8 @@ PassQuant::has_free_vars(const Node& node) const
 Node
 PassQuant::find_inverse(const Node& body, const Node& var, bool negated)
 {
+  util::Timer timer(d_stats.time_inv_elim_find_inv);
+
   Node cur  = body;
   Kind kind = cur.kind();
 
@@ -374,7 +378,7 @@ PassQuant::find_inverse(const Node& body, const Node& var, bool negated)
 Node
 PassQuant::eliminate(const Node& node)
 {
-  util::Timer timer(d_stats.time_inv_elim);
+  util::Timer timer_inv_elim(d_stats.time_inv_elim);
 
   assert(node.kind() == Kind::FORALL);
 
@@ -404,6 +408,7 @@ PassQuant::eliminate(const Node& node)
     return node;
   }
   assert(!utils::has_x(inv, var));
+  util::Timer timer_inv_elim_subst(d_stats.time_inv_elim_subst);
   std::unordered_map<Node, Node> substs{{var, inv}};
   std::unordered_map<Node, Node> cache;
   NodeManager& nm = d_env.nm();
@@ -555,7 +560,13 @@ PassQuant::Statistics::Statistics(util::Statistics& stats)
       time_alpha_elim(stats.new_stat<util::TimerStatistic>(
           "preprocess::quant::time_alpha_elim")),
       time_inv_elim(stats.new_stat<util::TimerStatistic>(
-          "preprocess:quant::time_inv_elim"))
+          "preprocess::quant::time_inv_elim")),
+      time_inv_elim_find_inv(stats.new_stat<util::TimerStatistic>(
+          "preprocess::quant::time_inv_elim_find_inv")),
+      time_inv_elim_subst(stats.new_stat<util::TimerStatistic>(
+          "preprocess::quant::time_inv_elim_subst")),
+      time_uniquify(stats.new_stat<util::TimerStatistic>(
+          "preprocess::quant::time_uniquify"))
 {
 }
 
