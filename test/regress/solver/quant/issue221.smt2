@@ -1,0 +1,5 @@
+(declare-const a Bool)
+(declare-const b RoundingMode)
+(assert (forall ((c RoundingMode)) (distinct a (forall ((d Bool)) (= d (xor (forall ((c RoundingMode)) (distinct (and (forall ((c RoundingMode)) (distinct a (forall ((d Bool)) (= d (distinct d (distinct b c)))))) a) (and (distinct a (forall ((d Bool)) (= (distinct a (forall ((d Bool)) (= d (distinct d (distinct b c))))) (distinct d (distinct b c))))) (distinct d (distinct b c))))) (forall ((c RoundingMode)) (distinct (and (forall ((c RoundingMode)) (distinct a (forall ((d Bool)) (= d (distinct d (distinct b c)))))) a) (and (distinct a (forall ((d Bool)) (= (distinct a (forall ((d Bool)) (= d (distinct d (distinct b c))))) (distinct d (distinct b c))))) (distinct d (distinct b c)))))))))))
+(set-info :status sat)
+(check-sat)

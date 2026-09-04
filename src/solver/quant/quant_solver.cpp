@@ -181,6 +181,26 @@ QuantSolver::substitute(const Node& n,
 
     if (inserted)
     {
+      // A quantifier that rebinds a substituted variable shadows it. Avoid
+      // capturing shadowed variables by recursing with a new scope excluding
+      // the shadowed variable.
+      if (cur.kind() == Kind::FORALL && substs.find(cur[0]) != substs.end())
+      {
+        // We need more than one substitution to change the body of cur.
+        if (substs.size() > 1)
+        {
+          std::unordered_map<Node, Node> reduced(substs);
+          reduced.erase(cur[0]);
+          std::vector<Node> children{cur[0], substitute(cur[1], reduced)};
+          it->second = utils::rebuild_node(d_env.nm(), cur, children);
+        }
+        else
+        {
+          it->second = cur;
+        }
+        visit.pop_back();
+        continue;
+      }
       visit.insert(visit.end(), cur.begin(), cur.end());
       continue;
     }
@@ -201,14 +221,11 @@ QuantSolver::substitute(const Node& n,
           assert(iit != cache.end());
           children.push_back(iit->second);
         }
-        if (cur.kind() == Kind::FORALL && children[0].kind() != Kind::VARIABLE)
-        {
-          it->second = children[1];
-        }
-        else
-        {
-          it->second = utils::rebuild_node(d_env.nm(), cur, children);
-        }
+        // Quantifiers binding a substituted variable are handled above, the
+        // prefix of the instantiated quantifier is stripped by the callers.
+        assert(cur.kind() != Kind::FORALL
+               || children[0].kind() == Kind::VARIABLE);
+        it->second = utils::rebuild_node(d_env.nm(), cur, children);
       }
     }
 
