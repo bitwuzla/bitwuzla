@@ -369,10 +369,13 @@ QuantSolver::process(const Node& q)
           vars.erase(cur[0]);
         }
 
-        if (vars.empty() && cur.kind() != Kind::FORALL
-            && d_process_cache.insert(cur).second)
+        if (vars.empty() && d_process_cache.insert(cur).second)
         {
-          d_ground_terms.push_back(cur);
+          // Do not consider terms for instantiation that contain quantifiers
+          if (!cur.node_info().quantifier)
+          {
+            d_ground_terms.push_back(cur);
+          }
         }
       }
     }
