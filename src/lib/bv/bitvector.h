@@ -37,6 +37,11 @@ class BitVector
   // 64-bit in d_val_uint64.
   static constexpr size_t s_native_size = sizeof(unsigned long) * 8;
   static_assert(s_native_size == sizeof(mp_bitcnt_t) * 8, "");
+  // GMP defines mp_limb_t as unsigned long or unsigned long long, thus a limb
+  // is never narrower than unsigned long. Values that are not stored as GMP
+  // integer are therefore guaranteed to fit into a single limb, which
+  // get_limb() relies on.
+  static_assert(s_native_size <= sizeof(mp_limb_t) * 8, "");
 
   /**
    * Determine if given string representation of a value in the given numeric

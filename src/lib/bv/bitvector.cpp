@@ -3340,25 +3340,12 @@ BitVector::ibvmodinv(const BitVector& bv)
 
   if (size == 1)
   {
-    if (pb->is_gmp())
+    assert(!pb->is_gmp());  // size 1 is never stored as GMP value
+    if (is_gmp())
     {
-      if (!is_gmp())
-      {
-        mpz_init_set_ui(d_val_gmp, 1);
-      }
-      else
-      {
-        mpz_set_ui(d_val_gmp, 1);
-      }
+      mpz_clear(d_val_gmp);
     }
-    else
-    {
-      if (is_gmp())
-      {
-        mpz_clear(d_val_gmp);
-      }
-      d_val_uint64 = 1;
-    }
+    d_val_uint64 = 1;
   }
   else
   {
@@ -3408,15 +3395,9 @@ BitVector::ibvmodinv(const BitVector& bv)
   }
   else
   {
-    if (pb->is_gmp())
-    {
-      mpz_mul_ui(ty, pb->d_val_gmp, d_val_uint64);
-    }
-    else
-    {
-      mpz_set_ui(ty, pb->d_val_uint64);
-      mpz_mul_ui(ty, ty, d_val_uint64);
-    }
+    assert(!pb->is_gmp());  // d_size == pb->d_size here
+    mpz_set_ui(ty, pb->d_val_uint64);
+    mpz_mul_ui(ty, ty, d_val_uint64);
   }
   mpz_fdiv_r_2exp_ull(ty, ty, size);
   assert(!mpz_cmp_ui(ty, 1));
@@ -3954,8 +3935,6 @@ BitVector::to_mpz(bool sign) const
 
 /* -------------------------------------------------------------------------- */
 
-#define BZLA_BV_MASK_BITS_UINT64(size)
-
 uint64_t
 BitVector::uint64_fdiv_r_2exp(uint64_t size, uint64_t val)
 {
@@ -4050,26 +4029,17 @@ BitVector::get_limb(void* limb, uint64_t nbits_rem, bool zeros) const
   mp_limb_t* gmp_limb = static_cast<mp_limb_t*>(limb);
   uint64_t i, n_limbs, n_limbs_total;
   mp_limb_t res = 0u, mask;
-  const int32_t bits_per_limb = sizeof(d_val_uint64) * 8;
 
   if (is_gmp())
   {
-    /* GMP normalizes the limbs, the left most (most significant) is never 0 */
+    // GMP normalizes the limbs, the left most (most significant) is never 0.
     n_limbs = mpz_size(d_val_gmp);
   }
   else
   {
-    if (d_val_uint64 == 0)
-    {
-      n_limbs = 0;
-    }
-    else
-    {
-      n_limbs = (mp_bits_per_limb >= bits_per_limb)
-                        || (d_val_uint64 >> mp_bits_per_limb) == 0
-                    ? 1
-                    : bits_per_limb / static_cast<uint64_t>(mp_bits_per_limb);
-    }
+    // Non-GMP values fit into a single limb, i.e., d_size <= s_native_size and
+    // s_native_size <= mp_bits_per_limb (see static_assert in bitvector.h).
+    n_limbs = d_val_uint64 == 0 ? 0 : 1;
   }
 
   /* for leading zeros */
@@ -4081,17 +4051,7 @@ BitVector::get_limb(void* limb, uint64_t nbits_rem, bool zeros) const
     }
     else
     {
-      if (n_limbs == 0)
-      {
-        *gmp_limb = 0;
-      }
-      else
-      {
-        *gmp_limb = n_limbs == 1 ? d_val_uint64
-                                 : (mp_bits_per_limb >= bits_per_limb
-                                        ? 0
-                                        : (d_val_uint64 >> mp_bits_per_limb));
-      }
+      *gmp_limb = d_val_uint64;
     }
     return n_limbs;
   }
@@ -4112,14 +4072,10 @@ BitVector::get_limb(void* limb, uint64_t nbits_rem, bool zeros) const
     {
       res = mpz_getlimbn(d_val_gmp, n_limbs - 1 - i);
     }
-    else if (mp_bits_per_limb >= bits_per_limb)
-    {
-      res = d_val_uint64;
-    }
     else
     {
-      res = i == 0 ? (d_val_uint64 << mp_bits_per_limb) >> mp_bits_per_limb
-                   : d_val_uint64 >> mp_bits_per_limb;
+      assert(n_limbs == 1);
+      res = d_val_uint64;
     }
     if (nbits_rem && i == 0)
     {
