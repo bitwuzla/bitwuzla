@@ -908,9 +908,38 @@ Options::finalize()
 {
   if (produce_unsat_assumptions())
   {
+#ifdef BZLA_USE_KISSAT
+    if (sat_solver() == SatSolver::KISSAT)
+    {
+      throw Unsupported(
+          "unsat assumptions generation not supported with Kissat");
+    }
+#endif
+#ifdef BZLA_USE_GIMSATUL
+    if (sat_solver() == SatSolver::GIMSATUL)
+    {
+      throw Unsupported(
+          "unsat assumptions generation not supported with Gimsatul");
+    }
+#endif
     // we overrule the user here in case they disabled unsat cores, we must
     // enable unsat cores when enabling unsat assumptions
     produce_unsat_cores.set(true);
+  }
+  if (produce_unsat_cores())
+  {
+#ifdef BZLA_USE_KISSAT
+    if (sat_solver() == SatSolver::KISSAT)
+    {
+      throw Unsupported("unsat core generation not supported with Kissat");
+    }
+#endif
+#ifdef BZLA_USE_GIMSATUL
+    if (sat_solver() == SatSolver::GIMSATUL)
+    {
+      throw Unsupported("unsat core generation not supported with Gimsatul");
+    }
+#endif
   }
   if (produce_interpolants())
   {

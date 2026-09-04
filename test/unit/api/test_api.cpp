@@ -1667,6 +1667,34 @@ TEST_F(TestApi, get_unsat_core)
     bitwuzla::Bitwuzla bitwuzla(d_tm);
     ASSERT_THROW(bitwuzla.get_unsat_core(), bitwuzla::Exception);
   }
+#ifdef BZLA_USE_KISSAT
+  {
+    bitwuzla::Options options;
+    options.set(bitwuzla::Option::PRODUCE_UNSAT_CORES, true);
+    options.set(bitwuzla::Option::SAT_SOLVER, "kissat");
+    ASSERT_THROW(bitwuzla::Bitwuzla(d_tm, options), bitwuzla::Exception);
+  }
+  {
+    bitwuzla::Options options;
+    options.set(bitwuzla::Option::PRODUCE_UNSAT_ASSUMPTIONS, true);
+    options.set(bitwuzla::Option::SAT_SOLVER, "kissat");
+    ASSERT_THROW(bitwuzla::Bitwuzla(d_tm, options), bitwuzla::Exception);
+  }
+#endif
+#ifdef BZLA_USE_GIMSATUL
+  {
+    bitwuzla::Options options;
+    options.set(bitwuzla::Option::PRODUCE_UNSAT_CORES, true);
+    options.set(bitwuzla::Option::SAT_SOLVER, "gimsatul");
+    ASSERT_THROW(bitwuzla::Bitwuzla(d_tm, options), bitwuzla::Exception);
+  }
+  {
+    bitwuzla::Options options;
+    options.set(bitwuzla::Option::PRODUCE_UNSAT_ASSUMPTIONS, true);
+    options.set(bitwuzla::Option::SAT_SOLVER, "gimsatul");
+    ASSERT_THROW(bitwuzla::Bitwuzla(d_tm, options), bitwuzla::Exception);
+  }
+#endif
   {
     bitwuzla::Options options;
     options.set(bitwuzla::Option::PRODUCE_UNSAT_CORES, true);
