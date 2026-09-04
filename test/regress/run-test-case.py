@@ -11,8 +11,35 @@
 
 import argparse
 import os
+import re
 import subprocess
 import sys
+
+# A regex may be embedded in an .expect file as '{{<regex>}}', e.g. to match a
+# value that differs between architectures:
+#   expected floating-point significand size <= {{\d+}}, got '...'
+# Text outside of '{{...}}' is always matched literally.
+RE_EMBEDDED = re.compile(r'\{\{(.*?)\}\}', re.DOTALL)
+
+
+def is_pattern(expected):
+    return '{{' in expected
+
+
+def matches(testfile, expected, actual):
+    """Compare `actual` against `expected`, honoring embedded '{{<regex>}}'."""
+    if not is_pattern(expected):
+        return expected == actual
+    # split() with one group alternates literal, regex, literal, ...
+    pattern = ''.join(part if i % 2 else re.escape(part)
+                      for i, part in enumerate(RE_EMBEDDED.split(expected)))
+    try:
+        return re.fullmatch(pattern, actual) is not None
+    except re.error as e:
+        print("invalid regex in expect file of '{}': {}".format(testfile, e),
+              file=sys.stderr)
+        raise
+
 
 def check(testfile, expected, out, err, output_dir):
     out = out.decode()
@@ -58,8 +85,11 @@ def check(testfile, expected, out, err, output_dir):
 
     cmp = '{}{}'.format(cmp, err)
 
-    if expected.strip() != cmp.strip():
-        print("Expected:\n{}".format(expected.encode()), file=sys.stderr)
+    if not matches(testfile, expected.strip(), cmp.strip()):
+        print("Expected{}:\n{}".format(
+                  ' (pattern)' if is_pattern(expected) else '',
+                  expected.encode()),
+              file=sys.stderr)
         print('-' * 80, file=sys.stderr)
         outfile_name = os.path.join(output_dir, 'expected.log')
         print("see {}".format(outfile_name), file=sys.stderr)
