@@ -276,7 +276,7 @@ BitVector::BitVector(uint64_t size,
   assert(from1.is_null() == to1.is_null());
   if (!from0.is_null())
   {
-    if (!from1.is_null())
+    if (!from1.is_null() && rng.flip_coin())
     {
       iset(rng, from1, to1, sign);
     }
