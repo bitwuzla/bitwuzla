@@ -473,4 +473,73 @@ TEST_F(TestBvDomainGen, random_signed)
       "has_random");
 }
 
+TEST_F(TestBvDomainGen, random_after_next_fixed)
+{
+  // For fixed domains, has_random() is independent of the state of the
+  // next() iteration, i.e., random() must still generate the (single) value
+  // of the domain after it has been generated via next().
+
+  // 0101, positive when interpreted as signed.
+  BitVector five = BitVector::from_ui(TEST_BW, 5);
+  // 1101, negative when interpreted as signed.
+  BitVector minus_three = BitVector::from_ui(TEST_BW, 13);
+
+  {
+    BitVectorDomainGenerator gen(five, d_rng.get());
+    ASSERT_EQ(gen.next().compare(five), 0);
+    ASSERT_FALSE(gen.has_next());
+    for (uint64_t i = 0; i < TEST_BW; ++i)
+    {
+      ASSERT_TRUE(gen.has_random());
+      ASSERT_EQ(gen.random().compare(five), 0);
+    }
+  }
+
+  // Fixed domain within the given range.
+  {
+    BitVectorDomainGenerator gen(five,
+                                 d_rng.get(),
+                                 BitVectorRange(BitVector::mk_zero(TEST_BW),
+                                                BitVector::mk_ones(TEST_BW)));
+    ASSERT_EQ(gen.next().compare(five), 0);
+    ASSERT_TRUE(gen.has_random());
+    ASSERT_EQ(gen.random().compare(five), 0);
+  }
+
+  // Fixed domain outside of the given range, no values can be generated.
+  {
+    BitVectorDomainGenerator gen(
+        five,
+        d_rng.get(),
+        BitVectorRange(BitVector::from_ui(TEST_BW, 8),
+                       BitVector::from_ui(TEST_BW, 9)));
+    ASSERT_FALSE(gen.has_next());
+    ASSERT_FALSE(gen.has_random());
+  }
+
+  // Fixed domain in the lower/upper range of a dual generator.
+  BitVectorBounds bounds(BitVectorRange(BitVector::mk_zero(TEST_BW),
+                                        BitVector::from_ui(TEST_BW, 6)),
+                         BitVectorRange(BitVector::from_ui(TEST_BW, 9),
+                                        BitVector::mk_ones(TEST_BW)));
+  for (const BitVector& val : {five, minus_three})
+  {
+    BitVectorDomainDualGenerator gen(val, bounds, d_rng.get());
+    ASSERT_TRUE(gen.has_next());
+    ASSERT_EQ(gen.next().compare(val), 0);
+    ASSERT_TRUE(gen.has_random());
+    ASSERT_EQ(gen.random().compare(val), 0);
+  }
+
+  // Fixed domain in the negative/positive range of a signed generator.
+  for (const BitVector& val : {five, minus_three})
+  {
+    BitVectorDomainSignedGenerator gen(val, d_rng.get());
+    ASSERT_TRUE(gen.has_next());
+    ASSERT_EQ(gen.next().compare(val), 0);
+    ASSERT_TRUE(gen.has_random());
+    ASSERT_EQ(gen.random().compare(val), 0);
+  }
+}
+
 }  // namespace bzla::test

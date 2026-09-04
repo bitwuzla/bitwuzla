@@ -609,7 +609,12 @@ BitVectorDomainGenerator::generate_next(bool random)
 
   if (d_is_fixed)
   {
-    BitVector res = *d_bits;
+    // Note: We must not read the value from `d_bits` here. It is reset to
+    // nullptr when the (single) value of the fixed domain has been generated
+    // via `next()`, whereas `random()` is expected to still generate that
+    // value (`has_random()` remains true). `d_bits_min` is never reset and
+    // points to the same value.
+    BitVector res = *d_bits_min;
     if (!random)
     {
       d_bits = nullptr;
