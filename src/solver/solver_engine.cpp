@@ -173,7 +173,12 @@ SolverEngine::value(const Node& term)
   {
     // Make sure that term is processed by abstraction module
     Node _term = d_am ? d_am->process_value(term) : term;
-    process_term(_term);
+    // process_term() only descends into the children of terms it registers,
+    // so it is a no-op for an already registered term.
+    if (d_register_term_cache.find(_term) == d_register_term_cache.end())
+    {
+      process_term(_term);
+    }
     return _value(_term);
   }
 
@@ -609,6 +614,15 @@ SolverEngine::process_lemmas()
 Node
 SolverEngine::_value(const Node& term)
 {
+  // Return already computed value.
+  {
+    auto it = d_value_cache.find(term);
+    if (it != d_value_cache.end() && !it->second.is_null())
+    {
+      return it->second;
+    }
+  }
+
   NodeManager& nm = d_env.nm();
   node_ref_vector visit{term};
 
