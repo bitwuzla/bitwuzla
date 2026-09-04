@@ -73,7 +73,7 @@ Env::sat_factory()
 void
 Env::configure_terminator(Terminator* terminator)
 {
-  if (!d_sat_factory.has_terminator_support())
+  if (terminator && !d_sat_factory.has_terminator_support())
   {
     throw Unsupported("terminator not supported in configured SAT solver");
   }
