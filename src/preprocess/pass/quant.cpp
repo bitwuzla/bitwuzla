@@ -417,7 +417,7 @@ PassQuant::eliminate(const Node& node)
   {
     res = nm.mk_node(Kind::FORALL, {*it, res});
   }
-  return res;
+  return d_env.rewriter().rewrite(res);
 }
 
 Node
