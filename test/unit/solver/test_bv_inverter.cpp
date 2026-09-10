@@ -45,7 +45,9 @@ class TestBvInverter : public TestCommon
 
   void test_ic_cmp(Kind kind, uint64_t bw, size_t idx, size_t idx_x);
 
-  void test_ic_cmp(Kind predicate, uint64_t bw, size_t idx);
+  void test_ic_ineq(Kind kind, uint64_t bw, size_t idx_x);
+
+  void test_ic_predicate(Kind predicate, Kind kind, uint64_t bw, size_t idx);
 
   void check_conds(const Node& node,
                    const Node& x,
@@ -191,30 +193,74 @@ TestBvInverter::test_ic_sext(Kind predicate,
 }
 
 void
-TestBvInverter::test_ic_cmp(Kind predicate, uint64_t bw, size_t idx)
+TestBvInverter::test_ic_ineq(Kind kind, uint64_t bw, size_t idx_x)
 {
-  Type bv = d_nm.mk_bv_type(bw);
-  Node x  = d_nm.mk_var(bv, "x");
-  Node t  = d_nm.mk_const(bv, "t");
-  Node node = d_nm.mk_node(predicate, {idx == 0 ? x : t, idx == 0 ? t : x});
+  // Exercised through the public entry point ic(node, t, idx), which computes
+  // the IC for (= node t).
+  Type b    = d_nm.mk_bool_type();
+  Type bv   = d_nm.mk_bv_type(bw);
+  Node x    = d_nm.mk_var(bv, "x");
+  Node s    = d_nm.mk_const(bv, "s");
+  Node t    = d_nm.mk_const(b, "t");
+  Node node = d_nm.mk_node(kind, {idx_x == 0 ? x : s, idx_x == 0 ? s : x});
 
-  Node ic = d_inverter.ic(node, t, idx);
+  Node ic = d_inverter.ic(node, t, idx_x);
   ASSERT_FALSE(ic.is_null());
 
   SolvingContext ctx(d_nm, d_options, d_sat_factory);
-  Node ass = d_nm.mk_node(Kind::NOT,
-                          {d_nm.mk_node(Kind::EQUAL,
-                                        {ic,
-                                         d_nm.mk_node(Kind::EXISTS,
-                                                      {
-                                                          x,
-                                                          node,
-                                                      })})});
+  Node exists =
+      d_nm.mk_node(Kind::EXISTS, {x, d_nm.mk_node(Kind::EQUAL, {node, t})});
+  Node ass = d_nm.mk_node(Kind::DISTINCT, {ic, exists});
+  ctx.assert_formula(ass);
+  Result res = ctx.solve();
+  if (res != Result::UNSAT)
+  {
+    std::cout << "kind: " << kind << std::endl;
+    std::cout << "idx_x: " << idx_x << std::endl;
+    std::cout << "ic: " << ic << std::endl;
+    std::cout << "vc: " << ass << std::endl;
+  }
+  ASSERT_EQ(res, Result::UNSAT);
+
+  // Bit-vector comparison nodes on the path are only handled under an EQUAL
+  // predicate (with a Boolean right-hand side), as reached when chaining
+  // inverses in invert(). Thus, the above call exercises the same underlying
+  // ic() function and thus corresponds to the following test.
+  for (size_t idx : std::vector<size_t>{0, 1})
+  {
+    test_ic(Kind::EQUAL, kind, bv, bv, b, idx, idx_x);
+  }
+}
+
+void
+TestBvInverter::test_ic_predicate(Kind predicate,
+                                  Kind kind,
+                                  uint64_t bw,
+                                  size_t idx)
+{
+  // The IC for a node that is unconditionally invertible in x does not depend
+  // on the node but only on the predicate, see BvInverter::ic_predicate().
+  // This covers the leaf and unary cases, the binary cases are covered like
+  // any other binary node kind (see, e.g., TEST_F bv_add).
+  Type type = kind == Kind::NOT ? d_nm.mk_bool_type() : d_nm.mk_bv_type(bw);
+  Node x    = d_nm.mk_var(type, "x");
+  Node t    = d_nm.mk_const(type, "t");
+  Node node = kind == Kind::VARIABLE ? x : d_nm.mk_node(kind, {x});
+
+  Node ic = d_inverter.ic(predicate, node, t, idx, 0);
+  ASSERT_FALSE(ic.is_null());
+
+  SolvingContext ctx(d_nm, d_options, d_sat_factory);
+  Node pred =
+      d_nm.mk_node(predicate, {idx == 0 ? node : t, idx == 0 ? t : node});
+  Node exists = d_nm.mk_node(Kind::EXISTS, {x, pred});
+  Node ass    = d_nm.mk_node(Kind::DISTINCT, {ic, exists});
   ctx.assert_formula(ass);
   Result res = ctx.solve();
   if (res != Result::UNSAT)
   {
     std::cout << "predicate: " << predicate << std::endl;
+    std::cout << "kind: " << kind << std::endl;
     std::cout << "idx: " << idx << std::endl;
     std::cout << "ic: " << ic << std::endl;
     std::cout << "vc: " << ass << std::endl;
@@ -235,16 +281,6 @@ TestBvInverter::test_ic_bool(Kind predicate,
           d_nm.mk_bool_type(),
           idx,
           idx_x);
-}
-
-void
-TestBvInverter::test_ic_cmp(Kind kind, uint64_t bw, size_t idx, size_t idx_x)
-{
-  // Bit-vector comparison nodes on the path are only handled under an EQUAL
-  // predicate (with a Boolean right-hand side), as reached when chaining
-  // inverses in invert().
-  Type bv = d_nm.mk_bv_type(bw);
-  test_ic(Kind::EQUAL, kind, bv, bv, d_nm.mk_bool_type(), idx, idx_x);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -438,6 +474,69 @@ TEST_F(TestBvInverter, or)
   }
 }
 
+TEST_F(TestBvInverter, not)
+{
+  for (size_t idx : std::vector<size_t>{0, 1})
+  {
+    test_ic_predicate(Kind::EQUAL, Kind::NOT, 1, idx);
+    test_ic_predicate(Kind::DISTINCT, Kind::NOT, 1, idx);
+  }
+}
+
+TEST_F(TestBvInverter, var)
+{
+  for (size_t idx : std::vector<size_t>{0, 1})
+  {
+    for (Kind predicate : d_predicates)
+    {
+      test_ic_predicate(predicate, Kind::VARIABLE, 1, idx);
+      test_ic_predicate(predicate, Kind::VARIABLE, 4, idx);
+    }
+  }
+}
+
+TEST_F(TestBvInverter, bv_not)
+{
+  for (size_t idx : std::vector<size_t>{0, 1})
+  {
+    for (Kind predicate : d_predicates)
+    {
+      test_ic_predicate(predicate, Kind::BV_NOT, 1, idx);
+      test_ic_predicate(predicate, Kind::BV_NOT, 4, idx);
+    }
+  }
+}
+
+TEST_F(TestBvInverter, bv_add)
+{
+  for (size_t idx : std::vector<size_t>{0, 1})
+  {
+    for (size_t idx_x : std::vector<size_t>{0, 1})
+    {
+      for (Kind predicate : d_predicates)
+      {
+        test_ic(predicate, Kind::BV_ADD, 1, idx, idx_x);
+        test_ic(predicate, Kind::BV_ADD, 4, idx, idx_x);
+      }
+    }
+  }
+}
+
+TEST_F(TestBvInverter, bv_xor)
+{
+  for (size_t idx : std::vector<size_t>{0, 1})
+  {
+    for (size_t idx_x : std::vector<size_t>{0, 1})
+    {
+      for (Kind predicate : d_predicates)
+      {
+        test_ic(predicate, Kind::BV_XOR, 1, idx, idx_x);
+        test_ic(predicate, Kind::BV_XOR, 4, idx, idx_x);
+      }
+    }
+  }
+}
+
 TEST_F(TestBvInverter, bv_and)
 {
   for (size_t idx : std::vector<size_t>{0, 1})
@@ -591,60 +690,73 @@ TEST_F(TestBvInverter, bv_sext)
 
 TEST_F(TestBvInverter, bv_ult)
 {
-  for (size_t idx : std::vector<size_t>{0, 1})
+  for (size_t idx_x : std::vector<size_t>{0, 1})
   {
-    for (size_t idx_x : std::vector<size_t>{0, 1})
-    {
-      test_ic_cmp(Kind::BV_ULT, 1, idx, idx_x);
-      test_ic_cmp(Kind::BV_ULT, 4, idx, idx_x);
-    }
+    test_ic_ineq(Kind::BV_ULT, 1, idx_x);
+    test_ic_ineq(Kind::BV_ULT, 4, idx_x);
   }
 }
 
 TEST_F(TestBvInverter, bv_ugt)
 {
-  for (size_t idx : std::vector<size_t>{0, 1})
+  for (size_t idx_x : std::vector<size_t>{0, 1})
   {
-    for (size_t idx_x : std::vector<size_t>{0, 1})
-    {
-      test_ic_cmp(Kind::BV_UGT, 1, idx, idx_x);
-      test_ic_cmp(Kind::BV_UGT, 4, idx, idx_x);
-    }
+    test_ic_ineq(Kind::BV_UGT, 1, idx_x);
+    test_ic_ineq(Kind::BV_UGT, 4, idx_x);
   }
 }
 
 TEST_F(TestBvInverter, bv_slt)
 {
-  for (size_t idx : std::vector<size_t>{0, 1})
+  for (size_t idx_x : std::vector<size_t>{0, 1})
   {
-    for (size_t idx_x : std::vector<size_t>{0, 1})
-    {
-      test_ic_cmp(Kind::BV_SLT, 1, idx, idx_x);
-      test_ic_cmp(Kind::BV_SLT, 4, idx, idx_x);
-    }
+    test_ic_ineq(Kind::BV_SLT, 1, idx_x);
+    test_ic_ineq(Kind::BV_SLT, 4, idx_x);
   }
 }
 
 TEST_F(TestBvInverter, bv_sgt)
 {
-  for (size_t idx : std::vector<size_t>{0, 1})
+  for (size_t idx_x : std::vector<size_t>{0, 1})
   {
-    for (size_t idx_x : std::vector<size_t>{0, 1})
-    {
-      test_ic_cmp(Kind::BV_SGT, 1, idx, idx_x);
-      test_ic_cmp(Kind::BV_SGT, 4, idx, idx_x);
-    }
+    test_ic_ineq(Kind::BV_SGT, 1, idx_x);
+    test_ic_ineq(Kind::BV_SGT, 4, idx_x);
   }
 }
 
-TEST_F(TestBvInverter, ineq)
+TEST_F(TestBvInverter, bv_ule)
 {
-  for (Kind predicate : d_predicates)
+  for (size_t idx_x : std::vector<size_t>{0, 1})
   {
-    test_ic_cmp(predicate, 1, 0);
-    test_ic_cmp(predicate, 1, 1);
-    test_ic_cmp(predicate, 4, 0);
-    test_ic_cmp(predicate, 4, 1);
+    test_ic_ineq(Kind::BV_ULE, 1, idx_x);
+    test_ic_ineq(Kind::BV_ULE, 4, idx_x);
+  }
+}
+
+TEST_F(TestBvInverter, bv_uge)
+{
+  for (size_t idx_x : std::vector<size_t>{0, 1})
+  {
+    test_ic_ineq(Kind::BV_UGE, 1, idx_x);
+    test_ic_ineq(Kind::BV_UGE, 4, idx_x);
+  }
+}
+
+TEST_F(TestBvInverter, bv_sle)
+{
+  for (size_t idx_x : std::vector<size_t>{0, 1})
+  {
+    test_ic_ineq(Kind::BV_SLE, 1, idx_x);
+    test_ic_ineq(Kind::BV_SLE, 4, idx_x);
+  }
+}
+
+TEST_F(TestBvInverter, bv_sge)
+{
+  for (size_t idx_x : std::vector<size_t>{0, 1})
+  {
+    test_ic_ineq(Kind::BV_SGE, 1, idx_x);
+    test_ic_ineq(Kind::BV_SGE, 4, idx_x);
   }
 }
 

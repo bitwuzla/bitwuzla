@@ -189,6 +189,14 @@ class BvInverter
                            const Node& t,
                            const std::unordered_map<Node, size_t>& path);
   /**
+   * Get invertibility condition (IC) for a predicate (<p> x t) w.r.t x.
+   * @param predicate The predicate <p>.
+   * @param t         The right-hand-side of the predicate.
+   * @return The invertibility condition.
+   */
+  Node ic_predicate(node::Kind predicate, const Node& t);
+
+  /**
    * Get invertibility condition (IC) for a predicate w.r.t. an AND node.
    *
    * This computes the IC for for (<p> (and x s) t) or (<p> (and s x) t).
