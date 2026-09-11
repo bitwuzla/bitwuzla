@@ -449,11 +449,12 @@ AbstractionModule::check_term_abstraction(const Node& abstr)
     const auto& to_check = it->second;
     for (const auto& lem : to_check)
     {
-      added_lemma = check_lemma(lem.get(), val_x, val_s, val_t, x, s, t);
-      if (!added_lemma && KindInfo::is_commutative(kind))
+      bool added = check_lemma(lem.get(), val_x, val_s, val_t, x, s, t);
+      if (!added && KindInfo::is_commutative(kind))
       {
-        added_lemma = check_lemma(lem.get(), val_s, val_x, val_t, s, x, t);
+        added = check_lemma(lem.get(), val_s, val_x, val_t, s, x, t);
       }
+      added_lemma = added_lemma || added;
       if (added_lemma && !d_opt_eager_refine)
       {
         break;
