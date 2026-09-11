@@ -103,16 +103,23 @@ PassQuant::process(const Node& node)
       if (cur.kind() == Kind::FORALL)
       {
         d_stats.num_quants += 1;
-        auto [_, vinserted] = d_bound_vars.insert(cur[0].id());
-        if (!vinserted)
+        // Record the binder that owns `cur[0]`. Reaching the same binder node
+        // again (e.g., a quantifier shared between assertions that are
+        // processed in different calls to apply(), where d_cache does not
+        // persist) is not sharing and must not be uniquified.
+        auto [itv, vinserted] = d_bound_vars.emplace(cur[0].id(), cur.id());
+        if (!vinserted && itv->second != cur.id())
         {
           // Shared binder, uniquify.
           // Note: The fresh variable must not be mapped to d_cache[cur[0]].
           //       The mapping is only valid below this binder, whereas
           //       d_cache[cur[0]] is used to rebuild the nodes of the
           //       binder that keeps the original variable.
+          // Note: The fresh variable is not recorded in d_bound_vars here.
+          //       It is bound by exactly one, newly created binder, which is
+          //       not part of the DAG we are traversing. It is recorded if
+          //       that binder is processed again in a later call to apply().
           Node fresh_var = mk_fresh_var(nm, cur[0]);
-          d_bound_vars.insert(fresh_var.id());
           res = uniquify_variable(cur, fresh_var);
           assert(!res.is_null());
           assert(res.kind() == Kind::FORALL);
@@ -264,7 +271,6 @@ PassQuant::uniquify_variable(const Node& node, const Node& fresh_var)
           if (vinserted)
           {
             vit->second = mk_fresh_var(nm, cur[0]);
-            d_bound_vars.insert(vit->second.id());
           }
         }
         visit.insert(visit.end(), cur.begin(), cur.end());

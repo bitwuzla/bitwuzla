@@ -566,6 +566,35 @@ TEST_F(TestPassQuant, uniquify_binders_shadowing_binder_below_inner_rename)
 // Corresponds to test regress/preprocess/quant/alpha6.smt2 and serves as an
 // isolated test case (only the quant preprocessing pass is applied, no SAT
 // solver involved).
+TEST_F(TestPassQuant, uniquify_binders_reused_quantifier)
+{
+  Node c = d_nm.mk_const(d_bv2, "c");
+  Node d = d_nm.mk_const(d_bv2, "d");
+  Node x = d_nm.mk_var(d_bv2, "x");
+
+  // The same quantifier node is used by two assertions that are processed in
+  // two different calls to apply(). This is not a shared binder (it is one
+  // binder, reached twice) and must not be uniquified.
+  Node q  = d_nm.mk_node(Kind::FORALL, {x, d_nm.mk_node(Kind::BV_ULE, {x, c})});
+  Node a1 = d_nm.mk_node(Kind::OR, {q, d_nm.mk_node(Kind::BV_ULT, {c, d})});
+  Node a2 = d_nm.mk_node(Kind::OR, {q, d_nm.mk_node(Kind::BV_ULT, {d, c})});
+
+  d_as.push_back(a1);
+  {
+    preprocess::AssertionVector assertions(d_as.view());
+    d_pass.apply(assertions);
+  }
+  d_as.push_back(a2);
+  {
+    preprocess::AssertionVector assertions(d_as.view());
+    d_pass.apply(assertions);
+    // Both assertions still share the same binder, no copy was created.
+    auto binders = collect_binders({assertions[0], assertions[1]});
+    ASSERT_EQ(binders.size(), 1u);
+    ASSERT_EQ(binders.begin()->second.size(), 1u);
+  }
+}
+
 TEST_F(TestPassQuant, alpha6_no_merge_of_non_equivalent_quants)
 {
   Node body;

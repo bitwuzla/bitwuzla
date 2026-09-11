@@ -13,7 +13,7 @@
 
 #include <cstdlib>
 
-#include "backtrack/unordered_set.h"
+#include "backtrack/unordered_map.h"
 #include "preprocess/preprocessing_pass.h"
 #include "solver/bv/bv_inverter.h"
 #include "type/type.h"
@@ -143,8 +143,11 @@ class PassQuant : public PreprocessingPass
    */
   std::unordered_map<Node, Node> d_alpha_reps;
 
-  /** Cache which variables are already bound in assertions. */
-  backtrack::unordered_set<uint64_t> d_bound_vars;
+  /**
+   * Cache which variables are already bound in assertions.
+   * Maps variable id to the id of the binder that binds them.
+   */
+  backtrack::unordered_map<uint64_t, uint64_t> d_bound_vars;
 
   /** Cache option to enable alpha equivalence processing. */
   bool d_opt_quant_alpha;
