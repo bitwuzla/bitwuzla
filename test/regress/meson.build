@@ -1784,6 +1784,7 @@ tests_smt2_get_interpolant = [
   ['get-interpolant/murxla-54fadb5bb5e62d88.min.smt2'],
   ['get-interpolant/murxla-556e2bd662ece5fe.smt2'],
   ['get-interpolant/murxla-771693115476ea54.min.smt2'],
+  ['get-interpolant/murxla-7a0a73acd8df8026.min.smt2'],
   ['get-interpolant/murxla-b21df6c6cf3b808e.min.smt2'],
   ['get-interpolant/murxla-e4a11d9f2204c5fc.min.smt2'],
   ['get-interpolant/murxla-edffe3592d6e7ed5.min.smt2'],

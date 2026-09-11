@@ -1033,7 +1033,13 @@ Interpolator::extract_gates(const Node& node)
     auto [it, inserted] = cache.try_emplace(cur);
     if (inserted)
     {
-      if (cur.kind() == Kind::BV_AND && cur.type().bv_size() == 1)
+      // We do not descend down BvSolver leafs. They are atomic from the
+      // bit-level point of view and are handled as terminals below.
+      if (bv::BvSolver::is_leaf(cur))
+      {
+        // Leafs are handled as terminal below.
+      }
+      else if (cur.kind() == Kind::BV_AND && cur.type().bv_size() == 1)
       {
         auto args = share_aware_flatten_and(cur);
         args      = and_distrib(d_rewriter, args);
@@ -1049,7 +1055,11 @@ Interpolator::extract_gates(const Node& node)
     else if (it->second.is_null())
     {
       Node res;
-      if (cur.kind() == Kind::BV_AND && cur.type().bv_size() == 1)
+      if (bv::BvSolver::is_leaf(cur))
+      {
+        res = cur;
+      }
+      else if (cur.kind() == Kind::BV_AND && cur.type().bv_size() == 1)
       {
         std::vector<Node> children;
         for (const auto& leaf : flattened.at(cur))
