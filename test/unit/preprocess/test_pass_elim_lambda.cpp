@@ -25,8 +25,11 @@ class TestPassElimLambda : public TestPreprocessingPass
  public:
   TestPassElimLambda()
       : d_sat_factory(d_options),
-        d_env(d_nm, d_sat_factory),
-        d_pass(d_env, &d_bm) {};
+        d_env(d_nm, d_sat_factory, d_options),
+        d_pass(d_env, &d_bm)
+  {
+    d_bv2 = d_nm.mk_bv_type(2);
+  };
 
  protected:
   Node apply(const Node& assertion)
@@ -37,10 +40,12 @@ class TestPassElimLambda : public TestPreprocessingPass
     return d_as[0];
   }
 
+ protected:
   option::Options d_options;
   sat::SatSolverFactory d_sat_factory;
   Env d_env;
   preprocess::pass::PassElimLambda d_pass;
+  Type d_bv2;
 };
 
 TEST_F(TestPassElimLambda, reduce)
@@ -93,6 +98,77 @@ TEST_F(TestPassElimLambda, reduce_capture)
   ASSERT_EQ(res[1].kind(), Kind::FORALL);
   ASSERT_NE(res[1][0], u);
   ASSERT_EQ(res[1][1], d_nm.mk_node(Kind::EQUAL, {u, res[1][0]}));
+}
+
+TEST_F(TestPassElimLambda, shadowing_quantifier)
+{
+  Node c = d_nm.mk_const(d_bv2, "c");
+  Node d = d_nm.mk_const(d_bv2, "d");
+  Node v = d_nm.mk_var(d_bv2, "v");
+
+  // ((lambda v. (forall v. (bvule v c))) d), i.e., the quantifier rebinds
+  // (shadows) the variable of the lambda. Note that binding one variable node
+  // with more than one binder is not reachable via the parser (which creates
+  // a fresh variable per binder), but is not disallowed via the API.
+  Node quant =
+      d_nm.mk_node(Kind::FORALL, {v, d_nm.mk_node(Kind::BV_ULE, {v, c})});
+  Node app =
+      d_nm.mk_node(Kind::APPLY, {d_nm.mk_node(Kind::LAMBDA, {v, quant}), d});
+
+  d_as.push_back(app);
+  preprocess::AssertionVector assertions(d_as.view());
+  d_pass.apply(assertions);
+
+  // The quantifier binds `v`, thus every occurrence of `v` in its body is
+  // bound by the quantifier and must not be substituted with `d`.
+  // Note: The pass does not rewrite, it only rebuilds.
+  ASSERT_EQ(assertions[0], quant);
+}
+
+TEST_F(TestPassElimLambda, shadowing_quantifier_remaining_substitution)
+{
+  Node c = d_nm.mk_const(d_bv2, "c");
+  Node d = d_nm.mk_const(d_bv2, "d");
+  Node u = d_nm.mk_var(d_bv2, "u");
+  Node v = d_nm.mk_var(d_bv2, "v");
+
+  // ((lambda u. (lambda v. (forall v. (bvule v u)))) c d), i.e., the
+  // quantifier shadows `v` but not `u`, which still has to be substituted in
+  // its body.
+  Node quant =
+      d_nm.mk_node(Kind::FORALL, {v, d_nm.mk_node(Kind::BV_ULE, {v, u})});
+  Node lambda =
+      d_nm.mk_node(Kind::LAMBDA, {u, d_nm.mk_node(Kind::LAMBDA, {v, quant})});
+  Node app = d_nm.mk_node(Kind::APPLY, {lambda, c, d});
+
+  d_as.push_back(app);
+  preprocess::AssertionVector assertions(d_as.view());
+  d_pass.apply(assertions);
+
+  Node expected =
+      d_nm.mk_node(Kind::FORALL, {v, d_nm.mk_node(Kind::BV_ULE, {v, c})});
+  ASSERT_EQ(assertions[0], expected);
+}
+
+TEST_F(TestPassElimLambda, shadowing_lambda)
+{
+  Node c = d_nm.mk_const(d_bv2, "c");
+  Node d = d_nm.mk_const(d_bv2, "d");
+  Node v = d_nm.mk_var(d_bv2, "v");
+
+  // ((lambda v. ((lambda v. (bvule v c)) d)) c), i.e., the inner lambda
+  // rebinds (shadows) the variable of the outer lambda.
+  Node inner = d_nm.mk_node(
+      Kind::APPLY,
+      {d_nm.mk_node(Kind::LAMBDA, {v, d_nm.mk_node(Kind::BV_ULE, {v, c})}), d});
+  Node app =
+      d_nm.mk_node(Kind::APPLY, {d_nm.mk_node(Kind::LAMBDA, {v, inner}), c});
+
+  d_as.push_back(app);
+  preprocess::AssertionVector assertions(d_as.view());
+  d_pass.apply(assertions);
+
+  ASSERT_EQ(assertions[0], d_nm.mk_node(Kind::BV_ULE, {d, c}));
 }
 
 }  // namespace bzla::test
