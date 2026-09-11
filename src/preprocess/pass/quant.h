@@ -29,11 +29,14 @@ class PassQuant : public PreprocessingPass
 
  private:
   /**
-   * Rebuild given quantifier with `fresh_var` in place of its variable.
+   * Rebuild given binder with `fresh_var` in place of its variable.
    *
    * @note Expects the body of `node` to be cached in d_cache.
+   * @note Binders in the body of `node` that rebind its variable (shadowing)
+   *       are left untouched, every occurrence of the variable below such a
+   *       binder is bound by that binder.
    *
-   * @param node      The quantifier whose variable is already bound elsewhere.
+   * @param node      The binder whose variable is already bound elsewhere.
    * @param fresh_var The variable to bind instead, of the same type as the
    *                  variable of `node`.
    * @return `node` with its variable replaced by `fresh_var`.
@@ -104,9 +107,14 @@ class PassQuant : public PreprocessingPass
    * @note Does not descend into nodes cached in d_alpha_reps (except `node`
    *       itself), which are already normalized.
    *
+   * @note Accounts for all binder kinds, i.e., a variable bound by a lambda
+   *       below `node` is not free.
+   *
    * @param node The node to check.
    * @return A pair of a flag for whether `node` has free variables, and the set
-   *         of variables bound below `node` (empty if it has free variables).
+   *         of variables bound by quantifiers below `node` (empty if it has
+   *         free variables). Lambda variables are not included, they are not
+   *         associated with a canonical variable.
    */
   std::pair<bool, std::unordered_set<Node>> has_free_vars(
       const Node& node) const;

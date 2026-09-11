@@ -10,6 +10,7 @@
 
 #include <gtest/gtest.h>
 
+#include "node/kind_info.h"
 #include "node/node_utils.h"
 #include "preprocess/pass/quant.h"
 #include "sat/sat_solver_factory.h"
@@ -45,7 +46,7 @@ class TestPassQuant : public TestPreprocessingPass
       {
         continue;
       }
-      if (cur.kind() == Kind::FORALL)
+      if (KindInfo::is_binder(cur.kind()))
       {
         binders[cur[0]].insert(cur);
       }
@@ -563,9 +564,34 @@ TEST_F(TestPassQuant, uniquify_binders_shadowing_binder_below_inner_rename)
   ASSERT_FALSE(pass.has_free_vars(assertions[0]).first);
 }
 
-// Corresponds to test regress/preprocess/quant/alpha6.smt2 and serves as an
-// isolated test case (only the quant preprocessing pass is applied, no SAT
-// solver involved).
+TEST_F(TestPassQuant, uniquify_binders_shadowing_lambda)
+{
+  Node c = d_nm.mk_const(d_bv2, "c");
+  Node d = d_nm.mk_const(d_bv2, "d");
+  Node v = d_nm.mk_var(d_bv2, "v");
+
+  // (forall v. (bvule (f d) v)) with f = (lambda v. (bvadd v c)), i.e., the
+  // lambda rebinds (shadows) the variable of the quantifier.
+  Node lam = d_nm.mk_node(Kind::LAMBDA, {v, d_nm.mk_node(Kind::BV_ADD, {v, c})});
+  Node q   = d_nm.mk_node(
+      Kind::FORALL,
+      {v,
+       d_nm.mk_node(Kind::BV_ULE, {d_nm.mk_node(Kind::APPLY, {lam, d}), v})});
+
+  d_as.push_back(q);
+  preprocess::AssertionVector assertions(d_as.view());
+  d_pass.apply(assertions);
+
+  // No variable bound by more than one binder, and the lambda still binds its
+  // own variable, i.e., the shadowed occurrences were not renamed.
+  auto binders = collect_binders({assertions[0]});
+  ASSERT_EQ(binders.size(), 2u);
+  for (const auto& [var, bs] : binders)
+  {
+    ASSERT_EQ(bs.size(), 1u);
+  }
+}
+
 TEST_F(TestPassQuant, uniquify_binders_reused_quantifier)
 {
   Node c = d_nm.mk_const(d_bv2, "c");

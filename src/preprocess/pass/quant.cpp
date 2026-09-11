@@ -10,6 +10,7 @@
 
 #include "preprocess/pass/quant.h"
 
+#include "node/kind_info.h"
 #include "node/node.h"
 #include "node/node_ref_vector.h"
 #include "node/node_utils.h"
@@ -66,6 +67,13 @@ mk_fresh_var(NodeManager& nm, const Node& var)
   assert(var.kind() == Kind::VARIABLE);
   return nm.mk_var(var.type(), var.symbol());
 }
+
+/** @return True if `node` is a binder that binds `var`. */
+bool
+rebinds(const Node& node, const Node& var)
+{
+  return KindInfo::is_binder(node.kind()) && node[0] == var;
+}
 }  // namespace
 
 Node
@@ -94,15 +102,20 @@ PassQuant::process(const Node& node)
     }
     else if (it->second.is_null())
     {
+      assert(cur.kind() != Kind::EXISTS);
+
       Node res = rewriter.rewrite(utils::rebuild_node(nm, cur, d_cache));
 
-      // Make binding of quantified variables unique, i.e., no binders are
-      // shared, neither nested nor across assertions. Note that unique binders
-      // are already guaranteed through the parser, but via the API, sharing
+      // Make binding of variables unique, i.e., no binders are shared,
+      // neither nested nor across assertions. Note that unique binders are
+      // already guaranteed through the parser, but via the API, sharing
       // binders is not disallowed.
-      if (cur.kind() == Kind::FORALL)
+      if (KindInfo::is_binder(cur.kind()))
       {
-        d_stats.num_quants += 1;
+        if (KindInfo::is_quant(cur.kind()))
+        {
+          d_stats.num_quants += 1;
+        }
         // Record the binder that owns `cur[0]`. Reaching the same binder node
         // again (e.g., a quantifier shared between assertions that are
         // processed in different calls to apply(), where d_cache does not
@@ -122,7 +135,7 @@ PassQuant::process(const Node& node)
           Node fresh_var = mk_fresh_var(nm, cur[0]);
           res = uniquify_variable(cur, fresh_var);
           assert(!res.is_null());
-          assert(res.kind() == Kind::FORALL);
+          assert(res.kind() == cur.kind());
           assert(cur != node || !has_free_vars(res).first);
         }
       }
@@ -162,7 +175,7 @@ PassQuant::uniquify_variable(const Node& node, const Node& fresh_var)
 {
   util::Timer timer(d_stats.time_uniquify);
 
-  assert(node.kind() == Kind::FORALL);
+  assert(KindInfo::is_binder(node.kind()));
 
   NodeManager& nm    = d_env.nm();
   Rewriter& rewriter = d_env.rewriter();
@@ -188,7 +201,7 @@ PassQuant::uniquify_variable(const Node& node, const Node& fresh_var)
 
     if (inserted)
     {
-      if (cur.num_children() && (cur.kind() != Kind::FORALL || cur[0] != var))
+      if (cur.num_children() && !rebinds(cur, var))
       {
         visit.insert(visit.end(), cur.begin(), cur.end());
         continue;
@@ -198,8 +211,7 @@ PassQuant::uniquify_variable(const Node& node, const Node& fresh_var)
         it->second = true;
       }
     }
-    else if (!it->second && cur.num_children()
-             && (cur.kind() != Kind::FORALL || cur[0] != var))
+    else if (!it->second && cur.num_children() && !rebinds(cur, var))
     {
       for (const Node& child : cur)
       {
@@ -222,7 +234,7 @@ PassQuant::uniquify_variable(const Node& node, const Node& fresh_var)
     for (const auto& [n, refs] : references)
     {
       // As above, we do not descend into binders that rebind `var`.
-      if (refs && n.kind() == Kind::FORALL)
+      if (refs && KindInfo::is_binder(n.kind()))
       {
         assert(n[0] != var);
         visit.push_back(n[1]);
@@ -232,7 +244,7 @@ PassQuant::uniquify_variable(const Node& node, const Node& fresh_var)
         Node cur = visit.back();
         visit.pop_back();
         // As above, we do not descend into binders that rebind `var`.
-        if (cur.kind() == Kind::FORALL && cur[0] == var)
+        if (rebinds(cur, var))
         {
           continue;
         }
@@ -262,7 +274,7 @@ PassQuant::uniquify_variable(const Node& node, const Node& fresh_var)
       }
       else
       {
-        if (cur.kind() == Kind::FORALL)
+        if (KindInfo::is_binder(cur.kind()))
         {
           // The DAG below this binder references `var` and is thus rebuilt,
           // while the original binder stays in use elsewhere. Uniquify its
@@ -285,13 +297,14 @@ PassQuant::uniquify_variable(const Node& node, const Node& fresh_var)
   } while (!visit.empty());
 
   return rewriter.rewrite(
-      nm.mk_node(Kind::FORALL, {fresh_var, cache.at(body)}));
+      nm.mk_node(node.kind(), {fresh_var, cache.at(body)}));
 }
 
 std::pair<bool, std::unordered_set<Node>>
 PassQuant::has_free_vars(const Node& node) const
 {
-  std::unordered_set<Node> quants;
+  std::unordered_set<Node> bound_vars;
+  std::unordered_set<Node> quant_vars;
   std::vector<Node> vars;
   std::vector<Node> visit{node};
   std::unordered_set<Node> cache;
@@ -310,21 +323,25 @@ PassQuant::has_free_vars(const Node& node) const
       {
         vars.push_back(cur);
       }
-      else if (cur.kind() == Kind::FORALL)
+      else if (KindInfo::is_binder(cur.kind()))
       {
-        quants.insert(cur[0]);
+        bound_vars.insert(cur[0]);
+        if (KindInfo::is_quant(cur.kind()))
+        {
+          quant_vars.insert(cur[0]);
+        }
       }
       visit.insert(visit.end(), cur.begin(), cur.end());
     }
   } while (!visit.empty());
   for (const auto& v : vars)
   {
-    if (quants.find(v) == quants.end())
+    if (bound_vars.find(v) == bound_vars.end())
     {
       return {true, {}};
     }
   }
-  return {false, quants};
+  return {false, quant_vars};
 }
 
 Node
