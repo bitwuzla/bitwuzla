@@ -2,22 +2,30 @@
 
 This file collects a summary of important and/or user-visible changes.
 
-- Improved MBQI engine by incorporating invertibility condition-based
-  instantiation for quantified bit-vector variables. This instantiation
+- Improved MBQI engine by incorporating **invertibility condition-based
+  instantiations** for quantified bit-vector variables. This instantiation
   strategy is based on a CEGQI-based technique presented in
   [Aina Niemetz, Mathias Preiner, Andrew Reynolds, Clark Barrett, Cesare
    Tinelli. Solving Quantified Bit-Vectors Using Invertibility Conditions.
    CAV 2018, Springer, 2018](http://dx.doi.org/10.1007/978-3-319-96142-2_16).
 
-- Removed obsolete option `--pp-contr-ands`. This preprocessing pass was
+- Added a **preprocessing pass for quantified formulas**, enabled by default
+  via option `--pp-quant`. The pass eliminates quantified variables by means of
+  inverse computation, which generalizes destructive equality resolution (DER)
+  to quantified bit-vector variables. It further merges alpha-equivalent
+  quantified formulas, i.e., formulas that are equal up to renaming of their
+  bound variables, which can be disabled separately via option
+  `--pp-quant-alpha`.
+
+- Removed **obsolete option** `--pp-contr-ands`. This preprocessing pass was
   disabled by default and does not have an observable positive impact.
 
 - Fixed crash on floating-point from rational conversions with a zero
   denominator, e.g., `((_ to_fp 5 11) RNE (/ 1 0))`. A zero denominator is now
   rejected with an error.
 
-- Improved push/pop support in the SAT backends. Now uses activation variables
-  to remove clauses on pop().
+- Improved **push/pop** support in the SAT backends. Now uses activation
+  variables to remove clauses on pop().
 
 - Bumped **CaDiCaL** to version 3.0.1, CaDiCaL >= 3.0 is now required.
 
