@@ -240,7 +240,6 @@ BvInverter::is_invertible(const Node& node) const
       assert(kind != Kind::BV_INC);
       assert(kind != Kind::BV_NAND);
       assert(kind != Kind::BV_NEG);
-      assert(kind != Kind::BV_NEG);
       assert(kind != Kind::BV_NEGO);
       assert(kind != Kind::BV_NOR);
       assert(kind != Kind::BV_REDAND);
@@ -254,7 +253,6 @@ BvInverter::is_invertible(const Node& node) const
       assert(kind != Kind::BV_SADDO);
       assert(kind != Kind::BV_SDIV);
       assert(kind != Kind::BV_SDIVO);
-      assert(kind != Kind::BV_SIGN_EXTEND);
       assert(kind != Kind::BV_SIGN_EXTEND);
       assert(kind != Kind::BV_SMOD);
       assert(kind != Kind::BV_SMULO);
