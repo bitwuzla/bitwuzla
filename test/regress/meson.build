@@ -1571,6 +1571,8 @@ tests_smt2 = [
   ['solver/quant/issue209.smt2'],
   ['solver/quant/issue221.smt2'],
   ['solver/quant/murxla-1bf2af511aa131a8.min.smt2'],
+  ['solver/quant/murxla-79f138c989a0de5e.min1.smt2'],
+  ['solver/quant/murxla-79f138c989a0de5e.min2.smt2'],
   ['solver/quant/murxla-f7a80aad674c2953.min.smt2', ['--bv-solver=preprop']],
   ['solver/quant/quant_ic_bounds_regr0.smt2'],
   ['solver/quant/quant_ic_coupled_inverses.smt2'],

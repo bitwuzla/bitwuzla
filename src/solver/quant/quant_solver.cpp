@@ -765,8 +765,14 @@ QuantSolver::get_value_for_operands(
   }
 
   Node instantiated = substitute(node, substs);
-  return {d_solver_state.value(instantiated[0]).value<BitVector>(),
-          d_solver_state.value(instantiated[1]).value<BitVector>()};
+  // Rewrite the operands before querying their value. Querying a value
+  // registers the term, and terms registered as theory leafs must be in
+  // rewritten form.
+  Rewriter& rw = d_env.rewriter();
+  Node op0     = rw.rewrite(instantiated[0]);
+  Node op1     = rw.rewrite(instantiated[1]);
+  return {d_solver_state.value(op0).value<BitVector>(),
+          d_solver_state.value(op1).value<BitVector>()};
 }
 
 std::pair<Node, std::unordered_map<Node, size_t>>
