@@ -157,6 +157,10 @@ Node
 SolverEngine::value(const Node& term)
 {
   assert(d_in_solving_mode || d_sat_state == Result::SAT);
+  // Note: Querying the value of a term registers it, i.e., terms that are
+  //       theory leafs are added to the corresponding solver. We need to ensure
+  //       that all terms that go through registration are fully rewritten.
+  assert(!d_in_solving_mode || d_env.rewriter().rewrite(term) == term);
 
   if (term.is_value())
   {
@@ -513,6 +517,8 @@ SolverEngine::process_assertion(const Node& assertion,
 void
 SolverEngine::process_term(const Node& term)
 {
+  assert(d_env.rewriter().rewrite(term) == term);
+
   util::Timer timer(d_stats.time_register_term);
   // Make sure that terms are processed by the abstraction module.
   node::node_ref_vector visit{term};
