@@ -656,11 +656,42 @@ PassQuant::alpha_normalize(const Node& node)
 
   NodeManager& nm    = d_env.nm();
   Rewriter& rewriter = d_env.rewriter();
-  std::unordered_map<Node, Node> substs;
   std::unordered_map<Node, Node> repr_substs;
   std::unordered_set<Node> top_quants;
-  std::vector<Node> visit{node};
 
+  // Map quantifiers to their parents count.
+  // Note that a quantifier with more than one parent is 'shared' and must not
+  // be treated as part of an enclosing binder chain. It is normalized as a
+  // chain of its own, and the enclosing chain uses that normal form. This
+  // guarantees that the variable of a binder belongs to exactly one chain.
+  std::unordered_map<Node, size_t> nparents;
+  {
+    std::vector<Node> pvisit{node};
+    std::unordered_set<Node> pcache;
+    do
+    {
+      Node cur = pvisit.back();
+      pvisit.pop_back();
+      if (!pcache.insert(cur).second)
+      {
+        continue;
+      }
+      for (const Node& child : cur)
+      {
+        if (child.kind() == Kind::FORALL)
+        {
+          nparents[child] += 1;
+        }
+        pvisit.push_back(child);
+      }
+    } while (!pvisit.empty());
+  }
+  auto shared = [&nparents](const Node& n) {
+    auto it = nparents.find(n);
+    return it != nparents.end() && it->second > 1;
+  };
+
+  std::vector<Node> visit{node};
   do
   {
     auto cur            = visit.back();
@@ -671,7 +702,7 @@ PassQuant::alpha_normalize(const Node& node)
       if (cur.kind() == Kind::FORALL)
       {
         top_quants.insert(cur);
-        while (cur[1].kind() == Kind::FORALL)
+        while (cur[1].kind() == Kind::FORALL && !shared(cur[1]))
         {
           // skip nested quants
           cur = cur[1];
@@ -686,15 +717,24 @@ PassQuant::alpha_normalize(const Node& node)
       {
         assert(top_quants.find(cur) != top_quants.end());
         // Get canonical variables for all quantiers in chain.
+        //
+        // We normalize bottom-up, hence the only variables that still occur
+        // free in the (already normalized) body are the ones bound by enclosing
+        // chains, which are yet unmapped since we use one substitution map per
+        // chain. Keeping the map per chain further ensures that a variable that
+        // is the binder of two distinct chains cannot pick up the other chain's
+        // canonical variable when a quantifier is shared between a nested and a
+        // non-nested position.
+        std::unordered_map<Node, Node> substs;
         Node body = cur;
         std::vector<Node> args;
-        while (body.kind() == Kind::FORALL)
+        do
         {
           Node var = get_canonical_var(body[0]);
           args.push_back(var);
           substs.emplace(body[0], var);
           body = body[1];
-        }
+        } while (body.kind() == Kind::FORALL && !shared(body));
         // Substitute and cache.
         std::unordered_map<Node, Node> subst_cache;
         Node norm = rewriter.rewrite(

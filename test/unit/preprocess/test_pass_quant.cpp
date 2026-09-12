@@ -773,6 +773,80 @@ TEST_F(TestPassQuant, alpha_shared_binder2)
   }
 }
 
+TEST_F(TestPassQuant, alpha_shared_quant_nested_and_top_level_missed_merge)
+{
+  Node c = d_nm.mk_const(d_bv2, "c");
+  Node v = d_nm.mk_var(d_bv2, "v");
+  Node u = d_nm.mk_var(d_bv2, "u");
+  Node w = d_nm.mk_var(d_bv2, "w");
+
+  Node q       = d_nm.mk_node(Kind::FORALL,
+                              {v, d_nm.mk_node(Kind::BV_ULE, {v, c})});
+  Node alpha_q = d_nm.mk_node(Kind::FORALL,
+                              {u, d_nm.mk_node(Kind::BV_ULE, {u, c})});
+
+  // Quantifier `q` is shared between a nested and a non-nested position: it is
+  // the body of the quantifier over w and, at the same time, an operand of the
+  // conjunction. A quantifier that is shared between a nested and non-nested
+  // position must not be treated as part of the binder chain of the enclosing
+  // quantifier: The chain of the enclosing quantifier would include the
+  // variable of `q`, and so would the chain of `q` itself, which yields a
+  // normal form with a free canonical variable and thus a missed merge.
+  d_as.push_back(utils::mk_nary(
+      d_nm,
+      Kind::AND,
+      {d_nm.mk_node(Kind::FORALL, {w, q}), q, alpha_q}));
+
+  preprocess::AssertionVector assertions(d_as.view());
+  d_pass.apply(assertions);
+
+  ASSERT_FALSE(utils::free_vars(assertions[0]));
+  ASSERT_EQ(d_env.statistics().new_or_get_stat<uint64_t>(
+                "preprocess::quant::num_alpha_elim"),
+            1);
+}
+
+TEST_F(TestPassQuant, alpha_shared_quant_with_nested_quant_missed_merge)
+{
+  Node c = d_nm.mk_const(d_bv2, "c");
+  Node v = d_nm.mk_var(d_bv2, "v");
+  Node x = d_nm.mk_var(d_bv2, "x");
+  Node u = d_nm.mk_var(d_bv2, "u");
+  Node y = d_nm.mk_var(d_bv2, "y");
+  Node w = d_nm.mk_var(d_bv2, "w");
+
+  Node q = d_nm.mk_node(
+      Kind::FORALL,
+      {v,
+       d_nm.mk_node(Kind::NOT,
+                    {d_nm.mk_node(Kind::FORALL,
+                                  {x, d_nm.mk_node(Kind::BV_ULE, {v, x})})})});
+  Node alpha_q = d_nm.mk_node(
+      Kind::FORALL,
+      {u,
+       d_nm.mk_node(Kind::NOT,
+                    {d_nm.mk_node(Kind::FORALL,
+                                  {y, d_nm.mk_node(Kind::BV_ULE, {u, y})})})});
+
+  // Same as above, but `q` contains a nested quantifier (over x) with v free.
+  // Using one substitution map per chain is not sufficient here, `q` must
+  // further be normalized as a chain of its own. Else, `q` is normalized twice,
+  // the second normalization may reuse a canonical variable that is still bound
+  // in the cached normal form of the nested quantifier, substitution renames
+  // that binder to a fresh variable, and the resulting normal form of `q` is
+  // not canonical, which yields a missed merge.
+  d_as.push_back(utils::mk_nary(
+      d_nm, Kind::AND, {d_nm.mk_node(Kind::FORALL, {w, q}), q, alpha_q}));
+
+  preprocess::AssertionVector assertions(d_as.view());
+  d_pass.apply(assertions);
+
+  ASSERT_FALSE(utils::free_vars(assertions[0]));
+  ASSERT_EQ(d_env.statistics().new_or_get_stat<uint64_t>(
+                "preprocess::quant::num_alpha_elim"),
+            1);
+}
+
 TEST_F(TestPassQuant, has_free_vars)
 {
   Node c = d_nm.mk_const(d_bv2, "c");
