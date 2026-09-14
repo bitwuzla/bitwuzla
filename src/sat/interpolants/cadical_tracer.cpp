@@ -295,6 +295,7 @@ CadicalTracer::get_interpolant(
   util::Timer timer(d_stats.time_get_interpolant);
 
   d_part_interpolants.clear();
+  assert(d_final_clause_ids.size() == 1);
   int64_t final_clause_id = d_final_clause_ids[0];
 
   if (d_logger.is_log_enabled(2))
