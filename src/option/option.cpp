@@ -946,6 +946,9 @@ Options::finalize()
 #ifdef BZLA_USE_CADICAL
     // Interpolation is currently only supported with CaDiCaL.
     sat_solver.set(SatSolver::CADICAL);
+    // The ADC propagator is used for an alternative distinct_n handling.
+    // Not supported with interpolation.
+    adc_sat_propagator.set(false);
 #else
     throw Unsupported(
         "interpolation generation only supported with CaDiCaL (not available)");
