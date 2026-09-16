@@ -147,6 +147,10 @@ BvSolver::solve()
       }
       else if (d_sat_state == Result::UNKNOWN)
       {
+        if (d_env.terminate())
+        {
+          return Result::UNKNOWN;
+        }
         d_cur_solver = option::BvSolver::BITBLAST;
         d_sat_state  = d_bitblast_solver.solve();
       }
