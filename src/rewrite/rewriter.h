@@ -80,7 +80,7 @@ class Rewriter
   const Node& rewrite(const Node& node);
   /**
    * Evaluate given node.
-   * @note Requires that all leaves of the given node are values.
+   * @note Asserts that the given node can be constant folded.
    * @param node The node to evaluate.
    * @return The resulting value of evaluating the node.
    */

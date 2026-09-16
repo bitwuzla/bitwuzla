@@ -146,7 +146,8 @@ Rewriter::eval(const Node& node)
 {
   node::node_ref_vector visit{node};
   // We use d_eval_cache, a separate cache from the rewriter cache to be able
-  // to evaluate nodes even when rewriting is disabled.
+  // to evaluate nodes even when rewriting is disabled. Note that for rwl > 0,
+  // d_eval_cache is an alias for the rewriter cache.
   do
   {
     const Node& cur     = visit.back();
@@ -174,8 +175,10 @@ Rewriter::eval(const Node& node)
     }
     visit.pop_back();
   } while (!visit.empty());
-  assert(d_eval_cache.find(node) != d_eval_cache.end());
-  return d_eval_cache.at(node);
+  auto it = d_eval_cache.find(node);
+  assert(it != d_eval_cache.end());
+  assert(it->second.is_value());
+  return it->second;
 }
 
 const Node&
