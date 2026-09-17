@@ -287,9 +287,6 @@ BvInterpolator::label_lemma(
                   "interpolation queries with mixed lemmas not supported");
             }
             k = cit->second;
-#ifdef NDEBUG
-            break;
-#endif
           }
         }
         if (inserted)
