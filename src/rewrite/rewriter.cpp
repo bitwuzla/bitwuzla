@@ -81,8 +81,7 @@ Rewriter::Rewriter(Env& env, uint8_t level, const std::string& id)
       d_logger(env.logger()),
       d_level(level),
       d_arithmetic(level == LEVEL_ARITHMETIC),
-      d_eval_cache(env.options().rewrite_level() > 0 ? d_cache
-                                                     : d_eval_cache_aux),
+      d_eval_cache(level > 0 ? d_cache : d_eval_cache_aux),
       d_stats(env.statistics(),
               "rewriter::" + (id.empty() ? "" : "(" + id + ")::"))
 {
