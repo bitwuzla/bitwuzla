@@ -12,6 +12,7 @@
 #define BZLA_BACKTRACK_UNORDERED_SET_H_INCLUDED
 
 #include <cassert>
+#include <functional>
 #include <unordered_set>
 #include <vector>
 
@@ -47,6 +48,20 @@ class unordered_set : public Backtrackable
   auto begin() const { return d_data.begin(); }
 
   auto end() const { return d_data.end(); }
+
+  /* --- Insertion order ---------------------------------------------------- */
+
+  /**
+   * Get the elements of this set in insertion order.
+   *
+   * Iterating the set itself yields an order that depends on the standard
+   * library implementation. Use this if the iteration order must be
+   * deterministic across platforms.
+   */
+  const std::vector<std::reference_wrapper<const T>>& values() const
+  {
+    return d_values;
+  }
 
   /* --- Backtrackable interface -------------------------------------------- */
 

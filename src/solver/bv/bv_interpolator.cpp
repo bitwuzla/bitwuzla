@@ -85,7 +85,11 @@ BvInterpolator::interpolant(const std::vector<Node>& ppA,
 
     label_vars(var_labels, term_labels, ppA, ppB);
 
-    for (const auto& a : d_lemmas)
+    // Process lemmas in insertion order. We do not iterate over d_lemmas here,
+    // since this would yield an std::unordered_set order, which differs between
+    // standard library implementations and thus makes labeling (and with it the
+    // computed interpolant) platform-dependent.
+    for (const Node& a : d_lemmas.values())
     {
       // If other theories than BV are involved, it can happen that lemmas
       // sent by a theory solver contain terms that are abstracted via the
