@@ -246,12 +246,15 @@ is_ite(const AigNode& aig, std::vector<const AigNode*>& children)
 void
 AigCnfEncoder::_encode(const AigNode& aig)
 {
-  std::vector<const AigNode*> visit;
-  std::unordered_set<const AigNode*> cache;
-  visit.push_back(&aig);
+  // Pre-/post-order worklist: the flag records whether the entry's children
+  // have already been pushed.
+  std::vector<std::pair<const AigNode*, bool>> visit;
+  // Reused across iterations.
+  std::vector<const AigNode*> children;
+  visit.emplace_back(&aig, false);
   do
   {
-    auto cur = visit.back();
+    auto [cur, expanded] = visit.back();
     if (is_encoded(*cur))
     {
       visit.pop_back();
@@ -275,21 +278,23 @@ AigCnfEncoder::_encode(const AigNode& aig)
     {
       assert(cur->is_and());
 
-      auto [it, inserted] = cache.insert(cur);
-
-      std::vector<const AigNode*> children;
+      children.clear();
       bool ite = is_ite(*cur, children);
 
-      if (inserted)
+      if (!expanded)
       {
+        visit.back().second = true;
         if (ite)
         {
-          visit.insert(visit.end(), children.begin(), children.end());
+          for (const AigNode* child : children)
+          {
+            visit.emplace_back(child, false);
+          }
         }
         else
         {
-          visit.push_back(&(*cur)[0]);
-          visit.push_back(&(*cur)[1]);
+          visit.emplace_back(&(*cur)[0], false);
+          visit.emplace_back(&(*cur)[1], false);
         }
       }
       else
