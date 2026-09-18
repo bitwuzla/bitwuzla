@@ -18,41 +18,45 @@ namespace bzla::bitblast {
 
 AigNodeUniqueTable::AigNodeUniqueTable() { d_buckets.resize(16, nullptr); }
 
-std::pair<bool, AigNodeData*>
-AigNodeUniqueTable::insert(AigNodeData* d)
+AigNodeData*
+AigNodeUniqueTable::find(uintptr_t left, uintptr_t right) const
 {
-  size_t h         = hash(d->d_left, d->d_right);
-  AigNodeData* cur = d_buckets[h];
-  int64_t left_id  = d->d_left.get_id();
-  int64_t right_id = d->d_right.get_id();
+  AigNodeData* cur = d_buckets[hash(left, right)];
 
   // Check collision chain.
   while (cur)
   {
-    if (cur->d_left.get_id() == left_id && cur->d_right.get_id() == right_id)
+    if (cur->d_left.key() == left && cur->d_right.key() == right)
     {
-      return std::make_pair(false, cur);
+      return cur;
     }
     cur = cur->next;
   }
+  return nullptr;
+}
 
+void
+AigNodeUniqueTable::insert(AigNodeData* d)
+{
+  assert(find(d->d_left.key(), d->d_right.key()) == nullptr);
   if (d_num_elements == d_buckets.size())
   {
     resize();
-    h = hash(d->d_left, d->d_right);
   }
+  size_t h = hash(d->d_left.key(), d->d_right.key());
   assert(d->next == nullptr);
   d->next      = d_buckets[h];
   d_buckets[h] = d;
 
   ++d_num_elements;
-  return std::make_pair(true, d);
 }
 
 void
 AigNodeUniqueTable::erase(const AigNodeData* d)
 {
-  size_t h          = hash(d->d_left, d->d_right);
+  uintptr_t left    = d->d_left.key();
+  uintptr_t right   = d->d_right.key();
+  size_t h          = hash(left, right);
   AigNodeData* cur  = d_buckets[h];
   AigNodeData* prev = nullptr;
   assert(cur != nullptr);
@@ -64,11 +68,9 @@ AigNodeUniqueTable::erase(const AigNodeData* d)
   }
 
   // Find data in collision chain.
-  int64_t left_id  = d->d_left.get_id();
-  int64_t right_id = d->d_right.get_id();
   while (cur)
   {
-    if (cur->d_left.get_id() == left_id && cur->d_right.get_id() == right_id)
+    if (cur->d_left.key() == left && cur->d_right.key() == right)
     {
       break;
     }
@@ -89,17 +91,6 @@ AigNodeUniqueTable::erase(const AigNodeData* d)
   --d_num_elements;
 }
 
-size_t
-AigNodeUniqueTable::hash(const AigNode& left, const AigNode& right)
-{
-  size_t lhs = static_cast<size_t>(std::abs(left.get_id()));
-  size_t rhs = static_cast<size_t>(std::abs(right.get_id()));
-  size_t h   = 547789289u * lhs + 786695309u * rhs;
-  // The number of buckets is always a power of two (see resize()), so size() -
-  // 1 is an all-ones mask.
-  return h & (d_buckets.size() - 1);
-}
-
 void
 AigNodeUniqueTable::resize()
 {
@@ -114,7 +105,7 @@ AigNodeUniqueTable::resize()
   {
     while (cur)
     {
-      size_t h     = hash(cur->d_left, cur->d_right);
+      size_t h     = hash(cur->d_left.key(), cur->d_right.key());
       auto next    = cur->next;
       cur->next    = d_buckets[h];
       d_buckets[h] = cur;
@@ -160,15 +151,15 @@ AigNodeData*
 AigManager::find_or_create_and(const AigNode& left, const AigNode& right)
 {
   assert(std::abs(left.get_id()) < std::abs(right.get_id()));
-  AigNodeData* d          = new AigNodeData(this, left, right);
-  auto [inserted, lookup] = d_unique_table.insert(d);
-  if (!inserted)
+  AigNodeData* lookup = d_unique_table.find(left.key(), right.key());
+  if (lookup)
   {
     ++d_statistics.num_shared;
-    delete d;
     return lookup;
   }
 
+  AigNodeData* d = new AigNodeData(this, left, right);
+  d_unique_table.insert(d);
   init_id(d);
   ++d_statistics.num_ands;
   return d;
