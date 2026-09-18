@@ -1956,7 +1956,6 @@ Rewriter::rewrite_fp_to_fp_from_sbv(const Node& node)
   if (d_level >= 1)
   {
     BZLA_APPLY_RW_RULE(FP_TO_FP_FROM_SBV_EVAL);
-    BZLA_APPLY_RW_RULE(FP_TO_FP_FROM_SBV_BV1_ELIM);
   }
 
 DONE:
@@ -2345,7 +2344,6 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     CASE(FP_TO_FP_FROM_BV_EVAL);
     CASE(FP_TO_FP_FROM_FP_EVAL);
     CASE(FP_TO_FP_FROM_SBV_EVAL);
-    CASE(FP_TO_FP_FROM_SBV_BV1_ELIM);
     CASE(FP_TO_FP_FROM_UBV_EVAL);
     CASE(FP_EQUAL_ELIM);
     CASE(FP_FP_ELIM);

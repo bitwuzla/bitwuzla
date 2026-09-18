@@ -804,7 +804,6 @@ enum class RewriteRuleKind
   FP_TO_FP_FROM_BV_EVAL,
   FP_TO_FP_FROM_FP_EVAL,
   FP_TO_FP_FROM_SBV_EVAL,
-  FP_TO_FP_FROM_SBV_BV1_ELIM,
 
   //// to_fp_unsigned
   // Level 1+

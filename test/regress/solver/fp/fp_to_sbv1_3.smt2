@@ -1,0 +1,6 @@
+(set-logic QF_BVFP)
+(declare-const r RoundingMode)
+(declare-const a (_ BitVec 1))
+(assert (fp.isNaN ((_ to_fp 5 11) r a)))
+(set-info :status unsat)
+(check-sat)
