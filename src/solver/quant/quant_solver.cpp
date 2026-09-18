@@ -14,7 +14,6 @@
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
 #include "node/node_utils.h"
-#include "node/unordered_node_ref_map.h"
 #include "solving_context.h"
 #include "util/logger.h"
 
@@ -172,67 +171,8 @@ Node
 QuantSolver::substitute(const Node& n,
                         const std::unordered_map<Node, Node>& substs)
 {
-  node::unordered_node_ref_map<Node> cache;
-  node::node_ref_vector visit{n};
-  do
-  {
-    const Node& cur     = visit.back();
-    auto [it, inserted] = cache.emplace(cur, Node());
-
-    if (inserted)
-    {
-      // A quantifier that rebinds a substituted variable shadows it. Avoid
-      // capturing shadowed variables by recursing with a new scope excluding
-      // the shadowed variable.
-      if (cur.kind() == Kind::FORALL && substs.find(cur[0]) != substs.end())
-      {
-        // We need more than one substitution to change the body of cur.
-        if (substs.size() > 1)
-        {
-          std::unordered_map<Node, Node> reduced(substs);
-          reduced.erase(cur[0]);
-          std::vector<Node> children{cur[0], substitute(cur[1], reduced)};
-          it->second = utils::rebuild_node(d_env.nm(), cur, children);
-        }
-        else
-        {
-          it->second = cur;
-        }
-        visit.pop_back();
-        continue;
-      }
-      visit.insert(visit.end(), cur.begin(), cur.end());
-      continue;
-    }
-    else if (it->second.is_null())
-    {
-      auto iit = substs.find(cur);
-      if (iit != substs.end())
-      {
-        assert(cur.kind() == Kind::VARIABLE);
-        it->second = iit->second;
-      }
-      else
-      {
-        std::vector<Node> children;
-        for (const Node& child : cur)
-        {
-          auto iit = cache.find(child);
-          assert(iit != cache.end());
-          children.push_back(iit->second);
-        }
-        // Quantifiers binding a substituted variable are handled above, the
-        // prefix of the instantiated quantifier is stripped by the callers.
-        assert(cur.kind() != Kind::FORALL
-               || children[0].kind() == Kind::VARIABLE);
-        it->second = utils::rebuild_node(d_env.nm(), cur, children);
-      }
-    }
-
-    visit.pop_back();
-  } while (!visit.empty());
-
-  return cache.at(n);
+  std::unordered_map<Node, Node> cache;
+  return utils::substitute(d_env.nm(), n, substs, cache, false);
 }
 
 const Node&

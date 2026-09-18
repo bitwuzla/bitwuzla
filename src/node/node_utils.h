@@ -137,16 +137,45 @@ Node rebuild_node(NodeManager& nm,
 /**
  * Apply substitutions to node.
  *
- * @param node The node process.
+ * Substitutions are applied to the *free* occurrences of the substituted
+ * nodes, i.e., `node` has to be the term in whose scope the substitutions are
+ * meant to apply. In particular, substituting the variable of a binder in the
+ * binder itself is a no-op, since the binder is its binding occurrence:
+ * instantiating a binder requires passing its body, not the binder.
+ *
+ * Substituting a variable is capture-avoiding: a binder that rebinds the
+ * variable shadows it, and a binder whose variable occurs free in the term the
+ * variable is substituted with is renamed so that it cannot capture it. The
+ * variables of the binders in the result are thus not necessarily the ones in
+ * `node`.
+ *
+ * Substituting a node that is not a variable is not capture-avoiding. A binder
+ * binds a variable, so this is sound as long as such a substitution does not
+ * introduce free variables, i.e., as long as it rewrites a node in place.
+ *
+ * @note Requires the substitutions to be type preserving. Reusing `cache`
+ *       across calls is only sound for the same substitution map. Only nodes
+ *       in the scope of `node` are cached, nodes below a binder that shadows
+ *       or renames a variable are not.
+ *
+ * @param node The node to process.
  * @param substitutions The substitution map to apply.
  * @param cache The substitution cache.
+ * @param follow_substs Apply substitutions to substituted terms. Requires
+ *                      the substitution map to be acyclic. If false,
+ *                      substitutions are applied simultaneously, i.e., a
+ *                      substituted term is not processed again.
+ * @param num_substs Output parameter. If given, the number of nodes replaced
+ *                   by their substitution is added to this counter.
  * @return The node with substitutions applied. The given node if no
  *         substitutions given.
  */
 Node substitute(NodeManager& nm,
                 const Node& node,
                 const std::unordered_map<Node, Node>& substitutions,
-                std::unordered_map<Node, Node>& cache);
+                std::unordered_map<Node, Node>& cache,
+                bool follow_substs   = true,
+                uint64_t* num_substs = nullptr);
 
 /**
  * Invert Boolean or bit-vector node.

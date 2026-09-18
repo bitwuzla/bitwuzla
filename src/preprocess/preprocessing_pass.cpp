@@ -11,7 +11,6 @@
 #include "preprocess/preprocessing_pass.h"
 
 #include "env.h"
-#include "node/node_ref_vector.h"
 #include "node/node_utils.h"
 
 namespace bzla::preprocess {
@@ -45,44 +44,10 @@ PreprocessingPass::substitute(const Node& node,
                               const SubstitutionMap& substitutions,
                               std::unordered_map<Node, Node>& cache) const
 {
-  node::node_ref_vector visit{node};
   uint64_t num_substs = 0;
-
-  do
-  {
-    const Node& cur     = visit.back();
-    auto [it, inserted] = cache.emplace(cur, Node());
-    if (inserted)
-    {
-      visit.insert(visit.end(), cur.begin(), cur.end());
-      continue;
-    }
-    else if (it->second.is_null())
-    {
-      auto its = substitutions.find(cur);
-      if (its != substitutions.end())
-      {
-        it->second = its->second;
-        num_substs += 1;
-      }
-      else
-      {
-        std::vector<Node> children;
-        for (const Node& child : cur)
-        {
-          auto itc = cache.find(child);
-          assert(itc != cache.end());
-          assert(!itc->second.is_null());
-          children.push_back(itc->second);
-        }
-        it->second = node::utils::rebuild_node(d_env.nm(), cur, children);
-      }
-    }
-    visit.pop_back();
-  } while (!visit.empty());
-  auto it = cache.find(node);
-  assert(it != cache.end());
-  return std::make_pair(it->second, num_substs);
+  Node res            = node::utils::substitute(
+      d_env.nm(), node, substitutions.map(), cache, false, &num_substs);
+  return std::make_pair(res, num_substs);
 }
 
 Node

@@ -97,58 +97,21 @@ PassElimLambda::reduce(const Node& node) const
   assert(node.kind() == Kind::APPLY);
   assert(node[0].kind() == Kind::LAMBDA);
 
+  // Reduce the processed lambda, which has all applications on lambdas in its
+  // body eliminated already.
   std::unordered_map<Node, Node> substitutions;
   auto it   = node.begin();
-  Node body = *it++;
+  Node body = d_cache.at(*it++);
+  assert(body.kind() == Kind::LAMBDA);
   for (; it != node.end(); ++it)
   {
-    const Node& var = body[0];
-    substitutions.emplace(var, d_cache.at(*it));
+    substitutions.emplace(body[0], d_cache.at(*it));
     body = body[1];
   }
   assert(body.kind() != Kind::LAMBDA);
 
   std::unordered_map<Node, Node> cache;
-  node::node_ref_vector visit{body};
-  do
-  {
-    const Node& cur = visit.back();
-
-    auto [it, inserted] = cache.emplace(cur, Node());
-    if (inserted)
-    {
-      if (cur.kind() == Kind::APPLY && cur[0].kind() == Kind::LAMBDA)
-      {
-        assert(d_cache.find(cur) != d_cache.end());
-        visit.push_back(d_cache.at(cur));
-      }
-      else
-      {
-        visit.insert(visit.end(), cur.begin(), cur.end());
-      }
-      continue;
-    }
-    else if (it->second.is_null())
-    {
-      if (cur.kind() == Kind::APPLY && cur[0].kind() == Kind::LAMBDA)
-      {
-        assert(d_cache.find(cur) != d_cache.end());
-        it->second = cache.at(d_cache.at(cur));
-      }
-      else if (substitutions.find(cur) != substitutions.end())
-      {
-        assert(cur.kind() == Kind::VARIABLE);
-        it->second = substitutions.at(cur);
-      }
-      else
-      {
-        it->second = utils::rebuild_node(d_env.nm(), cur, cache);
-      }
-    }
-    visit.pop_back();
-  } while (!visit.empty());
-
-  return cache.at(body);
+  return utils::substitute(d_env.nm(), body, substitutions, cache, false);
 }
 
 PassElimLambda::Statistics::Statistics(util::Statistics& stats)
