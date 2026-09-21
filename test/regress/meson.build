@@ -1796,6 +1796,10 @@ tests_smt2_get_interpolant = [
   ['get-interpolant/mixed-lemma-leaf.smt2'],
   ['get-interpolant/prop-murxla-110deca336eefafd.min.smt2'],
 
+  # tripwires for CaDiCaL's external propagator interface vs. the proof tracer
+  ['get-interpolant/adc-sat-propagator.smt2'],
+  ['get-interpolant/eq-decision-heuristic.smt2'],
+
   # fp
   ['get-interpolant/fp/murxla-136034c02cd7865c-1.min.smt2'],
   ['get-interpolant/fp/murxla-136034c02cd7865c-2.min.smt2'],

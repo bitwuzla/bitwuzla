@@ -85,10 +85,6 @@ CadicalTracer::add_original_clause(int64_t id,
     Log(2) << ss.str() << " } [restore: " << restore << "]";
   }
 
-  (void) redundant;
-  assert(id);
-  assert(d_cur_aig_id);
-
   if (restore)
   {
     // We must never delete clauses, for different reasons. Thus we also never
@@ -96,9 +92,18 @@ CadicalTracer::add_original_clause(int64_t id,
     return;
   }
 
+  (void) redundant;
+  assert(id);
+  assert(d_cur_aig_id);
+
   assert(static_cast<int64_t>(d_clauses.size()) == id);
   // original clause, thus no antecedents
   d_clauses.emplace_back(clause, ClauseType::ORIGINAL, d_cur_aig_id);
+  // Only clauses that come through CadicalInterpol::add() are associated with
+  // an AIG id. Clauses added elsewhere (e.g., by an external propagator) have
+  // none and must not inherit the AIG id of the previously encoded clause,
+  // which would silently mislabel them. Thus, we record aig id 0 for them.
+  d_cur_aig_id = 0;
 }
 
 void
@@ -434,9 +439,6 @@ CadicalTracer::get_interpolant(
           }
           auto label = get_var_label(cnf2aig, var_labels, lit);
           assert(label != VariableKind::NONE);
-          // If NONE, then lit is not active (i.e., it is not part of a
-          // clause that is currently asserted/assumed) and thus irrelevant
-          // (the interpolant is not extended with it).
           extend_interpolant(cnf2aig,
                              ipol,
                              d_part_interpolants.at(antecedents[idx]),
