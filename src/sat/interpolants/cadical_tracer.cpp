@@ -437,8 +437,11 @@ CadicalTracer::get_interpolant(
           // If NONE, then lit is not active (i.e., it is not part of a
           // clause that is currently asserted/assumed) and thus irrelevant
           // (the interpolant is not extended with it).
-          extend_interpolant(
-              cnf2aig, ipol, d_part_interpolants[antecedents[idx]], lit, label);
+          extend_interpolant(cnf2aig,
+                             ipol,
+                             d_part_interpolants.at(antecedents[idx]),
+                             lit,
+                             label);
         }
       }
       d_part_interpolants[id] = ipol;
