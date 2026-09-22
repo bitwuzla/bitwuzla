@@ -44,6 +44,27 @@ Building Bitwuzla on Linux and macOS
   If the build system does not find CaDiCaL or SymFPU, it will fall back to
   downloading and building a suitable version itself.
 
+.. note::
+  CaDiCaL and Kissat ship no pkg-config file and are therefore looked up in the
+  compiler's default library directories. To build against an installation in a
+  custom prefix, either set ``LIBRARY_PATH`` and ``CPATH``:
+
+  .. code:: bash
+
+    export LIBRARY_PATH=<prefix>/lib
+    export CPATH=<prefix>/include
+    ./configure.py
+
+  or point the build system at the directories explicitly:
+
+  .. code:: bash
+
+    ./configure.py --extra-libdir <prefix>/lib   # can be given repeatedly
+
+  ``--extra-libdir`` only covers the library search path; the corresponding
+  include directory still has to be added via ``CPATH``, ``CPPFLAGS`` or
+  ``CXXFLAGS`` if it is not in the compiler's default search path.
+
 Python Bindings
 ---------------
 

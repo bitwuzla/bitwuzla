@@ -24,10 +24,30 @@ gmp_link_dep = declare_dependency(link_args: extra_link_args)
 
 # Subproject dependencies
 
+# find_library() only searches the compiler's built-in library directories,
+# which Meson reads from '<compiler> --print-search-dirs'. GCC includes
+# LIBRARY_PATH in that output, Clang does not, so pass it on explicitly to keep
+# lookup of libraries that ship no pkg-config file consistent across compilers.
+# Directories given via 'extra_libdirs' are searched first.
+extra_libdirs = get_option('extra_libdirs')
+env_python = find_program('python3', 'python', required: false)
+if env_python.found()
+  library_path = run_command(env_python, '-c',
+                             'import os; print("\\n".join(' +
+                             'os.environ.get("LIBRARY_PATH", "").split(os.pathsep)))',
+                             check: true).stdout().strip()
+  foreach dir : library_path.split('\n')
+    if dir != ''
+      extra_libdirs += dir
+    endif
+  endforeach
+endif
+
 # CaDiCaL does not provide pkg-config to find dependency
 cadical_dep = cpp_compiler.find_library('cadical',
                                         has_headers: ['cadical/cadical.hpp',
                                                       'cadical/tracer.hpp'],
+                                        dirs: extra_libdirs,
                                         static: build_static,
                                         required: false)
 if not cadical_dep.found()
@@ -69,6 +89,7 @@ cms_dep = dependency('cryptominisat5',
 # Kissat does not provide pkg-config to find dependency
 kissat_dep = cpp_compiler.find_library('kissat',
                                         has_headers: 'kissat.h',
+                                        dirs: extra_libdirs,
                                         static: build_static,
                                         required: false)
 if not kissat_dep.found()

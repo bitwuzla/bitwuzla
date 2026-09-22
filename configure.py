@@ -77,6 +77,10 @@ def main():
                     help='shared library')
     ap.add_argument('--static', action='store_true',
                     help='static library')
+    ap.add_argument('--extra-libdir', action='append', metavar='DIR',
+                    help='additional directory to search for libraries that '
+                         'provide no pkg-config file (CaDiCaL, Kissat), '
+                         'can be given multiple times')
     bool_opt(ap, 'assertions', 'assertions')
     bool_opt(ap, 'asan', 'address sanitizer')
     bool_opt(ap, 'ubsan', 'undefined behavior sanitizer')
@@ -161,6 +165,9 @@ def main():
         build_opts.append(f'-Daiger={_bool(args.aiger)}')
     if args.mimalloc is not None:
         build_opts.append(f'-Dmimalloc={_bool(args.mimalloc)}')
+    if args.extra_libdir:
+        dirs = ','.join(os.path.abspath(d) for d in args.extra_libdir)
+        build_opts.append(f'-Dextra_libdirs={dirs}')
 
     configure_build(args.build_dir, build_opts)
 

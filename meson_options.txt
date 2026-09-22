@@ -9,3 +9,6 @@ option('gimsatul', type: 'boolean', value: false)
 option('fpexp', type: 'boolean', value: false)
 option('aiger', type: 'boolean', value: false)
 option('mimalloc', type: 'boolean', value: false)
+option('extra_libdirs', type: 'array', value: [],
+       description: 'additional directories to search for libraries that ' +
+                    'provide no pkg-config file (CaDiCaL, Kissat)')
