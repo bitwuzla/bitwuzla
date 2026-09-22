@@ -95,10 +95,6 @@ AigBitblaster::bitblast(const Node& t)
         case Kind::SELECT:
         case Kind::APPLY:
         case Kind::CONSTANT:
-          if (cur.kind() == Kind::CONSTANT)
-          {
-            d_consts.push_back(cur);
-          }
           assert(BvSolver::is_leaf(cur));
           it->second = type.is_bool()
                            ? d_bitblaster.bv_constant(1)
