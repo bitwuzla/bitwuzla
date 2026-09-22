@@ -318,7 +318,6 @@ BvInterpolator::label_lemma(
   const auto& bits = d_bitblaster.bits(lemma);
   assert(!bits.empty());
   bv::AigBitblaster::aig_node_ref_vector visit;
-  std::unordered_set<int64_t> cache;
   for (const auto& aig : bits)
   {
     visit.push_back(aig);
