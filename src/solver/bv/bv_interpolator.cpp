@@ -297,18 +297,16 @@ BvInterpolator::label_lemma(
         {
           it->second = VariableKind::GLOBAL;
         }
-      }
 
-      if (BvSolver::is_leaf(cur) && !cur.is_const())
-      {
-        auto it = term_labels.find(cur);
-        assert(it != term_labels.end());
-        const auto& bits = d_bitblaster.bits(cur);
-        if (!bits.empty())
+        if (BvSolver::is_leaf(cur))
         {
-          label_var(var_labels, bits, it->second);
+          const auto& bits = d_bitblaster.bits(cur);
+          if (!bits.empty())
+          {
+            label_var(var_labels, bits, it->second);
+          }
+          // If not bit-blasted, it is not relevant for interpolant.
         }
-        // If not bit-blasted, it is not relevant for interpolant.
       }
       visit.pop_back();
     } while (!visit.empty());
