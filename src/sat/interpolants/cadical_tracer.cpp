@@ -450,19 +450,17 @@ CadicalTracer::get_interpolant(
     }
     else if (type == ClauseType::ASSUMPTION)
     {
-      const auto& antecedents = clause.d_antecedents;
-      // All literals in assumption clause must be assumption literals if it
-      // does not have antecedents since we don't use constraint(). Note that
-      // this only occurs if there is a trivial conflict due to assumptions.
-      assert(
-          !antecedents.empty()
-          || (clause.d_clause.size() == 2
-              && d_assumptions.find(-clause.d_clause[0]) != d_assumptions.end()
-              && d_assumptions.find(-clause.d_clause[1])
-                     != d_assumptions.end()));
+      // Assumption clauses with antecedents are recorded as derived clauses
+      // in add_assumption_clause().
+      assert(clause.d_antecedents.empty());
+      // All literals in assumption clause must be assumption literals since
+      // we don't use constraint(). Note that this only occurs if there is a
+      // trivial conflict due to assumptions.
+      assert(clause.d_clause.size() == 2
+             && d_assumptions.find(-clause.d_clause[0]) != d_assumptions.end()
+             && d_assumptions.find(-clause.d_clause[1]) != d_assumptions.end());
 
-      Interpolant ipol =
-          antecedents.size() ? d_part_interpolants.at(id) : Interpolant();
+      Interpolant ipol;
       for (int32_t lit : clause.d_clause)
       {
         if (d_assumptions.find(-lit) == d_assumptions.end())
@@ -483,10 +481,7 @@ CadicalTracer::get_interpolant(
         }
       }
 
-      if (antecedents.empty())
-      {
-        d_part_interpolants[id] = ipol;
-      }
+      d_part_interpolants[id] = ipol;
     }
   }
 
