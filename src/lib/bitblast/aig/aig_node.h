@@ -146,6 +146,13 @@ class AigNodeData
   friend class AigNodeUniqueTable;
 
  public:
+  /**
+   * A node derives its id and its manager from its own address, see id() and
+   * mgr(), so a copy outside of a block would be garbage.
+   */
+  AigNodeData(const AigNodeData&)            = delete;
+  AigNodeData& operator=(const AigNodeData&) = delete;
+
   void inc_refs()
   {
     if (d_refs == s_max_refs)
