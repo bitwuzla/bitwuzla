@@ -404,7 +404,7 @@ class BitblasterInterface
    * Bit-blast if-then-else over bit-vectors `a` and `b` of size k, and a
    * condition `cond` of size 1.
    */
-  virtual Bits bv_ite(const T cond, const Bits& a, const Bits& b)
+  virtual Bits bv_ite(const T& cond, const Bits& a, const Bits& b)
   {
     Bits res;
     res.reserve(a.size());
