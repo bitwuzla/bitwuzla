@@ -193,11 +193,8 @@ class CadicalTracer : public Tracer
   std::unordered_set<int32_t> d_assumptions;
   /** The clauses observed via add_assumption_clause(). */
   std::vector<int64_t> d_assumption_clauses;
-  /**
-   * The partial interpolants, dummy at index 0 to enable access via clause id.
-   */
-  std::unordered_map<int64_t, Interpolant> d_part_interpolants = {
-      {0, Interpolant()}};
+  /** The partial interpolants, maps clause id to its partial interpolant. */
+  std::unordered_map<int64_t, Interpolant> d_part_interpolants;
 
   std::vector<int64_t> d_final_clause_ids;
   std::vector<int64_t> d_proof_core;
