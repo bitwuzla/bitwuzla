@@ -10,6 +10,7 @@
 
 #include <gtest/gtest.h>
 
+#include "config.h"
 #include "option/option.h"
 #include "test.h"
 
@@ -138,6 +139,37 @@ TEST_F(TestOptions, opt_defaults)
     ASSERT_EQ(opts.prop_nprops(), 10000);
     ASSERT_EQ(opts.prop_nupdates(), 5);
   }
+}
+
+TEST_F(TestOptions, opt_adc_sat_propagator)
+{
+  std::vector<std::string> sat_solvers;
+#ifdef BZLA_USE_CMS
+  sat_solvers.push_back("cms");
+#endif
+#ifdef BZLA_USE_GIMSATUL
+  sat_solvers.push_back("gimsatul");
+#endif
+#ifdef BZLA_USE_KISSAT
+  sat_solvers.push_back("kissat");
+#endif
+  for (const auto& sat_solver : sat_solvers)
+  {
+    Options opts;
+    opts.set<std::string>(Option::SAT_SOLVER, sat_solver);
+    opts.set<bool>(Option::ADC_SAT_PROPAGATOR, true);
+    opts.finalize();
+    ASSERT_FALSE(opts.adc_sat_propagator());
+  }
+#ifdef BZLA_USE_CADICAL
+  {
+    Options opts;
+    opts.set<std::string>(Option::SAT_SOLVER, "cadical");
+    opts.set<bool>(Option::ADC_SAT_PROPAGATOR, true);
+    opts.finalize();
+    ASSERT_EQ(opts.adc_sat_propagator(), config::cadical_patched);
+  }
+#endif
 }
 
 }  // namespace bzla::test

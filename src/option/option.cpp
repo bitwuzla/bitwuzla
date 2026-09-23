@@ -961,10 +961,15 @@ Options::finalize()
     // artificial introduction of 'mixed' lemmas).
     abstraction_assert.set(false);
   }
-#ifndef BZLA_USE_CADICAL
-  // The ADC SAT propagator relies on CaDiCaL's external propagator interface.
-  // Without CaDiCaL, fall back to theory-level handling of DISTINCT_N in the
-  // solver engine.
+  // The ADC SAT propagator relies on CaDiCaL's external propagator interface,
+  // other SAT solvers silently drop it. Without CaDiCaL as SAT solver, fall
+  // back to theory-level handling of DISTINCT_N in the solver engine.
+#ifdef BZLA_USE_CADICAL
+  if (sat_solver() != SatSolver::CADICAL)
+  {
+    adc_sat_propagator.set(false);
+  }
+#else
   adc_sat_propagator.set(false);
 #endif
   // A system-wide CaDiCaL lacks our restore-before-observing patch, where
