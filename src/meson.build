@@ -199,10 +199,9 @@ if git_exe.found()
   python_exe = find_program('python3', 'python')
   repo = meson.project_source_root()
   get_git_id = join_paths(repo, 'src', 'get_git_id.py')
-  config_input = join_paths(meson.current_build_dir(), 'config.h.in')
   config_h = vcs_tag(
     command: [python_exe, get_git_id, repo],
-    input: config_input,
+    input: config_h,
     output: 'config.h',
     replace_string: '@git_id@',
     fallback: ''
