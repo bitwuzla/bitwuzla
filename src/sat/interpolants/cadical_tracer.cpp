@@ -265,10 +265,19 @@ CadicalTracer::conclude_unsat(CaDiCaL::ConclusionType conclusion,
     assert(!d_clauses[clause_ids[0]].d_clause.empty());
   }
 #endif
-  d_conclusion = conclusion;
-  d_proof_core.clear();
+  d_conclusion       = conclusion;
   d_final_clause_ids = clause_ids;
-  std::vector<int64_t> visit{clause_ids};
+  d_proof_core.clear();
+}
+
+/* -------------------------------------------------------------------------- */
+
+void
+CadicalTracer::extract_proof_core()
+{
+  util::Timer timer(d_stats.time_get_interpolant);
+  assert(!d_clauses.empty());
+  std::vector<int64_t> visit{d_final_clause_ids};
   std::vector<bool> visited(d_clauses.size(), false);
   // Compute proof core by tracing back from final clause ids
   while (!visit.empty())
@@ -288,8 +297,6 @@ CadicalTracer::conclude_unsat(CaDiCaL::ConclusionType conclusion,
   d_stats.size_proof_core = d_proof_core.size();
 }
 
-/* -------------------------------------------------------------------------- */
-
 Node
 CadicalTracer::get_interpolant(
     const std::unordered_map<int64_t, VariableKind>& var_labels,
@@ -297,6 +304,14 @@ CadicalTracer::get_interpolant(
     const std::unordered_map<Node, sat::interpolants::VariableKind>&
         term_labels)
 {
+  // Extract proof core if not already extracted. We do not extract the proof
+  // core eagerly, on conclude_unsat(), but delay this to the first
+  // get_interpolant() call after conclude_unsat().
+  if (d_proof_core.empty())
+  {
+    extract_proof_core();
+  }
+
   util::Timer timer(d_stats.time_get_interpolant);
 
   d_part_interpolants.clear();

@@ -84,6 +84,7 @@ class Tracer : public CaDiCaL::Tracer
   {
     Statistics(util::Statistics& stats, const std::string& prefix);
     util::TimerStatistic& time_get_interpolant;
+    util::TimerStatistic& time_extract_proof_core;
     uint64_t& size_interpolant;
     uint64_t& size_proof;
     uint64_t& size_proof_core;

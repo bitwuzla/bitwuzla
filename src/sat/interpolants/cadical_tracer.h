@@ -164,6 +164,12 @@ class CadicalTracer : public Tracer
                           int32_t lit,
                           VariableKind kind);
   /**
+   * Extract proof core from d_clauses by tracing back from d_final_clause_ids
+   * into d_proof_core.
+   */
+  void extract_proof_core();
+
+  /**
    * Mark variable with phase of literal.
    * @param marked_vars The currently marked vars.
    * @param lit         The literal to mark the variable for.

@@ -24,6 +24,8 @@ Tracer::Statistics::Statistics(util::Statistics& stats,
                                const std::string& prefix)
     : time_get_interpolant(stats.new_or_get_stat<util::TimerStatistic>(
           prefix + "time_get_interpolant")),
+      time_extract_proof_core(stats.new_or_get_stat<util::TimerStatistic>(
+          prefix + "time_extract_proof_core")),
       size_interpolant(
           stats.new_or_get_stat<uint64_t>(prefix + "size_interpolant")),
       size_proof(stats.new_or_get_stat<uint64_t>(prefix + "size_proof")),
