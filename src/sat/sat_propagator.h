@@ -43,7 +43,12 @@ class SatPropagator
   virtual void attach_propagator(Propagator* propagator) = 0;
   virtual void assign(int32_t lit)                       = 0;
   virtual void unassign(int32_t var)                     = 0;
-  virtual bool done() const                              = 0;
+  /**
+   * @return True if this propagator cannot propagate anymore. Must never
+   *         become false again: done propagators are permanently dropped
+   *         from assignment notifications.
+   */
+  virtual bool done() const = 0;
 
   /**
    * Key identifying the constraint enforced by this propagator.

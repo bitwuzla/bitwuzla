@@ -20,6 +20,28 @@
 
 namespace bzla::sat {
 
+template <class Notify>
+void
+Propagator::notify_watchers(uint32_t watchers, Notify&& notify)
+{
+  assert(watchers > 0);
+  auto& sps = d_watchers[watchers - 1];
+  size_t j  = 0;
+  for (size_t i = 0, size = sps.size(); i < size; ++i)
+  {
+    SatPropagator* sp = sps[i];
+    // Done is permanent and a done propagator's state goes stale, it must not
+    // be notified again, neither about assignments nor about unassignments.
+    if (sp->done())
+    {
+      continue;
+    }
+    notify(sp);
+    sps[j++] = sp;
+  }
+  sps.resize(j);
+}
+
 void
 Propagator::notify_assignment(const std::vector<int32_t>& lits)
 {
@@ -29,16 +51,10 @@ Propagator::notify_assignment(const std::vector<int32_t>& lits)
     auto& info      = d_var_info[var];
     info.assignment = lit < 0 ? -1 : 1;
     d_assignments.push_back(var);
-    if (d_var_info[var].watched)
+    if (info.watchers)
     {
-      for (auto& sp : d_sat_propagators)
-      {
-        if (sp->done())
-        {
-          continue;
-        }
-        sp->assign(lit);
-      }
+      notify_watchers(info.watchers,
+                      [lit](SatPropagator* sp) { sp->assign(lit); });
     }
   }
 }
@@ -67,12 +83,10 @@ Propagator::notify_backtrack(size_t new_level)
       d_decisions.push_back(var * info.phase);
     }
     // Notify watchers that variable assignment was undone.
-    if (info.watched)
+    if (info.watchers)
     {
-      for (auto& sp : d_sat_propagators)
-      {
-        sp->unassign(var);
-      }
+      notify_watchers(info.watchers,
+                      [var](SatPropagator* sp) { sp->unassign(var); });
     }
   }
 }
@@ -152,7 +166,7 @@ Propagator::cb_add_external_clause_lit()
 void
 Propagator::notify_fixed_assignment(int32_t lit)
 {
-  d_var_info[std::abs(lit)].fixed = true;
+  d_var_info[std::abs(lit)].fixed = lit < 0 ? -1 : 1;
   ++d_stats.num_fixed;
 }
 
@@ -191,22 +205,33 @@ Propagator::resize(int32_t var)
 }
 
 void
-Propagator::watch(int32_t lit)
+Propagator::watch(int32_t lit, SatPropagator* sp)
 {
   int32_t var = std::abs(lit);
   auto& vi    = info(var);
-  vi.watched  = true;
+  if (!vi.watchers)
+  {
+    d_watchers.emplace_back();
+    vi.watchers = static_cast<uint32_t>(d_watchers.size());
+  }
+  // Propagators watch all their literals in attach_propagator(), so a literal
+  // watched twice by the same propagator is always at the end of the list.
+  auto& sps = d_watchers[vi.watchers - 1];
+  if (sps.empty() || sps.back() != sp)
+  {
+    sps.push_back(sp);
+  }
   d_solver->add_observed_var(var);
   // Propagators are registered on demand and may miss fixed notifications,
   // hence query the fixed assignment here. Must not be guarded by `!vi.fixed`:
-  // notify_fixed_assignment() only records the flag, and CaDiCaL fires it for
-  // unobserved variables as well, so `fixed` may already be set while
+  // notify_fixed_assignment() only records the fixed value, and CaDiCaL fires
+  // it for unobserved variables as well, so `fixed` may already be set while
   // `assignment` is still 0.
   int32_t v = d_solver->fixed(var);
   if (v != 0)
   {
     vi.assignment = v;
-    vi.fixed      = true;
+    vi.fixed      = v;
   }
   ++d_stats.num_observed;
   ++d_stats.num_watched;
@@ -249,8 +274,8 @@ Propagator::register_propagator(std::unique_ptr<SatPropagator> sp)
 {
   // Propagators are never unregistered, but the caches that drive registration
   // are backtrackable, so we are handed the same constraint again after every
-  // pop(). Keep the first one: duplicates only grow the list that every
-  // watched-literal event iterates over.
+  // pop(). Keep the first one: duplicates only grow the watch lists of their
+  // literals.
   if (!d_sat_propagator_keys.insert(sp->key()).second)
   {
     ++d_stats.num_duplicate_propagators;

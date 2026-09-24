@@ -123,8 +123,10 @@ DistinctNPropagator::DistinctNPropagator(
 bool
 DistinctNPropagator::done() const
 {
-  const auto& vi = d_propagator->info(d_var);
-  return vi.fixed && vi.assignment == -1;
+  // Query the fixed value rather than the current assignment, which is undone
+  // on backtracking if it was notified above its level. Being done must be
+  // permanent, see SatPropagator::done().
+  return d_propagator->info(d_var).fixed < 0;
 }
 
 void
@@ -155,7 +157,7 @@ DistinctNPropagator::attach_propagator(Propagator* propagator)
       for (size_t i = 0, size = lits.size(); i < size; ++i)
       {
         int32_t lit = lits[i];
-        d_propagator->watch(lit);
+        d_propagator->watch(lit, this);
         // This is a heuristic for now and should be adapated based on current
         // assignments. We assume all bit-vectors to be different.
         d_propagator->force_phase(phase.bit(size - 1 - i) ? lit : -lit);

@@ -42,7 +42,7 @@ EqDecisionHeuristic::attach_propagator(Propagator* propagator)
     for (int32_t bit : bv)
     {
       int32_t var = std::abs(bit);
-      d_propagator->watch(var);
+      d_propagator->watch(var, this);
       d_idxmap.emplace(var, i++);
     }
   }

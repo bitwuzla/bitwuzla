@@ -19,7 +19,6 @@
 #include <deque>
 #include <memory>
 #include <set>
-#include <unordered_set>
 
 #include "sat/distinct_n_propagator.h"
 
@@ -33,9 +32,9 @@ class Propagator : public CaDiCaL::ExternalPropagator,
   {
     int8_t phase      = 0;
     int8_t assignment = 0;
-    bool fixed        = false;
+    int8_t fixed      = 0;
     bool active       = false;
-    bool watched      = false;
+    uint32_t watchers = 0;  // Index of the propagators watching this variable
   };
 
   ~Propagator() override = default;
@@ -73,8 +72,11 @@ class Propagator : public CaDiCaL::ExternalPropagator,
   /** Resize variable info struct include var. */
   void resize(int32_t var);
 
-  /** Mark literal as watched. */
-  void watch(int32_t lit);
+  /**
+   * Mark literal as watched by the given propagator, which is then notified
+   * about all assignment changes to it.
+   */
+  void watch(int32_t lit, SatPropagator* sp);
 
   /**
    * Mark literal as observed, which indicates that it may occur in a clause
@@ -100,6 +102,10 @@ class Propagator : public CaDiCaL::ExternalPropagator,
   void print_stats() const;
 
  private:
+  /** Call `notify` on every propagator in the given watch list. */
+  template <class Notify>
+  void notify_watchers(uint32_t watchers, Notify&& notify);
+
   CaDiCaL::Solver* d_solver = nullptr;
   std::vector<int32_t> d_phases;
   std::vector<VarInfo> d_var_info;
@@ -107,6 +113,8 @@ class Propagator : public CaDiCaL::ExternalPropagator,
   std::deque<int32_t> d_decisions;
   std::vector<size_t> d_assignments_control;
   std::vector<std::unique_ptr<SatPropagator>> d_sat_propagators;
+  /** The propagators watching a variable, see VarInfo::watchers. */
+  std::vector<std::vector<SatPropagator*>> d_watchers;
   /** Keys of the registered propagators. */
   std::set<std::vector<uint64_t>> d_sat_propagator_keys;
   std::deque<int32_t> d_external_clause;
