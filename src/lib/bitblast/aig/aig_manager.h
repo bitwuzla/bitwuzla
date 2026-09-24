@@ -27,12 +27,26 @@ class AigNodeUniqueTable
  public:
   AigNodeUniqueTable();
 
-  // AigNodeData* lookup(const AigNode& left, const AigNode& right);
-  std::pair<bool, AigNodeData*> insert(AigNodeData* d);
+  /**
+   * @return Node data of the AND gate with the given children, or nullptr if
+   *         it does not exist.
+   */
+  AigNodeData* find(uintptr_t left, uintptr_t right) const;
+  /** Insert node data for an AND gate that is not yet in the table. */
+  void insert(AigNodeData* d);
   void erase(const AigNodeData* d);
 
  private:
-  size_t hash(const AigNode& left, const AigNode& right);
+  size_t hash(uintptr_t left, uintptr_t right) const
+  {
+    // The keys are tagged pointers, whose low bits carry little entropy, so
+    // mix multiplicatively and index with the high bits of the product.
+    uint64_t h = static_cast<uint64_t>(left) * 0x9e3779b97f4a7c15ull
+                 + static_cast<uint64_t>(right) * 0xc2b2ae3d27d4eb4full;
+    // The number of buckets is always a power of two (see resize()), so
+    // size() - 1 is an all-ones mask.
+    return static_cast<size_t>(h >> 32) & (d_buckets.size() - 1);
+  }
   void resize();
 
   size_t d_num_elements = 0;
@@ -93,12 +107,12 @@ class AigManager
   void init_id(AigNodeData* d);
 
   /**
-   * Find already constructed and gate with given children.
+   * Get the AND gate with the given children, constructing it if it does not
+   * exist yet.
    *
-   * @param left Left child of AND gate.
-   * @param right Right child of AND gate.
-   * @return Pointer to existing node data or nullptr if AND gate was not yet
-   * constructed.
+   * @param left Left child of the AND gate.
+   * @param right Right child of the AND gate.
+   * @return Pointer to the node data of the AND gate.
    */
   AigNodeData* find_or_create_and(const AigNode& left, const AigNode& right);
 

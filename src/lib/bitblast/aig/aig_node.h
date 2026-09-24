@@ -55,6 +55,12 @@ class AigNode
 
   bool is_null() const { return d_data == 0; }
 
+  /**
+   * @return Identity key of this node. Two nodes are equal if and only if
+   *         their keys are equal.
+   */
+  uintptr_t key() const { return d_data; }
+
   std::string str() const;
 
  private:
