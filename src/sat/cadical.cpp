@@ -239,6 +239,16 @@ CadicalInterpol::add(int32_t lit, int64_t cgroup_id)
   Cadical::add(lit);
 }
 
+void
+CadicalInterpol::push()
+{
+  assert(d_tracer);
+  Cadical::push();
+  // Activation literals are not associated with any AIG node, the tracer
+  // needs to know about them to strip them from the traced clauses.
+  d_tracer->add_activation_var(d_activation_vars.back());
+}
+
 /* -------------------------------------------------------------------------- */
 
 }  // namespace bzla::sat

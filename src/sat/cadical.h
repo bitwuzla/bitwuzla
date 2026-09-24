@@ -93,6 +93,7 @@ class CadicalInterpol : public Cadical
   CadicalInterpol();
   ~CadicalInterpol();
   void add(int32_t lit, int64_t cgroup_id = 0) override;
+  void push() override;
   void connect_tracer(Env& env,
                       bv::AigBitblaster& bitblaster,
                       const bitblast::AigCnfEncoder& cnf_encoder);

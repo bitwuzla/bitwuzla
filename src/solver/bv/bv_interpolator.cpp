@@ -74,8 +74,12 @@ BvInterpolator::interpolant(const std::vector<Node>& ppA,
   // map SAT clause to label
   std::unordered_map<int64_t, ClauseKind> clause_labels;
 
-  // SAT variable that represents true/false. We always label it as GLOBAL.
-  var_labels[d_cnf_encoder.true_var()] = VariableKind::GLOBAL;
+  // AIG that represents true/false. We always label it as GLOBAL. Note that
+  // variable labels are keyed by AIG id, not by SAT variable. The SAT variable
+  // representing true/false does not necessarily have the same id as the
+  // true AIG (e.g., if an activation variable for an assertion level was
+  // allocated before).
+  var_labels[d_bitblaster.amgr().mk_true().get_id()] = VariableKind::GLOBAL;
 
   std::unordered_map<Node, VariableKind> term_labels;
   {

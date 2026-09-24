@@ -14,6 +14,7 @@
 #ifdef BZLA_USE_CADICAL
 
 #include <cadical/tracer.hpp>
+#include <unordered_set>
 
 #include "bitblast/aig/aig_cnf.h"
 #include "bitblast/aig/aig_manager.h"
@@ -63,6 +64,26 @@ class Tracer : public CaDiCaL::Tracer
   {
     assert(id);
     d_cur_aig_id = id;
+  }
+
+  /**
+   * Register SAT variable that is used as activation literal for an
+   * assertion level (see Cadical::push()).
+   *
+   * Clauses added at an assertion level > 0 are extended with the activation
+   * literal of that level, which is assumed to be false while the level is
+   * active and permanently set to true when the level is popped. Activation
+   * literals are not associated with any AIG node and can thus not be
+   * labeled. The tracer strips them from all clauses it records. This is
+   * sound since activation literals only occur positively in clauses, and
+   * can thus never be a resolution pivot.
+   *
+   * @param var The activation variable.
+   */
+  void add_activation_var(int32_t var)
+  {
+    assert(var > 0);
+    d_activation_vars.insert(var);
   }
 
   /**
@@ -146,6 +167,8 @@ class Tracer : public CaDiCaL::Tracer
 
   /** The associated AIG id of the currently processed clause. */
   int64_t d_cur_aig_id = 0;
+  /** The SAT variables used as activation literals for assertion levels. */
+  std::unordered_set<int32_t> d_activation_vars;
 };
 
 }  // namespace sat::interpolants

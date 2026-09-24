@@ -44,15 +44,9 @@ get_var_label(const std::vector<int64_t>& cnf2aig,
               const std::unordered_map<int64_t, VariableKind>& var_labels,
               int64_t lit)
 {
-  auto it = var_labels.find(cnf2aig[std::abs(lit)]);
-  if (it == var_labels.end())
-  {
-    // if not labeled, it is not active, i.e., it is part of a definition
-    // that is not currently asserted/assumed
-    return VariableKind::NONE;
-  }
-  assert(it->second != VariableKind::NONE);
-  return it->second;
+  auto kind = var_labels.at(cnf2aig[std::abs(lit)]);
+  assert(kind != VariableKind::NONE);
+  return kind;
 }
 ClauseKind
 get_clause_label(const std::vector<int64_t>& cnf2aig,
@@ -94,11 +88,23 @@ CadicalTracer::add_original_clause(int64_t id,
 
   (void) redundant;
   assert(id);
-  assert(d_cur_aig_id);
-
   assert(static_cast<int64_t>(d_clauses.size()) == id);
+
+  std::vector<int32_t> stripped = strip_activation_lits(clause);
+  if (stripped.empty() && !clause.empty())
+  {
+    // Unit clause that permanently disables a popped assertion level, see
+    // Cadical::pop(). It is not associated with any AIG node and only
+    // satisfies clauses of the popped level, which are thus never used as
+    // antecedents afterwards. Record a dummy clause to keep ids in sync.
+    assert(!d_cur_aig_id);
+    d_clauses.emplace_back();
+    return;
+  }
+
+  assert(d_cur_aig_id);
   // original clause, thus no antecedents
-  d_clauses.emplace_back(clause, ClauseType::ORIGINAL, d_cur_aig_id);
+  d_clauses.emplace_back(stripped, ClauseType::ORIGINAL, d_cur_aig_id);
   // Only clauses that come through CadicalInterpol::add() are associated with
   // an AIG id. Clauses added elsewhere (e.g., by an external propagator) have
   // none and must not inherit the AIG id of the previously encoded clause,
@@ -137,7 +143,8 @@ CadicalTracer::add_derived_clause(int64_t id,
   (void) witness;
   assert(!antecedents.empty());
   assert(static_cast<int64_t>(d_clauses.size()) == id);
-  d_clauses.emplace_back(clause, ClauseType::DERIVED, 0, antecedents);
+  d_clauses.emplace_back(
+      strip_activation_lits(clause), ClauseType::DERIVED, 0, antecedents);
 }
 
 void
@@ -164,6 +171,9 @@ CadicalTracer::add_assumption_clause(int64_t id,
   else
   {
     assert(clause.size() == 2);
+    // Activation literals are never assumed positively, thus this can only
+    // be a clause over two regular assumption literals.
+    assert(strip_activation_lits(clause).size() == 2);
     bool is_ass_lit0 = d_assumptions.find(-clause[0]) != d_assumptions.end();
     bool is_ass_lit1 = d_assumptions.find(-clause[1]) != d_assumptions.end();
     if (!is_ass_lit0 || !is_ass_lit1)
@@ -259,10 +269,12 @@ CadicalTracer::conclude_unsat(CaDiCaL::ConclusionType conclusion,
   {
     assert(conclusion == CaDiCaL::ConclusionType::ASSUMPTIONS);
     // One or more constraints are responsible for the conflict, conclusion of
-    // proof chain is a single clause with failed assumptions.
+    // proof chain is a single clause with failed assumptions. Note that this
+    // clause may be a dummy clause (an empty vector, not to be confused with
+    // the empty clause) if all failed assumptions are activation literals,
+    // which are stripped from traced clauses.
     assert(clause_ids.size() == 1);
     assert(clause_ids[0] < static_cast<int64_t>(d_clauses.size()));
-    assert(!d_clauses[clause_ids[0]].d_clause.empty());
   }
 #endif
   d_conclusion       = conclusion;
@@ -271,6 +283,28 @@ CadicalTracer::conclude_unsat(CaDiCaL::ConclusionType conclusion,
 }
 
 /* -------------------------------------------------------------------------- */
+
+std::vector<int32_t>
+CadicalTracer::strip_activation_lits(const std::vector<int32_t>& clause) const
+{
+  if (d_activation_vars.empty())
+  {
+    return clause;
+  }
+  std::vector<int32_t> res;
+  res.reserve(clause.size());
+  for (int32_t lit : clause)
+  {
+    auto it = d_activation_vars.find(std::abs(lit));
+    // Activation literals only occur positively.
+    assert(it == d_activation_vars.end() || lit > 0);
+    if (it == d_activation_vars.end())
+    {
+      res.push_back(lit);
+    }
+  }
+  return res;
+}
 
 void
 CadicalTracer::extract_proof_core()

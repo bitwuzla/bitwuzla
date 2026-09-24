@@ -164,6 +164,13 @@ class CadicalTracer : public Tracer
                           int32_t lit,
                           VariableKind kind);
   /**
+   * Strip activation literals from given clause.
+   * @param clause The clause.
+   * @return The clause without activation literals.
+   */
+  std::vector<int32_t> strip_activation_lits(
+      const std::vector<int32_t>& clause) const;
+  /**
    * Extract proof core from d_clauses by tracing back from d_final_clause_ids
    * into d_proof_core.
    */

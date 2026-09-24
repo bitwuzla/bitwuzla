@@ -159,12 +159,6 @@ BvBitblastSolver::~BvBitblastSolver() {}
 Result
 BvBitblastSolver::solve()
 {
-  if (d_reset_sat)
-  {
-    init_sat_solver();
-    d_reset_sat = false;
-  }
-
   d_sat_solver->configure_terminator(d_env.terminator());
 
   if (!d_encode_queue.empty())
@@ -172,24 +166,12 @@ BvBitblastSolver::solve()
     util::Timer timer(d_stats.time_encode);
     for (const auto& [n, is_assertion, level, level_encode] : d_encode_queue)
     {
-      // The interpolation proof tracer cannot label clauses that contain
-      // SAT-level activation literals, so when producing interpolants we
-      // always encode at level 0 (no activation literals) and rely on the
-      // d_reset_sat reset-on-pop path instead.
-      uint32_t enc_level = 0;
-      if (!d_produce_interpolants)
-      {
-        sync_sat_level(level);
-        enc_level = level_encode;
-      }
+      sync_sat_level(level);
       const auto& bits = d_bitblaster.bits(n);
       assert(bits.size() == 1);
-      d_cnf_encoder->encode(bits[0], is_assertion, enc_level);
+      d_cnf_encoder->encode(bits[0], is_assertion, level_encode);
     }
-    if (!d_produce_interpolants)
-    {
-      d_encode_queue.clear();
-    }
+    d_encode_queue.clear();
   }
 
   // Update CNF statistics
@@ -338,11 +320,6 @@ BvBitblastSolver::unsat_core(std::vector<Node>& core) const
 void
 BvBitblastSolver::pop()
 {
-  if (d_produce_interpolants)
-  {
-    d_reset_sat = true;
-    return;
-  }
   assert(d_sat_level <= d_mgr->num_levels());
   // The backtrack manager decrements its level counter after invoking the
   // callbacks, so d_mgr->num_levels() is the level currently being popped.

@@ -150,8 +150,6 @@ class BvBitblastSolver : public Solver,
 
   /** True if produce-interpolants is enabled. */
   bool d_produce_interpolants = false;
-  /** True to reset SAT solver on each solve() call. */
-  bool d_reset_sat = false;
 
   /**
    * Registered decision heuristics that need to be registered before the next
