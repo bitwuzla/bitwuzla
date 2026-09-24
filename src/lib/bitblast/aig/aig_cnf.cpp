@@ -79,6 +79,7 @@ AigCnfEncoder::encode(const AigNode& node, bool top_level, uint32_t level)
       // leafs of top-level AIGs are associated with the top-most AIG
       d_sat_solver.add_clause({cnf_lit(child)}, node.get_id());
       ++d_statistics.num_clauses;
+      ++d_statistics.num_literals;
     }
   }
   else
