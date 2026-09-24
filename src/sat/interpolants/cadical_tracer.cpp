@@ -445,6 +445,9 @@ CadicalTracer::get_interpolant(
       for (size_t i = 1; i < size; ++i)
       {
         size_t idx = size - i - 1;
+#ifndef NDEBUG
+        size_t num_pivots = 0;
+#endif
         for (int32_t lit : d_clauses[antecedents[idx]].d_clause)
         {
           // skip if not marked with the opposite phase in conflict clause
@@ -452,6 +455,9 @@ CadicalTracer::get_interpolant(
           {
             continue;
           }
+#ifndef NDEBUG
+          ++num_pivots;
+#endif
           auto label = get_var_label(cnf2aig, var_labels, lit);
           assert(label != VariableKind::NONE);
           extend_interpolant(cnf2aig,
@@ -460,6 +466,9 @@ CadicalTracer::get_interpolant(
                              lit,
                              label);
         }
+        // CaDiCaL chains are expected to be in strict RUP order, i.e., each
+        // antecedent is resolved over exactly one pivot.
+        assert(num_pivots == 1);
       }
       d_part_interpolants[id] = ipol;
     }
