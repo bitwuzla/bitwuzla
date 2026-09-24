@@ -36,7 +36,6 @@ class Propagator : public CaDiCaL::ExternalPropagator,
     bool fixed        = false;
     bool active       = false;
     bool watched      = false;
-    bool decision     = false;
   };
 
   ~Propagator() override = default;

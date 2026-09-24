@@ -28,7 +28,6 @@ Propagator::notify_assignment(const std::vector<int32_t>& lits)
     int32_t var     = std::abs(lit);
     auto& info      = d_var_info[var];
     info.assignment = lit < 0 ? -1 : 1;
-    info.decision   = d_solver->is_decision(lit);
     d_assignments.push_back(var);
     if (d_var_info[var].watched)
     {
