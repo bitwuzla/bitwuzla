@@ -275,7 +275,7 @@ CadicalTracer::conclude_unsat(CaDiCaL::ConclusionType conclusion,
 void
 CadicalTracer::extract_proof_core()
 {
-  util::Timer timer(d_stats.time_get_interpolant);
+  util::Timer timer(d_stats.time_extract_proof_core);
   assert(!d_clauses.empty());
   std::vector<int64_t> visit{d_final_clause_ids};
   std::vector<bool> visited(d_clauses.size(), false);
