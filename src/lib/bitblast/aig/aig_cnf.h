@@ -187,6 +187,8 @@ class AigCnfEncoder
   std::vector<size_t> d_aig_encoded_ids;
   /** Tracks encoded AIGs by assertion level. */
   std::vector<size_t> d_aig_encoded_ids_control;
+  /** Marks AND nodes expanded during traversal in _encode(). */
+  std::vector<bool> d_expanded;
   /** Stack of collect_and(), a member to save an allocation per call. */
   std::vector<AigNode> d_visit;
   /** SAT solver. */

@@ -12,6 +12,7 @@
 
 #include <cstdlib>
 #include <functional>
+#include <span>
 #include <unordered_set>
 #include <vector>
 
@@ -41,6 +42,12 @@ AigCnfEncoder::encode(const AigNode& node, bool top_level, uint32_t level)
   if (d_true_var == 0)
   {
     initialize();
+  }
+
+  size_t size = static_cast<size_t>(std::abs(node.get_id()));
+  if (size > d_expanded.size())
+  {
+    d_expanded.resize(size, false);
   }
 
   d_sat_solver.set_level(level);
@@ -375,8 +382,12 @@ void
 AigCnfEncoder::_encode(const AigNode& aig)
 {
   std::vector<AigNode> visit;
-  std::unordered_set<int64_t> cache;
-  std::vector<AigNode> children;
+  std::vector<AigNode> leafs;
+  // The children of the expanded nodes, one segment per node. Nodes are encoded
+  // in reverse order of expansion, hence the segment of the node to encode is
+  // always on top.
+  std::vector<AigNode> pending;
+  std::vector<std::pair<size_t, bool>> segments;  // (start in pending, is ite)
   visit.push_back(aig);
   do
   {
@@ -403,24 +414,32 @@ AigCnfEncoder::_encode(const AigNode& aig)
     else
     {
       assert(cur.is_and());
-      auto [it, inserted] = cache.insert(cur.get_id());
-
-      children.clear();
-      bool ite = extracts_as_ite(cur, &children);
-      if (!ite)
+      size_t pos = static_cast<size_t>(std::abs(cur.get_id()) - 1);
+      assert(pos < d_expanded.size());
+      if (!d_expanded[pos])
       {
-        children.clear();
-        collect_and(cur, children, s_max_and_size);
-      }
-
-      if (inserted)
-      {
-        visit.insert(visit.end(), children.begin(), children.end());
+        d_expanded[pos] = true;
+        leafs.clear();
+        bool ite = extracts_as_ite(cur, &leafs);
+        if (!ite)
+        {
+          leafs.clear();
+          collect_and(cur, leafs, s_max_and_size);
+        }
+        segments.emplace_back(pending.size(), ite);
+        pending.insert(pending.end(), leafs.begin(), leafs.end());
+        visit.insert(visit.end(), leafs.begin(), leafs.end());
       }
       else
       {
+        d_expanded[pos] = false;
         visit.pop_back();
         set_encoded(cur);
+
+        auto [start, ite] = segments.back();
+        segments.pop_back();
+        std::span<const AigNode> children(pending.begin() + start,
+                                          pending.end());
 
         auto id = std::abs(cur.get_id());
         auto x  = cnf_var(cur);
@@ -472,9 +491,11 @@ AigCnfEncoder::_encode(const AigNode& aig)
           // variable and 2 clauses of one merged AND node.
           d_statistics.num_merged += children.size() - 2;
         }
+        pending.resize(start);
       }
     }
   } while (!visit.empty());
+  assert(pending.empty() && segments.empty());
 }
 
 void
