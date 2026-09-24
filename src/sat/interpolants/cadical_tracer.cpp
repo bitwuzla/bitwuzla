@@ -393,7 +393,7 @@ CadicalTracer::get_interpolant(
 
   for (int64_t id : d_proof_core)
   {
-    assert(id <= static_cast<int64_t>(d_clauses.size()));
+    assert(id < static_cast<int64_t>(d_clauses.size()));
     const auto& clause = d_clauses[id];
     ClauseType type    = clause.d_type;
     assert(type != ClauseType::NONE);
