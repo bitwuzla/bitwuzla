@@ -105,7 +105,6 @@ BvInverter::invert(const Node& node,
 {
   Node res;
   std::vector<Node> conds;
-  std::unordered_map<Node, Node> subst_cache;
 
   if (path.empty())
   {
@@ -148,7 +147,7 @@ BvInverter::invert(const Node& node,
       Node icond;
       std::tie(icond, next) = ic(cur, idx, path, negate);
       Node _xx              = d_nm.mk_const(next.type());
-      Node pred = utils::substitute(d_nm, cur, {{next, _xx}}, subst_cache);
+      Node pred             = utils::substitute(d_nm, cur, {{next, _xx}});
       if (negate)
       {
         // The invertibility condition is computed for the negated literal,

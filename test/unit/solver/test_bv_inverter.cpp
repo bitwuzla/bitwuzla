@@ -374,12 +374,10 @@ TestBvInverter::check_conds(const Node& node,
       vars.push_back(var);
     }
   }
-  std::unordered_map<Node, Node> subst_cache;
-  Node body = d_nm.mk_node(
-      Kind::NOT, {utils::substitute(d_nm,
-                                    utils::mk_nary(d_nm, Kind::AND, conds),
-                                    substs,
-                                    subst_cache)});
+  Node body =
+      d_nm.mk_node(Kind::NOT,
+                   {utils::substitute(
+                       d_nm, utils::mk_nary(d_nm, Kind::AND, conds), substs)});
   for (auto it = vars.rbegin(); it != vars.rend(); ++it)
   {
     body = d_nm.mk_node(Kind::FORALL, {*it, body});
@@ -409,8 +407,7 @@ TestBvInverter::check_inverse(const Node& node,
                               bool check_valid)
 {
   SolvingContext ctx(d_nm, d_options, d_sat_factory);
-  std::unordered_map<Node, Node> subst_cache;
-  Node ass = utils::substitute(d_nm, node, {{x, invert}}, subst_cache);
+  Node ass = utils::substitute(d_nm, node, {{x, invert}});
   if (conds.empty())
   {
     // Unconditional inverses must be valid, i.e., substituting the inverse

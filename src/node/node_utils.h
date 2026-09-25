@@ -11,6 +11,7 @@
 #ifndef BZLA_NODE_NODE_UTILS_H_INCLUDED
 #define BZLA_NODE_NODE_UTILS_H_INCLUDED
 
+#include <memory>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -135,47 +136,124 @@ Node rebuild_node(NodeManager& nm,
                   const std::unordered_map<Node, Node>& cache);
 
 /**
- * Apply substitutions to node.
+ * Applies a substitution map to nodes.
  *
  * Substitutions are applied to the *free* occurrences of the substituted
- * nodes, i.e., `node` has to be the term in whose scope the substitutions are
- * meant to apply. In particular, substituting the variable of a binder in the
- * binder itself is a no-op, since the binder is its binding occurrence:
- * instantiating a binder requires passing its body, not the binder.
+ * nodes, i.e., a node passed to substitute() has to be the term in whose scope
+ * the substitutions are meant to apply. In particular, substituting the
+ * variable of a binder in the binder itself is a no-op, since the binder is
+ * its binding occurrence: instantiating a binder requires passing its body,
+ * not the binder.
  *
  * Substituting a variable is capture-avoiding: a binder that rebinds the
  * variable shadows it, and a binder whose variable occurs free in the term the
  * variable is substituted with is renamed so that it cannot capture it. The
  * variables of the binders in the result are thus not necessarily the ones in
- * `node`.
+ * the given node.
  *
- * Substituting a node that is not a variable is not capture-avoiding. A binder
- * binds a variable, so this is sound as long as such a substitution does not
- * introduce free variables, i.e., as long as it rewrites a node in place.
+ * The substitution cache is shared across calls to substitute(), and the
+ * information needed to avoid capture is computed only once, when the first
+ * binder is encountered.
  *
- * @note Requires the substitutions to be type preserving. Reusing `cache`
- *       across calls is only sound for the same substitution map. Only nodes
- *       in the scope of `node` are cached, nodes below a binder that shadows
- *       or renames a variable are not.
+ * @note Requires the substitutions to be type preserving. The substituter
+ *       refers to the substitution map, which must outlive it and must not be
+ *       modified during its lifetime.
+ */
+class Substituter
+{
+ public:
+  /**
+   * Constructor.
+   *
+   * @param nm The associated node manager.
+   * @param substitutions The substitution map to apply.
+   * @param follow_substs Apply substitutions to substituted terms. Requires
+   *                      the substitution map to be acyclic.
+   */
+  Substituter(NodeManager& nm,
+              const std::unordered_map<Node, Node>& substitutions,
+              bool follow_substs = true);
+  /** The substitution map must outlive the substituter. */
+  Substituter(NodeManager& nm,
+              std::unordered_map<Node, Node>&& substitutions,
+              bool follow_substs = true) = delete;
+  ~Substituter();
+
+  /**
+   * Apply the substitutions to `node`.
+   *
+   * @param node The node to process.
+   * @return The node with substitutions applied. The given node if no
+   *         substitutions given.
+   */
+  Node substitute(const Node& node);
+
+  /**
+   * @return The number of nodes replaced by their substitution in all calls
+   *         to substitute() so far. Nodes cached by a previous call are not
+   *         counted again.
+   */
+  uint64_t num_substs() const { return d_num_substs; }
+
+ private:
+  struct Capture;
+
+  /**
+   * Apply `substitutions` to `node`, caching the results in `cache`.
+   *
+   * Binders that need a scope of their own are processed by
+   * substitute_binder(), which recurses with the substitution map and the
+   * cache of that scope.
+   */
+  Node substitute_aux(const Node& node,
+                      const std::unordered_map<Node, Node>& substitutions,
+                      std::unordered_map<Node, Node>& cache);
+
+  /** Apply substitutions to the body of a binder that needs its own scope. */
+  Node substitute_binder(const Node& binder,
+                         const std::unordered_map<Node, Node>& substitutions,
+                         bool captured);
+
+  /** @return True if `binder` captures a substitution. */
+  bool is_captured(const Node& binder);
+
+  /** The associated node manager. */
+  NodeManager& d_nm;
+  /** The substitution map. */
+  const std::unordered_map<Node, Node>& d_substitutions;
+  /** True to apply substitutions to substituted terms. */
+  bool d_follow_substs;
+  /**
+   * The substitution cache. Only nodes in the scope of the nodes passed to
+   * substitute() are cached, nodes below a binder that shadows or renames a
+   * variable are not.
+   */
+  std::unordered_map<Node, Node> d_cache;
+  /**
+   * Determines whether a binder captures a substitution. Created when the
+   * first binder is encountered, nodes without binders do not need it.
+   */
+  std::unique_ptr<Capture> d_capture;
+  /** The number of nodes replaced by their substitution. */
+  uint64_t d_num_substs = 0;
+};
+
+/**
+ * Apply substitutions to node.
+ *
+ * Convenience function for a single node, see Substituter for the semantics.
  *
  * @param node The node to process.
  * @param substitutions The substitution map to apply.
- * @param cache The substitution cache.
- * @param follow_substs Apply substitutions to substituted terms. Requires
- *                      the substitution map to be acyclic. If false,
- *                      substitutions are applied simultaneously, i.e., a
- *                      substituted term is not processed again.
- * @param num_substs Output parameter. If given, the number of nodes replaced
- *                   by their substitution is added to this counter.
+ * @param follow_substs Apply substitutions to substituted terms, see
+ *                      Substituter::Substituter().
  * @return The node with substitutions applied. The given node if no
  *         substitutions given.
  */
 Node substitute(NodeManager& nm,
                 const Node& node,
                 const std::unordered_map<Node, Node>& substitutions,
-                std::unordered_map<Node, Node>& cache,
-                bool follow_substs   = true,
-                uint64_t* num_substs = nullptr);
+                bool follow_substs = true);
 
 /**
  * Invert Boolean or bit-vector node.

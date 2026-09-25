@@ -110,8 +110,7 @@ PassElimLambda::reduce(const Node& node) const
   }
   assert(body.kind() != Kind::LAMBDA);
 
-  std::unordered_map<Node, Node> cache;
-  return utils::substitute(d_env.nm(), body, substitutions, cache, false);
+  return utils::substitute(d_env.nm(), body, substitutions, false);
 }
 
 PassElimLambda::Statistics::Statistics(util::Statistics& stats)

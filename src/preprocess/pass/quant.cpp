@@ -587,8 +587,7 @@ PassQuant::eliminate(const Node& node)
     assert(!substs.empty());
     {
       util::Timer timer_inv_elim_subst(d_stats.time_inv_elim_subst);
-      std::unordered_map<Node, Node> cache;
-      body = rewriter.rewrite(utils::substitute(nm, body, substs, cache));
+      body = rewriter.rewrite(utils::substitute(nm, body, substs));
     }
     d_stats.num_inv_elim += substs.size();
     for (const auto& [var, inv] : substs)
@@ -736,9 +735,8 @@ PassQuant::alpha_normalize(const Node& node)
           body = body[1];
         } while (body.kind() == Kind::FORALL && !shared(body));
         // Substitute and cache.
-        std::unordered_map<Node, Node> subst_cache;
         Node norm = rewriter.rewrite(
-            utils::substitute(nm, d_alpha_cache.at(body), substs, subst_cache));
+            utils::substitute(nm, d_alpha_cache.at(body), substs));
         args.push_back(norm);
         it->second              = utils::mk_nary(nm, Kind::FORALL, args);
         auto [has_free, quants] = has_free_vars(it->second);
@@ -774,9 +772,7 @@ PassQuant::alpha_normalize(const Node& node)
   const Node& norm = d_alpha_cache.at(node);
   assert(!has_free_vars(norm).first);
   // Substitute alpha-equivalent quantifiers with their representatives.
-  std::unordered_map<Node, Node> subst_cache;
-  Node res =
-      rewriter.rewrite(utils::substitute(nm, node, repr_substs, subst_cache));
+  Node res = rewriter.rewrite(utils::substitute(nm, node, repr_substs));
   auto [it, inserted] = d_alpha_reps.emplace(norm, res);
   if (!inserted && it->second != res)
   {

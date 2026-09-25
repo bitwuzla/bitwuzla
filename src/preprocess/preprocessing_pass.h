@@ -33,8 +33,6 @@ namespace preprocess {
  */
 class PreprocessingPass
 {
-  using SubstitutionMap = backtrack::unordered_map<Node, Node>;
-
  public:
   /**
    * Constructor.
@@ -69,26 +67,6 @@ class PreprocessingPass
   const std::string& id() const { return d_id; }
 
  protected:
-  /**
-   * Replace all occurrences of `substititutions` in `node.
-   * @param node          The node.
-   * @param substitutions A Map from node that should be substituted to node to
-   *                      substitute with.
-   * @param cache         The substitution cache, maps node to its substitution
-   *                      if applicable, else to itself.
-   * @return The rewritten form of the node with all occurrences in the
-   *         substitution map replaced by their substitutions and the number
-   *         of substitutions performed.
-   */
-  std::pair<Node, uint64_t> substitute(
-      const Node& node,
-      const SubstitutionMap& substitutions,
-      std::unordered_map<Node, Node>& cache) const;
-
-  Node substitute(const Node& node,
-                  const std::unordered_map<Node, Node>& substitutions,
-                  std::unordered_map<Node, Node>& cache) const;
-
   /**
    * Mark assertion as processed.
    *

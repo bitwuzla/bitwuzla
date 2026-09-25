@@ -1707,11 +1707,11 @@ PassNormalize::normalize_adders(const std::vector<Node>& assertions,
     }
   }
 
-  std::unordered_map<Node, Node> subst_cache;
+  utils::Substituter substituter(nm, results);
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
     norm_assertions.push_back(
-        d_rewriter.rewrite(substitute(assertions[i], results, subst_cache)));
+        d_rewriter.rewrite(substituter.substitute(assertions[i])));
   }
 }
 

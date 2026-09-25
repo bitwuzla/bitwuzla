@@ -266,27 +266,23 @@ TEST_F(TestNodeUtils, substitute)
   Node t = d_nm.mk_node(Kind::BV_ADD, {d_a4, d_b4});
 
   std::unordered_map<Node, Node> substs{{d_a4, d_c4}};
-  std::unordered_map<Node, Node> cache;
-  ASSERT_EQ(utils::substitute(d_nm, t, substs, cache),
+  ASSERT_EQ(utils::substitute(d_nm, t, substs),
             d_nm.mk_node(Kind::BV_ADD, {d_c4, d_b4}));
 
   // Without substitutions the node is returned as is.
   std::unordered_map<Node, Node> empty;
-  cache.clear();
-  ASSERT_EQ(utils::substitute(d_nm, t, empty, cache), t);
+  ASSERT_EQ(utils::substitute(d_nm, t, empty), t);
 }
 
 TEST_F(TestNodeUtils, substitute_follow_substs)
 {
   std::unordered_map<Node, Node> substs{{d_a4, d_b4}, {d_b4, d_c4}};
-  std::unordered_map<Node, Node> cache;
 
   // Substitutions are applied to substituted terms.
-  ASSERT_EQ(utils::substitute(d_nm, d_a4, substs, cache), d_c4);
+  ASSERT_EQ(utils::substitute(d_nm, d_a4, substs), d_c4);
 
   // Substitutions are applied simultaneously.
-  cache.clear();
-  ASSERT_EQ(utils::substitute(d_nm, d_a4, substs, cache, false), d_b4);
+  ASSERT_EQ(utils::substitute(d_nm, d_a4, substs, false), d_b4);
 }
 
 TEST_F(TestNodeUtils, substitute_num_substs)
@@ -294,11 +290,15 @@ TEST_F(TestNodeUtils, substitute_num_substs)
   Node t = d_nm.mk_node(Kind::BV_ADD, {d_a4, d_b4});
 
   std::unordered_map<Node, Node> substs{{d_a4, d_c4}, {d_b4, d_c4}};
-  std::unordered_map<Node, Node> cache;
-  uint64_t num_substs = 0;
-  ASSERT_EQ(utils::substitute(d_nm, t, substs, cache, false, &num_substs),
+  utils::Substituter substituter(d_nm, substs, false);
+  ASSERT_EQ(substituter.substitute(t),
             d_nm.mk_node(Kind::BV_ADD, {d_c4, d_c4}));
-  ASSERT_EQ(num_substs, 2);
+  ASSERT_EQ(substituter.num_substs(), 2);
+
+  // Nodes cached by a previous call are not counted again.
+  ASSERT_EQ(substituter.substitute(d_nm.mk_node(Kind::BV_MUL, {d_a4, d_b4})),
+            d_nm.mk_node(Kind::BV_MUL, {d_c4, d_c4}));
+  ASSERT_EQ(substituter.num_substs(), 2);
 }
 
 TEST_F(TestNodeUtils, substitute_shadow)
@@ -312,9 +312,8 @@ TEST_F(TestNodeUtils, substitute_shadow)
       d_nm.mk_node(Kind::AND, {d_nm.mk_node(Kind::EQUAL, {x, d_a4}), bound});
 
   std::unordered_map<Node, Node> substs{{x, d_c4}};
-  std::unordered_map<Node, Node> cache;
   // The binder shadows x, its body is left untouched.
-  ASSERT_EQ(utils::substitute(d_nm, t, substs, cache),
+  ASSERT_EQ(utils::substitute(d_nm, t, substs),
             d_nm.mk_node(Kind::AND,
                          {d_nm.mk_node(Kind::EQUAL, {d_c4, d_a4}), bound}));
 }
@@ -328,16 +327,14 @@ TEST_F(TestNodeUtils, substitute_bound_variable)
       d_nm.mk_node(Kind::FORALL, {x, d_nm.mk_node(Kind::EQUAL, {x, d_a4})});
 
   std::unordered_map<Node, Node> substs{{x, d_b4}};
-  std::unordered_map<Node, Node> cache;
-  ASSERT_EQ(utils::substitute(d_nm, q, substs, cache), q);
+  ASSERT_EQ(utils::substitute(d_nm, q, substs), q);
 
   // Only the free occurrences below the binder are substituted, the binder
   // itself is kept.
   Node qy = d_nm.mk_node(Kind::FORALL, {x, d_nm.mk_node(Kind::EQUAL, {x, y})});
   std::unordered_map<Node, Node> substs_xy{{x, d_b4}, {y, d_c4}};
-  cache.clear();
   ASSERT_EQ(
-      utils::substitute(d_nm, qy, substs_xy, cache),
+      utils::substitute(d_nm, qy, substs_xy),
       d_nm.mk_node(Kind::FORALL, {x, d_nm.mk_node(Kind::EQUAL, {x, d_c4})}));
 }
 
@@ -349,8 +346,7 @@ TEST_F(TestNodeUtils, substitute_capture)
   Node t = d_nm.mk_node(Kind::FORALL, {u, d_nm.mk_node(Kind::EQUAL, {v, u})});
 
   std::unordered_map<Node, Node> substs{{v, u}};
-  std::unordered_map<Node, Node> cache;
-  Node res = utils::substitute(d_nm, t, substs, cache);
+  Node res = utils::substitute(d_nm, t, substs);
 
   // The binder is renamed, u stays free.
   ASSERT_EQ(res.kind(), Kind::FORALL);
@@ -359,6 +355,74 @@ TEST_F(TestNodeUtils, substitute_capture)
   std::unordered_set<Node> fvs;
   ASSERT_TRUE(utils::free_vars(res, &fvs));
   ASSERT_EQ(fvs, std::unordered_set<Node>{u});
+}
+
+TEST_F(TestNodeUtils, substitute_capture_shared)
+{
+  Node u = d_nm.mk_var(d_bv4_type, "u");
+  Node v = d_nm.mk_var(d_bv4_type, "v");
+  // (forall u (= v u)), substituting v with u would capture u.
+  Node t = d_nm.mk_node(Kind::FORALL, {u, d_nm.mk_node(Kind::EQUAL, {v, u})});
+
+  std::unordered_map<Node, Node> substs{{v, u}};
+  utils::Substituter substituter(d_nm, substs);
+  // No binder is encountered in the first call, capture is only determined
+  // once the second call reaches the binder.
+  ASSERT_EQ(substituter.substitute(d_nm.mk_node(Kind::EQUAL, {v, d_a4})),
+            d_nm.mk_node(Kind::EQUAL, {u, d_a4}));
+  Node res = substituter.substitute(t);
+
+  // The binder is renamed, u stays free.
+  ASSERT_EQ(res.kind(), Kind::FORALL);
+  ASSERT_NE(res[0], u);
+  ASSERT_EQ(res[1], d_nm.mk_node(Kind::EQUAL, {u, res[0]}));
+}
+
+TEST_F(TestNodeUtils, substitute_capture_follow_substs)
+{
+  Node w = d_nm.mk_var(d_bv4_type, "w");
+  Node x = d_nm.mk_var(d_bv4_type, "x");
+  Node y = d_nm.mk_var(d_bv4_type, "y");
+  // (forall w (= x w)), x is substituted with (bvadd y a4), in which w only
+  // occurs after substituting y with w.
+  Node t   = d_nm.mk_node(Kind::FORALL, {w, d_nm.mk_node(Kind::EQUAL, {x, w})});
+  Node add = d_nm.mk_node(Kind::BV_ADD, {y, d_a4});
+  std::unordered_map<Node, Node> substs{{x, add}, {y, w}};
+
+  // The binder is renamed, w stays free.
+  Node res = utils::substitute(d_nm, t, substs);
+  ASSERT_EQ(res.kind(), Kind::FORALL);
+  ASSERT_NE(res[0], w);
+  ASSERT_EQ(res[1],
+            d_nm.mk_node(Kind::EQUAL,
+                         {d_nm.mk_node(Kind::BV_ADD, {w, d_a4}), res[0]}));
+  std::unordered_set<Node> fvs;
+  ASSERT_TRUE(utils::free_vars(res, &fvs));
+  ASSERT_EQ(fvs, std::unordered_set<Node>{w});
+
+  // Substituted terms are not processed again, nothing is captured.
+  ASSERT_EQ(
+      utils::substitute(d_nm, t, substs, false),
+      d_nm.mk_node(Kind::FORALL, {w, d_nm.mk_node(Kind::EQUAL, {add, w})}));
+}
+
+TEST_F(TestNodeUtils, substitute_shadow_follow_substs)
+{
+  Node w = d_nm.mk_var(d_bv4_type, "w");
+  Node x = d_nm.mk_var(d_bv4_type, "x");
+  Node y = d_nm.mk_var(d_bv4_type, "y");
+  // (forall y (= x y)) shadows y, but x is substituted with (bvadd y a4),
+  // which refers to the y substituted with w.
+  Node t = d_nm.mk_node(Kind::FORALL, {y, d_nm.mk_node(Kind::EQUAL, {x, y})});
+  std::unordered_map<Node, Node> substs{
+      {x, d_nm.mk_node(Kind::BV_ADD, {y, d_a4})}, {y, w}};
+
+  ASSERT_EQ(
+      utils::substitute(d_nm, t, substs),
+      d_nm.mk_node(Kind::FORALL,
+                   {y,
+                    d_nm.mk_node(Kind::EQUAL,
+                                 {d_nm.mk_node(Kind::BV_ADD, {w, d_a4}), y})}));
 }
 
 TEST_F(TestNodeUtils, substitute_capture_vacuous_binder)
@@ -373,8 +437,7 @@ TEST_F(TestNodeUtils, substitute_capture_vacuous_binder)
   // capture w, even though renaming w in the body changes nothing.
   Node t = d_nm.mk_node(Kind::BV_ADD, {w, d_a4});
   std::unordered_map<Node, Node> substs{{x, t}};
-  std::unordered_map<Node, Node> cache;
-  Node res = utils::substitute(d_nm, q, substs, cache);
+  Node res = utils::substitute(d_nm, q, substs);
 
   ASSERT_EQ(res.kind(), Kind::FORALL);
   ASSERT_NE(res[0], w);
@@ -396,8 +459,7 @@ TEST_F(TestNodeUtils, substitute_no_capture)
   Node t = d_nm.mk_node(Kind::AND, {d_nm.mk_node(Kind::EQUAL, {v, d_b4}), q});
 
   std::unordered_map<Node, Node> substs{{v, u}};
-  std::unordered_map<Node, Node> cache;
-  ASSERT_EQ(utils::substitute(d_nm, t, substs, cache),
+  ASSERT_EQ(utils::substitute(d_nm, t, substs),
             d_nm.mk_node(Kind::AND, {d_nm.mk_node(Kind::EQUAL, {u, d_b4}), q}));
 }
 

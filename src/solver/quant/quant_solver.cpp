@@ -171,8 +171,7 @@ Node
 QuantSolver::substitute(const Node& n,
                         const std::unordered_map<Node, Node>& substs)
 {
-  std::unordered_map<Node, Node> cache;
-  return utils::substitute(d_env.nm(), n, substs, cache, false);
+  return utils::substitute(d_env.nm(), n, substs, false);
 }
 
 const Node&

@@ -10,7 +10,6 @@
 
 #include "node/node_utils.h"
 
-#include <algorithm>
 #include <sstream>
 
 #include "bv/bitvector.h"
@@ -431,16 +430,10 @@ rebuild_node(NodeManager& nm,
 
 namespace {
 
-/** Determine whether `node` is or contains a binder. */
-bool
-has_binder(const Node& node)
-{
-  const NodeInfo& info = node.node_info();
-  return info.quantifier || info.lambda;
-}
-
 /** Maps a node to a set of variables. */
 using FreeVarsMap = std::unordered_map<Node, std::unordered_set<Node>>;
+
+}  // namespace
 
 /**
  * Determines whether a binder captures a substitution.
@@ -449,41 +442,31 @@ using FreeVarsMap = std::unordered_map<Node, std::unordered_set<Node>>;
  * shadowed or captured by one. Substituting anything else is only captured if
  * it introduces free variables, which no caller does.
  */
-struct Capture
+struct Substituter::Capture
 {
   /**
-   * Record the free variables of the term `var` is substituted with.
+   * Constructor.
    *
-   * Nothing is recorded for substituted nodes that are not variables and for
-   * substitutions without free variables, neither of which can be captured.
+   * @param substitutions The substitution map.
+   * @param follow_substs True if substitutions are applied to substituted
+   *                      terms.
    */
-  void add(const Node& var, const Node& subst)
+  Capture(const std::unordered_map<Node, Node>& substitutions,
+          bool follow_substs)
   {
-    if (var.kind() != Kind::VARIABLE)
+    for (const auto& [n, subst] : substitutions)
     {
-#ifndef NDEBUG
-      // Substituting a node that is not a variable is not capture-avoiding,
-      // hence it must not introduce free variables that a binder can capture.
-      compute_free_vars(var, d_fv_cache);
-      compute_free_vars(subst, d_fv_cache);
-      const auto& var_fvs = d_fv_cache.at(var);
-      for (const Node& fv : d_fv_cache.at(subst))
-      {
-        assert(var_fvs.find(fv) != var_fvs.end());
-      }
-#endif
-      return;
+      add(n, subst);
     }
-    std::unordered_set<Node> fvs;
-    if (free_vars(subst, &fvs, d_fv_cache))
+    if (follow_substs)
+    {
+      follow(substitutions);
+    }
+    for (const auto& [var, fvs] : d_var_fvs)
     {
       d_vars.insert(fvs.begin(), fvs.end());
-      d_var_fvs.emplace(var, std::move(fvs));
     }
   }
-
-  /** @return True if no binder can capture a substitution. */
-  bool empty() const { return d_vars.empty(); }
 
   /**
    * @return True if `binder` captures a substitution, i.e., if a substituted
@@ -517,6 +500,110 @@ struct Capture
   }
 
  private:
+  /**
+   * Record the free variables of the term `var` is substituted with.
+   *
+   * Nothing is recorded for substituted nodes that are not variables and for
+   * substitutions without free variables, neither of which can be captured.
+   */
+  void add(const Node& var, const Node& subst)
+  {
+    if (var.kind() != Kind::VARIABLE)
+    {
+#ifndef NDEBUG
+      // Substituting a node that is not a variable is not capture-avoiding,
+      // hence it must not introduce free variables that a binder can capture.
+      compute_free_vars(var, d_fv_cache);
+      compute_free_vars(subst, d_fv_cache);
+      const auto& var_fvs = d_fv_cache.at(var);
+      for (const Node& fv : d_fv_cache.at(subst))
+      {
+        assert(var_fvs.find(fv) != var_fvs.end());
+      }
+#endif
+      return;
+    }
+    std::unordered_set<Node> fvs;
+    if (free_vars(subst, &fvs, d_fv_cache))
+    {
+      d_var_fvs.emplace(var, std::move(fvs));
+    }
+  }
+
+  /**
+   * Replace every substituted variable in the recorded free variables with the
+   * free variables of its substitution.
+   *
+   * If substitutions are applied to substituted terms, a variable is replaced
+   * with its substitution with all substitutions applied. A binder thus also
+   * captures the free variables of the terms substituted into its
+   * substitution. The substitution map is acyclic, hence the free variables
+   * are computed in post-order over the substituted variables they depend on.
+   */
+  void follow(const std::unordered_map<Node, Node>& substitutions)
+  {
+    auto is_substituted = [&substitutions](const Node& var) {
+      auto it = substitutions.find(var);
+      return it != substitutions.end() && it->second != var;
+    };
+
+    FreeVarsMap closed;
+    std::vector<Node> visit;
+    for (const auto& [var, fvs] : d_var_fvs)
+    {
+      visit.push_back(var);
+    }
+    std::unordered_map<Node, bool> visited;
+    while (!visit.empty())
+    {
+      Node cur            = visit.back();
+      auto [it, inserted] = visited.emplace(cur, false);
+      if (inserted)
+      {
+        for (const Node& fv : d_var_fvs.at(cur))
+        {
+          if (is_substituted(fv) && d_var_fvs.find(fv) != d_var_fvs.end())
+          {
+            visit.push_back(fv);
+          }
+        }
+        continue;
+      }
+      else if (!it->second)
+      {
+        it->second = true;
+        std::unordered_set<Node> fvs;
+        for (const Node& fv : d_var_fvs.at(cur))
+        {
+          if (!is_substituted(fv))
+          {
+            fvs.insert(fv);
+            continue;
+          }
+          // Substituted variables without an entry are substituted with a
+          // term without free variables.
+          auto itc = closed.find(fv);
+          assert(itc != closed.end() || d_var_fvs.find(fv) == d_var_fvs.end());
+          if (itc != closed.end())
+          {
+            fvs.insert(itc->second.begin(), itc->second.end());
+          }
+        }
+        closed.emplace(cur, std::move(fvs));
+      }
+      visit.pop_back();
+    }
+
+    d_var_fvs.clear();
+    for (auto& [var, fvs] : closed)
+    {
+      if (!fvs.empty())
+      {
+        d_var_fvs.emplace(var, std::move(fvs));
+      }
+    }
+  }
+
   /** Maps a substituted variable to the free variables of its substitution. */
   FreeVarsMap d_var_fvs;
   /** The union of the above, used as a cheap check per binder. */
@@ -525,23 +612,43 @@ struct Capture
   FreeVarsMap d_fv_cache;
 };
 
-Node substitute_aux(NodeManager& nm,
-                    const Node& node,
-                    const std::unordered_map<Node, Node>& substitutions,
-                    Capture* capture,
-                    std::unordered_map<Node, Node>& cache,
-                    bool follow_substs,
-                    uint64_t* num_substs);
+Substituter::Substituter(NodeManager& nm,
+                         const std::unordered_map<Node, Node>& substitutions,
+                         bool follow_substs)
+    : d_nm(nm), d_substitutions(substitutions), d_follow_substs(follow_substs)
+{
+}
 
-/** Apply substitutions to the body of a binder that needs its own scope. */
+Substituter::~Substituter() {}
+
 Node
-substitute_binder(NodeManager& nm,
-                  const Node& binder,
-                  const std::unordered_map<Node, Node>& substitutions,
-                  bool captured,
-                  Capture* capture,
-                  bool follow_substs,
-                  uint64_t* num_substs)
+Substituter::substitute(const Node& node)
+{
+  if (d_substitutions.empty())
+  {
+    return node;
+  }
+  return substitute_aux(node, d_substitutions, d_cache);
+}
+
+bool
+Substituter::is_captured(const Node& binder)
+{
+  // Shadowing and capture are only possible below a binder. The free
+  // variables of the substituted terms are thus only computed when the first
+  // binder is encountered, and only once for all calls to substitute().
+  if (!d_capture)
+  {
+    d_capture = std::make_unique<Capture>(d_substitutions, d_follow_substs);
+  }
+  return d_capture->is_captured(binder);
+}
+
+Node
+Substituter::substitute_binder(
+    const Node& binder,
+    const std::unordered_map<Node, Node>& substitutions,
+    bool captured)
 {
   assert(KindInfo::is_binder(binder.kind()));
 
@@ -555,11 +662,9 @@ substitute_binder(NodeManager& nm,
     // renaming must not be applied to the substituted terms, which refer to
     // the variable of the enclosing scope. The fresh variable cannot capture
     // anything, it is bound by this binder only.
-    new_var = nm.mk_var(var.type(), var.symbol());
+    new_var = d_nm.mk_var(var.type(), var.symbol());
     std::unordered_map<Node, Node> renaming{{var, new_var}};
-    std::unordered_map<Node, Node> renaming_cache;
-    body = substitute_aux(
-        nm, body, renaming, nullptr, renaming_cache, false, nullptr);
+    body = Substituter(d_nm, renaming, false).substitute(body);
   }
 
   // The binder shadows its variable, it must not be substituted in its scope.
@@ -570,29 +675,19 @@ substitute_binder(NodeManager& nm,
     // Nodes in the scope of the binder are substituted w.r.t. `substs` and
     // must not be cached in the cache of the enclosing scope.
     std::unordered_map<Node, Node> scope_cache;
-    body = substitute_aux(
-        nm, body, substs, capture, scope_cache, follow_substs, num_substs);
+    body = substitute_aux(body, substs, scope_cache);
   }
 
-  return nm.mk_node(binder.kind(), {new_var, body});
+  return d_nm.mk_node(binder.kind(), {new_var, body});
 }
 
-/**
- * Apply substitutions to `node`.
- *
- * Binders that need a scope of their own are processed by substitute_binder(),
- * which recurses with the substitution map of that scope. `capture` is null if
- * no binder can capture a substitution; shadowing still has to be handled.
- */
 Node
-substitute_aux(NodeManager& nm,
-               const Node& node,
-               const std::unordered_map<Node, Node>& substitutions,
-               Capture* capture,
-               std::unordered_map<Node, Node>& cache,
-               bool follow_substs,
-               uint64_t* num_substs)
+Substituter::substitute_aux(const Node& node,
+                            const std::unordered_map<Node, Node>& substitutions,
+                            std::unordered_map<Node, Node>& cache)
 {
+  // False if in the scope of a binder processed by substitute_binder().
+  bool top_level = &cache == &d_cache;
   node::node_ref_vector visit{node};
 
   do
@@ -616,17 +711,11 @@ substitute_aux(NodeManager& nm,
         {
           // A binder that shadows a substituted node or that would capture a
           // substitution needs a scope of its own.
-          bool captured = capture && capture->is_captured(cur);
+          bool captured = is_captured(cur);
           if (captured || substitutions.find(cur[0]) != substitutions.end())
           {
             // Note: `it` may be invalidated by the recursive call.
-            cache[cur] = substitute_binder(nm,
-                                           cur,
-                                           substitutions,
-                                           captured,
-                                           capture,
-                                           follow_substs,
-                                           num_substs);
+            cache[cur] = substitute_binder(cur, substitutions, captured);
             visit.pop_back();
             continue;
           }
@@ -634,7 +723,7 @@ substitute_aux(NodeManager& nm,
         visit.insert(visit.end(), cur.begin(), cur.end());
         continue;
       }
-      else if (follow_substs)
+      else if (d_follow_substs && top_level)
       {
         visit.push_back(its->second);
         continue;
@@ -644,16 +733,28 @@ substitute_aux(NodeManager& nm,
     if (substituted)
     {
       assert(!its->second.is_null());
-      // With `follow_substs` the substituted term has been processed above.
-      it->second = follow_substs ? cache.at(its->second) : its->second;
-      if (num_substs)
+      if (!d_follow_substs)
       {
-        *num_substs += 1;
+        it->second = its->second;
       }
+      else if (top_level)
+      {
+        // The substituted term has been processed above.
+        it->second = cache.at(its->second);
+      }
+      else
+      {
+        // Substituted terms are in the scope of the nodes passed to
+        // substitute(), not in the scope of the binder they are substituted
+        // into. They are thus processed w.r.t. all substitutions and cached in
+        // the top-level cache, which does not invalidate `it`.
+        it->second = substitute_aux(its->second, d_substitutions, d_cache);
+      }
+      d_num_substs += 1;
     }
     else
     {
-      it->second = rebuild_node(nm, cur, cache);
+      it->second = rebuild_node(d_nm, cur, cache);
     }
     assert(!it->second.is_null());
     visit.pop_back();
@@ -662,46 +763,13 @@ substitute_aux(NodeManager& nm,
   return cache.at(node);
 }
 
-}  // namespace
-
 Node
 substitute(NodeManager& nm,
            const Node& node,
            const std::unordered_map<Node, Node>& substitutions,
-           std::unordered_map<Node, Node>& cache,
-           bool follow_substs,
-           uint64_t* num_substs)
+           bool follow_substs)
 {
-  if (substitutions.empty())
-  {
-    return node;
-  }
-
-  // Shadowing and capture are only possible below a binder. If `follow_substs`
-  // is enabled, substituted terms are also traversed and may contain binders.
-  bool binders =
-      has_binder(node)
-      || (follow_substs
-          && std::any_of(substitutions.begin(),
-                         substitutions.end(),
-                         [](const auto& p) { return has_binder(p.second); }));
-
-  Capture capture;
-  if (binders)
-  {
-    for (const auto& [n, subst] : substitutions)
-    {
-      capture.add(n, subst);
-    }
-  }
-
-  return substitute_aux(nm,
-                        node,
-                        substitutions,
-                        capture.empty() ? nullptr : &capture,
-                        cache,
-                        follow_substs,
-                        num_substs);
+  return Substituter(nm, substitutions, follow_substs).substitute(node);
 }
 
 Node

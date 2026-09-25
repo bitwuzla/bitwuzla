@@ -12,6 +12,7 @@
 #define BZLA_PREPROCESS_PASS_EMBEDDED_CONSTRAINTS_H_INCLUDED
 
 #include "backtrack/unordered_map.h"
+#include "node/node_utils.h"
 #include "preprocess/preprocessing_pass.h"
 #include "util/statistics.h"
 
@@ -29,7 +30,7 @@ class PassEmbeddedConstraints : public PreprocessingPass
   Node process(const Node& node) override;
 
  private:
-  Node _process(const Node& node, std::unordered_map<Node, Node>& cache);
+  Node _process(const Node& node, node::utils::Substituter& substituter);
 
   /** Backtrackable substitution map. */
   backtrack::unordered_map<Node, Node> d_substitutions;

@@ -11,7 +11,6 @@
 #include "preprocess/preprocessing_pass.h"
 
 #include "env.h"
-#include "node/node_utils.h"
 
 namespace bzla::preprocess {
 
@@ -38,26 +37,6 @@ PreprocessingPass::clear_cache()
 }
 
 /* --- PreprocessingPass protected ------------------------------------------ */
-
-std::pair<Node, uint64_t>
-PreprocessingPass::substitute(const Node& node,
-                              const SubstitutionMap& substitutions,
-                              std::unordered_map<Node, Node>& cache) const
-{
-  uint64_t num_substs = 0;
-  Node res            = node::utils::substitute(
-      d_env.nm(), node, substitutions.map(), cache, false, &num_substs);
-  return std::make_pair(res, num_substs);
-}
-
-Node
-PreprocessingPass::substitute(
-    const Node& node,
-    const std::unordered_map<Node, Node>& substitutions,
-    std::unordered_map<Node, Node>& cache) const
-{
-  return node::utils::substitute(d_env.nm(), node, substitutions, cache);
-}
 
 bool
 PreprocessingPass::cache_assertion(const Node& assertion)
