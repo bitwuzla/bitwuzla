@@ -829,7 +829,7 @@ class Term
    *       strings instantiation. It is always ignored for Boolean and
    *       RoundingMode values.
    *
-   * @tparam T   The type of the value representation. `bool` for Boolean
+   * @param T    The type of the value representation. `bool` for Boolean
    *             values; `RoundingMode` for rounding mode values;
    *             `std::tuple<std::string, std::string, std::string>` for
    *             floating-point values (IEEE-754 representation as strings
