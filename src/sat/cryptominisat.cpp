@@ -155,12 +155,6 @@ CryptoMiniSat::get_version() const
   return d_solver->get_version();
 }
 
-void
-CryptoMiniSat::set_num_threads(uint32_t n_threads) const
-{
-  d_solver->set_num_threads(n_threads);
-}
-
 /* --- CryptoMiniSat private ------------------------------------------------ */
 
 CMSat::Lit
