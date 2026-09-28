@@ -42,13 +42,12 @@ BvInterpolator::BvInterpolator(Env& env,
     : d_stats(env.statistics(), "solver::bv::interpolator::"),
       d_env(env),
       d_logger(env.logger()),
-      d_lemmas(state.lemma_cache()),
+      d_lemmas(bb_solver.encoded_lemmas()),
       d_bitblaster(bb_solver.bitblaster()),
       d_cnf_encoder(bb_solver.cnf_encoder()),
       d_tracer(reinterpret_cast<sat::CadicalInterpol*>(bb_solver.sat_solver())
                    ->tracer()),
-      d_word_blaster(state.fp_solver().word_blaster()),
-      d_am(state.abstraction_module())
+      d_word_blaster(state.fp_solver().word_blaster())
 {
 }
 
@@ -89,24 +88,16 @@ BvInterpolator::interpolant(const std::vector<Node>& ppA,
 
     label_vars(var_labels, term_labels, ppA, ppB);
 
-    // Process lemmas in insertion order. We do not iterate over d_lemmas here,
-    // since this would yield an std::unordered_set order, which differs between
-    // standard library implementations and thus makes labeling (and with it the
-    // computed interpolant) platform-dependent.
-    for (const Node& a : d_lemmas.values())
+    // Process lemmas in encoding order, which keeps labeling (and with it the
+    // computed interpolant) platform-independent. We label the lemmas whose
+    // clauses are currently in the SAT solver rather than the lemmas in
+    // SolverEngine::lemma_cache(), since lemma clauses may survive pops that
+    // remove the lemma from the cache (see
+    // BvBitblastSolver::encoded_lemmas()). These lemmas are given in their
+    // bit-blasted form, i.e., as processed by the abstraction module.
+    for (const Node& a : d_lemmas)
     {
-      // If other theories than BV are involved, it can happen that lemmas
-      // sent by a theory solver contain terms that are abstracted via the
-      // abstraction module. Such lemmas are not directly bit-blasted
-      // (their abstracted version is), but cached in their original form in
-      // SolverEngine::lemma_cache() (which d_lemmas corresponds to) since this
-      // cache is used to filter duplicate lemmas sent by theory solvers.
-      // We thus query the abstraction module for the processed version of
-      // the lemma (= the original lemma if no abstractions were introduced).
-      label_lemma(var_labels,
-                  clause_labels,
-                  term_labels,
-                  d_am ? d_am->get_processed(a) : a);
+      label_lemma(var_labels, clause_labels, term_labels, a);
     }
   }
 
@@ -171,13 +162,9 @@ BvInterpolator::interpolant(const std::vector<Node>& ppA,
       if (cache.insert(cur).second)
       {
         visit.insert(visit.end(), cur.begin(), cur.end());
-        // We label the lemma processed by the abstraction module, since this
-        // is the one bit-blasted, not the original one. The abstraction module,
-        // however, only caches the lemma itself, but not the nodes it contains.
-        assert(term_labels.find(d_am && d_am->is_processed(cur)
-                                    ? d_am->get_processed(cur)
-                                    : cur)
-               != term_labels.end());
+        // Lemmas are given in their bit-blasted form (as processed by the
+        // abstraction module), which is the form we label.
+        assert(term_labels.find(cur) != term_labels.end());
       }
     }
   }

@@ -70,6 +70,21 @@ class BvBitblastSolver : public Solver,
   sat::SatSolver* sat_solver() { return d_sat_solver.get(); }
 
   /**
+   * Get the lemmas whose clauses are currently in the SAT solver, in encoding
+   * order. Only maintained if produce-interpolants is enabled.
+   *
+   * Lemmas are encoded at the level of their terms, which may be lower than
+   * the level they were generated at. Their clauses thus survive pops that
+   * remove them from SolverEngine::lemma_cache(), and they may occur in
+   * subsequent proofs. Hence, the interpolation engine must label lemmas based
+   * on this list rather than on the lemma cache.
+   *
+   * @note Lemmas are given in the form they were bit-blasted, i.e., after
+   *       processing by the abstraction module.
+   */
+  const std::vector<Node>& encoded_lemmas() const { return d_encoded_lemmas; }
+
+  /**
    * Get interpolant I of formulas A and B such that
    * (and A B) is unsat and (=> A I) and (=> I (not B)) are valid.
    *
@@ -120,12 +135,23 @@ class BvBitblastSolver : public Solver,
   /** The current set of assumptions. */
   backtrack::vector<Node> d_assumptions;
   /**
-   * Queue of (node, is_assertion, level, enc_level) tuples pending CNF
-   * encoding, registered at assertion level `level` and encoded at
+   * Queue of (node, is_assertion, is_lemma, level, enc_level) tuples pending
+   * CNF encoding, registered at assertion level `level` and encoded at
    * `enc_level`. Backtrackable, so entries above a popped level are dropped
    * automatically.
    */
-  backtrack::vector<std::tuple<Node, bool, uint32_t, uint32_t>> d_encode_queue;
+  backtrack::vector<std::tuple<Node, bool, bool, uint32_t, uint32_t>>
+      d_encode_queue;
+
+  /**
+   * The lemmas whose clauses are currently in the SAT solver, in encoding
+   * order, and the level they were encoded at. Only maintained if
+   * produce-interpolants is enabled. Not backtrackable, since lemmas are
+   * encoded at the level of their terms (see encoded_lemmas()). Entries are
+   * removed in pop() when their encoding level is popped.
+   */
+  std::vector<Node> d_encoded_lemmas;
+  std::unordered_map<Node, uint32_t> d_encoded_lemma_levels;
 
   /** AIG bit-blaster. */
   AigBitblaster d_bitblaster;

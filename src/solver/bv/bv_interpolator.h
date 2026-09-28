@@ -13,10 +13,8 @@
 
 #include <cstdint>
 
-#include "backtrack/unordered_set.h"
 #include "bitblast/aig_bitblaster.h"
 #include "sat/interpolants/tracer_kinds.h"
-#include "solver/abstract/abstraction_module.h"
 #include "solver/bv/aig_bitblaster.h"
 #include "solver/bv/bv_bitblast_solver.h"
 #include "solver/fp/word_blaster.h"
@@ -214,8 +212,11 @@ class BvInterpolator
   /** The associated logger instance. */
   util::Logger& d_logger;
 
-  /** The current set of lemmas. */
-  const backtrack::unordered_set<Node>& d_lemmas;
+  /**
+   * The lemmas whose clauses are currently in the SAT solver, in their
+   * bit-blasted form (see BvBitblastSolver::encoded_lemmas()).
+   */
+  const std::vector<Node>& d_lemmas;
 
   /** AIG bit-blaster. */
   AigBitblaster& d_bitblaster;
@@ -225,8 +226,6 @@ class BvInterpolator
   sat::interpolants::Tracer* d_tracer;
   /** The associated word_blaster. */
   const fp::WordBlaster& d_word_blaster;
-  /** The associated abstraction module, nulllptr if disabled. */
-  abstract::AbstractionModule* d_am = nullptr;
 };
 
 #else

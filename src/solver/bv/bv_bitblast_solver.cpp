@@ -164,12 +164,28 @@ BvBitblastSolver::solve()
   if (!d_encode_queue.empty())
   {
     util::Timer timer(d_stats.time_encode);
-    for (const auto& [n, is_assertion, level, level_encode] : d_encode_queue)
+    for (const auto& [n, is_assertion, is_lemma, level, level_encode] :
+         d_encode_queue)
     {
       sync_sat_level(level);
       const auto& bits = d_bitblaster.bits(n);
       assert(bits.size() == 1);
       d_cnf_encoder->encode(bits[0], is_assertion, level_encode);
+      if (d_produce_interpolants && is_lemma)
+      {
+        // A lemma may be encoded again after it was dropped from the lemma
+        // cache on pop while its clauses survived. Keep the lowest level its
+        // clauses are active at.
+        auto [it, inserted] = d_encoded_lemma_levels.emplace(n, level_encode);
+        if (inserted)
+        {
+          d_encoded_lemmas.push_back(n);
+        }
+        else
+        {
+          it->second = std::min(it->second, level_encode);
+        }
+      }
     }
     d_encode_queue.clear();
   }
@@ -251,7 +267,8 @@ BvBitblastSolver::register_assertion(const Node& assertion,
       is_lemma ? d_solver_state.term_level(assertion) : level;
   assert(level_encode <= level);
 
-  d_encode_queue.emplace_back(assertion, top_level, level, level_encode);
+  d_encode_queue.emplace_back(
+      assertion, top_level, is_lemma, level, level_encode);
 
   // Update AIG statistics
   update_statistics();
@@ -323,10 +340,28 @@ BvBitblastSolver::pop()
   assert(d_sat_level <= d_mgr->num_levels());
   // The backtrack manager decrements its level counter after invoking the
   // callbacks, so d_mgr->num_levels() is the level currently being popped.
+  uint32_t popped_level = static_cast<uint32_t>(d_mgr->num_levels());
+  // Drop lemmas whose clauses are disabled by popping this level. Lemmas
+  // encoded at lower levels remain in the SAT solver.
+  if (!d_encoded_lemmas.empty())
+  {
+    auto it = std::remove_if(
+        d_encoded_lemmas.begin(), d_encoded_lemmas.end(), [&](const Node& n) {
+          auto lit = d_encoded_lemma_levels.find(n);
+          assert(lit != d_encoded_lemma_levels.end());
+          if (lit->second >= popped_level)
+          {
+            d_encoded_lemma_levels.erase(lit);
+            return true;
+          }
+          return false;
+        });
+    d_encoded_lemmas.erase(it, d_encoded_lemmas.end());
+  }
   // Levels above d_sat_level were never added in the SAT solver
   // (sync_sat_level() is only called for levels with pending assertions), so
   // there is nothing to pop for them.
-  if (d_sat_level == d_mgr->num_levels())
+  if (d_sat_level == popped_level)
   {
     --d_sat_level;
     d_sat_solver->pop();

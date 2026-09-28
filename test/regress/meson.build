@@ -1798,6 +1798,7 @@ tests_smt2_get_interpolant = [
   ['get-interpolant/bug-vgasim.min.smt2'],
   ['get-interpolant/interp-query.12.smt2'],
   ['get-interpolant/mixed-lemma-leaf.smt2'],
+  ['get-interpolant/incr-pop-lemma.smt2'],
   ['get-interpolant/prop-murxla-110deca336eefafd.min.smt2'],
 
   # tripwires for CaDiCaL's external propagator interface vs. the proof tracer
