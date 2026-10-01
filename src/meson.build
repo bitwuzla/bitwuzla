@@ -102,6 +102,56 @@ gimsatul_dep = dependency('gimsatul', required: get_option('gimsatul'))
 # symfpu headers
 symfpu_dep = dependency('symfpu', include_type: 'system', required: true)
 
+# Check version of system SymFPU. SymFPU does not ship any version information
+# (no version header, no pkg-config version), so we probe for
+# 'symfpu::unpackedFloat<t>::makeOne()', the only declaration added in SymFPU
+# 1.2.0. Earlier versions, including the tagged 1.1.0 release, compute wrong
+# bit-widths for several floating-point conversions. If the system SymFPU is
+# too old, fall back to the bundled version.
+if symfpu_dep.type_name() != 'internal'
+  symfpu_probe = '''
+#include <symfpu/core/unpackedFloat.h>
+
+// Minimal stand-in for a SymFPU traits class, enough to instantiate
+// symfpu::unpackedFloat<> without pulling in a back end. Instantiating
+// the class only instantiates the declarations of its members.
+struct probeBitVector {
+  probeBitVector(unsigned);
+  unsigned getWidth() const;
+};
+struct probeTraits {
+  typedef unsigned bwt;
+  typedef unsigned fpt;
+  typedef bool prop;
+  typedef probeBitVector ubv;
+  typedef probeBitVector sbv;
+};
+
+using probe = decltype(&symfpu::unpackedFloat<probeTraits>::makeOne);
+
+int main() { return 0; }
+'''
+  if not cpp_compiler.compiles(symfpu_probe,
+                               dependencies: symfpu_dep,
+                               name: 'SymFPU >= 1.2.0')
+    message('Found a system-wide SymFPU older than 1.2.0, ' +
+            'falling back to the bundled version.')
+    symfpu_dep = subproject('symfpu').get_variable('symfpu_dep').as_system()
+  endif
+endif
+
+# Check version of bundled SymFPU. Meson does not update an existing checkout
+# of the subproject when its wrap file changes, it only warns. The bundled
+# headers are only copied to the build directory at build time and can
+# therefore not be probed via compiles(), check the checkout's sources instead.
+if symfpu_dep.type_name() == 'internal'
+  symfpu_header = meson.project_source_root() / 'subprojects' / 'symfpu' / 'core' / 'unpackedFloat.h'
+  if not import('fs').read(symfpu_header).contains('makeOne(')
+    error('Bundled SymFPU in subprojects/symfpu is older than 1.2.0, ' +
+          'run \'meson subprojects update --reset symfpu\' to update it.')
+  endif
+endif
+
 dependencies = [
   gmp_dep, gmp_link_dep, mpfr_dep,
   symfpu_dep,

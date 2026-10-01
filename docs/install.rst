@@ -31,7 +31,7 @@ Building Bitwuzla on Linux and macOS
   * `GMP >= v6.3 (GNU Multi-Precision arithmetic library) <https://gmplib.org>`_
   * `MPFR >= v4.2.1 (GNU Multiple Precision Floating-Point Reliable Library) <https://www.mpfr.org>`_
   * `CaDiCaL >= 3.0.0 <https://github.com/arminbiere/cadical>`_
-  * `SymFPU <https://github.com/martin-cs/symfpu>`_
+  * `SymFPU >= v1.2.0 <https://github.com/martin-cs/symfpu>`_
   * `googletest <https://github.com/google/googletest>`_ (debug, testing)
 
 * **Optional Dependencies**
@@ -43,6 +43,12 @@ Building Bitwuzla on Linux and macOS
 .. note::
   If the build system does not find CaDiCaL or SymFPU, it will fall back to
   downloading and building a suitable version itself.
+
+.. note::
+  SymFPU does not expose its version, Bitwuzla therefore determines whether a
+  system installation is recent enough by probing for an API change introduced
+  in SymFPU 1.2.0. If the system installation is too old, the build system
+  falls back to the bundled version.
 
 .. note::
   CaDiCaL and Kissat ship no pkg-config file and are therefore looked up in the
