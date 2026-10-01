@@ -2500,10 +2500,6 @@ def test_terminate(tm, capfd):
         assert "CryptoMiniSat not compiled in" in str(e) or \
                "terminator not supported in configured SAT solver" in str(e)
 
-    # No terminator support in Kissat, so configuring the terminator
-    # will already throw even though this would terminate in the PP (as the
-    # terminator immediately would terminate the execution on the first call to
-    # terminate).
     try:
         tt = TestTerminator()
         options.set(Option.BV_SOLVER, 'bitblast')
@@ -2511,7 +2507,11 @@ def test_terminate(tm, capfd):
         options.set(Option.REWRITE_LEVEL, 0)
         bitwuzla = Bitwuzla(tm, options)
         bitwuzla.configure_terminator(tt)
+        bitwuzla.assert_formula(b)
+        assert bitwuzla.check_sat() == Result.UNKNOWN
     except BitwuzlaException as e:
+        # A system-wide Kissat lacks our patch that polls the terminate
+        # callback, configuring a terminator is unsupported in that case.
         assert "Kissat not compiled in" in str(e) or \
                "terminator not supported in configured SAT solver" in str(e)
 
@@ -2556,7 +2556,20 @@ def test_terminate_sat(tm, capfd):
     parser.parse(smt2, False, False)
     captured = capfd.readouterr()
     assert captured.out == 'unknown\n'
-    # Note: CryptoMiniSat and Kissat do not implement terminator support
+    # Kissat
+    try:
+        options.set(Option.SAT_SOLVER, 'kissat')
+        tt = TestTerminator(1000)
+        bitwuzla = Bitwuzla(tm, options)
+        bitwuzla.configure_terminator(tt)
+        bitwuzla.assert_formula(b)
+        assert bitwuzla.check_sat() == Result.UNKNOWN
+    except BitwuzlaException as e:
+        # A system-wide Kissat lacks our patch that polls the terminate
+        # callback, configuring a terminator is unsupported in that case.
+        assert "Kissat not compiled in" in str(e) or \
+               "terminator not supported in configured SAT solver" in str(e)
+    # Note: CryptoMiniSat does not implement terminator support
 
 
 def test_terminate_timeout_wrap(tm):

@@ -29,6 +29,12 @@ This file collects a summary of important and/or user-visible changes.
 
 - Bumped **CaDiCaL** to version 3.0.1, CaDiCaL >= 3.0 is now required.
 
+- Added **terminator support** for SAT solver **Kissat**. Configuring a
+  terminator while using Kissat as SAT solver no longer raises an error.
+  This requires the bundled Kissat subproject, which is patched to call the
+  terminate callback. A system-wide Kissat is unpatched, terminator support
+  remains disabled in that case.
+
 ## News for version 0.9.1
 
 - Updated SymFPU to version 1.2.0.

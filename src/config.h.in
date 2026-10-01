@@ -21,6 +21,13 @@ static constexpr bool is_debug_build = @is_debug_build@;
  * interface must stay disabled in that case.
  */
 static constexpr bool cadical_patched = @cadical_patched@;
+/**
+ * True if linked against our patched, bundled Kissat. False for a system-wide
+ * Kissat, which lacks the patch that polls the callback registered via
+ * kissat_set_terminate(). Terminator support for Kissat must stay disabled in
+ * that case.
+ */
+static constexpr bool kissat_patched = @kissat_patched@;
 static constexpr const char* git_id  = "@git_id@";
 static constexpr const char* version =
     @is_dev_version@ && @is_git_version@ ? "@version@-@git_id@" : "@version@";

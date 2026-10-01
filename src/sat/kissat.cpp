@@ -16,6 +16,7 @@
 
 #include <cassert>
 
+#include "config.h"
 #include "util/exceptions.h"
 
 /*------------------------------------------------------------------------*/
@@ -116,10 +117,21 @@ Kissat::solve()
 void
 Kissat::configure_terminator(Terminator* terminator)
 {
+  if constexpr (!config::kissat_patched)
+  {
+    if (terminator)
+    {
+      throw Unsupported("terminator not supported in unpatched Kissat");
+    }
+  }
+  d_terminator = terminator;
   if (terminator)
   {
-    throw Unsupported("terminator not supported in Kissat");
     kissat_set_terminate(d_solver, terminator, kissat_terminate_wrapper);
+  }
+  else
+  {
+    kissat_set_terminate(d_solver, nullptr, nullptr);
   }
 }
 
@@ -138,6 +150,10 @@ Kissat::init()
   }
   d_solver = kissat_init();
   kissat_set_option(d_solver, "quiet", 1);
+  if (d_terminator)
+  {
+    kissat_set_terminate(d_solver, d_terminator, kissat_terminate_wrapper);
+  }
   d_init = false;
 }
 

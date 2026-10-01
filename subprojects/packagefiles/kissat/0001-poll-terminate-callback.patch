@@ -1,0 +1,25 @@
+--- a/src/internal.h
++++ b/src/internal.h
+@@ -59,6 +59,7 @@
+ #endif
+   volatile void *state;
+   int (*volatile terminate) (void *);
++  unsigned delay;
+ };
+ 
+ // clang-format off
+--- a/src/terminate.h
++++ b/src/terminate.h
+@@ -13,6 +13,12 @@
+                                       const char *name, const char *file,
+                                       long lineno, const char *fun) {
+   assert (0 <= bit), assert (bit < 64);
++  if (!solver->termination.flagged && solver->termination.terminate &&
++      !solver->termination.delay--) {
++    solver->termination.delay = 10;
++    if (solver->termination.terminate ((void *) solver->termination.state))
++      solver->termination.flagged = ~(uint64_t) 0;
++  }
+ #ifdef COVERAGE
+   const uint64_t mask = (uint64_t) 1 << bit;
+   if (!(solver->termination.flagged & mask))

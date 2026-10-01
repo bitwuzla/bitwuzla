@@ -17,6 +17,7 @@
 #include <fstream>
 #include <ostream>
 
+#include "config.h"
 #include "sat/cadical.h"
 #include "sat/cryptominisat.h"
 #include "sat/gimsatul.h"
@@ -4419,18 +4420,53 @@ TEST_F(TestApi, terminate)
   }
 #endif
 #ifdef BZLA_USE_KISSAT
-  // No terminator support in Kissat, so configuring the terminator
-  // will already throw even though this would terminate in the PP (as the
-  // terminator immediately would terminate the execution on the first call to
-  // terminate).
+  // A system-wide Kissat lacks our patch that polls the terminate callback,
+  // configuring a terminator is unsupported in that case (see
+  // configure_terminator_unsupported).
+  if (config::kissat_patched)
   {
     TestTerminator tt;
     bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::SAT_SOLVER, "kissat");
     opts.set(bitwuzla::Option::REWRITE_LEVEL, static_cast<uint64_t>(0));
     opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
-    opts.set(bitwuzla::Option::SAT_SOLVER, "kissat");
     bitwuzla::Bitwuzla bitwuzla(d_tm, opts);
-    ASSERT_THROW(bitwuzla.configure_terminator(&tt), bitwuzla::Exception);
+    bitwuzla.configure_terminator(&tt);
+    bitwuzla.assert_formula(b);
+    ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNKNOWN);
+  }
+  if (config::kissat_patched)
+  {
+    TestTerminator tt;
+    bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::SAT_SOLVER, "kissat");
+    opts.set(bitwuzla::Option::REWRITE_LEVEL, static_cast<uint64_t>(0));
+    opts.set(bitwuzla::Option::BV_SOLVER, "prop");
+    bitwuzla::Bitwuzla bitwuzla(d_tm, opts);
+    bitwuzla.configure_terminator(&tt);
+    bitwuzla.assert_formula(b);
+    ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNKNOWN);
+  }
+  if (config::kissat_patched)
+  {
+    // Configure terminator via parser.
+    bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::SAT_SOLVER, "kissat");
+    opts.set(bitwuzla::Option::REWRITE_LEVEL, static_cast<uint64_t>(0));
+    opts.set(bitwuzla::Option::BV_SOLVER, "prop");
+    TestTerminator tt;
+    std::stringstream smt2;
+    smt2 << "(declare-const x (_ BitVec 4))"
+         << "(declare-const s (_ BitVec 4))"
+         << "(declare-const t (_ BitVec 4))"
+         << "(assert (distinct (bvmul s (bvmul x t)) (bvmul (bvmul s x) t)))"
+         << "(check-sat)" << std::endl;
+    bitwuzla::parser::Parser parser(d_tm, opts);
+    parser.configure_terminator(&tt);
+    testing::internal::CaptureStdout();
+    parser.parse("<string>", smt2, false);
+    std::string output = testing::internal::GetCapturedStdout();
+    ASSERT_EQ(output, "");
   }
 #endif
 }
@@ -4506,7 +4542,45 @@ TEST_F(TestApi, terminate_sat)
     ASSERT_EQ(output, unknown.str());
   }
 #endif
-  // Note: Only CaDiCaL implements terminator support.
+#ifdef BZLA_USE_KISSAT
+  // Requires our patched Kissat, see terminate.
+  if (config::kissat_patched)
+  {
+    TestTerminator tt(1000);
+    bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::SAT_SOLVER, "kissat");
+    opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
+    opts.set(bitwuzla::Option::PREPROCESS, false);
+    bitwuzla::Bitwuzla bitwuzla(d_tm, opts);
+    bitwuzla.configure_terminator(&tt);
+    bitwuzla.assert_formula(b);
+    ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNKNOWN);
+  }
+  if (config::kissat_patched)
+  {
+    // Configure terminator via parser.
+    bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::SAT_SOLVER, "kissat");
+    opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
+    opts.set(bitwuzla::Option::PREPROCESS, false);
+    TestTerminator tt(100);
+    std::stringstream smt2;
+    smt2 << "(declare-const x (_ BitVec 32))"
+         << "(declare-const s (_ BitVec 32))"
+         << "(declare-const t (_ BitVec 32))"
+         << "(assert (distinct (bvmul s (bvmul x t)) (bvmul (bvmul s x) t)))"
+         << "(check-sat)" << std::endl;
+    bitwuzla::parser::Parser parser(d_tm, opts);
+    parser.configure_terminator(&tt);
+    std::stringstream unknown;
+    unknown << "unknown" << std::endl;
+    testing::internal::CaptureStdout();
+    ASSERT_NO_THROW(parser.parse("<string>", smt2, false));
+    std::string output = testing::internal::GetCapturedStdout();
+    ASSERT_EQ(output, unknown.str());
+  }
+#endif
+  // Note: Only CaDiCaL and (patched) Kissat implement terminator support.
   //       Throws an exception with other SAT solvers.
 #ifdef BZLA_USE_CMS
   {
@@ -4524,17 +4598,6 @@ TEST_F(TestApi, terminate_sat)
     TestTerminator tt(1000);
     bitwuzla::Options opts;
     opts.set(bitwuzla::Option::SAT_SOLVER, "gimsatul");
-    opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
-    opts.set(bitwuzla::Option::PREPROCESS, false);
-    bitwuzla::Bitwuzla bitwuzla(d_tm, opts);
-    ASSERT_THROW(bitwuzla.configure_terminator(&tt), bitwuzla::Exception);
-  }
-#endif
-#ifdef BZLA_USE_KISSAT
-  {
-    TestTerminator tt(1000);
-    bitwuzla::Options opts;
-    opts.set(bitwuzla::Option::SAT_SOLVER, "kissat");
     opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
     opts.set(bitwuzla::Option::PREPROCESS, false);
     bitwuzla::Bitwuzla bitwuzla(d_tm, opts);
@@ -4710,6 +4773,8 @@ TEST_F(TestApi, configure_terminator_unsupported)
   }
 #endif
 #if defined(BZLA_USE_KISSAT)
+  // A system-wide Kissat lacks our patch that polls the terminate callback.
+  if (!config::kissat_patched)
   {
     bitwuzla::Options opts;
     opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");

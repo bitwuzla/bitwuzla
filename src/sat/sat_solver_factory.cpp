@@ -26,6 +26,7 @@
 
 #include <cassert>
 
+#include "config.h"
 #include "sat/sat_solver.h"
 #include "util/exceptions.h"
 
@@ -82,9 +83,10 @@ bool
 SatSolverFactory::has_terminator_support()
 {
 #ifdef BZLA_USE_KISSAT
+  // A system-wide Kissat lacks our patch that polls the terminate callback.
   if (d_sat_solver == option::SatSolver::KISSAT)
   {
-    return false;
+    return config::kissat_patched;
   }
 #endif
 #ifdef BZLA_USE_CMS

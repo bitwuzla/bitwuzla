@@ -103,6 +103,19 @@ if not kissat_dep.found()
                           required: get_option('kissat'))
 endif
 
+# Our bundled Kissat is patched (see subprojects/packagefiles/kissat), a
+# system-wide Kissat is not. Without the patch, Kissat stores the callback
+# registered via kissat_set_terminate() but never calls it, so terminator
+# support has to be disabled. As with CaDiCaL, Kissat ships no pkg-config file
+# and is looked up with 'find_library', thus '--force-fallback-for' does not
+# apply.
+kissat_patched = kissat_dep.found() and kissat_dep.type_name() == 'internal'
+if kissat_dep.found() and not kissat_patched
+  warning('Using a system-wide Kissat, which lacks the patches in ' +
+          'subprojects/packagefiles/kissat. Terminator support for Kissat ' +
+          'will be disabled.')
+endif
+
 gimsatul_dep = dependency('gimsatul',
                           include_type: 'system',
                           required: get_option('gimsatul'))
@@ -249,6 +262,7 @@ conf_data.set('is_debug_build', (get_option('buildtype') == 'debug').to_string()
 conf_data.set('is_dev_version', meson.project_version().endswith('-dev').to_string())
 conf_data.set('is_git_version', is_git_version.to_string())
 conf_data.set('cadical_patched', cadical_patched.to_string())
+conf_data.set('kissat_patched', kissat_patched.to_string())
 config_h = configure_file(input: 'config.h.in',
                output: output_h,
                configuration: conf_data)

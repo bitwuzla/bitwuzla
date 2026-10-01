@@ -19,6 +19,7 @@ extern "C" {
 #include <fstream>
 
 #include "api/c/bitwuzla_structs.h"
+#include "config.h"
 #include "test/unit/test.h"
 
 namespace bzla::test {
@@ -5815,7 +5816,7 @@ TEST_F(TestCApi, terminate)
     bitwuzla_delete(bitwuzla);
   }
   // not solved by rewriting, should be terminated in the PP when configured
-#ifdef BZLA_USE_CADICAL
+#if defined(BZLA_USE_CADICAL) || defined(BZLA_USE_KISSAT)
   BitwuzlaTerm s = bitwuzla_mk_const(d_tm, bv_sort4, nullptr);
   BitwuzlaTerm t = bitwuzla_mk_const(d_tm, bv_sort4, nullptr);
   BitwuzlaTerm b = bitwuzla_mk_term2(
@@ -5829,6 +5830,8 @@ TEST_F(TestCApi, terminate)
                         BITWUZLA_KIND_BV_MUL,
                         bitwuzla_mk_term2(d_tm, BITWUZLA_KIND_BV_MUL, s, x),
                         t));
+#endif
+#ifdef BZLA_USE_CADICAL
   {
     BitwuzlaOptions *opts = bitwuzla_options_new();
     bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "bitblast");
@@ -5920,19 +5923,44 @@ TEST_F(TestCApi, terminate)
   }
 #endif
 #ifdef BZLA_USE_KISSAT
-  // No terminator support in Kissat, so configuring the terminator
-  // will already throw even though this would terminate in the PP (as the
-  // terminator immediately would terminate the execution on the first call to
-  // terminate).
+  // A system-wide Kissat lacks our patch that polls the terminate callback,
+  // configuring a terminator is unsupported in that case.
+  if (!config::kissat_patched)
+  {
+    BitwuzlaOptions* opts = bitwuzla_options_new();
+    bitwuzla_set_option(opts, BITWUZLA_OPT_REWRITE_LEVEL, 0);
+    bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "bitblast");
+    bitwuzla_set_option_mode(opts, BITWUZLA_OPT_SAT_SOLVER, "kissat");
+    Bitwuzla* bitwuzla = bitwuzla_new(d_tm, opts);
+    ASSERT_DEATH(
+        bitwuzla_set_termination_callback(bitwuzla, test_terminate1, nullptr),
+        "terminator not supported in configured SAT solver");
+    bitwuzla_options_delete(opts);
+    bitwuzla_delete(bitwuzla);
+  }
+  if (config::kissat_patched)
   {
     BitwuzlaOptions *opts = bitwuzla_options_new();
     bitwuzla_set_option(opts, BITWUZLA_OPT_REWRITE_LEVEL, 0);
     bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "bitblast");
     bitwuzla_set_option_mode(opts, BITWUZLA_OPT_SAT_SOLVER, "kissat");
     Bitwuzla *bitwuzla = bitwuzla_new(d_tm, opts);
-    ASSERT_DEATH(
-        bitwuzla_set_termination_callback(bitwuzla, test_terminate1, nullptr),
-        "terminator not supported in configured SAT solver");
+    bitwuzla_set_termination_callback(bitwuzla, test_terminate1, nullptr);
+    bitwuzla_assert(bitwuzla, b);
+    ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNKNOWN);
+    bitwuzla_options_delete(opts);
+    bitwuzla_delete(bitwuzla);
+  }
+  if (config::kissat_patched)
+  {
+    BitwuzlaOptions *opts = bitwuzla_options_new();
+    bitwuzla_set_option(opts, BITWUZLA_OPT_REWRITE_LEVEL, 0);
+    bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "prop");
+    bitwuzla_set_option_mode(opts, BITWUZLA_OPT_SAT_SOLVER, "kissat");
+    Bitwuzla *bitwuzla = bitwuzla_new(d_tm, opts);
+    bitwuzla_set_termination_callback(bitwuzla, test_terminate1, nullptr);
+    bitwuzla_assert(bitwuzla, b);
+    ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNKNOWN);
     bitwuzla_options_delete(opts);
     bitwuzla_delete(bitwuzla);
   }
