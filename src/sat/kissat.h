@@ -48,9 +48,10 @@ class Kissat : public SatSolver
  private:
   void init();
 
-  int32_t d_max_var = 1;
-  bool d_init       = false;
-  kissat* d_solver  = nullptr;
+  int32_t d_max_var        = 1;
+  bool d_init              = false;
+  kissat *d_solver         = nullptr;
+  Terminator *d_terminator = nullptr;
   std::vector<int32_t> d_literals;
   std::vector<int32_t> d_assumptions;
 };

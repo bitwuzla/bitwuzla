@@ -81,12 +81,6 @@ SatSolverFactory::new_sat_solver(bool produce_interpolants)
 bool
 SatSolverFactory::has_terminator_support()
 {
-#ifdef BZLA_USE_KISSAT
-  if (d_sat_solver == option::SatSolver::KISSAT)
-  {
-    return false;
-  }
-#endif
 #ifdef BZLA_USE_CMS
   if (d_sat_solver == option::SatSolver::CRYPTOMINISAT)
   {
@@ -99,7 +93,8 @@ SatSolverFactory::has_terminator_support()
     return false;
   }
 #endif
-  assert(d_sat_solver == option::SatSolver::CADICAL);
+  assert(d_sat_solver == option::SatSolver::CADICAL
+         || d_sat_solver == option::SatSolver::KISSAT);
   return true;
 }
 
