@@ -268,6 +268,7 @@ CadicalTracer::conclude_unsat(CaDiCaL::ConclusionType conclusion,
   d_conclusion       = conclusion;
   d_final_clause_ids = clause_ids;
   d_proof_core.clear();
+  d_rev_bb_cache = {};
 }
 
 /* -------------------------------------------------------------------------- */
@@ -312,6 +313,7 @@ CadicalTracer::get_interpolant(
   if (d_proof_core.empty())
   {
     extract_proof_core();
+    d_rev_bb_cache = compute_rev_bb_cache();
   }
 
   d_part_interpolants.clear();
@@ -560,8 +562,6 @@ CadicalTracer::get_interpolant_node(
     return d_nm.mk_value(false);
   }
 
-  RevBitblasterCache rev_bb_cache = compute_rev_bb_cache();
-
   // Convert AIG interpolant to Node
   bv::AigBitblaster::aig_node_vector visit{interpolant.d_interpolant};
   std::unordered_map<int64_t, Node> vars_to_nodes;
@@ -588,7 +588,7 @@ CadicalTracer::get_interpolant_node(
     {
       if (it->second.is_null())
       {
-        it->second = get_node_from_bb_cache(cur, rev_bb_cache, term_labels);
+        it->second = get_node_from_bb_cache(cur, d_rev_bb_cache, term_labels);
         assert(!cur.is_const() || !it->second.is_null());
         if (it->second.is_null())
         {
