@@ -47,6 +47,33 @@ class TestBvNodeIsCons : public TestBvNode
     }
     ASSERT_TRUE(not_all_equal);
   }
+
+  /**
+   * Test that the shift amount (pos_x = 1) is consistent for target value
+   * t = 0 (and t = ones for ashr) if its domain has fixed bits that force
+   * its value to be > 2^64 - 1.
+   */
+  template <class T>
+  void test_cons_shift_wide_fixed_bits(uint64_t bw, const BitVector& t)
+  {
+    assert(bw > 64);
+    // fixed: bit 64 fixed to 1, all other bits unconstrained
+    // is_fixed: all bits fixed, bit 64 set to 1
+    std::string fixed = std::string(bw - 65, 'x') + "1" + std::string(64, 'x');
+    std::string is_fixed =
+        std::string(bw - 65, '0') + "1" + std::string(64, '0');
+    for (const auto& d : {fixed, is_fixed})
+    {
+      BitVectorDomain x(d);
+      std::unique_ptr<BitVectorNode> op_s(new BitVectorNode(d_rng.get(), bw));
+      std::unique_ptr<BitVectorNode> op_x(
+          new BitVectorNode(d_rng.get(), x.lo(), x));
+      T op(d_rng.get(), bw, op_s.get(), op_x.get());
+      ASSERT_TRUE(op.is_consistent(t, 1));
+      BitVector cons = op.consistent_value(t, 1);
+      ASSERT_TRUE(x.match_fixed_bits(cons));
+    }
+  }
 };
 
 TEST_F(TestBvNodeIsCons, add)
@@ -106,6 +133,19 @@ TEST_F(TestBvNodeIsCons, shift_cons_zero_target)
     test_cons_shift_zero_target<BitVectorShl>(bw);
     test_cons_shift_zero_target<BitVectorShr>(bw);
     test_cons_shift_zero_target<BitVectorAshr>(bw);
+  }
+}
+
+TEST_F(TestBvNodeIsCons, shift_cons_wide_fixed_bits)
+{
+  for (uint64_t bw : {65, 66, 128})
+  {
+    BitVector zero = BitVector::mk_zero(bw);
+    BitVector ones = BitVector::mk_ones(bw);
+    test_cons_shift_wide_fixed_bits<BitVectorShl>(bw, zero);
+    test_cons_shift_wide_fixed_bits<BitVectorShr>(bw, zero);
+    test_cons_shift_wide_fixed_bits<BitVectorAshr>(bw, zero);
+    test_cons_shift_wide_fixed_bits<BitVectorAshr>(bw, ones);
   }
 }
 

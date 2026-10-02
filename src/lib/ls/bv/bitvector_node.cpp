@@ -1957,15 +1957,14 @@ BitVectorShl::is_consistent(const BitVector& t, uint64_t pos_x)
   {
     // CC: pos_x = 1: t = 0 \/ \exists y. (y <= ctz(t) /\ mcb(x, y))
     // Consistent value: pos_x = 1: random value <= ctz(t)
-    uint64_t max =
-        ctz_t < size ? ctz_t
-                     : (size >= 64 ? UINT64_MAX
-                                   : ((static_cast<uint64_t>(1) << size) - 1));
+    // Note: For t = 0, any value is consistent.
+    BitVector max = ctz_t < size ? BitVector::from_ui(size, ctz_t)
+                                 : BitVector::mk_ones(size);
     if (x_has_fixed_bits)
     {
       if (x.is_fixed())
       {
-        if (BitVector::from_ui(size, max).compare(x.lo()) >= 0)
+        if (max.compare(x.lo()) >= 0)
         {
           BV_NODE_CACHE_CONSISTENT(x.lo());
           return true;
@@ -1973,8 +1972,7 @@ BitVectorShl::is_consistent(const BitVector& t, uint64_t pos_x)
         return false;
       }
 
-      BitVectorDomainGenerator gen(
-          x, d_rng, {x.lo(), BitVector::from_ui(size, max)});
+      BitVectorDomainGenerator gen(x, d_rng, {x.lo(), max});
       if (gen.has_random())
       {
         BV_NODE_CACHE_CONSISTENT(gen.random());
@@ -1984,8 +1982,8 @@ BitVectorShl::is_consistent(const BitVector& t, uint64_t pos_x)
     }
     else
     {
-      d_consistent.reset(new BitVector(
-          BitVector::from_ui(size, d_rng->pick<uint64_t>(0, max))));
+      d_consistent.reset(
+          new BitVector(size, *d_rng, BitVector::mk_zero(size), max));
     }
   }
   return true;
@@ -2272,15 +2270,14 @@ BitVectorShr::is_consistent(const BitVector& t, uint64_t pos_x)
   else
   {
     // CC: pos_x = 1: t = 0 \/ \exists y. (y <= clz(t) /\ mcb(x, y))
-    uint64_t max =
-        clz_t < size ? clz_t
-                     : (size >= 64 ? UINT64_MAX
-                                   : ((static_cast<uint64_t>(1) << size) - 1));
+    // Note: For t = 0, any value is consistent.
+    BitVector max = clz_t < size ? BitVector::from_ui(size, clz_t)
+                                 : BitVector::mk_ones(size);
     if (x_has_fixed_bits)
     {
       if (x.is_fixed())
       {
-        if (BitVector::from_ui(size, max).compare(x.lo()) >= 0)
+        if (max.compare(x.lo()) >= 0)
         {
           BV_NODE_CACHE_CONSISTENT(x.lo());
           return true;
@@ -2288,8 +2285,7 @@ BitVectorShr::is_consistent(const BitVector& t, uint64_t pos_x)
         return false;
       }
 
-      BitVectorDomainGenerator gen(
-          x, d_rng, {x.lo(), BitVector::from_ui(size, max)});
+      BitVectorDomainGenerator gen(x, d_rng, {x.lo(), max});
       if (gen.has_random())
       {
         BV_NODE_CACHE_CONSISTENT(gen.random());
@@ -2299,8 +2295,8 @@ BitVectorShr::is_consistent(const BitVector& t, uint64_t pos_x)
     }
     else
     {
-      d_consistent.reset(new BitVector(
-          BitVector::from_ui(size, d_rng->pick<uint64_t>(0, max))));
+      d_consistent.reset(
+          new BitVector(size, *d_rng, BitVector::mk_zero(size), max));
     }
   }
   return true;
@@ -2746,14 +2742,12 @@ BitVectorAshr::is_consistent(const BitVector& t, uint64_t pos_x)
   // Consistent value:
   //   pos_x = 1: t = 0: random value
   //              t > 0: random value < cnt(t)
-  uint64_t max = cnt_t < size
-                     ? cnt_t - 1
-                     : (size >= 64 ? UINT64_MAX
-                                   : ((static_cast<uint64_t>(1) << size) - 1));
+  // Note: For t = 0 and t = ones, any value is consistent.
+  BitVector max = cnt_t < size ? BitVector::from_ui(size, cnt_t - 1)
+                               : BitVector::mk_ones(size);
   if (x.has_fixed_bits())
   {
-    BitVectorDomainGenerator gen(
-        x, d_rng, {BitVector::mk_zero(size), BitVector::from_ui(size, max)});
+    BitVectorDomainGenerator gen(x, d_rng, {BitVector::mk_zero(size), max});
     if (gen.has_random())
     {
       BV_NODE_CACHE_CONSISTENT(gen.random());
@@ -2762,7 +2756,7 @@ BitVectorAshr::is_consistent(const BitVector& t, uint64_t pos_x)
     return false;
   }
   d_consistent.reset(
-      new BitVector(BitVector::from_ui(size, d_rng->pick<uint64_t>(0, max))));
+      new BitVector(size, *d_rng, BitVector::mk_zero(size), max));
   return true;
 }
 
