@@ -304,6 +304,8 @@ CadicalTracer::get_interpolant(
     const std::unordered_map<Node, sat::interpolants::VariableKind>&
         term_labels)
 {
+  util::Timer timer(d_stats.time_get_interpolant);
+
   // Extract proof core if not already extracted. We do not extract the proof
   // core eagerly, on conclude_unsat(), but delay this to the first
   // get_interpolant() call after conclude_unsat().
@@ -311,8 +313,6 @@ CadicalTracer::get_interpolant(
   {
     extract_proof_core();
   }
-
-  util::Timer timer(d_stats.time_get_interpolant);
 
   d_part_interpolants.clear();
   assert(d_final_clause_ids.size() == 1);
