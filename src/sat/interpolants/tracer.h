@@ -85,6 +85,7 @@ class Tracer : public CaDiCaL::Tracer
     Statistics(util::Statistics& stats, const std::string& prefix);
     util::TimerStatistic& time_get_interpolant;
     util::TimerStatistic& time_extract_proof_core;
+    util::TimerStatistic& time_compute_rev_bb_cache;
     uint64_t& size_interpolant;
     uint64_t& size_proof;
     uint64_t& size_proof_core;
@@ -146,6 +147,9 @@ class Tracer : public CaDiCaL::Tracer
 
   /** The associated AIG id of the currently processed clause. */
   int64_t d_cur_aig_id = 0;
+
+  /** Cache the current reverse BB cache mapping. */
+  RevBitblasterCache d_rev_bb_cache;
 };
 
 }  // namespace sat::interpolants

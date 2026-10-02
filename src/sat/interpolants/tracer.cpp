@@ -26,6 +26,8 @@ Tracer::Statistics::Statistics(util::Statistics& stats,
           prefix + "time_get_interpolant")),
       time_extract_proof_core(stats.new_or_get_stat<util::TimerStatistic>(
           prefix + "time_extract_proof_core")),
+      time_compute_rev_bb_cache(stats.new_or_get_stat<util::TimerStatistic>(
+          prefix + "time_compute_rev_bb_cache")),
       size_interpolant(
           stats.new_or_get_stat<uint64_t>(prefix + "size_interpolant")),
       size_proof(stats.new_or_get_stat<uint64_t>(prefix + "size_proof")),
@@ -37,6 +39,7 @@ Tracer::Statistics::Statistics(util::Statistics& stats,
 Tracer::RevBitblasterCache
 Tracer::compute_rev_bb_cache() const
 {
+  util::Timer timer(d_stats.time_compute_rev_bb_cache);
   RevBitblasterCache res;
   // Get reverse mapping for nodes in bitblaster cache
   const auto& bb_cache = d_bitblaster.bitblaster_cache();
