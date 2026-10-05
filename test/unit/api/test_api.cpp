@@ -486,10 +486,10 @@ TEST_F(TestApi, mk_array_sort)
                bitwuzla::Exception);
   ASSERT_THROW(d_tm.mk_array_sort(d_arr_sort_bv, d_bv_sort8),
                bitwuzla::Exception);
+  ASSERT_THROW(d_tm.mk_array_sort(d_fun_sort, d_bv_sort8), bitwuzla::Exception);
+  ASSERT_THROW(d_tm.mk_array_sort(d_bv_sort8, d_fun_sort), bitwuzla::Exception);
 
   ASSERT_NO_THROW(d_tm.mk_array_sort(d_bv_sort8, d_arr_sort_bv));
-  ASSERT_NO_THROW(d_tm.mk_array_sort(d_fun_sort, d_bv_sort8));
-  ASSERT_NO_THROW(d_tm.mk_array_sort(d_bv_sort8, d_fun_sort));
 }
 
 TEST_F(TestApi, mk_bv_sort)

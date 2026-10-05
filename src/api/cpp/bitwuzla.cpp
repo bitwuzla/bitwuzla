@@ -1846,6 +1846,10 @@ TermManager::mk_array_sort(const Sort& index, const Sort& element)
   BITWUZLA_CHECK_SORT_NOT_NULL(element);
   BITWUZLA_CHECK(!index.is_array())
       << "array sorts not supported as index sort of array";
+  BITWUZLA_CHECK(!index.is_fun())
+      << "function sorts not supported as index sort of array";
+  BITWUZLA_CHECK(!element.is_fun())
+      << "function sorts not supported as element sort of array";
   BITWUZLA_CHECK_SORT_TERM_MGR(index, "index sort");
   BITWUZLA_CHECK_SORT_TERM_MGR(element, "element sort");
   return d_nm->mk_array_type(*index.d_type, *element.d_type);

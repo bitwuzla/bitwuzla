@@ -652,10 +652,12 @@ TEST_F(TestCApi, mk_array_sort)
   ASSERT_DEATH(bitwuzla_mk_array_sort(d_tm, d_bv_sort1, 0), d_error_inv_sort);
   ASSERT_DEATH(bitwuzla_mk_array_sort(d_tm, d_arr_sort_bv, d_bv_sort8),
                "array sorts not supported as index");
+  ASSERT_DEATH(bitwuzla_mk_array_sort(d_tm, d_fun_sort, d_bv_sort8),
+               "function sorts not supported as index");
+  ASSERT_DEATH(bitwuzla_mk_array_sort(d_tm, d_bv_sort8, d_fun_sort),
+               "function sorts not supported as element");
 
   bitwuzla_mk_array_sort(d_tm, d_bv_sort8, d_arr_sort_bv);
-  bitwuzla_mk_array_sort(d_tm, d_fun_sort, d_bv_sort8);
-  bitwuzla_mk_array_sort(d_tm, d_bv_sort8, d_fun_sort);
 }
 
 TEST_F(TestCApi, mk_bool_sort) { bitwuzla_mk_bool_sort(d_tm); }
