@@ -315,6 +315,12 @@ class ArraySolver : public Solver
 
   /** Flag that indicates whether array solver is currently in check(). */
   bool d_in_check = false;
+  /**
+   * Flag that indicates whether a constant array equality lemma was skipped in
+   * the current check() call because it depends on the cardinality of an
+   * uninterpreted sort.
+   */
+  bool d_const_array_eq_unknown = false;
 
   struct Statistics
   {

@@ -2,13 +2,10 @@
 ; (defaults #x00 vs #x01) with uninterpreted (sort U) store indices. Deciding
 ; this equality runs default-value propagation on both sides, which queries the
 ; cardinality of the uninterpreted index sort via type::cardinality_gt (formerly
-; aborting: card() had no uninterpreted case). Reusing the same index variables
-; i1/i2 on both sides keeps the covered-index sets syntactically identical, so no
-; cross-index equality reasoning is needed and the result is a definite unsat:
-; the index sort U is unbounded, so some index outside {i1, i2} is left with the
-; two differing constant defaults #x00 and #x01.
+; aborting: card() had no uninterpreted case). The formula is satisfiable iff
+; {i1, i2} covers U (e.g., U = {i1, i2}, v1 = w1, v2 = w2), which depends on the
+; size of U, hence the expected output of Bitwuzla is unknown.
 (set-logic ALL)
-(set-info :status unsat)
 (declare-sort U 0)
 (declare-const i1 U)
 (declare-const i2 U)

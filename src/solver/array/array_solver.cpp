@@ -77,6 +77,7 @@ ArraySolver::check()
   d_array_models.clear();
   d_updated_indices.clear();
   d_accesses.clear();
+  d_const_array_eq_unknown = false;
 
   // Nothing to check
   if (d_equalities.empty() && d_selects.empty())
@@ -131,6 +132,14 @@ ArraySolver::check()
     }
   }
   d_in_check = false;
+  // A skipped constant array equality lemma leaves the current model
+  // unconfirmed, give up unless other lemmas still refine it.
+  if (d_const_array_eq_unknown && d_lemma_cache.empty())
+  {
+    d_solver_state.unsupported(
+        "Equalities over constant arrays with uninterpreted index sorts not "
+        "yet supported.");
+  }
   return true;
 }
 
@@ -770,6 +779,12 @@ ArraySolver::add_const_array_equality_lemma(
   }
   else
   {
+    // Uninterpreted index sorts not fully supported.
+    if (acc.index().type().is_uninterpreted())
+    {
+      d_const_array_eq_unknown = true;
+      return false;
+    }
     // The DISTINCT_N(N,...) cardinality argument N is only used relative to the
     // number of index children M: if N exceeds M the constraint is false, so
     // its exact value only matters when N <= M. Clamping N to M + 1 therefore
