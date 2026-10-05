@@ -58,16 +58,13 @@ class QuantSolver : public Solver
 
   Node instantiate(const Node& q, const std::unordered_map<Node, Node>& substs);
   Node substitute(const Node& n, const std::unordered_map<Node, Node>& substs);
-  // void add_instance(const Node& q, const Node& inst);
 
   const Node& inst_const(const Node& q);
   const Node& skolem_const(const Node& q);
-  const Node& ce_const(const Node& q);
 
   Node skolemize(const Node& q);
 
   const Node& skolemization_lemma(const Node& q);
-  const Node& value_inst_lemma(const Node& q);
 
   void process(const Node& q);
 
@@ -154,7 +151,6 @@ class QuantSolver : public Solver
   std::unordered_map<uint64_t, uint64_t> d_num_selected;
   std::vector<uint64_t> d_selected_terms;
 
-  std::unordered_map<Node, Node> d_ce_consts;
   std::unordered_map<Node, Node> d_instantiation_consts;
   std::unordered_map<Node, Node> d_skolem_consts;
 

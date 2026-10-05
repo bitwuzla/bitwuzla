@@ -211,25 +211,6 @@ QuantSolver::skolem_const(const Node& q)
   return iit->second;
 }
 
-const Node&
-QuantSolver::ce_const(const Node& q)
-{
-  auto it = d_ce_consts.find(q);
-  if (it != d_ce_consts.end())
-  {
-    return it->second;
-  }
-
-  NodeManager& nm = d_env.nm();
-  std::stringstream ss;
-  ss << "ce(" << q.id() << ")";
-
-  Node ce              = nm.mk_const(q.type(), ss.str());
-  auto [iit, inserted] = d_ce_consts.emplace(q, ce);
-  Log(2) << "Counterexample literal " << ce << " for " << q;
-  return iit->second;
-}
-
 Node
 QuantSolver::skolemize(const Node& q)
 {
