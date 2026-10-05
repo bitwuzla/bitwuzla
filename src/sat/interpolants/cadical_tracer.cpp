@@ -90,7 +90,12 @@ CadicalTracer::add_original_clause(int64_t id,
   assert(id);
   assert(static_cast<int64_t>(d_clauses.size()) == id);
 
-  std::vector<int32_t> stripped = strip_activation_lits(clause);
+  auto [stripped, level] = strip_activation_lits(clause);
+  // Level 0 clauses are never popped, we don't record them in d_level2clauses.
+  if (level > 0)
+  {
+    d_level2clauses[level].push_back(id);
+  }
   if (stripped.empty() && !clause.empty())
   {
     // Unit clause that permanently disables a popped assertion level, see
@@ -143,8 +148,13 @@ CadicalTracer::add_derived_clause(int64_t id,
   (void) witness;
   assert(!antecedents.empty());
   assert(static_cast<int64_t>(d_clauses.size()) == id);
-  d_clauses.emplace_back(
-      strip_activation_lits(clause), ClauseType::DERIVED, 0, antecedents);
+  auto [stripped, level] = strip_activation_lits(clause);
+  // Level 0 clauses are never popped, we don't record them in d_level2clauses.
+  if (level > 0)
+  {
+    d_level2clauses[level].push_back(id);
+  }
+  d_clauses.emplace_back(stripped, ClauseType::DERIVED, 0, antecedents);
 }
 
 void
@@ -173,7 +183,7 @@ CadicalTracer::add_assumption_clause(int64_t id,
     assert(clause.size() == 2);
     // Activation literals are never assumed positively, thus this can only
     // be a clause over two regular assumption literals.
-    assert(strip_activation_lits(clause).size() == 2);
+    assert(strip_activation_lits(clause).first.size() == 2);
     bool is_ass_lit0 = d_assumptions.find(-clause[0]) != d_assumptions.end();
     bool is_ass_lit1 = d_assumptions.find(-clause[1]) != d_assumptions.end();
     if (!is_ass_lit0 || !is_ass_lit1)
@@ -284,13 +294,16 @@ CadicalTracer::conclude_unsat(CaDiCaL::ConclusionType conclusion,
 
 /* -------------------------------------------------------------------------- */
 
-std::vector<int32_t>
+std::pair<std::vector<int32_t>, uint32_t>
 CadicalTracer::strip_activation_lits(const std::vector<int32_t>& clause) const
 {
+  uint32_t level = 0;
+
   if (d_activation_vars.empty())
   {
-    return clause;
+    return {clause, level};
   }
+
   std::vector<int32_t> res;
   res.reserve(clause.size());
   for (int32_t lit : clause)
@@ -302,8 +315,12 @@ CadicalTracer::strip_activation_lits(const std::vector<int32_t>& clause) const
     {
       res.push_back(lit);
     }
+    else
+    {
+      level = std::max(level, it->second);
+    }
   }
-  return res;
+  return {res, level};
 }
 
 void
@@ -329,6 +346,20 @@ CadicalTracer::extract_proof_core()
   std::sort(d_proof_core.begin(), d_proof_core.end());
   d_stats.size_proof      = d_clauses.size();
   d_stats.size_proof_core = d_proof_core.size();
+}
+
+void
+CadicalTracer::pop_clauses(uint32_t level)
+{
+  assert(level > 0);
+  auto it = d_level2clauses.find(level);
+  assert(it != d_level2clauses.end());
+  for (int64_t id : it->second)
+  {
+    assert(static_cast<size_t>(id) < d_clauses.size());
+    d_clauses[id] = Clause();
+  }
+  d_level2clauses.erase(it);
 }
 
 Node

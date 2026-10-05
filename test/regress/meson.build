@@ -1783,6 +1783,7 @@ tests_smt2_get_interpolant = [
   ['get-interpolant/eqsubst3.smt2'],
 
   # default config
+  ['get-interpolant/incr-pop-gc.smt2'],
   ['get-interpolant/seq.subst1.smt2'],
   ['get-interpolant/murxla-1ab3c57122752408.min.smt2'],
   ['get-interpolant/murxla-1ab3c57122752408.min2.smt2'],

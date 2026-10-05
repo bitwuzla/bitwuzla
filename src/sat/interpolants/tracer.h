@@ -14,7 +14,7 @@
 #ifdef BZLA_USE_CADICAL
 
 #include <cadical/tracer.hpp>
-#include <unordered_set>
+#include <unordered_map>
 
 #include "bitblast/aig/aig_cnf.h"
 #include "bitblast/aig/aig_manager.h"
@@ -78,12 +78,23 @@ class Tracer : public CaDiCaL::Tracer
    * sound since activation literals only occur positively in clauses, and
    * can thus never be a resolution pivot.
    *
-   * @param var The activation variable.
+   * @param var   The activation variable.
+   * @param level The assertion level of the activation variable.
    */
-  void add_activation_var(int32_t var)
+  void add_activation_var(int32_t var, uint32_t level)
   {
     assert(var > 0);
-    d_activation_vars.insert(var);
+    d_activation_vars.emplace(var, level);
+  }
+  /**
+   * Unregister SAT variable that is used as an activation literal.
+   * @param var The activation variable.
+   */
+  void release_activation_var(int32_t var)
+  {
+    auto it = d_activation_vars.find(var);
+    assert(it != d_activation_vars.end());
+    d_activation_vars.erase(it);
   }
 
   /**
@@ -100,6 +111,13 @@ class Tracer : public CaDiCaL::Tracer
       const std::unordered_map<int64_t, ClauseKind>& clause_labels,
       const std::unordered_map<Node, sat::interpolants::VariableKind>&
           term_labels) = 0;
+
+  /**
+   * Pop (garbage collect) clauses from the clause database when given assertion
+   * level was popped.
+   * @param level The assertion level.
+   */
+  virtual void pop_clauses(uint32_t level) = 0;
 
   struct Statistics
   {
@@ -168,7 +186,7 @@ class Tracer : public CaDiCaL::Tracer
   /** The associated AIG id of the currently processed clause. */
   int64_t d_cur_aig_id = 0;
   /** The SAT variables used as activation literals for assertion levels. */
-  std::unordered_set<int32_t> d_activation_vars;
+  std::unordered_map<int32_t, uint32_t> d_activation_vars;
 };
 
 }  // namespace sat::interpolants

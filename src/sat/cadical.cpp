@@ -246,7 +246,18 @@ CadicalInterpol::push()
   Cadical::push();
   // Activation literals are not associated with any AIG node, the tracer
   // needs to know about them to strip them from the traced clauses.
-  d_tracer->add_activation_var(d_activation_vars.back());
+  d_tracer->add_activation_var(d_activation_vars.back(),
+                               d_activation_vars.size() - 1);
+}
+
+void
+CadicalInterpol::pop()
+{
+  assert(d_tracer);
+  int32_t var = d_activation_vars.back();
+  Cadical::pop();
+  d_tracer->pop_clauses(d_activation_vars.size());
+  d_tracer->release_activation_var(var);
 }
 
 /* -------------------------------------------------------------------------- */

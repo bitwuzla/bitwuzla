@@ -122,6 +122,8 @@ class CadicalTracer : public Tracer
       const std::unordered_map<Node, sat::interpolants::VariableKind>&
           term_labels) override;
 
+  void pop_clauses(uint32_t level) override;
+
  private:
   /**
    * Construct interpolant for given clause.
@@ -168,7 +170,7 @@ class CadicalTracer : public Tracer
    * @param clause The clause.
    * @return The clause without activation literals.
    */
-  std::vector<int32_t> strip_activation_lits(
+  std::pair<std::vector<int32_t>, uint32_t> strip_activation_lits(
       const std::vector<int32_t>& clause) const;
   /**
    * Extract proof core from d_clauses by tracing back from d_final_clause_ids
@@ -201,6 +203,8 @@ class CadicalTracer : public Tracer
 
   /** Added clauses, dummy at index 0 to enable access via clause id. */
   std::vector<Clause> d_clauses{Clause()};
+  /** Map assertion level to clause ids. */
+  std::unordered_map<uint32_t, std::vector<int64_t>> d_level2clauses;
 
   /** The currently active assumptions. */
   std::unordered_set<int32_t> d_assumptions;
