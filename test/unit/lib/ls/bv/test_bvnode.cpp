@@ -1224,4 +1224,50 @@ TEST_F(TestBvNode, normalize_bounds)
   test_normalize_bounds_both();
 }
 
+TEST_F(TestBvNode, update_bounds_exclusive_after_inclusive)
+{
+  // An exclusive bound with the same value as an inclusive bound is tighter
+  // and must be applied, independently of the order of registration.
+  BitVector zero(4, "0000"), ones(4, "1111");
+  BitVector smin(4, "1000"), smax(4, "0111");
+  BitVector five(4, "0101"), six(4, "0110"), four(4, "0100");
+  BitVector mtwo(4, "1110"), mone(4, "1111"), mthree(4, "1101");
+
+  for (bool reverse : {false, true})
+  {
+    // unsigned: x >= 5 and x > 5
+    {
+      BitVectorNode node(d_rng.get(), 4);
+      node.update_bounds(five, ones, !reverse, false, false);
+      node.update_bounds(five, ones, reverse, false, false);
+      ASSERT_EQ(node.bounds_u().d_min.compare(six), 0);
+      ASSERT_EQ(node.bounds_u().d_max.compare(ones), 0);
+    }
+    // unsigned: x <= 5 and x < 5
+    {
+      BitVectorNode node(d_rng.get(), 4);
+      node.update_bounds(zero, five, false, !reverse, false);
+      node.update_bounds(zero, five, false, reverse, false);
+      ASSERT_EQ(node.bounds_u().d_min.compare(zero), 0);
+      ASSERT_EQ(node.bounds_u().d_max.compare(four), 0);
+    }
+    // signed: x >= -2 and x > -2
+    {
+      BitVectorNode node(d_rng.get(), 4);
+      node.update_bounds(mtwo, smax, !reverse, false, true);
+      node.update_bounds(mtwo, smax, reverse, false, true);
+      ASSERT_EQ(node.bounds_s().d_min.compare(mone), 0);
+      ASSERT_EQ(node.bounds_s().d_max.compare(smax), 0);
+    }
+    // signed: x <= -2 and x < -2
+    {
+      BitVectorNode node(d_rng.get(), 4);
+      node.update_bounds(smin, mtwo, false, !reverse, true);
+      node.update_bounds(smin, mtwo, false, reverse, true);
+      ASSERT_EQ(node.bounds_s().d_min.compare(smin), 0);
+      ASSERT_EQ(node.bounds_s().d_max.compare(mthree), 0);
+    }
+  }
+}
+
 }  // namespace bzla::ls::test

@@ -215,56 +215,32 @@ BitVectorNode::update_bounds(const BitVector& min,
 
   if (is_signed)
   {
-    if (d_bounds_s.d_min.is_null() || d_bounds_s.d_min.signed_compare(min) < 0)
+    assert(!min_is_exclusive || !min.is_max_signed());
+    assert(!max_is_exclusive || !max.is_min_signed());
+    BitVector _min = min_is_exclusive ? min.bvinc() : min;
+    if (d_bounds_s.d_min.is_null() || d_bounds_s.d_min.signed_compare(_min) < 0)
     {
-      if (min_is_exclusive)
-      {
-        assert(!min.is_max_signed());
-        d_bounds_s.d_min = min.bvinc();
-      }
-      else
-      {
-        d_bounds_s.d_min = min;
-      }
+      d_bounds_s.d_min = std::move(_min);
     }
-    if (d_bounds_s.d_max.is_null() || d_bounds_s.d_max.signed_compare(max) > 0)
+    BitVector _max = max_is_exclusive ? max.bvdec() : max;
+    if (d_bounds_s.d_max.is_null() || d_bounds_s.d_max.signed_compare(_max) > 0)
     {
-      if (max_is_exclusive)
-      {
-        assert(!max.is_min_signed());
-        d_bounds_s.d_max = max.bvdec();
-      }
-      else
-      {
-        d_bounds_s.d_max = max;
-      }
+      d_bounds_s.d_max = std::move(_max);
     }
   }
   else
   {
-    if (d_bounds_u.d_min.is_null() || d_bounds_u.d_min.compare(min) < 0)
+    assert(!min_is_exclusive || !min.is_ones());
+    assert(!max_is_exclusive || !max.is_zero());
+    BitVector _min = min_is_exclusive ? min.bvinc() : min;
+    if (d_bounds_u.d_min.is_null() || d_bounds_u.d_min.compare(_min) < 0)
     {
-      if (min_is_exclusive)
-      {
-        assert(!min.is_ones());
-        d_bounds_u.d_min = min.bvinc();
-      }
-      else
-      {
-        d_bounds_u.d_min = min;
-      }
+      d_bounds_u.d_min = std::move(_min);
     }
-    if (d_bounds_u.d_max.is_null() || d_bounds_u.d_max.compare(max) > 0)
+    BitVector _max = max_is_exclusive ? max.bvdec() : max;
+    if (d_bounds_u.d_max.is_null() || d_bounds_u.d_max.compare(_max) > 0)
     {
-      if (max_is_exclusive)
-      {
-        assert(!max.is_zero());
-        d_bounds_u.d_max = max.bvdec();
-      }
-      else
-      {
-        d_bounds_u.d_max = max;
-      }
+      d_bounds_u.d_max = std::move(_max);
     }
   }
 }
