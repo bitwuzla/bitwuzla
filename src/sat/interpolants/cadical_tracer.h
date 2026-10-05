@@ -192,6 +192,13 @@ class CadicalTracer : public Tracer
    */
   bitblast::AigNode mk_or(const std::vector<bitblast::AigNode>& aigs) const;
 
+  /**
+   * The current reverse bitblaster cache.
+   * Computed lazily on the first call to get_interpolant_node() after
+   * conclude_unsat(), and reset on conclude_unsat().
+   */
+  RevBitblasterCache d_rev_bb_cache;
+
   /** Added clauses, dummy at index 0 to enable access via clause id. */
   std::vector<Clause> d_clauses{Clause()};
 

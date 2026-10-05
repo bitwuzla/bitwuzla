@@ -313,7 +313,6 @@ CadicalTracer::get_interpolant(
   if (d_proof_core.empty())
   {
     extract_proof_core();
-    d_rev_bb_cache = compute_rev_bb_cache();
   }
 
   d_part_interpolants.clear();
@@ -560,6 +559,11 @@ CadicalTracer::get_interpolant_node(
   if (interpolant.d_interpolant.is_false())
   {
     return d_nm.mk_value(false);
+  }
+
+  if (d_rev_bb_cache.empty())
+  {
+    d_rev_bb_cache = compute_rev_bb_cache();
   }
 
   // Convert AIG interpolant to Node

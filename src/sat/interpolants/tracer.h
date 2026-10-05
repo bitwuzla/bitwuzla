@@ -147,13 +147,6 @@ class Tracer : public CaDiCaL::Tracer
 
   /** The associated AIG id of the currently processed clause. */
   int64_t d_cur_aig_id = 0;
-
-  /**
-   * The current reverse bitblaster cache.
-   * Computed on the first get_interpolant() call after conclude_unsat() and
-   * reset on conclude_unsat().
-   */
-  RevBitblasterCache d_rev_bb_cache;
 };
 
 }  // namespace sat::interpolants
