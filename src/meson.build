@@ -159,6 +159,12 @@ int main() { return 0; }
     message('Found a system-wide SymFPU older than 1.2.0, ' +
             'falling back to the bundled version.')
     symfpu_dep = subproject('symfpu').get_variable('symfpu_dep').as_system()
+  # Experimental floating-point formats require the patches applied to the
+  # bundled version (see subprojects/packagefiles/symfpu).
+  elif get_option('fpexp')
+    message('Experimental floating-point formats require patched SymFPU, ' +
+            'using the bundled version instead of the system-wide SymFPU.')
+    symfpu_dep = subproject('symfpu').get_variable('symfpu_dep').as_system()
   endif
 endif
 
@@ -170,6 +176,12 @@ if symfpu_dep.type_name() == 'internal'
   symfpu_header = meson.project_source_root() / 'subprojects' / 'symfpu' / 'core' / 'unpackedFloat.h'
   if not import('fs').read(symfpu_header).contains('makeOne(')
     error('Bundled SymFPU in subprojects/symfpu is older than 1.2.0, ' +
+          'run \'meson subprojects update --reset symfpu\' to update it.')
+  endif
+  # The patches only affect experimental floating-point formats.
+  symfpu_convert = meson.project_source_root() / 'subprojects' / 'symfpu' / 'core' / 'convert.h'
+  if get_option('fpexp') and not import('fs').read(symfpu_convert).contains('exponentRangeIncreased')
+    error('Bundled SymFPU in subprojects/symfpu is not patched, ' +
           'run \'meson subprojects update --reset symfpu\' to update it.')
   endif
 endif

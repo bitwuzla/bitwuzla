@@ -2598,6 +2598,66 @@ TEST_F(TestFpFrom, to_fp_from_fp)
   }
 }
 
+// Requires the patches applied to the bundled SymFPU, which is only guaranteed
+// to be used with experimental formats.
+#ifdef BZLA_USE_FPEXP
+TEST_F(TestFpFrom, to_fp_small_formats)
+{
+  // Comprehensive tests for conversions to small formats with a smaller
+  // exponent range but an unpacked exponent that is at least as wide as the
+  // unpacked exponent of the source format, e.g., (4 4) -> (2 9).
+  std::vector<FpFormat> formats = {
+      {2, 5}, {2, 9}, {2, 17}, {3, 4}, {3, 9}, {4, 4}, {4, 9}};
+  for (const auto& f2 : formats)
+  {
+    Type type2 = d_nm.mk_fp_type(f2.first, f2.second);
+    for (const auto& f1 : formats)
+    {
+      if (f1.first + f1.second > 11)
+      {
+        continue;
+      }
+      Type type1       = d_nm.mk_fp_type(f1.first, f1.second);
+      uint64_t bv_size = f1.first + f1.second;
+      for (uint64_t i = 0, n = uint64_t{1} << bv_size; i < n; ++i)
+      {
+        BitVector bv = BitVector::from_ui(bv_size, i);
+        for (RoundingMode rm : d_all_rms)
+        {
+          FloatingPoint fp(
+              f2.first, f2.second, rm, FloatingPoint(f1.first, f1.second, bv));
+          FloatingPointSymFPU fp_symfpu(
+              type2, rm, FloatingPointSymFPU(type1, bv));
+          ASSERT_EQ(fp.str(), fp_symfpu.str())
+              << "(_ FloatingPoint " << f1.first << " " << f1.second
+              << ") -> (_ FloatingPoint " << f2.first << " " << f2.second
+              << "), value: " << bv.str() << ", rm: " << rm;
+        }
+      }
+    }
+    for (uint64_t bw = 2; bw <= 8; ++bw)
+    {
+      for (uint64_t i = 0, n = uint64_t{1} << bw; i < n; ++i)
+      {
+        BitVector bv = BitVector::from_ui(bw, i);
+        for (RoundingMode rm : d_all_rms)
+        {
+          for (auto sign : {false, true})
+          {
+            FloatingPoint fp(f2.first, f2.second, rm, bv, sign);
+            FloatingPointSymFPU fp_symfpu(type2, rm, bv, sign);
+            ASSERT_EQ(fp.str(), fp_symfpu.str())
+                << "(_ BitVec " << bw << ") -> (_ FloatingPoint " << f2.first
+                << " " << f2.second << "), value: " << bv.str()
+                << ", signed: " << sign << ", rm: " << rm;
+          }
+        }
+      }
+    }
+  }
+}
+#endif
+
 /* -------------------------------------------------------------------------- */
 
 }  // namespace bzla::test

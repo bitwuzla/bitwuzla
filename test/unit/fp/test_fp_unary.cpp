@@ -97,6 +97,36 @@ TEST_F(TestFpUnary, neg) { TEST_UNARY(neg); }
 TEST_F(TestFpUnary, sqrt) { TEST_UNARY_RM(sqrt); }
 TEST_F(TestFpUnary, rti) { TEST_UNARY_RM(rti); }
 
+// Requires the patches applied to the bundled SymFPU, which is only guaranteed
+// to be used with experimental formats.
+#ifdef BZLA_USE_FPEXP
+TEST_F(TestFpUnary, rti_small_formats)
+{
+  // Comprehensive tests for all values in small formats where the
+  // significand size equals the size of SymFPU's unpacked exponent (3 4),
+  // (4 5), and where rounding up the largest finite values overflows to
+  // infinity (2 5), (3 5), (4 9).
+  for (const auto& [exp_size, sig_size] : std::vector<FpFormat>{
+           {3, 4}, {4, 5}, {2, 5}, {2, 6}, {3, 5}, {3, 8}, {4, 9}})
+  {
+    Type type        = d_nm.mk_fp_type(exp_size, sig_size);
+    uint64_t bv_size = exp_size + sig_size;
+    for (uint64_t i = 0, n = uint64_t{1} << bv_size; i < n; ++i)
+    {
+      BitVector bv = BitVector::from_ui(bv_size, i);
+      FloatingPoint fp(exp_size, sig_size, bv);
+      FloatingPointSymFPU fp_symfpu(type, bv);
+      for (auto rm : d_all_rms)
+      {
+        ASSERT_EQ(fp.fprti(rm).str(), fp_symfpu.fprti(rm).str())
+            << "(_ FloatingPoint " << exp_size << " " << sig_size
+            << "), value: " << bv.str() << ", rm: " << rm;
+      }
+    }
+  }
+}
+#endif
+
 TEST_F(TestFpUnary, isX)
 {
   auto fun = [](const BitVector& bvexp, const BitVector& bvsig) {

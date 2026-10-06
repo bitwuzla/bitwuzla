@@ -98,6 +98,7 @@ unit_tests = [
       'bv_inverter',
       'bv_prop_solver',
       'fp_solver',
+      'fp_word_blaster',
     ]
   ],
 

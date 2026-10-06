@@ -4,6 +4,7 @@ revision = 40bdec00e99f8ea1b96c3dac0a05eed11c541639
 depth = 1
 
 patch_directory = symfpu
+diff_files = symfpu/0001-fix-conversions-for-experimental-formats.patch
 
 [provide]
 symfpu = symfpu_dep

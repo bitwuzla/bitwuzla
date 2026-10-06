@@ -72,6 +72,17 @@ This file collects a summary of important and/or user-visible changes.
   denominator, e.g., `((_ to_fp 5 11) RNE (/ 1 0))`. A zero denominator is now
   rejected with an error.
 
+- Fixed incorrect encodings of `fp.roundToIntegral` and of `to_fp`
+  conversions from floating-point and signed/unsigned bit-vector terms in
+  SymFPU for some **experimental floating-point formats**, e.g.,
+  `(_ FloatingPoint 3 4)` and `(_ FloatingPoint 3 5)`. These could cause wrong
+  answers or non-termination. Formats Float16, Float32, Float64 and Float128
+  are not affected. The bundled SymFPU subproject is now patched to fix these
+  issues. When configured with `--fpexp`, Bitwuzla now always uses the bundled
+  SymFPU, even if a system-wide SymFPU is installed. Existing checkouts of the
+  bundled SymFPU must be updated via
+  `meson subprojects update --reset symfpu`, otherwise configuring fails.
+
 - Improved **push/pop** support in the SAT backends (CaDiCaL, CryptoMiniSat).
   Now uses activation variables to remove clauses on pop().
 
