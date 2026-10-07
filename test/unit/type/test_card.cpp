@@ -163,11 +163,11 @@ TEST_F(TestCardinality, uninterpreted)
   // cardinality_gt and cardinality_min must treat it as unbounded too: it is
   // strictly greater than every bound, and cardinality_min saturates exactly to
   // the requested bound.
-  EXPECT_TRUE(cardinality_gt(u, 0));
-  EXPECT_TRUE(cardinality_gt(u, UINT64_MAX));
-  EXPECT_EQ(cardinality_min(u, 0), util::Integer(0));
-  EXPECT_EQ(cardinality_min(u, 42), util::Integer(42));
-  EXPECT_EQ(cardinality_min(u, UINT64_MAX), util::Integer(UINT64_MAX));
+  ASSERT_TRUE(cardinality_gt(u, 0));
+  ASSERT_TRUE(cardinality_gt(u, UINT64_MAX));
+  ASSERT_EQ(cardinality_min(u, 0), util::Integer(0));
+  ASSERT_EQ(cardinality_min(u, 42), util::Integer(42));
+  ASSERT_EQ(cardinality_min(u, UINT64_MAX), util::Integer(UINT64_MAX));
 }
 
 TEST_F(TestCardinality, uninterpreted_nested)
