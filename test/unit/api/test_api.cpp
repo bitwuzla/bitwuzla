@@ -3867,6 +3867,36 @@ TEST_F(TestApi, parser_smt2_string_sort)
   ASSERT_EQ(parser.get_declared_funs(), std::vector<bitwuzla::Term>{});
 }
 
+TEST_F(TestApi, parser_smt2_nested_array_sort)
+{
+  // Array nesting depth, deep enough to exhaust the native stack if sort
+  // parsing recurses per nesting level.
+  const size_t depth = 100000;
+  std::string str_sort;
+  for (size_t i = 0; i < depth; ++i)
+  {
+    str_sort += "(Array Bool ";
+  }
+  str_sort += "Bool" + std::string(depth, ')');
+
+  bitwuzla::Sort expected = d_tm.mk_bool_sort();
+  for (size_t i = 0; i < depth; ++i)
+  {
+    expected = d_tm.mk_array_sort(d_tm.mk_bool_sort(), expected);
+  }
+
+  bitwuzla::Options options;
+  {
+    bitwuzla::parser::Parser parser(d_tm, options);
+    ASSERT_EQ(parser.parse_sort(str_sort), expected);
+  }
+  {
+    bitwuzla::parser::Parser parser(d_tm, options);
+    parser.parse("(declare-const x " + str_sort + ")", true, false);
+    ASSERT_EQ(parser.parse_term("x").sort(), expected);
+  }
+}
+
 TEST_F(TestApi, parser_smt2_print_model_sat)
 {
   const char* input = "test_api_parser_smt2_print_model_sat.smt2";

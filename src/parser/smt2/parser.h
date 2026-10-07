@@ -396,12 +396,6 @@ class Parser : public bzla::parser::Parser
                   bool look_ahead = false,
                   Token la_char   = Token::INVALID);
   /**
-   * Helper for parse_sort, parse array sort.
-   * @param sort The resulting sort.
-   * @return False on error.
-   */
-  bool parse_sort_array(bitwuzla::Sort& sort);
-  /**
    * Helper for parse_sort, parse bit-vector or floating-point sort.
    * @param sort The resulting sort.
    * @return False on error.

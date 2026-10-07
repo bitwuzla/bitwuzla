@@ -2908,101 +2908,109 @@ Parser::close_term_sorted_vars(ParsedItem& item)
 bool
 Parser::parse_sort(bitwuzla::Sort& sort, bool look_ahead, Token la)
 {
-  Token token = look_ahead ? la : next_token();
-  if (!check_token(token))
+  // The cache of open nested array index sorts. Array sorts are parsed
+  // iteratively to avoid exhausting the call stack for deeply nested arrays.
+  std::vector<bitwuzla::Sort> array_index_sorts;
+  for (;;)
   {
-    return false;
-  }
-
-  if (token == Token::BOOL)
-  {
-    sort = d_tm.mk_bool_sort();
-  }
-  else if (token == Token::FP_FLOAT16)
-  {
-    sort = d_tm.mk_fp_sort(5, 11);
-  }
-  else if (token == Token::FP_FLOAT32)
-  {
-    sort = d_tm.mk_fp_sort(8, 24);
-  }
-  else if (token == Token::FP_FLOAT64)
-  {
-    sort = d_tm.mk_fp_sort(11, 53);
-  }
-  else if (token == Token::FP_FLOAT128)
-  {
-    sort = d_tm.mk_fp_sort(15, 113);
-  }
-  else if (token == Token::FP_ROUNDINGMODE)
-  {
-    sort = d_tm.mk_rm_sort();
-  }
-  else if (token == Token::LPAR)
-  {
-    token = next_token();
+    Token token = look_ahead ? la : next_token();
+    look_ahead  = false;
     if (!check_token(token))
     {
       return false;
     }
-    if (token == Token::ARRAY)
-    {
-      return parse_sort_array(sort);
-    }
-    if (token == Token::AS)
-    {
-      return parse_open_term_as();
-    }
-    if (token != Token::UNDERSCORE)
-    {
-      if (d_arrays_enabled)
-      {
-        return error("expected '_' or 'Array'");
-      }
-      if (d_lexer->token() == std::to_string(Token::ARRAY))
-      {
-        return error("expected '_' (arrays not enabled)");
-      }
-      return error("expected '_'");
-    }
-    return parse_sort_bv_fp(sort);
-  }
-  else if (token == Token::SYMBOL)
-  {
-    assert(d_lexer->has_token());
-    std::string symbol      = d_lexer->token();
-    SymbolTable::Node* node = d_table.find(symbol);
-    if (!node || node->d_sort.is_null())
-    {
-      return error("invalid sort '" + symbol + "'");
-    }
-    sort = node->d_sort;
-  }
-  else
-  {
-    return error("expected '(' or sort keyword");
-  }
-  return true;
-}
 
-bool
-Parser::parse_sort_array(bitwuzla::Sort& sort)
-{
-  bitwuzla::Sort index, element;
-  if (!parse_sort(index))
-  {
-    return false;
+    if (token == Token::BOOL)
+    {
+      sort = d_tm.mk_bool_sort();
+    }
+    else if (token == Token::FP_FLOAT16)
+    {
+      sort = d_tm.mk_fp_sort(5, 11);
+    }
+    else if (token == Token::FP_FLOAT32)
+    {
+      sort = d_tm.mk_fp_sort(8, 24);
+    }
+    else if (token == Token::FP_FLOAT64)
+    {
+      sort = d_tm.mk_fp_sort(11, 53);
+    }
+    else if (token == Token::FP_FLOAT128)
+    {
+      sort = d_tm.mk_fp_sort(15, 113);
+    }
+    else if (token == Token::FP_ROUNDINGMODE)
+    {
+      sort = d_tm.mk_rm_sort();
+    }
+    else if (token == Token::LPAR)
+    {
+      token = next_token();
+      if (!check_token(token))
+      {
+        return false;
+      }
+      if (token == Token::ARRAY)
+      {
+        array_index_sorts.emplace_back();
+        continue;
+      }
+      if (token == Token::AS)
+      {
+        return parse_open_term_as();
+      }
+      if (token != Token::UNDERSCORE)
+      {
+        if (d_arrays_enabled)
+        {
+          return error("expected '_' or 'Array'");
+        }
+        if (d_lexer->token() == std::to_string(Token::ARRAY))
+        {
+          return error("expected '_' (arrays not enabled)");
+        }
+        return error("expected '_'");
+      }
+      if (!parse_sort_bv_fp(sort))
+      {
+        return false;
+      }
+    }
+    else if (token == Token::SYMBOL)
+    {
+      assert(d_lexer->has_token());
+      std::string symbol      = d_lexer->token();
+      SymbolTable::Node* node = d_table.find(symbol);
+      if (!node || node->d_sort.is_null())
+      {
+        return error("invalid sort '" + symbol + "'");
+      }
+      sort = node->d_sort;
+    }
+    else
+    {
+      return error("expected '(' or sort keyword");
+    }
+
+    // Close nested array.
+    // We only close when element sort is done parsing. Top of array_index_sorts
+    // is null if array sort is still open (index sort not parsed yet).
+    while (!array_index_sorts.empty() && !array_index_sorts.back().is_null())
+    {
+      if (!parse_rpar())
+      {
+        return false;
+      }
+      sort = d_tm.mk_array_sort(array_index_sorts.back(), sort);
+      array_index_sorts.pop_back();
+    }
+    if (array_index_sorts.empty())
+    {
+      return true;
+    }
+    array_index_sorts.back() = sort;
   }
-  if (!parse_sort(element))
-  {
-    return false;
-  }
-  if (!parse_rpar())
-  {
-    return false;
-  }
-  sort = d_tm.mk_array_sort(index, element);
-  return true;
 }
 
 bool
