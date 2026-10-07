@@ -391,8 +391,6 @@ class BvInverter
                   const Node& t,
                   size_t idx_x);
 
-  /** The associated environment. */
-  Env& d_env;
   /** The associated node manager. */
   NodeManager& d_nm;
   /** Enable under-determined (lossy) inverses for extract/concat. */

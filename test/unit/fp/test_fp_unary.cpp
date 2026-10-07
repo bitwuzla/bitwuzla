@@ -99,7 +99,7 @@ TEST_F(TestFpUnary, rti) { TEST_UNARY_RM(rti); }
 
 TEST_F(TestFpUnary, isX)
 {
-  auto fun = [this](const BitVector& bvexp, const BitVector& bvsig) {
+  auto fun = [](const BitVector& bvexp, const BitVector& bvsig) {
     bool exp_iszero = bvexp.is_zero();
     bool exp_isones = bvexp.is_ones();
     for (bool sign : {false, true})

@@ -5104,8 +5104,7 @@ TEST_F(TestApi, issue197)
   parser.parse(std::string(smt2), true, false);
   auto bitwuzla   = parser.bitwuzla();
   auto assertions = bitwuzla->get_assertions();
-  auto result     = bitwuzla->check_sat();
-  assert(result == bitwuzla::Result::SAT);
+  ASSERT_EQ(bitwuzla->check_sat(), bitwuzla::Result::SAT);
   for (auto& t : assertions)
   {
     dfs(*bitwuzla, t);

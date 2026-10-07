@@ -22,7 +22,7 @@ namespace bzla::bv {
 /* --- BvInverter public ---------------------------------------------------- */
 
 BvInverter::BvInverter(Env& env, bool underdet)
-    : d_env(env), d_nm(env.nm()), d_underdet(underdet)
+    : d_nm(env.nm()), d_underdet(underdet)
 {
 }
 

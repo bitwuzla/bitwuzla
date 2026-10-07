@@ -44,7 +44,7 @@ class TestEvaluator : public TestRewriter
   {
     for (const Node& c : children)
     {
-      assert(c.is_value());
+      EXPECT_TRUE(c.is_value());
     }
     Node node = d_nm.mk_node(kind, children, indices);
     Node rw   = d_rewriter.rewrite(node);
