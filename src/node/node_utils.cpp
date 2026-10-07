@@ -266,7 +266,19 @@ mk_default_value(NodeManager& nm, const Type& type)
   }
   else if (type.is_array())
   {
-    return nm.mk_const_array(type, mk_default_value(nm, type.array_element()));
+    // Collect nested array element types iteratively rather than recursing to
+    // not exhaust the call stack on deeply nested array types.
+    std::vector<Type> types{type};
+    while (types.back().array_element().is_array())
+    {
+      types.push_back(types.back().array_element());
+    }
+    Node res = mk_default_value(nm, types.back().array_element());
+    for (auto it = types.rbegin(); it != types.rend(); ++it)
+    {
+      res = nm.mk_const_array(*it, res);
+    }
+    return res;
   }
   else if (type.is_uninterpreted())
   {

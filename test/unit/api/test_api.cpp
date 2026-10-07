@@ -1806,6 +1806,28 @@ TEST_F(TestApi, get_value)
   }
 }
 
+TEST_F(TestApi, get_value_nested_array)
+{
+  // Deep enough to exhaust the native stack if default model value
+  // construction recurses per nesting level.
+  const size_t depth  = 100000;
+  bitwuzla::Sort sort = d_tm.mk_bool_sort();
+  for (size_t i = 0; i < depth; ++i)
+  {
+    sort = d_tm.mk_array_sort(d_tm.mk_bool_sort(), sort);
+  }
+  bitwuzla::Term x = d_tm.mk_const(sort, "x");
+
+  bitwuzla::Options options;
+  options.set(bitwuzla::Option::PRODUCE_MODELS, true);
+  bitwuzla::Bitwuzla bitwuzla(d_tm, options);
+  bitwuzla.assert_formula(d_tm.mk_term(bitwuzla::Kind::EQUAL, {x, x}));
+  ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::SAT);
+  bitwuzla::Term val = bitwuzla.get_value(x);
+  ASSERT_EQ(val.kind(), bitwuzla::Kind::CONST_ARRAY);
+  ASSERT_EQ(val.sort(), sort);
+}
+
 TEST_F(TestApi, get_bool_value)
 {
   ASSERT_EQ(true, d_true.value<bool>());
