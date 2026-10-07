@@ -50,6 +50,17 @@ else
   enable_unit_testing = get_option('unit_testing').enabled()
 endif
 
+# Apple's linker warns about libraries that are passed more than once. This is
+# harmless and happens if a dependency's pkg-config file lists a library that
+# is also passed by another dependency, e.g., MPFR adds a bare '-lgmp' while GMP
+# is already linked via its full path.
+if host_machine.system() == 'darwin'
+  add_project_link_arguments(
+    meson.get_compiler('cpp').get_supported_link_arguments(
+      '-Wl,-no_warn_duplicate_libraries'),
+    language: ['c', 'cpp'])
+endif
+
 subdir('src')
 
 if enable_python

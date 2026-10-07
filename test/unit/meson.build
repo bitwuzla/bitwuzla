@@ -151,7 +151,7 @@ unit_tests = [
 
 ]
 
-gtest_dep = dependency('gtest_main', required: true)
+gtest_dep = dependency('gtest_main', include_type: 'system', required: true)
 test_inc = [include_directories('../../src', '../..', 'lib')]
 test_deps = [gtest_dep, bitwuzla_dep, gmp_dep, mpfr_dep]
 

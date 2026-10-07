@@ -28,7 +28,9 @@ rng_sources = [
 ]
 
 # AIGER dependency
-aiger_dep = dependency('aiger', required: get_option('aiger'))
+aiger_dep = dependency('aiger',
+                       include_type: 'system',
+                       required: get_option('aiger'))
 
 cpp_args_bb_lib = []
 if aiger_dep.found()

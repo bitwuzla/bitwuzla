@@ -32,7 +32,7 @@ result_pxd = custom_target('result.pxd',
 )
 
 # Build Python module
-python_dep = python.dependency()
+python_dep = python.dependency(include_type: 'system')
 bitwuzla_py_ext = python.extension_module(
   'bitwuzla',
   ['bitwuzla.pyx', enums_pxd, options_pxd, result_pxd, 'terminator.cpp'],

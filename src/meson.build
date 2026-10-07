@@ -9,10 +9,12 @@ cpp_compiler = meson.get_compiler('cpp')
 gmp_dep = dependency('gmp',
                      version: '>=6.3',
                      required: true,
+                     include_type: 'system',
                      static: build_static)
 mpfr_dep = dependency('mpfr',
                      version: '>=4.2.1',
                      required: true,
+                     include_type: 'system',
                      static: build_static)
 
 # MPFR's .pc has a bare '-lgmp' but no -L for GMP. If GMP is in a separate
@@ -51,7 +53,9 @@ cadical_dep = cpp_compiler.find_library('cadical',
                                         static: build_static,
                                         required: false)
 if not cadical_dep.found()
-  cadical_dep = dependency('cadical', required: get_option('cadical'))
+  cadical_dep = dependency('cadical',
+                           include_type: 'system',
+                           required: get_option('cadical'))
 endif
 
 # Check version of system CaDiCaL. Query semantic version macros defined in the
@@ -83,6 +87,7 @@ endif
 
 cms_dep = dependency('cryptominisat5',
                      version: '5.11.21',
+                     include_type: 'system',
                      static: build_static,
                      required: get_option('cryptominisat'))
 
@@ -93,10 +98,14 @@ kissat_dep = cpp_compiler.find_library('kissat',
                                         static: build_static,
                                         required: false)
 if not kissat_dep.found()
-  kissat_dep = dependency('kissat', required: get_option('kissat'))
+  kissat_dep = dependency('kissat',
+                          include_type: 'system',
+                          required: get_option('kissat'))
 endif
 
-gimsatul_dep = dependency('gimsatul', required: get_option('gimsatul'))
+gimsatul_dep = dependency('gimsatul',
+                          include_type: 'system',
+                          required: get_option('gimsatul'))
 
 # Using system include type suppresses compile warnings originating from the
 # symfpu headers
