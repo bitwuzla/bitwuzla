@@ -63,10 +63,32 @@ class Interpolator
    * A and B such that (and A B) is unsat and (=> A I) and (=> I (not B)).
    * Partition A is the given set of assertions, partition B consists of the
    * remaining assertions that are not in A.
+   *
+   * The interpolant is determined on the preprocessed assertions of A and B
+   * by the first applicable of the following:
+   *  1. If unsat was determined by the preprocessor: false if A contains
+   *     false, true if B contains false.
+   *  2. A substitution-based interpolant of the restricted partitions (see
+   *     interpolant_by_substitution()), if enabled via --interpolants-subst.
+   *  3. A bit-level interpolant from the SAT proof of the unrestricted
+   *     partitions, post-processed if enabled via --interpolants-simp.
+   *
+   * When computing an interpolation sequence (see get_interpolants()), the
+   * i-th interpolant I_i is computed for A = F_1 \cup ... \cup F_i,
+   * A_part = F_i and prev_itp = I_{i-1}. To ensure inductiveness,
+   * substitution-based interpolation is then applied to (and I_{i-1} F_i)
+   * rather than A, and ~B is not considered as interpolant.
+   *
    * @note Assertions in A must be currently asserted formulas.
    * @note Current SAT state must be unsat.
-   * @param A The set of formulas representing partition A. This must be
-   *          a strict subset of the set of current assertions.
+   * @param A        The set of formulas representing partition A. This must
+   *                 be a strict subset of the set of current assertions.
+   * @param A_part   The subset of A that was added to A since the previous
+   *                 interpolant of an interpolation sequence. Equal to A if
+   *                 not computing a sequence, or for its first interpolant.
+   * @param prev_itp The previous interpolant of an interpolation sequence.
+   *                 Null if not computing a sequence, or for its first
+   *                 interpolant.
    * @return The interpolant.
    */
   Node get_interpolant(const std::unordered_set<Node>& A,
