@@ -193,7 +193,8 @@ DistinctNPropagator::assign(int32_t lit)
   {
     return;
   }
-  for (const auto wbv : it->second)
+  auto& watchers = it->second;
+  for (const auto wbv : watchers)
   {
     if (wbv->assign(*d_propagator, lit))
     {
@@ -205,7 +206,7 @@ DistinctNPropagator::assign(int32_t lit)
       d_watched_vars[wbv->watched()].push_back(wbv);
     }
   }
-  it->second.clear();
+  watchers.clear();
 }
 
 void
