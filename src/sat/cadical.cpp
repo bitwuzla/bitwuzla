@@ -107,20 +107,6 @@ Cadical::fixed(int32_t lit)
 }
 
 void
-Cadical::phase(int32_t lit)
-{
-  assert(std::abs(lit) <= d_max_var);
-  assert(d_propagator);
-  d_propagator->force_phase(lit);
-}
-
-void
-Cadical::unphase(int32_t lit)
-{
-  return d_solver->unphase(lit);
-}
-
-void
 Cadical::register_propagator(std::unique_ptr<SatPropagator> sp)
 {
   // Initialize propagator on demand.

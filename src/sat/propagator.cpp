@@ -166,7 +166,7 @@ Propagator::cb_add_external_clause_lit()
 void
 Propagator::notify_fixed_assignment(int32_t lit)
 {
-  d_var_info[std::abs(lit)].fixed = lit < 0 ? -1 : 1;
+  info(std::abs(lit)).fixed = lit < 0 ? -1 : 1;
   ++d_stats.num_fixed;
 }
 
@@ -180,7 +180,7 @@ Propagator::attach_solver(CaDiCaL::Solver* solver)
 void
 Propagator::force_phase(int32_t lit)
 {
-  auto& var_info = d_var_info[std::abs(lit)];
+  auto& var_info = info(std::abs(lit));
   var_info.phase = lit < 0 ? -1 : 1;
   d_decisions.push_back(lit);
 }
@@ -188,14 +188,8 @@ Propagator::force_phase(int32_t lit)
 void
 Propagator::force_unphase(int32_t lit)
 {
-  auto& var_info = d_var_info[std::abs(lit)];
+  auto& var_info = info(std::abs(lit));
   var_info.phase = 0;
-}
-
-void
-Propagator::phase(int32_t lit)
-{
-  d_solver->phase(lit);
 }
 
 void

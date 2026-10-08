@@ -67,8 +67,6 @@ class Propagator : public CaDiCaL::ExternalPropagator,
 
   void force_unphase(int32_t lit);
 
-  void phase(int32_t lit);
-
   /** Resize variable info struct include var. */
   void resize(int32_t var);
 
@@ -107,7 +105,6 @@ class Propagator : public CaDiCaL::ExternalPropagator,
   void notify_watchers(uint32_t watchers, Notify&& notify);
 
   CaDiCaL::Solver* d_solver = nullptr;
-  std::vector<int32_t> d_phases;
   std::vector<VarInfo> d_var_info;
   std::vector<int32_t> d_assignments;
   std::deque<int32_t> d_decisions;

@@ -64,8 +64,6 @@ class Cadical : public SatSolver
   int32_t value(int32_t lit) override;
   bool failed(int32_t lit) override;
   int32_t fixed(int32_t lit) override;
-  void phase(int32_t lit) override;
-  void unphase(int32_t lit) override;
   void register_propagator(std::unique_ptr<SatPropagator> sp) override;
   Result solve() override;
   void push() override;
