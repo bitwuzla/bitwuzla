@@ -793,20 +793,25 @@ ArraySolver::add_const_array_equality_lemma(
     util::Integer min_card =
         type::cardinality_min(acc.index().type(), indices.size() + 1);
     BitVector bv_card(min_card.base2_size(), min_card.gmp_value(), false);
-    // Move to solver engine
-    d_solver_state.register_distinct_heuristic(indices);
-    indices.insert(indices.begin(), nm.mk_value(bv_card));
+    std::vector<Node> children{nm.mk_value(bv_card)};
+    children.insert(children.end(), indices.begin(), indices.end());
     conc = nm.mk_node(Kind::OR,
-                      {nm.mk_node(Kind::DISTINCT_N, indices),
+                      {nm.mk_node(Kind::DISTINCT_N, children),
                        nm.mk_node(Kind::EQUAL, {acc.element(), array[0]})});
   }
   Node lem = d_env.rewriter().rewrite(nm.mk_node(
       Kind::IMPLIES, {node::utils::mk_nary(nm, Kind::AND, conditions), conc}));
 
-  // We only add this lemma once per pair of constant arrays
+  // We only add this lemma once per pair of constant arrays. Heuristics are
+  // only registered for new lemmas.
   if (d_const_array_eq_lemma_cache.insert(lem).second)
   {
     lemma(lem, LemmaId::CONST_ARRAY_DIFF);
+    if (!indices.empty())
+    {
+      // Move to solver engine
+      d_solver_state.register_distinct_heuristic(indices);
+    }
     if (!stores_down.empty())
     {
       std::vector<Node> elements_acc{acc.element()};
