@@ -131,6 +131,13 @@ struct KindInfo
     return is_quant(kind) || kind == Kind::LAMBDA;
   }
 
+  /** @return True if the given kind is a partial operator kind. */
+  static bool is_partial(Kind kind)
+  {
+    return kind == Kind::FP_TO_SBV || kind == Kind::FP_TO_UBV
+           || kind == Kind::FP_MIN || kind == Kind::FP_MAX;
+  }
+
   constexpr KindInfo();
 
   /** Are all kinds initialized? */

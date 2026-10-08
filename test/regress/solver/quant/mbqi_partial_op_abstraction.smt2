@@ -1,0 +1,7 @@
+(set-logic AUFBVFP)
+(declare-const x (Array (_ BitVec 40) (_ BitVec 48)))
+(declare-fun b ((_ BitVec 3)) (_ BitVec 6))
+(declare-fun l ((_ BitVec 3)) (_ BitVec 6))
+(assert (and (bvule (l #b000) (b #b000)) (or false (forall ((d (_ BitVec 40))) (= (fp #b0 #b00000000000 #b0000000000000000000000000000000000000000000000000000) ((_ to_fp 11 53) ((_ fp.to_sbv 64) RNE ((_ to_fp 11 53) RNE ((_ zero_extend 8) ((_ extract 45 38) (select x ((_ zero_extend 3) ((_ extract 39 3) (bvmul d (_ bv3 40)))))))))))) (forall ((e (_ BitVec 40))) false))))
+(set-info :status sat)
+(check-sat)

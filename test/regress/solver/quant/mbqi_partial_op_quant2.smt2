@@ -1,0 +1,7 @@
+(set-logic BVFP)
+(set-option :preprocess false)
+(declare-const c (_ BitVec 8))
+(assert (= c ((_ fp.to_ubv 8) RNE (ite (forall ((y (_ BitVec 8))) (bvult y #xff)) (fp #b0 #b10000 #b0000000000) (fp #b0 #b10001 #b0000000000)))))
+(assert (= c #x02))
+(set-info :status unsat)
+(check-sat)

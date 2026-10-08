@@ -1,0 +1,5 @@
+(set-logic BVFP)
+(declare-const c (_ BitVec 8))
+(assert (forall ((x Float16)) (=> (fp.isNaN x) (= ((_ fp.to_ubv 8) RNE x) c))))
+(set-info :status sat)
+(check-sat)

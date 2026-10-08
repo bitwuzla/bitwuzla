@@ -48,6 +48,7 @@ QuantSolver::QuantSolver(Env& env, SolverState& state)
       d_assertions(state.backtrack_mgr()),
       d_process_cache(state.backtrack_mgr()),
       d_consts(state.backtrack_mgr()),
+      d_partial_ops(state.backtrack_mgr()),
       d_ground_terms(state.backtrack_mgr()),
       d_skolemization_lemmas(state.backtrack_mgr()),
       d_lemma_cache(state.backtrack_mgr()),
@@ -56,6 +57,7 @@ QuantSolver::QuantSolver(Env& env, SolverState& state)
       d_opt_quant_ic_bounds(env.options().quant_ic_bounds()),
       d_opt_quant_ic_filter(env.options().quant_ic_filter()),
       d_opt_quant_ic_value_limit(env.options().quant_ic_value_limit()),
+      d_opt_abstraction(env.options().abstraction()),
       d_stats(env.statistics(), "solver::quant::")
 {
 }
@@ -312,12 +314,49 @@ QuantSolver::process(const Node& q)
           if (!cur.node_info().quantifier)
           {
             d_ground_terms.push_back(cur);
+            if (KindInfo::is_partial(cur.kind()))
+            {
+              d_partial_ops.push_back(cur);
+            }
           }
         }
       }
     }
     visit.pop_back();
   } while (!visit.empty());
+}
+
+Node
+QuantSolver::abstractions_to_values(const Node& node)
+{
+  NodeManager& nm = d_env.nm();
+  std::unordered_map<Node, Node> cache;
+  node_ref_vector visit{node};
+  do
+  {
+    const Node& cur     = visit.back();
+    auto [it, inserted] = cache.try_emplace(cur);
+    if (inserted)
+    {
+      // Abstractions are replaced as a whole, no need to go below.
+      if (cur.kind() == Kind::AM_ABSTRACT)
+      {
+        it->second = d_solver_state.value(cur);
+      }
+      else
+      {
+        visit.insert(visit.end(), cur.begin(), cur.end());
+        continue;
+      }
+    }
+    else if (it->second.is_null())
+    {
+      it->second = utils::rebuild_node(nm, cur, cache);
+    }
+    visit.pop_back();
+  } while (!visit.empty());
+
+  return cache.at(node);
 }
 
 bool
@@ -348,6 +387,15 @@ QuantSolver::mbqi_check(const std::vector<Node>& to_check)
   {
     Node value = d_solver_state.value(c);
     d_mbqi_solver->assert_formula(nm.mk_node(Kind::EQUAL, {c, value}));
+  }
+  // Partial operators outside of quantifiers may contain abstractions of the
+  // parent solver, which must not leak into the MBQI solver. We replace them
+  // with their values in the current model.
+  for (const Node& p : d_partial_ops)
+  {
+    Node value = d_solver_state.value(p);
+    Node term  = d_opt_abstraction ? abstractions_to_values(p) : p;
+    d_mbqi_solver->assert_formula(nm.mk_node(Kind::EQUAL, {term, value}));
   }
 
   std::vector<Node> ce_q;

@@ -1,0 +1,5 @@
+(set-logic BVFP)
+(declare-const c Float16)
+(assert (forall ((x Float16)) (=> (fp.isZero x) (= (fp.min x (fp.neg x)) c))))
+(set-info :status sat)
+(check-sat)

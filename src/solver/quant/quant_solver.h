@@ -68,6 +68,14 @@ class QuantSolver : public Solver
 
   void process(const Node& q);
 
+  /**
+   * Replace all abstractions in the given node with their values in the
+   * current model.
+   * @param node The node.
+   * @return The node with all abstractions replaced by their values.
+   */
+  Node abstractions_to_values(const Node& node);
+
   bool mbqi_check(const std::vector<Node>& to_check);
   const Node& mbqi_inst(const Node& q);
   void mbqi_lemma(
@@ -147,6 +155,7 @@ class QuantSolver : public Solver
   backtrack::vector<Node> d_assertions;
   backtrack::unordered_set<Node> d_process_cache;
   backtrack::vector<Node> d_consts;
+  backtrack::vector<Node> d_partial_ops;
   backtrack::vector<Node> d_ground_terms;
   std::unordered_map<uint64_t, uint64_t> d_num_selected;
   std::vector<uint64_t> d_selected_terms;
@@ -175,6 +184,8 @@ class QuantSolver : public Solver
   bool d_opt_quant_ic_filter;
   /** Cache configuration of option QUANT_IC_VALUE_LIMIT. */
   uint64_t d_opt_quant_ic_value_limit;
+  /** Cache configuration of option ABSTRACTION. */
+  bool d_opt_abstraction;
 
   struct Statistics
   {
