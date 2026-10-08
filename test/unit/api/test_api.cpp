@@ -4967,10 +4967,54 @@ TEST_F(TestApi, sat_cms_query_unknown_literal)
     cms.add(0);
     cms.assume(-v1);
     ASSERT_EQ(cms.solve(), bitwuzla::Result::UNSAT);
-    ASSERT_TRUE(cms.failed(v1));
+    ASSERT_TRUE(cms.failed(-v1));
     // A never-added literal cannot be part of the unsat core.
     ASSERT_FALSE(cms.failed(1000));
   }
+}
+#endif
+
+#if defined(BZLA_USE_CMS) || defined(BZLA_USE_CADICAL)
+TEST_F(TestApi, sat_failed_per_literal)
+{
+  // Regression test: failed() is per literal, as in CaDiCaL. The CMS backend
+  // used to track failed assumptions per variable, so failed(x) and failed(-x)
+  // always agreed.
+  auto check = [](sat::SatSolver& solver) {
+    int32_t v1 = solver.new_var();
+    int32_t v2 = solver.new_var();
+    int32_t v3 = solver.new_var();
+    solver.add(v1);
+    solver.add(0);
+    // Only the assumed polarity is failed.
+    solver.assume(-v1);
+    solver.assume(v3);
+    ASSERT_EQ(solver.solve(), bitwuzla::Result::UNSAT);
+    ASSERT_TRUE(solver.failed(-v1));
+    ASSERT_FALSE(solver.failed(v1));
+    ASSERT_FALSE(solver.failed(v3));
+    ASSERT_FALSE(solver.failed(-v3));
+    // Both polarities are failed if both were assumed.
+    solver.assume(v2);
+    solver.assume(-v2);
+    ASSERT_EQ(solver.solve(), bitwuzla::Result::UNSAT);
+    ASSERT_TRUE(solver.failed(v2));
+    ASSERT_TRUE(solver.failed(-v2));
+    ASSERT_FALSE(solver.failed(v1));
+    ASSERT_FALSE(solver.failed(-v1));
+  };
+#ifdef BZLA_USE_CADICAL
+  {
+    sat::Cadical cadical;
+    check(cadical);
+  }
+#endif
+#ifdef BZLA_USE_CMS
+  {
+    sat::CryptoMiniSat cms(1);
+    check(cms);
+  }
+#endif
 }
 #endif
 

@@ -57,8 +57,8 @@ class CryptoMiniSat : public SatSolver
   CMSat::Lit import_lit(int32_t lit);
   /**
    * Collect data for failed().
-   * Caches for each variable if it is failed, i.e., in the unsat core, in
-   * d_failed_map.
+   * Caches for each literal if it is a failed assumption, i.e., in the unsat
+   * core, in d_failed_map.
    */
   void analyze_failed();
   /**
@@ -76,7 +76,10 @@ class CryptoMiniSat : public SatSolver
   std::vector<CMSat::Lit> d_assumptions;
   /** The current (unterminated) clause. */
   std::vector<CMSat::Lit> d_clause;
-  /** Map variable (index) to true if it is failed, and false otherwise. */
+  /**
+   * Map literal (index CMSat::Lit::toInt()) to true if it is a failed
+   * assumption, and false otherwise.
+   */
   std::vector<bool> d_failed_map;
   /**
    * Map variable (index) to 1 (if fixed to true), -1 (if fixed to false)

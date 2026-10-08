@@ -86,8 +86,8 @@ CryptoMiniSat::failed(int32_t lit)
   // Avoid import_lit() here: it would grow the solver and read past
   // d_failed_map. An unknown literal cannot be part of the unsat core.
   uint32_t var = std::abs(lit);
-  if (var > d_failed_map.size()) return false;
-  return d_failed_map[var - 1];
+  if (var > d_failed_map.size() / 2) return false;
+  return d_failed_map[CMSat::Lit(var - 1, lit < 0).toInt()];
 }
 
 int32_t
@@ -176,13 +176,16 @@ void
 CryptoMiniSat::analyze_failed()
 {
   uint32_t nvars = d_solver->nVars();
-  d_failed_map.resize(nvars);
+  d_failed_map.resize(2 * nvars);
+  // The conflict contains the negations of the failed assumptions. Record the
+  // assumed literal, not its variable, since failed() is per literal: assuming
+  // x does not make -x failed.
   const std::vector<CMSat::Lit> &conflict = d_solver->get_conflict();
   for (size_t i = 0, n = conflict.size(); i < n; ++i)
   {
-    uint32_t v = conflict[i].var();
-    assert(v < nvars);
-    d_failed_map[v] = true;
+    CMSat::Lit lit = ~conflict[i];
+    assert(lit.var() < nvars);
+    d_failed_map[lit.toInt()] = true;
   }
 }
 
