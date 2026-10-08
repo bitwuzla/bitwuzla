@@ -46,6 +46,27 @@ EqDecisionHeuristic::attach_propagator(Propagator* propagator)
       d_idxmap.emplace(var, std::make_pair(i++, bit));
     }
   }
+  // The bits of constants are literals of the single variable fixed to true,
+  // which only maps to its first column, and its assignment may never be
+  // notified since it was fixed before we watched it. Force columns with a
+  // root-fixed bit to its value right away, they are never released.
+  for (size_t idx = 0, size = d_setter.size(); idx < size; ++idx)
+  {
+    for (const auto& bv : d_bvs)
+    {
+      int32_t fixed = d_propagator->info(std::abs(bv[idx])).fixed;
+      if (fixed)
+      {
+        int32_t value = bv[idx] < 0 ? -fixed : fixed;
+        for (const auto& b : d_bvs)
+        {
+          d_propagator->force_phase(b[idx] * value);
+        }
+        d_setter[idx] = s_setter_fixed;
+        break;
+      }
+    }
+  }
 }
 
 void

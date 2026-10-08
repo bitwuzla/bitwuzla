@@ -32,6 +32,9 @@ class EqDecisionHeuristic : public SatPropagator
   bool done() const override { return false; }
 
  private:
+  /** Setter of columns forced by a root-fixed bit, never unassigned. */
+  static constexpr int32_t s_setter_fixed = -1;
+
   Propagator* d_propagator = nullptr;
   std::vector<std::vector<int32_t>> d_bvs;
   /** Maps a variable to its column and the literal it occurs as. */
