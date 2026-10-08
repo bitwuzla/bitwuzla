@@ -44,7 +44,7 @@ namespace {
 uint32_t
 aiger_id(const AigNode& node)
 {
-  assert(node.get_id() <= std::numeric_limits<int32_t>::max());
+  assert(std::abs(node.get_id()) <= std::numeric_limits<int32_t>::max());
 
   if (node.is_true())
   {
