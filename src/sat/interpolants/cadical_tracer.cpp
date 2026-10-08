@@ -163,21 +163,11 @@ CadicalTracer::add_assumption_clause(int64_t id,
   }
   else
   {
+    // Without constraint(), CaDiCaL only emits antecedent-free assumption
+    // clauses for clashing assumptions {a, -a}.
     assert(clause.size() == 2);
-    bool is_ass_lit0 = d_assumptions.find(-clause[0]) != d_assumptions.end();
-    bool is_ass_lit1 = d_assumptions.find(-clause[1]) != d_assumptions.end();
-    if (!is_ass_lit0 || !is_ass_lit1)
-    {
-      assert(static_cast<int64_t>(d_clauses.size()) == id);
-      int32_t lit = is_ass_lit0 ? -clause[1] : -clause[0];
-      d_clauses.push_back({{lit}, ClauseType::ASSUMPTION, 0, antecedents});
-      d_assumption_clauses.push_back(id);
-      return;
-    }
-  }
-
-  if (antecedents.empty())
-  {
+    assert(d_assumptions.find(-clause[0]) != d_assumptions.end());
+    assert(d_assumptions.find(-clause[1]) != d_assumptions.end());
     assert(static_cast<int64_t>(d_clauses.size()) == id);
     d_clauses.emplace_back(clause, ClauseType::ASSUMPTION, 0, antecedents);
   }
