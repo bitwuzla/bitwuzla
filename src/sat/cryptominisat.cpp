@@ -72,7 +72,9 @@ CryptoMiniSat::value(int32_t lit)
   // literal (never added, or added after the last solve) has no model value.
   uint32_t var = std::abs(lit);
   if (var > model.size()) return 0;
-  int32_t res = model[var - 1] == CMSat::l_True ? 1 : -1;
+  CMSat::lbool val = model[var - 1];
+  if (val == CMSat::l_Undef) return 0;
+  int32_t res = val == CMSat::l_True ? 1 : -1;
   return lit < 0 ? -res : res;
 }
 
