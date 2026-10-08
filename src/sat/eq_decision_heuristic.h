@@ -13,6 +13,7 @@
 
 #include <cstddef>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "sat/sat_propagator.h"
@@ -33,8 +34,10 @@ class EqDecisionHeuristic : public SatPropagator
  private:
   Propagator* d_propagator = nullptr;
   std::vector<std::vector<int32_t>> d_bvs;
-  std::unordered_map<int32_t, size_t> d_idxmap;
-  std::vector<bool> d_assigned;
+  /** Maps a variable to its column and the literal it occurs as. */
+  std::unordered_map<int32_t, std::pair<size_t, int32_t>> d_idxmap;
+  /** The variable that forced the phases of a column, 0 if none. */
+  std::vector<int32_t> d_setter;
 };
 
 }  // namespace bzla::sat

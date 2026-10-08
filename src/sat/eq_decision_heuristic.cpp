@@ -27,7 +27,7 @@ EqDecisionHeuristic::EqDecisionHeuristic(
 {
   if (!d_bvs.empty())
   {
-    d_assigned.resize(d_bvs[0].size(), false);
+    d_setter.resize(d_bvs[0].size(), 0);
   }
 }
 
@@ -43,7 +43,7 @@ EqDecisionHeuristic::attach_propagator(Propagator* propagator)
     {
       int32_t var = std::abs(bit);
       d_propagator->watch(var, this);
-      d_idxmap.emplace(var, i++);
+      d_idxmap.emplace(var, std::make_pair(i++, bit));
     }
   }
 }
@@ -58,16 +58,17 @@ EqDecisionHeuristic::assign(int32_t lit)
     return;
   }
 
-  size_t idx = it->second;
-  if (d_assigned[idx])
+  auto [idx, bit] = it->second;
+  if (d_setter[idx])
   {
     return;
   }
-  d_assigned[idx] = true;
-  int32_t phase   = lit < 0 ? -1 : 1;
+  d_setter[idx] = var;
+  // The bits are CNF literals, the bit is true iff its literal was assigned.
+  int32_t value = lit == bit ? 1 : -1;
   for (size_t i = 0, size = d_bvs.size(); i < size; ++i)
   {
-    d_propagator->force_phase(d_bvs[i][idx] * phase);
+    d_propagator->force_phase(d_bvs[i][idx] * value);
   }
 }
 
@@ -80,12 +81,15 @@ EqDecisionHeuristic::unassign(int32_t var)
     return;
   }
 
-  size_t idx = it->second;
-  if (!d_assigned[idx])
+  // Several variables map to the same column, only the one that forced its
+  // phases releases them. Unassignments arrive in reverse assignment order,
+  // hence it is the last variable of its column to be unassigned.
+  size_t idx = it->second.first;
+  if (d_setter[idx] != var)
   {
     return;
   }
-  d_assigned[idx] = false;
+  d_setter[idx] = 0;
   for (size_t i = 0, size = d_bvs.size(); i < size; ++i)
   {
     d_propagator->force_unphase(d_bvs[i][idx]);
