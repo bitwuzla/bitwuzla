@@ -69,6 +69,7 @@ Propagator::notify_new_decision_level()
 void
 Propagator::notify_backtrack(size_t new_level)
 {
+  assert(new_level < d_assignments_control.size());
   size_t backtrack_to = d_assignments_control[new_level];
   d_assignments_control.resize(new_level);
   while (backtrack_to < d_assignments.size())
