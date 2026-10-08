@@ -59,20 +59,21 @@ gimsatul_release(struct gimsatul *gimsatul)
 }
 
 void
-gimsatul_add_clauses(struct gimsatul *gimsatul,
+gimsatul_add_clauses(struct gimsatul* gimsatul,
                      int32_t variables,
-                     int32_t nliterals,
-                     int32_t *literals,
-                     int32_t expected_clauses)
+                     size_t nliterals,
+                     int32_t* literals,
+                     size_t expected_clauses)
 {
   struct ruler *ruler = gimsatul->ruler;
   signed char *marked = allocate_and_clear_block(variables);
   struct unsigneds clause;
   INIT(clause);
-  int signed_lit = 0, added = 0;
+  int signed_lit = 0;
+  size_t added   = 0;
 
   bool trivial = false;
-  for (int32_t i = 0; i < nliterals; ++i)
+  for (size_t i = 0; i < nliterals; ++i)
   {
     signed_lit = literals[i];
     if (signed_lit)

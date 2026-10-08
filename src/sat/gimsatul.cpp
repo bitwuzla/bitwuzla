@@ -97,8 +97,8 @@ Gimsatul::solve()
   }
   size_t size_before_assumptions = d_literals.size();
 
-  int32_t max_var     = d_max_var - 1;
-  int32_t num_clauses = d_num_clauses;
+  int32_t max_var    = d_max_var - 1;
+  size_t num_clauses = d_num_clauses;
   for (const auto a : d_assumptions)
   {
     d_literals.push_back(a);
