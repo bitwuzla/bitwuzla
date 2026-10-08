@@ -12,6 +12,7 @@
 #define BZLA__BITBLAST_AIG_AIG_PRINTER_H
 
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "bitblast/aig/aig_node.h"
