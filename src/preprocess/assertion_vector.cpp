@@ -62,6 +62,13 @@ AssertionVector::operator[](std::size_t index) const
   return d_view[d_begin + index];
 }
 
+const Node&
+AssertionVector::previous(std::size_t index) const
+{
+  assert(index < d_begin);
+  return d_view[index];
+}
+
 void
 AssertionVector::replace(size_t index, const Node& replacement)
 {

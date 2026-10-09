@@ -1,0 +1,8 @@
+(set-info :status sat)
+(declare-const __ (_ BitVec 1))
+(declare-fun s () (_ BitVec 1))
+(declare-fun _s () Bool)
+(assert (and (= s (_ bv1 1)) (= (_ bv1 1) (ite (bvult (_ bv0 64) ((_ zero_extend 63) __)) s (_ bv1 1)))))
+(push 1)
+(assert (and _s (= (_ bv1 1) (ite (bvult (_ bv0 64) ((_ zero_extend 63) __)) s (_ bv1 1)))))
+(check-sat)

@@ -10,14 +10,11 @@
 
 #include "preprocess/pass/variable_substitution.h"
 
-#include <deque>
-
 #include "bv/bitvector.h"
 #include "env.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
 #include "node/node_utils.h"
-#include "node/unordered_node_ref_map.h"
 #include "node/unordered_node_ref_set.h"
 #include "rewrite/rewriter.h"
 #include "util/hash.h"
@@ -604,9 +601,9 @@ PassVariableSubstitution::PassVariableSubstitution(
     : PreprocessingPass(env, backtrack_mgr, "vs", "varsubst"),
       d_substitutions(backtrack_mgr),
       d_substitution_assertions(backtrack_mgr),
-      d_first_seen(backtrack_mgr),
-      d_first_seen_cache(backtrack_mgr),
-      d_cache(backtrack_mgr),
+      d_keep(backtrack_mgr),
+      d_prev_nodes(backtrack_mgr),
+      d_prev_scanned(backtrack_mgr),
       d_stats(env.statistics(), "preprocess::" + name() + "::")
 {
 }
@@ -630,124 +627,112 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
 
   Log(1) << "Apply variable substitution";
 
-  auto& substitution_map = d_cache.substitutions();
-  bool process_term      = !substitution_map.empty();
-  size_t start_index     = assertions.start_index();
-
-  // Check current set of assertions for variable substitutions
-  std::unordered_map<Node, Node> new_substs;
-  std::unordered_map<Node, size_t> subst_index;
+  // Check current set of assertions for substitution candidates.
+  assert(d_candidates.empty());
   std::unordered_map<Node, std::vector<std::pair<Node, Node>>> extract_map;
   {
     util::Timer timer(d_stats.time_register);
-    for (size_t i = 0, size = assertions.size(); i < size; ++i)
+    // Note: Normalized assertions added in this loop are checked, too.
+    for (size_t i = 0; i < assertions.size(); ++i)
     {
-      const Node& assertion  = assertions[i];
-      // Cache original assertion, assertions are checked once for substitution
-      // candidates.
+      // Note: Do not use a reference here since it may become invalid when
+      //       resizing the assertions vector.
+      const Node assertion = assertions[i];
+      // Assertions are checked once for substitution candidates.
       if (!cache_assertion(assertion))
       {
         continue;
       }
-      find_vars(assertion, start_index + i);
-      // Try to normalize assertion for term substitution.
-      auto normalized = normalize_for_substitution(assertion);
-      if (!normalized.empty())
+      auto [var, term] = find_substitution(assertion);
+      if (!var.is_null())
       {
-        // Explicitly add normalized assertion that was derived from assertion.
-        // Note: Do not use assertion here since this reference may become
-        //       invalid when resizing the assertions vector.
-        Node parent = assertion;
-        for (const auto& n : normalized)
-        {
-          assertions.push_back(n, parent);
-        }
+        add_candidate(assertions, var, term, assertion, i);
         continue;
       }
-      auto [var, term] = find_substitution(assertion);
-      // No variable substitution
-      if (var.is_null())
+      // Try to normalize assertion for term substitution.
+      auto normalized = normalize_for_substitution(assertion);
+      if (normalized.empty())
       {
         collect_extracts(assertion, extract_map);
         continue;
       }
-      // If var already substituted, check if term is also a variable.
-      else if (d_substitutions.find(var) != d_substitutions.end()
-               || new_substs.find(var) != new_substs.end())
+      // Explicitly add normalized assertion that was derived from assertion.
+      for (const auto& n : normalized)
       {
-        if (term.is_const()
-            && (d_substitutions.find(term) == d_substitutions.end()
-                && new_substs.find(term) == new_substs.end()))
-        {
-          std::swap(var, term);
-        }
-        else
-        {
-          continue;
-        }
-      }
-
-      if (d_exclude_consts.find(var) != d_exclude_consts.end())
-      {
-        continue;
-      }
-
-      // If we already have substitutions, process the term first to ensure
-      // that all variables in this term are substituted before we check for
-      // cycles. This allows us to incrementally add new substitutions and
-      // check for cycles.
-      Node term_processed = process_term ? process(term) : term;
-
-      // Do not add direct substitution cycles
-      if (!is_direct_cycle(var, term_processed))
-      {
-        new_substs.emplace(var, term_processed);
-        subst_index.emplace(var, i);
-        Log(2) << "Add substitution: " << var << " -> " << term_processed;
+        assertions.push_back(n, assertion);
       }
     }
   }
 
   if (!extract_map.empty())
   {
-    process_extracts(extract_map, assertions, new_substs, subst_index);
+    process_extracts(extract_map, assertions);
   }
 
-  Log(1) << "Found " << new_substs.size() << " new substitutions";
-
-  // Remove substitution cycles
-  {
-    util::Timer timer_cycles(d_stats.time_remove_cycles);
-    remove_indirect_cycles(new_substs);
-    Log(1) << new_substs.size() << " substitutions after cycle removal";
-  }
-
-  // Add new substitutions to substitution map
-  substitution_map.insert(new_substs.begin(), new_substs.end());
-  d_stats.num_substs = substitution_map.size();
-
-  // Cache assertion indices of non-cyclic substitutions.
-  for (const auto& [var, term] : new_substs)
-  {
-    auto it = subst_index.find(var);
-    assert(it != subst_index.end());
-    size_t real_index = it->second + start_index;
-    assert(d_substitution_assertions.find(real_index)
-           == d_substitution_assertions.end());
-    d_substitution_assertions.emplace(real_index, var);
-    d_substitutions.emplace(var, std::make_pair(term, assertions[it->second]));
-  }
+  Log(1) << "Found " << d_candidates.size() << " substitution candidates";
 
   // No substitutions
-  if (substitution_map.empty())
+  if (d_substitutions.empty() && d_candidates.empty())
   {
     return;
   }
 
-  // Reset substitution cache since we have new substitutions
-  if (!new_substs.empty())
+  size_t start_index = assertions.start_index();
+  size_t num_substs  = d_substitutions.size();
+  if (d_candidates.empty())
   {
-    d_cache.cache().clear();
+    sync_cache();
+  }
+  else
+  {
+    // Cached results do not reflect the new candidates.
+    d_cache.clear();
+    // Substituting a candidate variable resolves its cycles. Process them in
+    // the order they were found, which determines which candidate of a cycle
+    // is dropped.
+    for (const Node& var : d_candidate_vars)
+    {
+      substitute(var);
+    }
+    for (const Node& var : d_candidate_vars)
+    {
+      const Candidate& c = d_candidates.at(var);
+      if (c.selected == c.terms.size())
+      {
+        continue;
+      }
+      const auto& [term, assertion, index] = c.terms[c.selected];
+      // Store the fully substituted term. Storing the term as found would
+      // require to expand chains of substitutions again whenever the cache
+      // is reset.
+      auto it = d_cache.find(var);
+      assert(it != d_cache.end());
+      it->second = d_env.rewriter().rewrite(it->second);
+      d_substitutions.emplace(var, it->second);
+      d_substitution_assertions.emplace(var, assertion);
+      if (c.keep)
+      {
+        d_keep.emplace(start_index + index, var);
+      }
+      auto ite = d_extract_eqs.find(assertion);
+      if (ite != d_extract_eqs.end())
+      {
+        d_stats.num_eq_elim_extracts += ite->second;
+        ++d_stats.num_eq_elim_extracts_substs;
+      }
+      Log(2) << "Add substitution: " << var << " -> " << it->second;
+    }
+    d_candidates.clear();
+    d_candidate_vars.clear();
+    d_extract_eqs.clear();
+    d_cache_num_substs = d_substitutions.size();
+    d_stats.num_substs = d_substitutions.size();
+    Log(1) << d_substitutions.size() << " substitutions after cycle removal";
+    // All candidates were cyclic.
+    if (d_substitutions.empty())
+    {
+      return;
+    }
   }
 
   // Apply substitutions.
@@ -770,37 +755,32 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
   //   --> true, F1[a/t], F2[b], b = s, F3[b/s]
   //
   // We are not allowed to substitute b = s with true since b occurs in one of
-  // the assertions of a previous check-sat call. Since we only preprocess
-  // newly added assertions b will not be globally substituted in all
-  // assertions and therefore we have to keep the substitution constraint b = s
-  // around. As a solution we only fully substitute initial assertions, i.e.,
-  // assertions from the first check-sat call.
-  // We could check whether a variable to be substituted occurs in assertions
-  // of previous check-sat calls in order to optimize this, but for now we keep
-  // the assertion since this avoids an additional traversal over previous
-  // assertions that we don't have access to in this pass.
-  bool initial_assertions = assertions.initial_assertions();
+  // the assertions of a previous check-sat call, which are not reprocessed.
+  // We therefore keep the substitution constraint of such variables.
   for (size_t i = 0, size = assertions.size(); i < size; ++i)
   {
     const Node& assertion = assertions[i];
-    // Only do full substitution on initial assertions.
-    if (!initial_assertions)
+    if (assertion.is_value())
     {
-      auto it = d_substitution_assertions.find(start_index + i);
-      if (it != d_substitution_assertions.end())
+      continue;
+    }
+    auto it = d_keep.find(start_index + i);
+    if (it != d_keep.end())
+    {
+      // Only rebuild on new substitutions, other passes may have simplified
+      // the constraint and rebuilding it every round would revert this.
+      if (d_substitutions.size() > num_substs)
       {
-        const auto& var = it->second;
-        // Variable occurs in previous assertions, don't perform full
-        // substitution.
-        if (!is_safe_to_substitute(var, start_index))
-        {
-          Node replacement = process(assertion, var);
-          assertions.replace(i, replacement);
-          continue;
-        }
+        const Node& var = it->second;
+        assertions.replace(i,
+                           d_env.rewriter().rewrite(d_env.nm().mk_node(
+                               Kind::EQUAL, {var, substitute(var)})));
       }
+      continue;
     }
     Node replacement = process(assertion);
+    // Substituted nodes do not contain any substituted variables.
+    d_cache.emplace(replacement, replacement);
     assertions.replace(i, replacement);
   }
 }
@@ -814,262 +794,262 @@ PassVariableSubstitution::exclude(const std::unordered_set<Node>& exclude)
 Node
 PassVariableSubstitution::process(const Node& term)
 {
-  Node null;
-  return d_env.rewriter().rewrite(
-      substitute(term, null, d_cache.substitutions(), d_cache.cache()));
-}
-
-bool
-PassVariableSubstitution::is_safe_to_substitute(const Node& var,
-                                                size_t assertion_start_index)
-{
-  auto it = d_first_seen.find(var);
-  assert(it != d_first_seen.end());
-  return it->second >= assertion_start_index;
-}
-
-void
-PassVariableSubstitution::find_vars(const Node& assertion, size_t index)
-{
-  util::Timer timer(d_stats.time_find_vars);
-  node_ref_vector visit{assertion};
-  do
-  {
-    const Node& cur = visit.back();
-    visit.pop_back();
-
-    if (d_first_seen_cache.insert(cur).second)
-    {
-      if (cur.is_const())
-      {
-        d_first_seen.emplace(cur, index);
-      }
-      visit.insert(visit.end(), cur.begin(), cur.end());
-    }
-  } while (!visit.empty());
+  assert(d_candidates.empty());
+  sync_cache();
+  return d_env.rewriter().rewrite(substitute(term));
 }
 
 const std::unordered_map<Node, Node>&
 PassVariableSubstitution::substitutions() const
 {
-  return d_cache.substitutions();
+  return d_substitutions.map();
 }
 
 const Node&
 PassVariableSubstitution::substitution_assertion(const Node& var) const
 {
-  auto it = d_substitutions.find(var);
-  assert(it != d_substitutions.end());
-  return it->second.second;
+  auto it = d_substitution_assertions.find(var);
+  assert(it != d_substitution_assertions.end());
+  return it->second;
 }
 
 /* --- PassVariableSubstitution private ------------------------------------- */
 
-void
-PassVariableSubstitution::remove_indirect_cycles(
-    std::unordered_map<Node, Node>& substitutions) const
+bool
+PassVariableSubstitution::can_substitute(const Node& var) const
 {
-  int64_t order_num = 1;
-  std::unordered_map<Node, int64_t> order;
-  node::unordered_node_ref_map<bool> cache;
-  node::node_ref_vector visit, nodes;
-  std::vector<size_t> marker{0};
+  return var.is_const() && d_substitutions.find(var) == d_substitutions.end()
+         && d_exclude_consts.find(var) == d_exclude_consts.end();
+}
 
-  // Compute topological order of substitutions. Assumes that direct cycles
-  // were already removed.
-  for (const auto& [var, term] : substitutions)
+void
+PassVariableSubstitution::add_candidate(const AssertionVector& assertions,
+                                        Node var,
+                                        Node term,
+                                        const Node& assertion,
+                                        size_t index)
+{
+  // If both sides are variables, choose the orientation of `var = term`.
+  // Substituting variable v is less effective if
+  //  - v occurs in assertions of previous calls, which are not reprocessed,
+  //    hence the substitution constraint must be kept (cost 2), or
+  //  - v already has a candidate, hence the term is only a fallback in case
+  //    the candidate is cyclic (cost 1).
+  // Swap only if the other orientation is strictly cheaper.
+  auto cost = [&](const Node& v) {
+    return (occurs_in_previous(assertions, v) ? 2 : 0)
+           + (d_candidates.find(v) == d_candidates.end() ? 0 : 1);
+  };
+  if (term.is_const() && can_substitute(term)
+      && (!can_substitute(var) || cost(term) < cost(var)))
   {
-    visit.push_back(var);
-    do
-    {
-      const Node& cur = visit.back();
+    std::swap(var, term);
+  }
+  else if (!can_substitute(var))
+  {
+    return;
+  }
 
-      auto [it, inserted] = cache.emplace(cur, false);
+  auto [it, inserted] = d_candidates.try_emplace(var);
+  Candidate& c        = it->second;
+  if (inserted)
+  {
+    d_candidate_vars.push_back(var);
+    c.keep         = occurs_in_previous(assertions, var);
+    d_min_subst_id = std::min(d_min_subst_id, var.id());
+  }
+  c.terms.emplace_back(term, assertion, index);
+  Log(2) << "Add substitution candidate: " << var << " -> " << term;
+}
+
+Node
+PassVariableSubstitution::substitute(const Node& term)
+{
+  util::Timer timer(d_stats.time_substitute);
+
+  // Get substitution term of given node, and whether it is a candidate.
+  auto get_subst = [this](const Node& node) -> std::pair<const Node*, bool> {
+    if (node.is_const())
+    {
+      auto it = d_substitutions.find(node);
+      if (it != d_substitutions.end())
+      {
+        return {&it->second, false};
+      }
+      auto itc = d_candidates.find(node);
+      if (itc != d_candidates.end())
+      {
+        const Candidate& c = itc->second;
+        if (c.selected < c.terms.size())
+        {
+          return {&std::get<0>(c.terms[c.selected]), true};
+        }
+      }
+    }
+    return {nullptr, false};
+  };
+  // Get result of already processed node.
+  auto get_result = [this](const Node& node) -> const Node& {
+    if (node.id() < d_min_subst_id)
+    {
+      return node;
+    }
+    auto it = d_cache.find(node);
+    assert(it != d_cache.end());
+    assert(!it->second.is_null());
+    return it->second;
+  };
+
+  NodeManager& nm = d_env.nm();
+  // Second component is true if the node was already expanded.
+  std::vector<std::pair<ConstNodeRef, bool>> visit{{term, false}};
+  // Stack positions of expanded candidate variables.
+  std::vector<size_t> expanded;
+  std::vector<Node> children;
+  do
+  {
+    const Node& cur = visit.back().first;
+
+    if (cur.id() < d_min_subst_id)
+    {
+      visit.pop_back();
+      continue;
+    }
+
+    if (!visit.back().second)
+    {
+      auto [it, inserted] = d_cache.emplace(cur, Node());
       if (inserted)
       {
-        if (cur.kind() == Kind::CONSTANT)
+        visit.back().second        = true;
+        auto [subst, is_candidate] = get_subst(cur);
+        if (subst)
         {
-          auto its = substitutions.find(cur);
-          if (its != substitutions.end())
+          if (is_candidate)
           {
-            // Mark first occurrence of substituted constant on the stack
-            marker.push_back(visit.size());
-            visit.push_back(its->second);
+            expanded.push_back(visit.size() - 1);
           }
+          visit.emplace_back(*subst, false);
         }
         else
         {
-          visit.insert(visit.end(), cur.begin(), cur.end());
-        }
-        continue;
-      }
-      // Check if constant is first occurrence on the stack (i.e., marked)
-      else if (marker.back() == visit.size())
-      {
-        assert(cur.kind() == Kind::CONSTANT);
-        assert(substitutions.find(cur) != substitutions.end());
-        marker.pop_back();
-        // Assign substitution rank
-        assert(order.find(cur) == order.end());
-        order.emplace(cur, order_num++);
-      }
-      else if (!it->second)
-      {
-        it->second = true;
-      }
-      visit.pop_back();
-    } while (!visit.empty());
-  }
-
-  cache.clear();
-
-  // Compute ranking for all remaining nodes.
-  for (const auto& [var, term] : substitutions)
-  {
-    visit.push_back(term);
-    do
-    {
-      const Node& cur     = visit.back();
-      auto [it, inserted] = cache.emplace(cur, false);
-      if (inserted)
-      {
-        visit.insert(visit.end(), cur.begin(), cur.end());
-        continue;
-      }
-      else if (!it->second)
-      {
-        if (order.find(cur) == order.end())
-        {
-          int64_t max = 0;
           for (const Node& child : cur)
           {
-            auto iit = order.find(child);
-            assert(iit != order.end());
-            if (iit->second > max)
-            {
-              max = iit->second;
-            }
+            visit.emplace_back(child, false);
           }
-          order.emplace(cur, max);
         }
-        it->second = true;
+        continue;
       }
-      visit.pop_back();
-    } while (!visit.empty());
-  }
+      if (!it->second.is_null())
+      {
+        visit.pop_back();
+        continue;
+      }
 
-  // Remove substitutions to break cycles.
-  auto it = substitutions.begin();
-  while (it != substitutions.end())
-  {
-    auto itv = order.find(it->first);
-    auto itt = order.find(it->second);
-    assert(itv != order.end());
-    assert(itt != order.end());
+      // Node is reached while it is expanded, i.e., the current path is
+      // cyclic. Committed substitutions are acyclic, hence the cycle contains
+      // a candidate. Break it by switching the innermost candidate on the path
+      // to its next term. Already processed nodes stay valid since they do
+      // not reach any node on the path.
+      ++d_stats.num_cycles;
+      assert(!expanded.empty());
+      size_t pos = expanded.back();
+      expanded.pop_back();
+      while (visit.size() > pos + 1)
+      {
+        if (visit.back().second)
+        {
+          d_cache.erase(visit.back().first);
+        }
+        visit.pop_back();
+      }
+      const Node& var = visit.back().first;
+      assert(visit.back().second);
+      d_cache.erase(var);
+      visit.back().second = false;
+      Candidate& c        = d_candidates.at(var);
+      Log(2) << "Remove cyclic substitution candidate: " << var << " -> "
+             << std::get<0>(c.terms[c.selected]);
+      ++c.selected;
+      continue;
+    }
 
-    // Found cycle if the rank of the term > rank of substituted constant.
-    // Remove cyclic substitution.
-    if (itt->second > itv->second)
+    Node res;
+    auto [subst, is_candidate] = get_subst(cur);
+    if (subst)
     {
-      it = substitutions.erase(it);
-      Log(2) << "Remove cyclic substitution: " << itv->first << " -> "
-             << itt->first;
+      res = get_result(*subst);
+      if (is_candidate)
+      {
+        assert(expanded.back() == visit.size() - 1);
+        expanded.pop_back();
+      }
+    }
+    else if (cur.num_children() > 0)
+    {
+      bool changed = false;
+      children.clear();
+      for (const Node& child : cur)
+      {
+        children.push_back(get_result(child));
+        changed |= children.back() != child;
+      }
+      res = changed ? utils::rebuild_node(nm, cur, children) : cur;
     }
     else
     {
-      ++it;
+      res = cur;
     }
+    d_cache[cur] = res;
+    visit.pop_back();
+  } while (!visit.empty());
+
+  return get_result(term);
+}
+
+void
+PassVariableSubstitution::sync_cache()
+{
+  // Substitutions only grow in apply(), which resets the cache. If they
+  // shrink, substitutions were popped and cached results are outdated.
+  if (d_cache_num_substs != d_substitutions.size())
+  {
+    d_cache.clear();
+    d_cache_num_substs = d_substitutions.size();
   }
 }
 
 bool
-PassVariableSubstitution::is_direct_cycle(const Node& var,
-                                          const Node& term) const
+PassVariableSubstitution::occurs_in_previous(const AssertionVector& assertions,
+                                             const Node& var)
 {
-  util::Timer timer(d_stats.time_direct_cycle_check);
-  node::unordered_node_ref_set cache;
-  std::deque<ConstNodeRef> visit{term};
-  do
+  if (assertions.initial_assertions())
   {
-    const Node& cur = visit.front();
-    visit.pop_front();
+    return false;
+  }
 
-    // var cannot be in cur
-    if (cur.id() < var.id())
-    {
-      continue;
-    }
-
-    auto [it, inserted] = cache.insert(cur);
-    if (inserted)
-    {
-      if (cur == var)
-      {
-        return true;
-      }
-      visit.insert(visit.end(), cur.begin(), cur.end());
-    }
-  } while (!visit.empty());
-  return false;
-}
-
-Node
-PassVariableSubstitution::substitute(
-    const Node& term,
-    const Node& excl_var,
-    const std::unordered_map<Node, Node>& substitutions,
-    std::unordered_map<Node, Node>& subst_cache)
-{
-  util::Timer timer(d_stats.time_substitute);
-  node::node_ref_vector visit{term};
-  std::unordered_map<Node, Node> local_cache;
-  // Use local cache if excl_var should not be substituted, but was already
-  // substituted in a previous substitute call. This makes sure that excl_var
-  // will not be substituted.
-  auto& cache = excl_var.is_null() ? subst_cache : local_cache;
-  do
+  // Collect nodes of assertions of previous preprocessing calls on demand.
+  size_t end = assertions.start_index();
+  if (d_prev_scanned.get() < end)
   {
-    const Node& cur = visit.back();
-
-    auto [it, inserted] = cache.emplace(cur, Node());
-    if (inserted)
+    util::Timer timer(d_stats.time_scan_previous);
+    node::node_ref_vector visit;
+    for (size_t i = d_prev_scanned.get(); i < end; ++i)
     {
-      auto its = substitutions.find(cur);
-      if (cur != excl_var && its != substitutions.end())
+      visit.push_back(assertions.previous(i));
+      do
       {
-        visit.push_back(its->second);
-      }
-      else
-      {
-        visit.insert(visit.end(), cur.begin(), cur.end());
-      }
-      continue;
+        const Node& cur = visit.back();
+        visit.pop_back();
+        if (d_prev_nodes.insert(cur).second)
+        {
+          visit.insert(visit.end(), cur.begin(), cur.end());
+        }
+      } while (!visit.empty());
     }
-    else if (it->second.is_null())
-    {
-      auto its = substitutions.find(cur);
-      if (cur != excl_var && its != substitutions.end())
-      {
-        auto iit = cache.find(its->second);
-        assert(iit != cache.end());
-        it->second = iit->second;
-      }
-      else
-      {
-        it->second = utils::rebuild_node(d_env.nm(), cur, cache);
-      }
-    }
-    visit.pop_back();
-  } while (!visit.empty());
-
-  return cache.at(term);
-}
-
-Node
-PassVariableSubstitution::process(const Node& term, const Node& excl_var)
-{
-  return d_env.rewriter().rewrite(
-      substitute(term, excl_var, d_cache.substitutions(), d_cache.cache()));
+    d_prev_scanned = end;
+  }
+  return d_prev_nodes.find(var) != d_prev_nodes.end();
 }
 
 namespace {
@@ -1087,22 +1067,16 @@ priority(const Node& n)
 
 void
 PassVariableSubstitution::process_extracts(
-    const std::unordered_map<Node, std::vector<std::pair<Node, Node>>>& extract_map,
-    AssertionVector& assertions,
-    std::unordered_map<Node, Node>& new_substs,
-    std::unordered_map<Node, size_t>& subst_index)
+    const std::unordered_map<Node, std::vector<std::pair<Node, Node>>>&
+        extract_map,
+    AssertionVector& assertions)
 {
   NodeManager& nm = d_env.nm();
   Rewriter& rw = d_env.rewriter();
 
   for (const auto& [var, extracts] : extract_map)
   {
-    if (d_substitutions.find(var) != d_substitutions.end()
-        || new_substs.find(var) != new_substs.end())
-    {
-      continue;
-    }
-    if (d_exclude_consts.find(var) != d_exclude_consts.end())
+    if (!can_substitute(var) || d_candidates.find(var) != d_candidates.end())
     {
       continue;
     }
@@ -1154,23 +1128,12 @@ PassVariableSubstitution::process_extracts(
     }
     if (full_subst)
     {
-      Node concat = utils::mk_nary(nm, Kind::BV_CONCAT, slices);
-      // Process term first to ensure that all variables in this term are
-      // substituted before we check for cycles.
-      if (!d_cache.substitutions().empty())
-      {
-        concat = process(concat);
-      }
-      if (!is_direct_cycle(var, concat))
-      {
-        Node eq = nm.mk_node(Kind::EQUAL, {var, concat});
-        subst_index.emplace(var, assertions.size());
-        assertions.push_back(eq, Node());
-        new_substs.emplace(var, concat);
-        d_stats.num_eq_elim_extracts += extracts.size();
-        ++d_stats.num_eq_elim_extracts_substs;
-        Log(2) << "Add substitution: " << var << " -> " << concat;
-      }
+      Node concat  = utils::mk_nary(nm, Kind::BV_CONCAT, slices);
+      Node eq      = nm.mk_node(Kind::EQUAL, {var, concat});
+      size_t index = assertions.size();
+      assertions.push_back(eq, Node());
+      add_candidate(assertions, var, concat, eq, index);
+      d_extract_eqs.emplace(eq, extracts.size());
     }
   }
 }
@@ -1303,19 +1266,16 @@ PassVariableSubstitution::Statistics::Statistics(util::Statistics& stats,
                                                  const std::string& prefix)
     : time_register(
           stats.new_stat<util::TimerStatistic>(prefix + "time_register")),
-      time_direct_cycle_check(stats.new_stat<util::TimerStatistic>(
-          prefix + "time_direct_cycle_check")),
-      time_remove_cycles(
-          stats.new_stat<util::TimerStatistic>(prefix + "time_remove_cycles")),
       time_substitute(
           stats.new_stat<util::TimerStatistic>(prefix + "time_substitute")),
-      time_find_vars(
-          stats.new_stat<util::TimerStatistic>(prefix + "time_find_vars")),
+      time_scan_previous(
+          stats.new_stat<util::TimerStatistic>(prefix + "time_scan_previous")),
       time_find_substitution(stats.new_stat<util::TimerStatistic>(
           prefix + "time_find_substitution")),
       time_compute_non_overlap(stats.new_stat<util::TimerStatistic>(
           prefix + "time_compute_non_overlap")),
       num_substs(stats.new_stat<uint64_t>(prefix + "num_substs")),
+      num_cycles(stats.new_stat<uint64_t>(prefix + "num_cycles")),
       num_norm_eq_linear_eq(
           stats.new_stat<uint64_t>(prefix + "normalize_eq::num_linear_eq")),
       num_norm_eq_gauss_elim(
@@ -1332,49 +1292,6 @@ PassVariableSubstitution::Statistics::Statistics(util::Statistics& stats,
           stats.new_stat<uint64_t>(prefix + "num_eq_elim_extract_substs"))
 
 {
-}
-
-/* --- PassVariableSubstitution::Cache -------------------------------------- */
-
-PassVariableSubstitution::Cache::Cache(backtrack::BacktrackManager* mgr)
-    : Backtrackable(mgr)
-{
-  d_map.emplace_back();
-  d_cache.emplace_back();
-}
-
-void
-PassVariableSubstitution::Cache::push()
-{
-  // Make copy of previous level to allow calling process() after a pop()
-  // without calling preprocess().
-  d_map.emplace_back(d_map.back());
-  d_cache.emplace_back(d_cache.back());
-}
-
-void
-PassVariableSubstitution::Cache::pop()
-{
-  d_map.pop_back();
-  d_cache.pop_back();
-}
-
-std::unordered_map<Node, Node>&
-PassVariableSubstitution::Cache::substitutions()
-{
-  return d_map.back();
-}
-
-const std::unordered_map<Node, Node>&
-PassVariableSubstitution::Cache::substitutions() const
-{
-  return d_map.back();
-}
-
-std::unordered_map<Node, Node>&
-PassVariableSubstitution::Cache::cache()
-{
-  return d_cache.back();
 }
 
 }  // namespace bzla::preprocess::pass
