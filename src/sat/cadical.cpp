@@ -64,12 +64,7 @@ void
 Cadical::add(int32_t lit, int64_t cgroup_id)
 {
   (void) cgroup_id;
-  int32_t var = std::abs(lit);
-  assert(var <= d_max_var);
-  if (d_propagator && var)
-  {
-    d_propagator->info(var).active = true;
-  }
+  assert(std::abs(lit) <= d_max_var);
   // Add activation literal of corresponding clause level when clause is closed.
   if (!lit && d_clause_level > 0)
   {

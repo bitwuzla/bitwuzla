@@ -281,11 +281,6 @@ Propagator::register_propagator(std::unique_ptr<SatPropagator> sp)
 }
 
 void
-Propagator::print_state() const
-{
-}
-
-void
 Propagator::print_stats() const
 {
   std::cout << "num_clauses: " << d_stats.num_clauses << std::endl;

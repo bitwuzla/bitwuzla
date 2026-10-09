@@ -33,7 +33,6 @@ class Propagator : public CaDiCaL::ExternalPropagator,
     int8_t phase      = 0;
     int8_t assignment = 0;
     int8_t fixed      = 0;
-    bool active       = false;
     uint32_t watchers = 0;  // Index of the propagators watching this variable
   };
 
@@ -96,7 +95,6 @@ class Propagator : public CaDiCaL::ExternalPropagator,
    */
   void register_propagator(std::unique_ptr<SatPropagator> sp);
 
-  void print_state() const;
   void print_stats() const;
 
  private:
