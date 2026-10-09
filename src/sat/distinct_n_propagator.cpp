@@ -98,7 +98,7 @@ WatchedBV::str(const Propagator& propagator, std::ostream& os) const
 }
 
 DistinctNPropagator::DistinctNPropagator(
-    util::Integer& card,
+    const util::Integer& card,
     int32_t var,
     const std::vector<std::vector<int32_t>>& bvs,
     uint64_t node_id)
@@ -217,7 +217,7 @@ DistinctNPropagator::unassign(int32_t var)
   auto vit = d_var_to_assigned.find(var);
   if (vit == d_var_to_assigned.end()) return;
   std::vector<std::pair<BitVector, WatchedBV*>> entries(std::move(vit->second));
-  vit->second.clear();
+  d_var_to_assigned.erase(vit);
   for (auto& [key, wbv] : entries)
   {
     auto map_it = d_assigned_map.find(key);
