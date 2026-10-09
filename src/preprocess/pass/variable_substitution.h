@@ -75,6 +75,9 @@ class PassVariableSubstitution : public PreprocessingPass
   /**
    * Substitute the current substitutions and candidates in `term`.
    *
+   * Rebuilt nodes are rewritten on construction, unchanged nodes are kept as
+   * is, i.e., the result is rewritten if `term` is.
+   *
    * Cyclic candidates are detected lazily: a node reached again while it is
    * still being expanded closes a cycle, which is broken by moving the
    * innermost candidate on the current path to its next substitution term.

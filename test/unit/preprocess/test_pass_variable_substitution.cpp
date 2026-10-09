@@ -222,26 +222,28 @@ TEST_F(TestPassVariableSubstitution, cycle_fallback)
   Node x       = d_nm.mk_const(d_nm.mk_bool_type(), "x");
   Node y       = d_nm.mk_const(d_nm.mk_bool_type(), "y");
   Node z       = d_nm.mk_const(d_nm.mk_bool_type(), "z");
+  Node w       = d_nm.mk_const(d_nm.mk_bool_type(), "w");
   Node y_and_z = d_nm.mk_node(Kind::AND, {y, z});
-  Node z_or_z  = d_nm.mk_node(Kind::OR, {z, z});
+  Node z_or_w  = d_nm.mk_node(Kind::OR, {z, w});
 
-  // x -> y & z closes the cycle y -> x -> y & z, x falls back to z | z.
+  // x -> y & z closes the cycle y -> x -> y & z, x falls back to z | w.
   d_as.push_back(d_nm.mk_node(Kind::EQUAL, {y, x}));
   d_as.push_back(d_nm.mk_node(Kind::EQUAL, {x, y_and_z}));
-  d_as.push_back(d_nm.mk_node(Kind::EQUAL, {x, z_or_z}));
+  d_as.push_back(d_nm.mk_node(Kind::EQUAL, {x, z_or_w}));
 
   preprocess::AssertionVector assertions(d_as.view());
   d_pass.apply(assertions);
 
+  // Substitutions are stored fully substituted and rewritten.
+  Node z_or_w_rw     = d_env.rewriter().rewrite(z_or_w);
   const auto& substs = d_pass.substitutions();
   ASSERT_EQ(substs.size(), 2);
-  // Substitutions are stored fully substituted and rewritten.
-  ASSERT_EQ(substs.at(y), d_env.rewriter().rewrite(z_or_z));
-  ASSERT_EQ(substs.at(x), d_env.rewriter().rewrite(z_or_z));
+  ASSERT_EQ(substs.at(y), z_or_w_rw);
+  ASSERT_EQ(substs.at(x), z_or_w_rw);
   ASSERT_EQ(d_as[0], d_nm.mk_value(true));
   ASSERT_EQ(d_as[1],
             d_env.rewriter().rewrite(d_nm.mk_node(
-                Kind::EQUAL, {z_or_z, d_nm.mk_node(Kind::AND, {z_or_z, z})})));
+                Kind::EQUAL, {z_or_w, d_nm.mk_node(Kind::AND, {z_or_w, z})})));
   ASSERT_EQ(d_as[2], d_nm.mk_value(true));
 }
 

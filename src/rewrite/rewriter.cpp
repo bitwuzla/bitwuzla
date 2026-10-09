@@ -119,11 +119,17 @@ Rewriter::rewrite(const Node& node)
         it = d_cache.find(cur);
         assert(it != d_cache.end());
         it->second = res;
+        // Rewriting is idempotent, cache the result as rewritten to not
+        // traverse it again if it is rewritten later on.
+        if (res != cur && !d_recursion_limit_reached)
+        {
+          d_cache.emplace(res, res);
+        }
 #ifndef NDEBUG
         uint64_t thresh = d_env.options().dbg_rw_node_thresh();
         if (thresh > 0 && d_num_nodes > 0)
         {
-          auto [new_nodes, depth] = diff(max_id, it->second);
+          auto [new_nodes, depth] = diff(max_id, res);
           Warn(new_nodes >= thresh) << "_rewrite() introduced " << new_nodes
                                     << " new nodes up to depth " << depth;
         }
@@ -212,6 +218,36 @@ Rewriter::mk_node(node::Kind kind,
 #endif
   --d_num_rec_calls;
   return res;
+}
+
+Node
+Rewriter::rebuild_node(const Node& node, const std::vector<Node>& children)
+{
+  assert(node.num_children() == children.size());
+  for (size_t i = 0, n = children.size(); i < n; ++i)
+  {
+    if (children[i] != node[i])
+    {
+      return _rewrite(node::utils::rebuild_node(nm(), node, children));
+    }
+  }
+  return node;
+}
+
+Node
+Rewriter::rebuild_node(const Node& node,
+                       const std::unordered_map<Node, Node>& cache)
+{
+  std::vector<Node> children;
+  children.reserve(node.num_children());
+  for (const Node& child : node)
+  {
+    auto it = cache.find(child);
+    assert(it != cache.end());
+    assert(!it->second.is_null());
+    children.push_back(it->second);
+  }
+  return rebuild_node(node, children);
 }
 
 const Node&
