@@ -11,6 +11,9 @@
 #ifndef BZLA_PREPROCESS_PASS_VARIABLE_SUBSTITUTION_H_INCLUDED
 #define BZLA_PREPROCESS_PASS_VARIABLE_SUBSTITUTION_H_INCLUDED
 
+#include <tuple>
+
+#include "backtrack/object.h"
 #include "backtrack/unordered_map.h"
 #include "backtrack/unordered_set.h"
 #include "preprocess/preprocessing_pass.h"
@@ -43,10 +46,6 @@ class PassVariableSubstitution : public PreprocessingPass
   const Node& substitution_assertion(const Node& var) const;
 
  private:
-  void remove_indirect_cycles(std::unordered_map<Node, Node>& substs) const;
-
-  bool is_direct_cycle(const Node& var, const Node& term) const;
-
   /**
    * Extract variable substitution, if possible.
    * @param assertion The assertion to extract a variable substitution from.
@@ -59,18 +58,43 @@ class PassVariableSubstitution : public PreprocessingPass
   std::pair<Node, Node> normalize_substitution_bv_ineq(const Node& node);
   std::vector<Node> normalize_substitution_eq_bv_concat(const Node& node);
 
-  Node substitute(const Node& term,
-                  const Node& excl_var,
-                  const std::unordered_map<Node, Node>& substitutions,
-                  std::unordered_map<Node, Node>& subst_cache);
+  /**
+   * Register `var = term` derived from the assertion at index `index` as
+   * substitution candidate. Swaps `var` and `term` if `term` is a variable
+   * that is the better candidate.
+   */
+  void add_candidate(const AssertionVector& assertions,
+                     Node var,
+                     Node term,
+                     const Node& assertion,
+                     size_t index);
 
-  Node process(const Node& term, const Node& excl_var);
+  /** @return Whether `var` can be substituted at all. */
+  bool can_substitute(const Node& var) const;
+
+  /**
+   * Substitute the current substitutions and candidates in `term`.
+   *
+   * Cyclic candidates are detected lazily: a node reached again while it is
+   * still being expanded closes a cycle, which is broken by moving the
+   * innermost candidate on the current path to its next substitution term.
+   */
+  Node substitute(const Node& term);
+
+  /** Clear the substitution cache if substitutions were popped. */
+  void sync_cache();
+
+  /**
+   * Determines whether `var` occurs in the assertions of previous
+   * preprocessing calls. These assertions are not reprocessed, so the
+   * substitution constraint of such a variable must be kept.
+   */
+  bool occurs_in_previous(const AssertionVector& assertions, const Node& var);
 
   void process_extracts(
-      const std::unordered_map<Node, std::vector<std::pair<Node, Node>>>& extract_map,
-      AssertionVector& assertions,
-      std::unordered_map<Node, Node>& new_substs,
-      std::unordered_map<Node, size_t>& subst_index);
+      const std::unordered_map<Node, std::vector<std::pair<Node, Node>>>&
+          extract_map,
+      AssertionVector& assertions);
 
   /** Helper struct for extract elimination. */
   struct Range
@@ -89,56 +113,57 @@ class PassVariableSubstitution : public PreprocessingPass
       std::unordered_map<std::pair<uint64_t, uint64_t>, std::vector<Node>>&
           indices);
 
-  /**
-   * Determines whether we can fully substitute given variable, or if we have
-   * to keep the substitution assertion.
-   */
-  bool is_safe_to_substitute(const Node& var, size_t assertion_start_index);
-  /** Maps variables found in assertion to index. */
-  void find_vars(const Node& assertion, size_t index);
-
-  /** Current set of variable substitutions. */
-  backtrack::unordered_map<Node, std::pair<Node, Node>> d_substitutions;
-  /**
-   * Current set of variable substitution assertions, maps assertion index to
-   * substituted var.
-   */
-  backtrack::unordered_map<size_t, Node> d_substitution_assertions;
-
-  /**
-   * Maps first occurrence of variable to assertion index where it was found.
-   */
-  backtrack::unordered_map<Node, size_t> d_first_seen;
-  /** Cache for find_vars. */
-  backtrack::unordered_set<Node> d_first_seen_cache;
-
-  /** Backtrackable cache. */
-  class Cache : public backtrack::Backtrackable
+  /** Substitution candidates of a variable found in the current apply(). */
+  struct Candidate
   {
-   public:
-    Cache(backtrack::BacktrackManager* mgr);
-
-    void push() override;
-
-    void pop() override;
-
-    /** @return Current substitution map. */
-    std::unordered_map<Node, Node>& substitutions();
-
-    const std::unordered_map<Node, Node>& substitutions() const;
-
-    /** @return Current substitution cache. */
-    std::unordered_map<Node, Node>& cache();
-
-   private:
-    /** Backtrackable substitution map. One map per scope level. */
-    std::vector<std::unordered_map<Node, Node>> d_map;
-    /** Backtrackable substitution cache. One cache per scope level. */
-    std::vector<std::unordered_map<Node, Node>> d_cache;
+    /** Candidate terms with their substitution assertions and indices. */
+    std::vector<std::tuple<Node, Node, size_t>> terms;
+    /** Index of the selected term, terms.size() if all terms are cyclic. */
+    size_t selected = 0;
+    /** True if the substitution constraint must be kept. */
+    bool keep = false;
   };
 
-  /** Backtrackable substitution cache. */
-  Cache d_cache;
+  /** Current set of variable substitutions. */
+  backtrack::unordered_map<Node, Node> d_substitutions;
+  /** Maps substituted variable to its substitution assertion. */
+  backtrack::unordered_map<Node, Node> d_substitution_assertions;
+  /**
+   * Maps assertion stack index to substituted variable for substitution
+   * assertions that must be kept.
+   */
+  backtrack::unordered_map<size_t, Node> d_keep;
+
+  /** Substitution candidates of the current apply(). */
+  std::unordered_map<Node, Candidate> d_candidates;
+  /** Candidate variables in the order they were found. */
+  std::vector<Node> d_candidate_vars;
+  /**
+   * Maps substitution assertions of the current apply() derived from extracts
+   * to the number of extracts they eliminate, counted if the candidate is
+   * selected.
+   */
+  std::unordered_map<Node, size_t> d_extract_eqs;
+
+  /**
+   * Substitution cache, maps nodes to their substituted node. Pending
+   * expansions are marked with a null node.
+   */
+  std::unordered_map<Node, Node> d_cache;
+  /** Number of substitutions d_cache was computed for. */
+  size_t d_cache_num_substs = 0;
+  /**
+   * Lower bound of the node ids of all variables that were ever substituted.
+   * Nodes with smaller ids cannot contain any of them.
+   */
+  uint64_t d_min_subst_id = UINT64_MAX;
+
+  /**
+   * Nodes occurring in the assertions of previous preprocessing calls up to
+   * stack index d_prev_scanned, computed on demand by occurs_in_previous().
+   */
+  backtrack::unordered_set<Node> d_prev_nodes;
+  backtrack::object<size_t> d_prev_scanned;
 
   /** Do not substitute these consts. */
   std::unordered_set<Node> d_exclude_consts;
@@ -147,13 +172,12 @@ class PassVariableSubstitution : public PreprocessingPass
   {
     Statistics(util::Statistics& stats, const std::string& prefix);
     util::TimerStatistic& time_register;
-    util::TimerStatistic& time_direct_cycle_check;
-    util::TimerStatistic& time_remove_cycles;
     util::TimerStatistic& time_substitute;
-    util::TimerStatistic& time_find_vars;
+    util::TimerStatistic& time_scan_previous;
     util::TimerStatistic& time_find_substitution;
     util::TimerStatistic& time_compute_non_overlap;
     uint64_t& num_substs;
+    uint64_t& num_cycles;
     uint64_t& num_norm_eq_linear_eq;
     uint64_t& num_norm_eq_gauss_elim;
     uint64_t& num_norm_eq_bv_concat;

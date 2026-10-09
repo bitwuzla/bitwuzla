@@ -161,16 +161,16 @@ TEST_F(TestPassVariableSubstitution, cycle3)
   Node eq2     = d_nm.mk_node(Kind::EQUAL, {y, x_and_z});
 
   d_as.push_back(x_and_z);
-  d_as.push_back(eq2);
   d_as.push_back(eq1);
+  d_as.push_back(eq2);
 
   preprocess::AssertionVector assertions(d_as.view());
   d_pass.apply(assertions);
 
   Node y_and_z = d_nm.mk_node(Kind::AND, {y, z});
   ASSERT_EQ(d_as[0], y_and_z);
-  ASSERT_EQ(d_as[1], d_nm.mk_node(Kind::EQUAL, {y, y_and_z}));
-  ASSERT_EQ(d_as[2], d_nm.mk_value(true));
+  ASSERT_EQ(d_as[1], d_nm.mk_value(true));
+  ASSERT_EQ(d_as[2], d_nm.mk_node(Kind::EQUAL, {y, y_and_z}));
 }
 
 TEST_F(TestPassVariableSubstitution, cycle4)
@@ -215,6 +215,96 @@ TEST_F(TestPassVariableSubstitution, cycle5)
   preprocess::AssertionVector assertions2(d_as.view());
   d_pass.apply(assertions);
   ASSERT_EQ(d_as[2], d_nm.mk_value(true));
+}
+
+TEST_F(TestPassVariableSubstitution, cycle_fallback)
+{
+  Node x       = d_nm.mk_const(d_nm.mk_bool_type(), "x");
+  Node y       = d_nm.mk_const(d_nm.mk_bool_type(), "y");
+  Node z       = d_nm.mk_const(d_nm.mk_bool_type(), "z");
+  Node y_and_z = d_nm.mk_node(Kind::AND, {y, z});
+  Node z_or_z  = d_nm.mk_node(Kind::OR, {z, z});
+
+  // x -> y & z closes the cycle y -> x -> y & z, x falls back to z | z.
+  d_as.push_back(d_nm.mk_node(Kind::EQUAL, {y, x}));
+  d_as.push_back(d_nm.mk_node(Kind::EQUAL, {x, y_and_z}));
+  d_as.push_back(d_nm.mk_node(Kind::EQUAL, {x, z_or_z}));
+
+  preprocess::AssertionVector assertions(d_as.view());
+  d_pass.apply(assertions);
+
+  const auto& substs = d_pass.substitutions();
+  ASSERT_EQ(substs.size(), 2);
+  // Substitutions are stored fully substituted and rewritten.
+  ASSERT_EQ(substs.at(y), d_env.rewriter().rewrite(z_or_z));
+  ASSERT_EQ(substs.at(x), d_env.rewriter().rewrite(z_or_z));
+  ASSERT_EQ(d_as[0], d_nm.mk_value(true));
+  ASSERT_EQ(d_as[1],
+            d_env.rewriter().rewrite(d_nm.mk_node(
+                Kind::EQUAL, {z_or_z, d_nm.mk_node(Kind::AND, {z_or_z, z})})));
+  ASSERT_EQ(d_as[2], d_nm.mk_value(true));
+}
+
+TEST_F(TestPassVariableSubstitution, inc_swap)
+{
+  SolvingContext ctx(d_nm, d_options, d_sat_factory);
+  Preprocessor& pp = ctx.preprocessor();
+
+  Node x      = d_nm.mk_const(d_nm.mk_bool_type(), "x");
+  Node y      = d_nm.mk_const(d_nm.mk_bool_type(), "y");
+  Node w      = d_nm.mk_const(d_nm.mk_bool_type(), "w");
+  Node x_or_w = d_nm.mk_node(Kind::OR, {x, w});
+  Node eq     = d_nm.mk_node(Kind::EQUAL, {x, y});
+
+  ctx.assert_formula(x_or_w);
+  ctx.preprocess();
+  ctx.push();
+  // x occurs in the assertions of the previous call, substitute y instead.
+  ctx.assert_formula(eq);
+  ctx.preprocess();
+  auto as = ctx.assertions();
+
+  ASSERT_EQ(as.size(), 2);
+  ASSERT_EQ(as[1], d_nm.mk_node(Kind::EQUAL, {x, x}));
+  ASSERT_EQ(pp.substitutions().size(), 1);
+  ASSERT_EQ(pp.substitutions().at(y), x);
+}
+
+TEST_F(TestPassVariableSubstitution, inc_previous)
+{
+  option::Options opts;
+  opts.pp_embedded_constr.set(false);
+  SolvingContext ctx(d_nm, opts, d_sat_factory);
+  Preprocessor& pp = ctx.preprocessor();
+
+  Node x       = d_nm.mk_const(d_nm.mk_bool_type(), "x");
+  Node y       = d_nm.mk_const(d_nm.mk_bool_type(), "y");
+  Node z       = d_nm.mk_const(d_nm.mk_bool_type(), "z");
+  Node w       = d_nm.mk_const(d_nm.mk_bool_type(), "w");
+  Node y_and_z = d_nm.mk_node(Kind::AND, {y, z});
+
+  ctx.assert_formula(d_nm.mk_node(Kind::EQUAL, {x, y_and_z}));
+  ctx.assert_formula(d_nm.mk_node(Kind::OR, {w, z}));
+  ctx.preprocess();
+  ctx.push();
+  // y only occurs in a substitution constraint that was substituted away, it
+  // can be fully substituted.
+  ctx.assert_formula(y);
+  // w occurs in a previous assertion, its substitution constraint is kept.
+  ctx.assert_formula(w);
+  ctx.preprocess();
+  auto as = ctx.assertions();
+
+  ASSERT_EQ(as.size(), 4);
+  ASSERT_EQ(as[0], d_nm.mk_value(true));
+  ASSERT_EQ(as[2], d_nm.mk_value(true));
+  ASSERT_EQ(as[3], w);
+  ASSERT_EQ(pp.process(x), z);
+  ASSERT_EQ(pp.process(w), d_nm.mk_value(true));
+
+  ctx.pop();
+  ASSERT_EQ(pp.process(x), y_and_z);
+  ASSERT_EQ(pp.process(w), w);
 }
 
 /* --- Incremental tests ---------------------------------------------------- */
@@ -1001,7 +1091,7 @@ TEST_F(TestPassVariableSubstitution, extract_simple_full_coverage)
   const auto& substs = d_pass.substitutions();
   ASSERT_NE(substs.find(x), substs.end());
   Node concat = d_nm.mk_node(Kind::BV_CONCAT, {v1, v2});
-  ASSERT_EQ(substs.at(x), concat);
+  ASSERT_EQ(substs.at(x), d_env.rewriter().rewrite(concat));
 }
 
 TEST_F(TestPassVariableSubstitution, extract_overlapping)
@@ -1070,9 +1160,9 @@ TEST_F(TestPassVariableSubstitution, extract_equals_value)
 
   const auto& substs = d_pass.substitutions();
   ASSERT_NE(substs.find(x), substs.end());
-  // Substitution should be a concat of the two values
+  // Substitution should be the concat of the two values
   Node concat = d_nm.mk_node(Kind::BV_CONCAT, {v1, v2});
-  ASSERT_EQ(substs.at(x), concat);
+  ASSERT_EQ(substs.at(x), d_env.rewriter().rewrite(concat));
 }
 
 TEST_F(TestPassVariableSubstitution, extract_three_non_overlapping)
@@ -1370,7 +1460,7 @@ TEST_F(TestPassVariableSubstitution, extract_on_rhs)
   const auto& substs = d_pass.substitutions();
   ASSERT_NE(substs.find(x), substs.end());
   Node concat = d_nm.mk_node(Kind::BV_CONCAT, {v1, v2});
-  ASSERT_EQ(substs.at(x), concat);
+  ASSERT_EQ(substs.at(x), d_env.rewriter().rewrite(concat));
 }
 
 TEST_F(TestPassVariableSubstitution, extract_two_independent_vars)
@@ -1404,8 +1494,10 @@ TEST_F(TestPassVariableSubstitution, extract_two_independent_vars)
   const auto& substs = d_pass.substitutions();
   ASSERT_NE(substs.find(x), substs.end());
   ASSERT_NE(substs.find(y), substs.end());
-  ASSERT_EQ(substs.at(x), d_nm.mk_node(Kind::BV_CONCAT, {v1, v2}));
-  ASSERT_EQ(substs.at(y), d_nm.mk_node(Kind::BV_CONCAT, {v3, v4}));
+  ASSERT_EQ(substs.at(x),
+            d_env.rewriter().rewrite(d_nm.mk_node(Kind::BV_CONCAT, {v1, v2})));
+  ASSERT_EQ(substs.at(y),
+            d_env.rewriter().rewrite(d_nm.mk_node(Kind::BV_CONCAT, {v3, v4})));
 }
 
 TEST_F(TestPassVariableSubstitution, extract_partial_coverage_three_of_four)

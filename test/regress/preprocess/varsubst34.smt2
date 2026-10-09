@@ -1,0 +1,7 @@
+(declare-fun s () (_ BitVec 32))
+(declare-fun _s () Bool)
+(assert (= s (ite _s (_ bv0 32) (_ bv1 32))))
+(push 1)
+(assert _s)
+(set-info :status sat)
+(check-sat)

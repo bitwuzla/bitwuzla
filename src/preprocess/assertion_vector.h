@@ -47,6 +47,13 @@ class AssertionVector
   const Node& operator[](std::size_t index) const;
 
   /**
+   * Get assertion of a previous preprocessing call.
+   * @param index The assertion stack index, must be less than start_index().
+   * @return The assertion at given assertion stack index.
+   */
+  const Node& previous(std::size_t index) const;
+
+  /**
    * Replace assertion at index i.
    *
    * @note Increments d_changed if contents of vector was modified.

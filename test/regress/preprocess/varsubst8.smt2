@@ -1,0 +1,6 @@
+(set-info :status sat)
+(declare-const x (_ BitVec 1))
+(declare-fun x1 () (_ BitVec 8))
+(assert (= (_ bv1 8) (bvsub ((_ zero_extend 7) x) x1)))
+(assert (= x1 (_ bv0 8)))
+(check-sat)

@@ -1,0 +1,8 @@
+(set-info :status sat)
+(declare-fun _1 () (_ BitVec 1))
+(declare-fun R () (_ BitVec 1))
+(declare-fun _3 () (_ BitVec 32))
+(declare-fun T () (_ BitVec 8))
+(declare-fun _12 () (_ BitVec 1))
+(assert (and (= _1 (bvnot R)) (= _12 (bvcomp R (bvcomp _3 (_ bv1 32)))) (= _3 (concat T (_ bv0 24))) (= _12 (bvcomp T (_ bv0 8))) (= (_ bv1 1) (bvnot (bvand _1 (_ bv0 1)))) (= _12 (_ bv1 1))))
+(check-sat)

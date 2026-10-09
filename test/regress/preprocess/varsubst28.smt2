@@ -1,0 +1,8 @@
+(set-info :status unsat)
+(declare-const __ (_ BitVec 8))
+(declare-const e (_ BitVec 8))
+(declare-const n (_ BitVec 8))
+(assert (= e ((_ extract 7 0) (bvadd (_ bv1 9) ((_ zero_extend 1) n)))))
+(assert (= e n))
+(assert (= (_ bv1 8) (bvsub n __)))
+(check-sat)
