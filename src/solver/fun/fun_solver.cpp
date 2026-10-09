@@ -122,7 +122,8 @@ FunSolver::value(const Node& term)
       vars.push_back(nm.mk_var(types[i]));
     }
 
-    Node res              = utils::mk_default_value(nm, types.back());
+    Node def              = utils::mk_default_value(nm, types.back());
+    Node res              = def;
     const auto& fun_model = it->second;
 
     // Construct nested ITEs for function model
@@ -132,7 +133,7 @@ FunSolver::value(const Node& term)
       assert(vars.size() == values.size());
       const Node& value = apply.value();
 
-      if (value == res)
+      if (value == def)
       {
         continue;
       }
