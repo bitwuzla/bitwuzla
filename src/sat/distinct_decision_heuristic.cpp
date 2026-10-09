@@ -15,6 +15,7 @@
 #include "sat/distinct_decision_heuristic.h"
 
 #include <cassert>
+#include <utility>
 
 #include "lib/bv/bitvector.h"
 #include "sat/propagator.h"
@@ -22,14 +23,10 @@
 namespace bzla::sat {
 
 DistinctDecisionHeuristic::DistinctDecisionHeuristic(
-    const std::vector<std::vector<int32_t>>& bvs,
+    std::vector<std::vector<int32_t>> bvs,
     const std::vector<uint64_t>& node_ids)
-    : SatPropagator(Kind::DISTINCT_DECISION, node_ids), d_bvs(bvs)
+    : SatPropagator(Kind::DISTINCT_DECISION, node_ids), d_bvs(std::move(bvs))
 {
-  if (!d_bvs.empty())
-  {
-    d_assigned.resize(d_bvs[0].size(), false);
-  }
 }
 
 void
@@ -37,19 +34,11 @@ DistinctDecisionHeuristic::attach_propagator(Propagator* propagator)
 {
   d_propagator = propagator;
   assert(!d_bvs.empty());
-  for (const auto& bv : d_bvs)
-  {
-    size_t i = 0;
-    for (int32_t bit : bv)
-    {
-      int32_t var = std::abs(bit);
-      d_propagator->watch(var, this);
-      d_idxmap.emplace(var, i++);
-    }
-  }
-
   BitVector phase(d_bvs.front().size());
-  // Watch all literals of watched bit-vectors.
+  // Decisions are only allowed over observed variables. The bits are not
+  // watched since we do not track their assignments. Bits that are already
+  // root-fixed, e.g., of constants, are notified as assigned when observed and
+  // are thus never decided on.
   for (const auto& bv : d_bvs)
   {
     for (size_t i = 0, size = bv.size(); i < size; ++i)

@@ -20,10 +20,9 @@
 
 namespace bzla::sat {
 
-EqDecisionHeuristic::EqDecisionHeuristic(
-    const std::vector<std::vector<int32_t>>& bvs,
-    const std::vector<uint64_t>& node_ids)
-    : SatPropagator(Kind::EQ_DECISION, node_ids), d_bvs(bvs)
+EqDecisionHeuristic::EqDecisionHeuristic(std::vector<std::vector<int32_t>> bvs,
+                                         const std::vector<uint64_t>& node_ids)
+    : SatPropagator(Kind::EQ_DECISION, node_ids), d_bvs(std::move(bvs))
 {
   if (!d_bvs.empty())
   {

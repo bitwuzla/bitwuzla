@@ -480,7 +480,7 @@ BvBitblastSolver::process_pending_eq_heuristics()
       node_ids.push_back(n.id());
     }
     std::unique_ptr<sat::EqDecisionHeuristic> eqh(
-        new sat::EqDecisionHeuristic(bits, node_ids));
+        new sat::EqDecisionHeuristic(std::move(bits), node_ids));
     d_sat_solver->register_propagator(std::move(eqh));
   }
 #endif
@@ -518,7 +518,7 @@ BvBitblastSolver::process_pending_distinct_heuristics()
       node_ids.push_back(n.id());
     }
     std::unique_ptr<sat::DistinctDecisionHeuristic> dih(
-        new sat::DistinctDecisionHeuristic(bits, node_ids));
+        new sat::DistinctDecisionHeuristic(std::move(bits), node_ids));
     d_sat_solver->register_propagator(std::move(dih));
   }
 #endif

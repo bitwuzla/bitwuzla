@@ -11,8 +11,6 @@
 #ifndef BZLA_SAT_DISTINCT_DECISION_HEURISTIC_H_INCLUDED
 #define BZLA_SAT_DISTINCT_DECISION_HEURISTIC_H_INCLUDED
 
-#include <cstddef>
-#include <unordered_map>
 #include <vector>
 
 #include "sat/sat_propagator.h"
@@ -22,7 +20,7 @@ namespace bzla::sat {
 class DistinctDecisionHeuristic : public SatPropagator
 {
  public:
-  DistinctDecisionHeuristic(const std::vector<std::vector<int32_t>>& bvs,
+  DistinctDecisionHeuristic(std::vector<std::vector<int32_t>> bvs,
                             const std::vector<uint64_t>& node_ids);
 
   void attach_propagator(Propagator* propagator) override;
@@ -33,8 +31,6 @@ class DistinctDecisionHeuristic : public SatPropagator
  private:
   Propagator* d_propagator = nullptr;
   std::vector<std::vector<int32_t>> d_bvs;
-  std::unordered_map<int32_t, size_t> d_idxmap;
-  std::vector<bool> d_assigned;
 };
 
 }  // namespace bzla::sat

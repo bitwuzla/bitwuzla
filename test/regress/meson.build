@@ -935,6 +935,7 @@ tests_smt2 = [
   ['solver/array/computeparents.smt2'],
   ['solver/array/computeparents_pushpop.smt2'],
   ['solver/array/constarray.smt2'],
+  ['solver/array/distinct_heuristic_fixed_bit.smt2'],
   ['solver/array/dubreva002ue.smt2'],
   ['solver/array/duplicatelemma1.smt2'],
   ['solver/array/duplicatelemma2.smt2'],
