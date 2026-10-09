@@ -53,6 +53,8 @@ class BitblasterInterface
  public:
   using Bits = std::vector<T>;
 
+  virtual ~BitblasterInterface() = default;
+
   virtual Bits bv_value(const BitVector& bv_value)
   {
     Bits res;
