@@ -707,7 +707,6 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
       // is reset.
       auto it = d_cache.find(var);
       assert(it != d_cache.end());
-      it->second = d_env.rewriter().rewrite(it->second);
       d_substitutions.emplace(var, it->second);
       d_substitution_assertions.emplace(var, assertion);
       if (c.keep)
@@ -772,9 +771,8 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
       if (d_substitutions.size() > num_substs)
       {
         const Node& var = it->second;
-        assertions.replace(i,
-                           d_env.rewriter().rewrite(d_env.nm().mk_node(
-                               Kind::EQUAL, {var, substitute(var)})));
+        assertions.replace(
+            i, d_env.rewriter().mk_node(Kind::EQUAL, {var, substitute(var)}));
       }
       continue;
     }
@@ -796,7 +794,8 @@ PassVariableSubstitution::process(const Node& term)
 {
   assert(d_candidates.empty());
   sync_cache();
-  return d_env.rewriter().rewrite(substitute(term));
+  // Rebuilt nodes are only rewritten locally, which requires rewritten input.
+  return substitute(d_env.rewriter().rewrite(term));
 }
 
 const std::unordered_map<Node, Node>&
@@ -829,6 +828,8 @@ PassVariableSubstitution::add_candidate(const AssertionVector& assertions,
                                         const Node& assertion,
                                         size_t index)
 {
+  // Rebuilt nodes are only rewritten locally, which requires rewritten terms.
+  term = d_env.rewriter().rewrite(term);
   // If both sides are variables, choose the orientation of `var = term`.
   // Substituting variable v is less effective if
   //  - v occurs in assertions of previous calls, which are not reprocessed,
@@ -858,7 +859,16 @@ PassVariableSubstitution::add_candidate(const AssertionVector& assertions,
     c.keep         = occurs_in_previous(assertions, var);
     d_min_subst_id = std::min(d_min_subst_id, var.id());
   }
-  c.terms.emplace_back(term, assertion, index);
+  // Values can not be cyclic and yield the most simplification, try them
+  // first.
+  if (term.is_value())
+  {
+    c.terms.emplace(c.terms.begin(), term, assertion, index);
+  }
+  else
+  {
+    c.terms.emplace_back(term, assertion, index);
+  }
   Log(2) << "Add substitution candidate: " << var << " -> " << term;
 }
 
@@ -888,60 +898,68 @@ PassVariableSubstitution::substitute(const Node& term)
     }
     return {nullptr, false};
   };
-  // Get result of already processed node.
-  auto get_result = [this](const Node& node) -> const Node& {
-    if (node.id() < d_min_subst_id)
-    {
-      return node;
-    }
-    auto it = d_cache.find(node);
-    assert(it != d_cache.end());
-    assert(!it->second.is_null());
-    return it->second;
-  };
+  Rewriter& rw = d_env.rewriter();
 
-  NodeManager& nm = d_env.nm();
-  // Second component is true if the node was already expanded.
-  std::vector<std::pair<ConstNodeRef, bool>> visit{{term, false}};
+  struct Frame
+  {
+    ConstNodeRef node;
+    /** Result entry in d_cache, null if the node was not expanded yet. */
+    Node* result = nullptr;
+    /** Size of the result stack when the node was expanded. */
+    size_t base = 0;
+    /** True if the node was expanded to its substitution term. */
+    bool subst = false;
+    /** True if the substitution term is a candidate term. */
+    bool candidate = false;
+  };
+  std::vector<Frame> visit{{term}};
+  // Results of processed nodes, in the order the nodes were completed.
+  std::vector<ConstNodeRef> results;
   // Stack positions of expanded candidate variables.
   std::vector<size_t> expanded;
   std::vector<Node> children;
   do
   {
-    const Node& cur = visit.back().first;
+    Frame& frame    = visit.back();
+    const Node& cur = frame.node;
 
-    if (cur.id() < d_min_subst_id)
+    if (!frame.result)
     {
-      visit.pop_back();
-      continue;
-    }
+      if (cur.id() < d_min_subst_id)
+      {
+        results.push_back(cur);
+        visit.pop_back();
+        continue;
+      }
 
-    if (!visit.back().second)
-    {
       auto [it, inserted] = d_cache.emplace(cur, Node());
       if (inserted)
       {
-        visit.back().second        = true;
+        frame.result               = &it->second;
+        frame.base                 = results.size();
         auto [subst, is_candidate] = get_subst(cur);
         if (subst)
         {
+          frame.subst     = true;
+          frame.candidate = is_candidate;
           if (is_candidate)
           {
             expanded.push_back(visit.size() - 1);
           }
-          visit.emplace_back(*subst, false);
+          visit.push_back({*subst});
         }
         else
         {
           for (const Node& child : cur)
           {
-            visit.emplace_back(child, false);
+            visit.push_back({child});
           }
         }
         continue;
       }
       if (!it->second.is_null())
       {
+        results.push_back(it->second);
         visit.pop_back();
         continue;
       }
@@ -957,16 +975,21 @@ PassVariableSubstitution::substitute(const Node& term)
       expanded.pop_back();
       while (visit.size() > pos + 1)
       {
-        if (visit.back().second)
+        if (visit.back().result)
         {
-          d_cache.erase(visit.back().first);
+          d_cache.erase(visit.back().node);
         }
         visit.pop_back();
       }
-      const Node& var = visit.back().first;
-      assert(visit.back().second);
+      Frame& var_frame = visit.back();
+      assert(var_frame.result);
+      assert(var_frame.candidate);
+      results.erase(results.begin() + var_frame.base, results.end());
+      const Node& var = var_frame.node;
       d_cache.erase(var);
-      visit.back().second = false;
+      var_frame.result    = nullptr;
+      var_frame.subst     = false;
+      var_frame.candidate = false;
       Candidate& c        = d_candidates.at(var);
       Log(2) << "Remove cyclic substitution candidate: " << var << " -> "
              << std::get<0>(c.terms[c.selected]);
@@ -975,11 +998,12 @@ PassVariableSubstitution::substitute(const Node& term)
     }
 
     Node res;
-    auto [subst, is_candidate] = get_subst(cur);
-    if (subst)
+    if (frame.subst)
     {
-      res = get_result(*subst);
-      if (is_candidate)
+      assert(results.size() == frame.base + 1);
+      res = results.back();
+      results.pop_back();
+      if (frame.candidate)
       {
         assert(expanded.back() == visit.size() - 1);
         expanded.pop_back();
@@ -987,24 +1011,30 @@ PassVariableSubstitution::substitute(const Node& term)
     }
     else if (cur.num_children() > 0)
     {
-      bool changed = false;
+      // Children are processed in reverse order, hence their results are on
+      // the result stack in reverse order.
+      size_t n = cur.num_children();
+      assert(results.size() == frame.base + n);
       children.clear();
-      for (const Node& child : cur)
+      for (size_t i = 0; i < n; ++i)
       {
-        children.push_back(get_result(child));
-        changed |= children.back() != child;
+        children.push_back(results[frame.base + n - 1 - i]);
       }
-      res = changed ? utils::rebuild_node(nm, cur, children) : cur;
+      results.erase(results.begin() + frame.base, results.end());
+      // Children are already rewritten, only rewrite the rebuilt node.
+      res = rw.rebuild_node(cur, children);
     }
     else
     {
       res = cur;
     }
-    d_cache[cur] = res;
+    *frame.result = res;
+    results.push_back(*frame.result);
     visit.pop_back();
   } while (!visit.empty());
 
-  return get_result(term);
+  assert(results.size() == 1);
+  return results.back();
 }
 
 void

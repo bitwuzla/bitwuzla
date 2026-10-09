@@ -198,4 +198,28 @@ TEST_F(TestRewriterUtils, is_bv_xnor)
       child1));
 }
 
+TEST_F(TestRewriterUtils, rebuild_node)
+{
+  Node band = d_nm.mk_node(Kind::AND, {d_a, d_b});
+  ASSERT_EQ(d_rewriter.rebuild_node(band, std::vector<Node>{d_a, d_b}), band);
+  ASSERT_EQ(d_rewriter.rebuild_node(band, std::vector<Node>{d_a, d_a}), d_a);
+  ASSERT_EQ(d_rewriter.rebuild_node(band, std::vector<Node>{d_a, d_c}),
+            d_nm.mk_node(Kind::AND, {d_a, d_c}));
+
+  Node extract = d_nm.mk_node(Kind::BV_EXTRACT, {d_a4}, {2, 1});
+  ASSERT_EQ(d_rewriter.rebuild_node(extract, {d_b4}),
+            d_nm.mk_node(Kind::BV_EXTRACT, {d_b4}, {2, 1}));
+
+  Type array_type = d_nm.mk_array_type(d_bv4_type, d_bv4_type);
+  Node carray     = d_nm.mk_const_array(array_type, d_a4);
+  ASSERT_EQ(d_rewriter.rebuild_node(carray, {d_a4}), carray);
+  ASSERT_EQ(d_rewriter.rebuild_node(carray, {d_b4}),
+            d_nm.mk_const_array(array_type, d_b4));
+
+  std::unordered_map<Node, Node> cache{{d_a, d_a}, {d_b, d_b}};
+  ASSERT_EQ(d_rewriter.rebuild_node(band, cache), band);
+  cache[d_b] = d_a;
+  ASSERT_EQ(d_rewriter.rebuild_node(band, cache), d_a);
+}
+
 }  // namespace bzla::test

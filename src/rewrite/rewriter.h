@@ -113,6 +113,31 @@ class Rewriter
                       const std::vector<uint64_t>& indices);
 
   /**
+   * Rebuild given node with given children and rewrite the rebuilt node.
+   *
+   * Other than rewrite(), this only rewrites the rebuilt node, hence the
+   * children must already be rewritten.
+   *
+   * @param node     The node to rebuild.
+   * @param children The rewritten children of the rebuilt node.
+   * @return `node` if the children did not change, and the rewritten rebuilt
+   *         node otherwise.
+   */
+  Node rebuild_node(const Node& node, const std::vector<Node>& children);
+
+  /**
+   * Rebuild given node with the children mapped to in `cache` and rewrite the
+   * rebuilt node, see rebuild_node() above.
+   *
+   * @param node  The node to rebuild.
+   * @param cache Maps the children of `node` to their rewritten replacements.
+   * @return `node` if the children did not change, and the rewritten rebuilt
+   *         node otherwise.
+   */
+  Node rebuild_node(const Node& node,
+                    const std::unordered_map<Node, Node>& cache);
+
+  /**
    * Helper to create an inverted Boolean or bit-vector node.
    * @param node The node to invert.
    * @return The inverted node.

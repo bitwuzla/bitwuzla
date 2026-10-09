@@ -291,7 +291,9 @@ PassQuant::uniquify_variable(const Node& node, const Node& fresh_var)
     }
     else if (it->second.is_null())
     {
-      it->second = rewriter.rewrite(utils::rebuild_node(nm, cur, cache));
+      // The processed body is rewritten, hence only rebuilt nodes need to be
+      // rewritten.
+      it->second = rewriter.rebuild_node(cur, cache);
     }
     visit.pop_back();
   } while (!visit.empty());
