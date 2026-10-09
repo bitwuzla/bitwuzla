@@ -2548,12 +2548,16 @@ def test_terminate_sat(tm, capfd):
     smt2 = '(declare-const x (_ BitVec 32))'\
            + '(declare-const s (_ BitVec 32))'\
            + '(declare-const t (_ BitVec 32))'\
-           + '(assert (distinct (bvmul s (bvmul x t)) (bvmul (bvmul s x) t)))'\
-           + '(check-sat)'
-    tt = TestTerminator(1000)
+           + '(assert (distinct (bvmul s (bvmul x t)) (bvmul (bvmul s x) t)))'
     parser = Parser(tm, options)
-    parser.configure_terminator(tt)
+    # The parser polls the terminator after each command and stops without
+    # printing anything once it fires. Only configure the terminator once
+    # everything up to check-sat is parsed, else the time limit may expire
+    # before check-sat is reached (e.g., on slow machines).
     parser.parse(smt2, False, False)
+    tt = TestTerminator(1000)
+    parser.configure_terminator(tt)
+    parser.parse('(check-sat)', False, False)
     captured = capfd.readouterr()
     assert captured.out == 'unknown\n'
     # Kissat

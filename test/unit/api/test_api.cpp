@@ -4525,19 +4525,26 @@ TEST_F(TestApi, terminate_sat)
     bitwuzla::Options opts;
     opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
     opts.set(bitwuzla::Option::PREPROCESS, false);
-    TestTerminator tt(100);
     std::stringstream smt2;
     smt2 << "(declare-const x (_ BitVec 32))"
          << "(declare-const s (_ BitVec 32))"
          << "(declare-const t (_ BitVec 32))"
          << "(assert (distinct (bvmul s (bvmul x t)) (bvmul (bvmul s x) t)))"
-         << "(check-sat)" << std::endl;
+         << std::endl;
     bitwuzla::parser::Parser parser(d_tm, opts);
+    // The parser polls the terminator after each command and stops without
+    // printing anything once it fires. Only configure the terminator once
+    // everything up to check-sat is parsed, else the time limit may expire
+    // before check-sat is reached (e.g., on slow machines).
+    ASSERT_NO_THROW(parser.parse("<string>", smt2, false));
+    TestTerminator tt(100);
     parser.configure_terminator(&tt);
+    std::stringstream check_sat;
+    check_sat << "(check-sat)" << std::endl;
     std::stringstream unknown;
     unknown << "unknown" << std::endl;
     testing::internal::CaptureStdout();
-    ASSERT_NO_THROW(parser.parse("<string>", smt2, false));
+    ASSERT_NO_THROW(parser.parse("<string>", check_sat, false));
     std::string output = testing::internal::GetCapturedStdout();
     ASSERT_EQ(output, unknown.str());
   }
@@ -4563,19 +4570,26 @@ TEST_F(TestApi, terminate_sat)
     opts.set(bitwuzla::Option::SAT_SOLVER, "kissat");
     opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
     opts.set(bitwuzla::Option::PREPROCESS, false);
-    TestTerminator tt(100);
     std::stringstream smt2;
     smt2 << "(declare-const x (_ BitVec 32))"
          << "(declare-const s (_ BitVec 32))"
          << "(declare-const t (_ BitVec 32))"
          << "(assert (distinct (bvmul s (bvmul x t)) (bvmul (bvmul s x) t)))"
-         << "(check-sat)" << std::endl;
+         << std::endl;
     bitwuzla::parser::Parser parser(d_tm, opts);
+    // The parser polls the terminator after each command and stops without
+    // printing anything once it fires. Only configure the terminator once
+    // everything up to check-sat is parsed, else the time limit may expire
+    // before check-sat is reached (e.g., on slow machines).
+    ASSERT_NO_THROW(parser.parse("<string>", smt2, false));
+    TestTerminator tt(100);
     parser.configure_terminator(&tt);
+    std::stringstream check_sat;
+    check_sat << "(check-sat)" << std::endl;
     std::stringstream unknown;
     unknown << "unknown" << std::endl;
     testing::internal::CaptureStdout();
-    ASSERT_NO_THROW(parser.parse("<string>", smt2, false));
+    ASSERT_NO_THROW(parser.parse("<string>", check_sat, false));
     std::string output = testing::internal::GetCapturedStdout();
     ASSERT_EQ(output, unknown.str());
   }

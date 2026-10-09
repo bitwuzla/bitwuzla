@@ -6038,22 +6038,29 @@ TEST_F(TestCApi, terminate_sat)
          << "(declare-const s (_ BitVec 32))"
          << "(declare-const t (_ BitVec 32))"
          << "(assert (distinct (bvmul s (bvmul x t)) (bvmul (bvmul s x) t)))"
-         << "(check-sat)" << std::endl;
+         << std::endl;
     BitwuzlaOptions* opts = bitwuzla_options_new();
     bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "bitblast");
     bitwuzla_set_option(opts, BITWUZLA_OPT_PREPROCESS, 0);
     BitwuzlaParser* parser =
         bitwuzla_parser_new(d_tm, opts, "smt2", 2, "<stdout>");
+    // The parser polls the terminator after each command and stops without
+    // printing anything once it fires. Only configure the terminator once
+    // everything up to check-sat is parsed, else the time limit may expire
+    // before check-sat is reached (e.g., on slow machines).
+    const char* error_msg;
+    bitwuzla_parser_parse(parser, smt2.str().c_str(), false, false, &error_msg);
+    ASSERT_EQ(error_msg, nullptr);
     struct terminator_state state;
     gettimeofday(&state.start, NULL);
     state.time_limit_ms = 1000;
     bitwuzla_parser_set_termination_callback(parser, test_terminate2, &state);
     std::stringstream unknown;
     unknown << "unknown" << std::endl;
-    const char* error_msg;
     testing::internal::CaptureStdout();
-    bitwuzla_parser_parse(parser, smt2.str().c_str(), false, false, &error_msg);
+    bitwuzla_parser_parse(parser, "(check-sat)", false, false, &error_msg);
     std::string output = testing::internal::GetCapturedStdout();
+    ASSERT_EQ(error_msg, nullptr);
     ASSERT_EQ(output, unknown.str());
     bitwuzla_parser_delete(parser);
     bitwuzla_options_delete(opts);
