@@ -323,6 +323,11 @@ QuantSolver::process(const Node& q)
 bool
 QuantSolver::mbqi_check(const std::vector<Node>& to_check)
 {
+  if (to_check.empty())
+  {
+    return true;
+  }
+
   util::Timer timer(d_stats.time_mbqi);
 
   // Initialize MBQI solver
