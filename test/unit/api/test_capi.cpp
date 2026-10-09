@@ -82,7 +82,7 @@ class TestCApi : public ::testing::Test
     d_fun_fp     = bitwuzla_mk_const(d_tm, d_fun_sort_fp, "fun_fp");
     d_array_fpbv = bitwuzla_mk_const(d_tm, d_arr_sort_fpbv, "array_fpbv");
     d_array      = bitwuzla_mk_const(d_tm, d_arr_sort_bv, "array");
-    d_store      = bitwuzla_mk_term3(d_tm,
+    d_store = bitwuzla_mk_term3(d_tm,
                                 BITWUZLA_KIND_ARRAY_STORE,
                                 d_array,
                                 bitwuzla_mk_const(d_tm, d_bv_sort32, "store"),
@@ -134,7 +134,7 @@ class TestCApi : public ::testing::Test
 
   void TearDown() override { bitwuzla_term_manager_delete(d_tm); }
 
-  BitwuzlaTermManager *d_tm;
+  BitwuzlaTermManager* d_tm;
 
   /* sorts */
   BitwuzlaSort d_arr_sort_bv;
@@ -205,37 +205,37 @@ class TestCApi : public ::testing::Test
   BitwuzlaTerm d_exists;
 
   /* error messages */
-  const char *d_error_not_null = "expected non-null object";
-  const char *d_error_solver   = "is not associated with given solver instance";
-  const char *d_error_inv_sort = "invalid sort";
-  const char *d_error_exp_arr_sort   = "expected array sort";
-  const char *d_error_exp_bv_sort    = "expected bit-vector sort";
-  const char *d_error_exp_fp_sort    = "expected floating-point sort";
-  const char *d_error_exp_fun_sort   = "expected function sort";
-  const char *d_error_exp_str        = "must not be an empty string";
-  const char *d_error_unexp_arr_sort = "unexpected array sort";
-  const char *d_error_unexp_fun_sort = "unexpected function sort";
-  const char *d_error_zero           = "must be > 0";
-  const char *d_error_bv_fit         = "does not fit into a bit-vector of size";
-  const char *d_error_inv_term       = "invalid term";
-  const char *d_error_exp_bool_term  = "expected Boolean term";
-  const char *d_error_exp_bv_term    = "expected bit-vector term";
-  const char *d_error_exp_bv_value   = "expected bit-vector value";
-  const char *d_error_exp_fp_term    = "expected floating-point term";
-  const char *d_error_exp_rm_term    = "expected rounding-mode term";
-  const char *d_error_exp_arr_term   = "expected array term";
-  const char *d_error_exp_fun_term   = "expected function term";
-  const char *d_error_exp_var_term   = "expected variable";
-  const char *d_error_exp_assumption = "must be an assumption";
-  const char *d_error_rm             = "invalid rounding mode";
-  const char *d_error_unexp_arr_term = "unexpected array term";
-  const char *d_error_unexp_fun_term = "expected non-function term";
-  const char *d_error_unexp_param_term = "term must not be parameterized";
-  const char *d_error_produce_models   = "model production not enabled";
-  const char *d_error_unsat            = "if input formula is not unsat";
-  const char *d_error_unsat_cores      = "unsat core production not enabled";
-  const char *d_error_sat              = "if input formula is not sat";
-  const char *d_error_model_quant =
+  const char* d_error_not_null = "expected non-null object";
+  const char* d_error_solver   = "is not associated with given solver instance";
+  const char* d_error_inv_sort = "invalid sort";
+  const char* d_error_exp_arr_sort   = "expected array sort";
+  const char* d_error_exp_bv_sort    = "expected bit-vector sort";
+  const char* d_error_exp_fp_sort    = "expected floating-point sort";
+  const char* d_error_exp_fun_sort   = "expected function sort";
+  const char* d_error_exp_str        = "must not be an empty string";
+  const char* d_error_unexp_arr_sort = "unexpected array sort";
+  const char* d_error_unexp_fun_sort = "unexpected function sort";
+  const char* d_error_zero           = "must be > 0";
+  const char* d_error_bv_fit         = "does not fit into a bit-vector of size";
+  const char* d_error_inv_term       = "invalid term";
+  const char* d_error_exp_bool_term  = "expected Boolean term";
+  const char* d_error_exp_bv_term    = "expected bit-vector term";
+  const char* d_error_exp_bv_value   = "expected bit-vector value";
+  const char* d_error_exp_fp_term    = "expected floating-point term";
+  const char* d_error_exp_rm_term    = "expected rounding-mode term";
+  const char* d_error_exp_arr_term   = "expected array term";
+  const char* d_error_exp_fun_term   = "expected function term";
+  const char* d_error_exp_var_term   = "expected variable";
+  const char* d_error_exp_assumption = "must be an assumption";
+  const char* d_error_rm             = "invalid rounding mode";
+  const char* d_error_unexp_arr_term = "unexpected array term";
+  const char* d_error_unexp_fun_term = "expected non-function term";
+  const char* d_error_unexp_param_term = "term must not be parameterized";
+  const char* d_error_produce_models   = "model production not enabled";
+  const char* d_error_unsat            = "if input formula is not unsat";
+  const char* d_error_unsat_cores      = "unsat core production not enabled";
+  const char* d_error_sat              = "if input formula is not sat";
+  const char* d_error_model_quant =
       "model printing is currently not supported with quantifiers";
 };
 
@@ -488,7 +488,7 @@ TEST_F(TestCApi, result_to_string)
 TEST_F(TestCApi, set_option)
 {
   {
-    BitwuzlaOptions *options = bitwuzla_options_new();
+    BitwuzlaOptions* options = bitwuzla_options_new();
     ASSERT_DEATH(bitwuzla_set_option(options, BITWUZLA_OPT_VERBOSITY, 5),
                  "expected value <=");
     //  ASSERT_DEATH(bitwuzla_set_option(
@@ -517,7 +517,7 @@ TEST_F(TestCApi, set_option)
   //  bitwuzla_options_delete(options);
   //}
   {
-    BitwuzlaOptions *options = bitwuzla_options_new();
+    BitwuzlaOptions* options = bitwuzla_options_new();
     bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_MODELS, 1);
     // ASSERT_DEATH(bitwuzla_set_option(
     //                  options, BITWUZLA_OPT_PP_UNCONSTRAINED_OPTIMIZATION, 1),
@@ -547,7 +547,7 @@ TEST_F(TestCApi, set_option)
   //  bitwuzla_options_delete(options);
   //}
   {
-    BitwuzlaOptions *options = bitwuzla_options_new();
+    BitwuzlaOptions* options = bitwuzla_options_new();
     ASSERT_EQ(bitwuzla_get_option(options, BITWUZLA_OPT_PRODUCE_UNSAT_CORES),
               0);
     bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_UNSAT_CORES, 1);
@@ -594,7 +594,7 @@ TEST_F(TestCApi, set_option)
 
 TEST_F(TestCApi, option_info)
 {
-  BitwuzlaOptions *options = bitwuzla_options_new();
+  BitwuzlaOptions* options = bitwuzla_options_new();
   BitwuzlaOptionInfo info;
 
   for (int32_t i = 0; i < BITWUZLA_OPT_NUM_OPTS; ++i)
@@ -612,7 +612,7 @@ TEST_F(TestCApi, option_info)
       ASSERT_EQ(std::string(bitwuzla_get_option_mode(options, opt)),
                 std::string(info.mode.cur));
       size_t nmodes      = info.mode.num_modes;
-      const char **modes = info.mode.modes;
+      const char** modes = info.mode.modes;
       bool in_modes      = false;
       for (size_t i = 0; i < nmodes; ++i)
       {
@@ -637,7 +637,7 @@ TEST_F(TestCApi, option_info)
 
 TEST_F(TestCApi, option_is_valid)
 {
-  BitwuzlaOptions *options = bitwuzla_options_new();
+  BitwuzlaOptions* options = bitwuzla_options_new();
   ASSERT_FALSE(bitwuzla_option_is_valid(options, "incremental"));
   ASSERT_TRUE(bitwuzla_option_is_valid(options, "produce-models"));
   bitwuzla_options_delete(options);
@@ -896,7 +896,7 @@ TEST_F(TestCApi, mk_term_check_null)
 
 TEST_F(TestCApi, mk_term_check_cnt)
 {
-  const char *error_arg_cnt = "invalid number of arguments";
+  const char* error_arg_cnt = "invalid number of arguments";
 
   std::vector<BitwuzlaTerm> apply_args1 = {d_bv_one1};
   std::vector<BitwuzlaTerm> apply_args2 = {d_fun, d_bv_const8};
@@ -1355,15 +1355,15 @@ TEST_F(TestCApi, mk_term_check_cnt)
 
 TEST_F(TestCApi, mk_term_check_args)
 {
-  const char *error_invalid_sort = "unexpected sort";
-  const char *error_mis_sort  = "mismatching sort";
+  const char* error_invalid_sort = "unexpected sort";
+  const char* error_mis_sort     = "mismatching sort";
   // const char *error_bvar_term = "expected unbound variable term";
-  const char *error_dvar_term    = "expected set of distinct variables";
-  const char *error_fp_size      = "must be > 1";
+  const char* error_dvar_term = "expected set of distinct variables";
+  const char* error_fp_size   = "must be > 1";
 
-  const char *error_arr_index_sort =
+  const char* error_arr_index_sort =
       "sort of index term does not match index sort of array";
-  const char *error_arr_element_sort =
+  const char* error_arr_element_sort =
       "sort of element term does not match element sort of array";
 
   std::vector<BitwuzlaTerm> array_select_args2_invalid_1 = {d_fp_const16,
@@ -1424,7 +1424,7 @@ TEST_F(TestCApi, mk_term_check_args)
   std::vector<BitwuzlaTerm> fp_args2_rm_invalid_1 = {d_bv_const8, d_fp_const16};
   std::vector<BitwuzlaTerm> fp_args2_rm_invalid_2 = {d_rm_const, d_bv_const8};
   std::vector<BitwuzlaTerm> fp_args3_rm_mis       = {
-            d_rm_const, d_fp_pzero32, d_fp_const16};
+      d_rm_const, d_fp_pzero32, d_fp_const16};
   std::vector<BitwuzlaTerm> fp_args3_rm_invalid_1 = {
       d_fp_const16, d_fp_const16, d_fp_const16};
   std::vector<BitwuzlaTerm> fp_args3_rm_invalid_2 = {
@@ -1449,7 +1449,7 @@ TEST_F(TestCApi, mk_term_check_args)
   std::vector<BitwuzlaTerm> quant_args2_invalid_2 = {d_var1, d_bv_const8};
   std::vector<BitwuzlaTerm> quant_args2_invalid_3 = {d_bound_var, d_bv_const8};
   std::vector<BitwuzlaTerm> quant_args3_invalid   = {
-        d_var1, d_var1, d_bool_const};
+      d_var1, d_var1, d_bool_const};
 
   std::vector<uint64_t> bv_idxs1                 = {3};
   std::vector<uint64_t> bv_idxs2                 = {2, 0};
@@ -2493,7 +2493,7 @@ TEST_F(TestCApi, mk_var)
 TEST_F(TestCApi, get_term_mgr)
 {
   {
-    Bitwuzla *bitwuzla = bitwuzla_new(d_tm, nullptr);
+    Bitwuzla* bitwuzla = bitwuzla_new(d_tm, nullptr);
     ASSERT_EQ(d_tm, bitwuzla_get_term_mgr(bitwuzla));
     bitwuzla_delete(bitwuzla);
   }
@@ -2502,7 +2502,7 @@ TEST_F(TestCApi, get_term_mgr)
 TEST_F(TestCApi, push)
 {
   {
-    Bitwuzla *bitwuzla = bitwuzla_new(d_tm, nullptr);
+    Bitwuzla* bitwuzla = bitwuzla_new(d_tm, nullptr);
     ASSERT_DEATH(bitwuzla_push(nullptr, 2), d_error_not_null);
 
     bitwuzla_push(bitwuzla, 0);
@@ -2513,7 +2513,7 @@ TEST_F(TestCApi, push)
 TEST_F(TestCApi, pop)
 {
   {
-    Bitwuzla *bitwuzla = bitwuzla_new(d_tm, nullptr);
+    Bitwuzla* bitwuzla = bitwuzla_new(d_tm, nullptr);
     ASSERT_DEATH(bitwuzla_pop(nullptr, 2), d_error_not_null);
 
     bitwuzla_pop(bitwuzla, 0);
@@ -2523,7 +2523,7 @@ TEST_F(TestCApi, pop)
 
 TEST_F(TestCApi, assert)
 {
-  Bitwuzla *bitwuzla = bitwuzla_new(d_tm, nullptr);
+  Bitwuzla* bitwuzla = bitwuzla_new(d_tm, nullptr);
   ASSERT_DEATH(bitwuzla_assert(nullptr, d_true), d_error_not_null);
   ASSERT_DEATH(bitwuzla_assert(bitwuzla, 0), d_error_inv_term);
   ASSERT_DEATH(bitwuzla_assert(bitwuzla, d_bv_const8), d_error_exp_bool_term);
@@ -2545,18 +2545,18 @@ TEST_F(TestCApi, assert)
 TEST_F(TestCApi, is_unsat_assumption)
 {
   {
-    BitwuzlaOptions *options = bitwuzla_options_new();
+    BitwuzlaOptions* options = bitwuzla_options_new();
     bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_UNSAT_ASSUMPTIONS, 0);
-    Bitwuzla *bitwuzla = bitwuzla_new(d_tm, options);
+    Bitwuzla* bitwuzla = bitwuzla_new(d_tm, options);
     ASSERT_DEATH(bitwuzla_is_unsat_assumption(bitwuzla, d_bv_const1),
                  "unsat assumptions production not enabled");
     bitwuzla_delete(bitwuzla);
     bitwuzla_options_delete(options);
   }
   {
-    BitwuzlaOptions *options = bitwuzla_options_new();
+    BitwuzlaOptions* options = bitwuzla_options_new();
     bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_UNSAT_ASSUMPTIONS, 1);
-    Bitwuzla *bitwuzla = bitwuzla_new(d_tm, options);
+    Bitwuzla* bitwuzla = bitwuzla_new(d_tm, options);
 
     ASSERT_DEATH(bitwuzla_is_unsat_assumption(nullptr, d_true),
                  d_error_not_null);
@@ -2593,18 +2593,18 @@ TEST_F(TestCApi, get_unsat_assumptions)
 {
   size_t size;
   {
-    BitwuzlaOptions *options = bitwuzla_options_new();
+    BitwuzlaOptions* options = bitwuzla_options_new();
     bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_UNSAT_ASSUMPTIONS, 0);
-    Bitwuzla *bitwuzla = bitwuzla_new(d_tm, options);
+    Bitwuzla* bitwuzla = bitwuzla_new(d_tm, options);
     ASSERT_DEATH(bitwuzla_get_unsat_assumptions(bitwuzla, &size),
                  "unsat assumptions production not enabled");
     bitwuzla_delete(bitwuzla);
     bitwuzla_options_delete(options);
   }
   {
-    BitwuzlaOptions *options = bitwuzla_options_new();
+    BitwuzlaOptions* options = bitwuzla_options_new();
     bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_UNSAT_ASSUMPTIONS, 1);
-    Bitwuzla *bitwuzla = bitwuzla_new(d_tm, options);
+    Bitwuzla* bitwuzla = bitwuzla_new(d_tm, options);
 
     ASSERT_DEATH(bitwuzla_get_unsat_assumptions(nullptr, &size),
                  d_error_not_null);
@@ -2625,9 +2625,9 @@ TEST_F(TestCApi, get_unsat_assumptions)
     ASSERT_TRUE(bitwuzla_is_unsat_assumption(bitwuzla, d_bv_const1_false));
     ASSERT_FALSE(bitwuzla_is_unsat_assumption(bitwuzla, d_and_bv_const1));
     ASSERT_FALSE(bitwuzla_is_unsat_assumption(bitwuzla, d_eq_bv_const8));
-    const BitwuzlaTerm *unsat_ass =
+    const BitwuzlaTerm* unsat_ass =
         bitwuzla_get_unsat_assumptions(bitwuzla, &size);
-    size_t i                = 0;
+    size_t i = 0;
     for (; i < size; ++i)
     {
       ASSERT_TRUE(bitwuzla_is_unsat_assumption(bitwuzla, unsat_ass[i]));
@@ -2647,20 +2647,20 @@ TEST_F(TestCApi, get_unsat_core)
 {
   size_t size;
   {
-    Bitwuzla *bitwuzla = bitwuzla_new(d_tm, nullptr);
+    Bitwuzla* bitwuzla = bitwuzla_new(d_tm, nullptr);
     ASSERT_DEATH(bitwuzla_get_unsat_core(bitwuzla, &size), d_error_unsat_cores);
     bitwuzla_delete(bitwuzla);
   }
   {
-    Bitwuzla *bitwuzla = bitwuzla_new(d_tm, nullptr);
+    Bitwuzla* bitwuzla = bitwuzla_new(d_tm, nullptr);
     ASSERT_DEATH(bitwuzla_get_unsat_core(bitwuzla, &size), d_error_unsat_cores);
     bitwuzla_delete(bitwuzla);
   }
   {
-    BitwuzlaOptions *options = bitwuzla_options_new();
+    BitwuzlaOptions* options = bitwuzla_options_new();
     bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_UNSAT_CORES, 1);
     bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_UNSAT_ASSUMPTIONS, 1);
-    Bitwuzla *bitwuzla = bitwuzla_new(d_tm, options);
+    Bitwuzla* bitwuzla = bitwuzla_new(d_tm, options);
 
     ASSERT_DEATH(bitwuzla_get_unsat_core(nullptr, &size), d_error_not_null);
     ASSERT_DEATH(bitwuzla_get_unsat_core(bitwuzla, nullptr), d_error_not_null);
@@ -2679,14 +2679,14 @@ TEST_F(TestCApi, get_unsat_core)
         bitwuzla, assumptions.size(), assumptions.data());
     ASSERT_TRUE(bitwuzla_is_unsat_assumption(bitwuzla, d_bv_const1_false));
     ASSERT_FALSE(bitwuzla_is_unsat_assumption(bitwuzla, d_and_bv_const1));
-    const BitwuzlaTerm *unsat_core = bitwuzla_get_unsat_core(bitwuzla, &size);
+    const BitwuzlaTerm* unsat_core = bitwuzla_get_unsat_core(bitwuzla, &size);
     ASSERT_TRUE(size == 2);
     ASSERT_TRUE(unsat_core[0] == d_bv_const1_false
                 || unsat_core[0] == d_bv_const1_true);
     ASSERT_TRUE(unsat_core[1] == d_bv_const1_false
                 || unsat_core[1] == d_bv_const1_true);
 
-    const BitwuzlaTerm *unsat_ass =
+    const BitwuzlaTerm* unsat_ass =
         bitwuzla_get_unsat_assumptions(bitwuzla, &size);
     ASSERT_EQ(unsat_ass[0], d_bv_const1_false);
     ASSERT_TRUE(size == 1);
@@ -2702,8 +2702,8 @@ TEST_F(TestCApi, get_unsat_core)
 TEST_F(TestCApi, simplify)
 {
   ASSERT_DEATH(bitwuzla_simplify(nullptr), d_error_not_null);
-  BitwuzlaOptions *options = bitwuzla_options_new();
-  Bitwuzla *bitwuzla       = bitwuzla_new(d_tm, options);
+  BitwuzlaOptions* options = bitwuzla_options_new();
+  Bitwuzla* bitwuzla       = bitwuzla_new(d_tm, options);
   bitwuzla_assert(bitwuzla, d_bv_const1_false);
   bitwuzla_assert(bitwuzla, d_and_bv_const1);
   bitwuzla_simplify(bitwuzla);
@@ -2715,8 +2715,8 @@ TEST_F(TestCApi, simplify_term)
 {
   BitwuzlaSort bv4         = bitwuzla_mk_bv_sort(d_tm, 4);
   BitwuzlaTerm bv4_a       = bitwuzla_mk_const(d_tm, bv4, "a");
-  BitwuzlaOptions *options = bitwuzla_options_new();
-  Bitwuzla *bitwuzla       = bitwuzla_new(d_tm, options);
+  BitwuzlaOptions* options = bitwuzla_options_new();
+  Bitwuzla* bitwuzla       = bitwuzla_new(d_tm, options);
   ASSERT_EQ(bitwuzla_simplify_term(
                 bitwuzla,
                 bitwuzla_mk_term2(
@@ -2739,7 +2739,7 @@ TEST_F(TestCApi, check_sat)
 {
   ASSERT_DEATH(bitwuzla_check_sat(nullptr), d_error_not_null);
   {
-    Bitwuzla *bitwuzla = bitwuzla_new(d_tm, nullptr);
+    Bitwuzla* bitwuzla = bitwuzla_new(d_tm, nullptr);
     bitwuzla_check_sat(bitwuzla);
     bitwuzla_check_sat(bitwuzla);
     bitwuzla_delete(bitwuzla);
@@ -2749,15 +2749,15 @@ TEST_F(TestCApi, check_sat)
 TEST_F(TestCApi, get_value)
 {
   {
-    Bitwuzla *bitwuzla = bitwuzla_new(d_tm, nullptr);
+    Bitwuzla* bitwuzla = bitwuzla_new(d_tm, nullptr);
     ASSERT_DEATH(bitwuzla_get_value(bitwuzla, d_bv_const8),
                  d_error_produce_models);
     bitwuzla_delete(bitwuzla);
   }
   {
-    BitwuzlaOptions *options = bitwuzla_options_new();
+    BitwuzlaOptions* options = bitwuzla_options_new();
     bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_MODELS, 1);
-    Bitwuzla *bitwuzla = bitwuzla_new(d_tm, options);
+    Bitwuzla* bitwuzla = bitwuzla_new(d_tm, options);
     ASSERT_DEATH(bitwuzla_get_value(nullptr, d_bv_const8), d_error_not_null);
     ASSERT_DEATH(bitwuzla_get_value(bitwuzla, 0), d_error_inv_term);
     bitwuzla_assert(bitwuzla, d_bv_const1_true);
@@ -2774,9 +2774,9 @@ TEST_F(TestCApi, get_value)
     bitwuzla_options_delete(options);
   }
   {
-    BitwuzlaOptions *options = bitwuzla_options_new();
+    BitwuzlaOptions* options = bitwuzla_options_new();
     bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_MODELS, 1);
-    Bitwuzla *bitwuzla = bitwuzla_new(d_tm, options);
+    Bitwuzla* bitwuzla = bitwuzla_new(d_tm, options);
     bitwuzla_assert(bitwuzla, d_exists);
     ASSERT_DEATH(bitwuzla_get_value(bitwuzla, d_bv_const8), d_error_sat);
     ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_SAT);
@@ -2938,7 +2938,7 @@ TEST_F(TestCApi, get_interpolant)
   {
     // produce-interpolants not enabled
     std::vector<BitwuzlaTerm> A = {a0, a1, a2, a3, a4, a5};
-    BitwuzlaOptions* options = bitwuzla_options_new();
+    BitwuzlaOptions* options    = bitwuzla_options_new();
     bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_INTERPOLANTS, 0);
     Bitwuzla* bitwuzla = bitwuzla_new(d_tm, options);
     for (const auto& t : A)
@@ -2988,7 +2988,7 @@ TEST_F(TestCApi, get_interpolant)
   {
     // given assertion is not currently asserted
     std::vector<BitwuzlaTerm> A = {a0, a1, a2, a3, a4, a5};
-    BitwuzlaOptions* options = bitwuzla_options_new();
+    BitwuzlaOptions* options    = bitwuzla_options_new();
     bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_INTERPOLANTS, 1);
     Bitwuzla* bitwuzla = bitwuzla_new(d_tm, options);
     for (const auto& t : A)
@@ -3055,8 +3055,8 @@ TEST_F(TestCApi, print_formula)
   ASSERT_DEATH(bitwuzla_print_formula(nullptr, "smt2", stdout, 2),
                d_error_not_null);
 
-  BitwuzlaOptions *options = bitwuzla_options_new();
-  Bitwuzla *bitwuzla       = bitwuzla_new(d_tm, options);
+  BitwuzlaOptions* options = bitwuzla_options_new();
+  Bitwuzla* bitwuzla       = bitwuzla_new(d_tm, options);
 
   ASSERT_DEATH(bitwuzla_print_formula(bitwuzla, nullptr, stdout, 2),
                d_error_not_null);
@@ -3079,7 +3079,7 @@ TEST_F(TestCApi, print_formula)
           d_bv_zero8));
 
   {
-    FILE *tmpfile = fopen(filename.c_str(), "w");
+    FILE* tmpfile = fopen(filename.c_str(), "w");
     bitwuzla_print_formula(bitwuzla, "smt2", tmpfile, 2);
     fclose(tmpfile);
     std::ifstream ifs(filename);
@@ -3100,7 +3100,7 @@ TEST_F(TestCApi, print_formula)
     ASSERT_EQ(res, expected_smt2.str());
   }
   {
-    FILE *tmpfile = fopen(filename.c_str(), "w");
+    FILE* tmpfile = fopen(filename.c_str(), "w");
     bitwuzla_print_formula(bitwuzla, "smt2", tmpfile, 10);
     fclose(tmpfile);
     std::ifstream ifs(filename);
@@ -3121,7 +3121,7 @@ TEST_F(TestCApi, print_formula)
     ASSERT_EQ(res, expected_smt2.str());
   }
   {
-    FILE *tmpfile = fopen(filename.c_str(), "w");
+    FILE* tmpfile = fopen(filename.c_str(), "w");
     bitwuzla_print_formula(bitwuzla, "smt2", tmpfile, 16);
     fclose(tmpfile);
     std::ifstream ifs(filename);
@@ -3144,7 +3144,7 @@ TEST_F(TestCApi, print_formula)
 
   bitwuzla_assert(bitwuzla, d_exists);
   {
-    FILE *tmpfile = fopen(filename.c_str(), "w");
+    FILE* tmpfile = fopen(filename.c_str(), "w");
     bitwuzla_print_formula(bitwuzla, "smt2", tmpfile, 2);
     fclose(tmpfile);
     std::ifstream ifs(filename);
@@ -3167,7 +3167,7 @@ TEST_F(TestCApi, print_formula)
     ASSERT_EQ(res, expected_smt2.str());
   }
   {
-    FILE *tmpfile = fopen(filename.c_str(), "w");
+    FILE* tmpfile = fopen(filename.c_str(), "w");
     bitwuzla_print_formula(bitwuzla, "smt2", tmpfile, 10);
     fclose(tmpfile);
     std::ifstream ifs(filename);
@@ -3190,7 +3190,7 @@ TEST_F(TestCApi, print_formula)
     ASSERT_EQ(res, expected_smt2.str());
   }
   {
-    FILE *tmpfile = fopen(filename.c_str(), "w");
+    FILE* tmpfile = fopen(filename.c_str(), "w");
     bitwuzla_print_formula(bitwuzla, "smt2", tmpfile, 16);
     fclose(tmpfile);
     std::ifstream ifs(filename);
@@ -3228,7 +3228,7 @@ TEST_F(TestCApi, print_formula)
               d_tm, BITWUZLA_KIND_APPLY, apply_args.size(), apply_args.data()),
           d_fp_const16));
   {
-    FILE *tmpfile = fopen(filename.c_str(), "w");
+    FILE* tmpfile = fopen(filename.c_str(), "w");
     bitwuzla_print_formula(bitwuzla, "smt2", tmpfile, 2);
     fclose(tmpfile);
     std::ifstream ifs(filename);
@@ -3258,7 +3258,7 @@ TEST_F(TestCApi, print_formula)
     ASSERT_EQ(res, expected_smt2.str());
   }
   {
-    FILE *tmpfile = fopen(filename.c_str(), "w");
+    FILE* tmpfile = fopen(filename.c_str(), "w");
     bitwuzla_print_formula(bitwuzla, "smt2", tmpfile, 10);
     fclose(tmpfile);
     std::ifstream ifs(filename);
@@ -3288,7 +3288,7 @@ TEST_F(TestCApi, print_formula)
     ASSERT_EQ(res, expected_smt2.str());
   }
   {
-    FILE *tmpfile = fopen(filename.c_str(), "w");
+    FILE* tmpfile = fopen(filename.c_str(), "w");
     bitwuzla_print_formula(bitwuzla, "smt2", tmpfile, 16);
     fclose(tmpfile);
     std::ifstream ifs(filename);
@@ -3325,10 +3325,10 @@ TEST_F(TestCApi, print_formula)
 TEST_F(TestCApi, print_formula2)
 {
   std::string filename = "print_formula.out";
-  FILE *tmpfile        = fopen(filename.c_str(), "w");
+  FILE* tmpfile        = fopen(filename.c_str(), "w");
 
-  BitwuzlaOptions *options = bitwuzla_options_new();
-  Bitwuzla *bitwuzla       = bitwuzla_new(d_tm, options);
+  BitwuzlaOptions* options = bitwuzla_options_new();
+  Bitwuzla* bitwuzla       = bitwuzla_new(d_tm, options);
   BitwuzlaSort bv1         = bitwuzla_mk_bv_sort(d_tm, 1);
   BitwuzlaSort ar1_1       = bitwuzla_mk_array_sort(d_tm, bv1, bv1);
   BitwuzlaTerm a           = bitwuzla_mk_const(d_tm, ar1_1, "a");
@@ -3364,10 +3364,10 @@ TEST_F(TestCApi, print_formula2)
 TEST_F(TestCApi, print_formula3)
 {
   std::string filename = "print_formula.out";
-  FILE *tmpfile        = fopen(filename.c_str(), "w");
+  FILE* tmpfile        = fopen(filename.c_str(), "w");
 
-  BitwuzlaOptions *options = bitwuzla_options_new();
-  Bitwuzla *bitwuzla       = bitwuzla_new(d_tm, options);
+  BitwuzlaOptions* options = bitwuzla_options_new();
+  Bitwuzla* bitwuzla       = bitwuzla_new(d_tm, options);
   BitwuzlaSort bv32        = bitwuzla_mk_bv_sort(d_tm, 32);
   BitwuzlaTerm n           = bitwuzla_mk_const(d_tm, bv32, "n");
   BitwuzlaTerm sim         = bitwuzla_mk_const(d_tm, bv32, "~");
@@ -3442,8 +3442,8 @@ TEST_F(TestCApi, print_formula3)
 
 TEST_F(TestCApi, statistics)
 {
-  BitwuzlaOptions *options = bitwuzla_options_new();
-  Bitwuzla *bitwuzla       = bitwuzla_new(d_tm, options);
+  BitwuzlaOptions* options = bitwuzla_options_new();
+  Bitwuzla* bitwuzla       = bitwuzla_new(d_tm, options);
   bitwuzla_assert(bitwuzla, d_bool_const);
   const char **keys, **values;
   size_t size;
@@ -3469,8 +3469,8 @@ TEST_F(TestCApi, parser_smt2)
   smt2 << "(exit)\n" << std::flush;
   smt2.close();
 
-  const char *error_msg;
-  BitwuzlaOptions *options = bitwuzla_options_new();
+  const char* error_msg;
+  BitwuzlaOptions* options = bitwuzla_options_new();
   ASSERT_DEATH(bitwuzla_parser_new(nullptr, options, "smt2", 2, "<stdout>"),
                d_error_not_null);
   ASSERT_DEATH(bitwuzla_parser_new(d_tm, nullptr, "smt2", 2, "<stdout>"),
@@ -3479,7 +3479,7 @@ TEST_F(TestCApi, parser_smt2)
                d_error_not_null);
   ASSERT_DEATH(bitwuzla_parser_new(d_tm, options, "smt2", 12, "<stdout>"),
                "invalid bit-vector output number format");
-  BitwuzlaParser *parser =
+  BitwuzlaParser* parser =
       bitwuzla_parser_new(d_tm, options, "smt2", 2, "<stdout>");
   ASSERT_DEATH(bitwuzla_parser_get_bitwuzla(parser), "not yet initialized");
   ASSERT_DEATH(bitwuzla_parser_parse(nullptr, filename, true, true, &error_msg),
@@ -3510,14 +3510,14 @@ TEST_F(TestCApi, parser2_smt2)
   smt2 << "(assert x)" << std::flush;
   smt2.close();
 
-  const char *error_msg;
-  BitwuzlaOptions *options = bitwuzla_options_new();
-  BitwuzlaParser *parser =
+  const char* error_msg;
+  BitwuzlaOptions* options = bitwuzla_options_new();
+  BitwuzlaParser* parser =
       bitwuzla_parser_new(d_tm, options, "smt2", 10, "<stdout>");
   bitwuzla_parser_parse(parser, filename, true, true, &error_msg);
   ASSERT_NE(error_msg, nullptr);
   ASSERT_EQ(std::string(error_msg),
-  std::string(bitwuzla_parser_get_error_msg(parser)));
+            std::string(bitwuzla_parser_get_error_msg(parser)));
   ASSERT_NE(std::string(error_msg).find("undefined symbol 'x'"),
             std::string::npos);
   size_t size;
@@ -3538,10 +3538,10 @@ TEST_F(TestCApi, parser_string1_smt2)
   smt2 << "(set-logic QF_BV)\n";
   smt2 << "(check-sat)\n";
   smt2 << "(exit)\n";
-  const char *error_msg;
-  BitwuzlaOptions *options = bitwuzla_options_new();
+  const char* error_msg;
+  BitwuzlaOptions* options = bitwuzla_options_new();
   {
-    BitwuzlaParser *parser =
+    BitwuzlaParser* parser =
         bitwuzla_parser_new(d_tm, options, "smt2", 10, "<stdout>");
     bitwuzla_parser_parse(parser, smt2.str().c_str(), true, true, &error_msg);
     ASSERT_NE(error_msg, nullptr);
@@ -3556,7 +3556,7 @@ TEST_F(TestCApi, parser_string1_smt2)
     bitwuzla_parser_delete(parser);
   }
   {
-    BitwuzlaParser *parser =
+    BitwuzlaParser* parser =
         bitwuzla_parser_new(d_tm, options, "smt2", 10, "<stdout>");
     bitwuzla_parser_parse(parser, smt2.str().c_str(), true, false, &error_msg);
     ASSERT_EQ(error_msg, nullptr);
@@ -3574,12 +3574,12 @@ TEST_F(TestCApi, parser_string1_smt2)
 
 TEST_F(TestCApi, parser_string2_smt2)
 {
-  std::string str_decl     = "(declare-const a Bool)";
-  std::string str_true     = "(assert (= a true))";
-  std::string str_false    = "(assert (= a false))";
-  const char *error_msg;
-  BitwuzlaOptions *options = bitwuzla_options_new();
-  BitwuzlaParser *parser =
+  std::string str_decl  = "(declare-const a Bool)";
+  std::string str_true  = "(assert (= a true))";
+  std::string str_false = "(assert (= a false))";
+  const char* error_msg;
+  BitwuzlaOptions* options = bitwuzla_options_new();
+  BitwuzlaParser* parser =
       bitwuzla_parser_new(d_tm, options, "smt2", 10, "<stdout>");
   bitwuzla_parser_parse(parser, str_decl.c_str(), true, false, &error_msg);
   ASSERT_EQ(error_msg, nullptr);
@@ -3587,7 +3587,7 @@ TEST_F(TestCApi, parser_string2_smt2)
   ASSERT_EQ(error_msg, nullptr);
   bitwuzla_parser_parse(parser, str_false.c_str(), true, false, &error_msg);
   ASSERT_EQ(error_msg, nullptr);
-  Bitwuzla *bitwuzla = bitwuzla_parser_get_bitwuzla(parser);
+  Bitwuzla* bitwuzla = bitwuzla_parser_get_bitwuzla(parser);
   ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNSAT);
   ASSERT_EQ(bitwuzla_get_term_mgr(bitwuzla), d_tm);
   size_t size;
@@ -3603,10 +3603,10 @@ TEST_F(TestCApi, parser_string2_smt2)
 
 TEST_F(TestCApi, parser_smt2_string_term)
 {
-  BitwuzlaOptions *options = bitwuzla_options_new();
-  BitwuzlaParser *parser =
+  BitwuzlaOptions* options = bitwuzla_options_new();
+  BitwuzlaParser* parser =
       bitwuzla_parser_new(d_tm, options, "smt2", 10, "<stdout>");
-  const char *error_msg;
+  const char* error_msg;
 
   ASSERT_DEATH(bitwuzla_parser_parse_term(nullptr, "true", &error_msg),
                d_error_not_null);
@@ -3668,10 +3668,10 @@ TEST_F(TestCApi, parser_smt2_string_term)
 
 TEST_F(TestCApi, parser_smt2_string_sort)
 {
-  BitwuzlaOptions *options = bitwuzla_options_new();
-  BitwuzlaParser *parser =
+  BitwuzlaOptions* options = bitwuzla_options_new();
+  BitwuzlaParser* parser =
       bitwuzla_parser_new(d_tm, options, "smt2", 10, "<stdout>");
-  const char *error_msg;
+  const char* error_msg;
 
   ASSERT_DEATH(bitwuzla_parser_parse_sort(nullptr, "Bool", &error_msg),
                d_error_not_null);
@@ -3753,12 +3753,12 @@ TEST_F(TestCApi, parser_smt2_print_model_sat)
   smt2 << "(check-sat)\n";
   smt2.close();
 
-  const char *error_msg;
-  BitwuzlaOptions *options = bitwuzla_options_new();
+  const char* error_msg;
+  BitwuzlaOptions* options = bitwuzla_options_new();
 
   {
     // error, produce models not enabled
-    BitwuzlaParser *parser =
+    BitwuzlaParser* parser =
         bitwuzla_parser_new(d_tm, options, "smt2", 2, "<stdout>");
     bitwuzla_parser_configure_auto_print_model(parser, true);
     bitwuzla_parser_parse(parser, filename, false, true, &error_msg);
@@ -3773,7 +3773,7 @@ TEST_F(TestCApi, parser_smt2_print_model_sat)
   bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_MODELS, true);
   {
     // parse only
-    BitwuzlaParser *parser =
+    BitwuzlaParser* parser =
         bitwuzla_parser_new(d_tm, options, "smt2", 2, "<stdout>");
     bitwuzla_parser_configure_auto_print_model(parser, true);
     bitwuzla_parser_parse(parser, filename, true, true, &error_msg);
@@ -3781,7 +3781,7 @@ TEST_F(TestCApi, parser_smt2_print_model_sat)
     bitwuzla_parser_delete(parser);
   }
   {
-    BitwuzlaParser *parser =
+    BitwuzlaParser* parser =
         bitwuzla_parser_new(d_tm, options, "smt2", 2, "<stdout>");
     bitwuzla_parser_configure_auto_print_model(parser, true);
     bitwuzla_parser_parse(parser, filename, false, true, &error_msg);
@@ -3807,11 +3807,11 @@ TEST_F(TestCApi, parser_smt2_print_model_unsat)
   smt2 << "(check-sat)\n";
   smt2.close();
 
-  const char *error_msg;
-  BitwuzlaOptions *options = bitwuzla_options_new();
+  const char* error_msg;
+  BitwuzlaOptions* options = bitwuzla_options_new();
   {
     // error, produce models not enabled
-    BitwuzlaParser *parser =
+    BitwuzlaParser* parser =
         bitwuzla_parser_new(d_tm, options, "smt2", 2, "<stdout>");
     bitwuzla_parser_configure_auto_print_model(parser, true);
     bitwuzla_parser_parse(parser, filename, false, true, &error_msg);
@@ -3825,7 +3825,7 @@ TEST_F(TestCApi, parser_smt2_print_model_unsat)
   bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_MODELS, true);
   {
     // parse only
-    BitwuzlaParser *parser =
+    BitwuzlaParser* parser =
         bitwuzla_parser_new(d_tm, options, "smt2", 2, "<stdout>");
     bitwuzla_parser_configure_auto_print_model(parser, true);
     bitwuzla_parser_parse(parser, filename, true, true, &error_msg);
@@ -3833,7 +3833,7 @@ TEST_F(TestCApi, parser_smt2_print_model_unsat)
     bitwuzla_parser_delete(parser);
   }
   {
-    BitwuzlaParser *parser =
+    BitwuzlaParser* parser =
         bitwuzla_parser_new(d_tm, options, "smt2", 2, "<stdout>");
     bitwuzla_parser_configure_auto_print_model(parser, true);
     bitwuzla_parser_parse(parser, filename, false, true, &error_msg);
@@ -3857,15 +3857,15 @@ TEST_F(TestCApi, parser_btor2)
   btor2 << "7 sort bitvec 1" << std::endl;
   btor2 << "8 slice 7 6 7 7" << std::endl;
   btor2 << "9 constraint 8" << std::endl << std::flush;
-  const char *error_msg;
+  const char* error_msg;
   size_t size;
 
-  BitwuzlaOptions *options = bitwuzla_options_new();
+  BitwuzlaOptions* options = bitwuzla_options_new();
 
   ASSERT_DEATH(bitwuzla_parser_new(d_tm, options, "btor2", 10, nullptr),
                d_error_not_null);
   {
-    BitwuzlaParser *parser =
+    BitwuzlaParser* parser =
         bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>");
     bitwuzla_parser_get_bitwuzla(parser);
     auto decl_sorts = bitwuzla_parser_get_declared_sorts(parser, &size);
@@ -3877,7 +3877,7 @@ TEST_F(TestCApi, parser_btor2)
     bitwuzla_parser_delete(parser);
   }
   {
-    BitwuzlaParser *parser =
+    BitwuzlaParser* parser =
         bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>");
     bitwuzla_parser_parse(parser, "parsex.btor2", true, true, &error_msg);
     ASSERT_NE(std::string(error_msg).find("failed to open 'parsex.btor2'"),
@@ -3895,7 +3895,7 @@ TEST_F(TestCApi, parser_btor2)
     bitwuzla_parser_delete(parser);
   }
   {
-    BitwuzlaParser *parser =
+    BitwuzlaParser* parser =
         bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>");
     bitwuzla_parser_parse(parser, input, true, true, &error_msg);
     ASSERT_EQ(error_msg, nullptr);
@@ -3926,11 +3926,11 @@ TEST_F(TestCApi, parser_btor2_string1)
   btor2 << "8 slice 7 6 7 7" << std::endl;
   btor2 << "9 constraint 8" << std::endl;
 
-  const char *error_msg;
+  const char* error_msg;
   size_t size;
-  BitwuzlaOptions *options = bitwuzla_options_new();
+  BitwuzlaOptions* options = bitwuzla_options_new();
   {
-    BitwuzlaParser *parser =
+    BitwuzlaParser* parser =
         bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>");
     bitwuzla_parser_parse(parser, btor2.str().c_str(), true, true, &error_msg);
     ASSERT_NE(error_msg, nullptr);
@@ -3944,7 +3944,7 @@ TEST_F(TestCApi, parser_btor2_string1)
     bitwuzla_parser_delete(parser);
   }
   {
-    BitwuzlaParser *parser =
+    BitwuzlaParser* parser =
         bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>");
     bitwuzla_parser_parse(parser, btor2.str().c_str(), true, false, &error_msg);
     auto decl_sorts = bitwuzla_parser_get_declared_sorts(parser, &size);
@@ -4010,10 +4010,10 @@ TEST_F(TestCApi, parser_btor2_string2)
   }
 
   size_t size;
-  const char *error_msg;
-  BitwuzlaOptions *options = bitwuzla_options_new();
+  const char* error_msg;
+  BitwuzlaOptions* options = bitwuzla_options_new();
   {
-    BitwuzlaParser *parser =
+    BitwuzlaParser* parser =
         bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>");
     bitwuzla_parser_parse(parser, decl_sorts.c_str(), true, false, &error_msg);
     ASSERT_EQ(error_msg, nullptr);
@@ -4030,7 +4030,7 @@ TEST_F(TestCApi, parser_btor2_string2)
     ASSERT_EQ(error_msg, nullptr);
     bitwuzla_parser_parse(parser, root.c_str(), true, false, &error_msg);
     ASSERT_EQ(error_msg, nullptr);
-    Bitwuzla *bitwuzla = bitwuzla_parser_get_bitwuzla(parser);
+    Bitwuzla* bitwuzla = bitwuzla_parser_get_bitwuzla(parser);
     ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNSAT);
     auto decl_sorts = bitwuzla_parser_get_declared_sorts(parser, &size);
     ASSERT_EQ(size, 0);
@@ -4050,7 +4050,7 @@ TEST_F(TestCApi, parser_btor2_string2)
     bitwuzla_parser_delete(parser);
   }
   {
-    BitwuzlaParser *parser =
+    BitwuzlaParser* parser =
         bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>");
     bitwuzla_parser_parse(parser, decl_sorts.c_str(), true, false, &error_msg);
     bitwuzla_parser_parse(parser, "3 input 2 @arr3", true, false, &error_msg);
@@ -4070,11 +4070,11 @@ TEST_F(TestCApi, parser_btor2_string2)
 
 TEST_F(TestCApi, parser_btor2_string_term)
 {
-  BitwuzlaOptions *options = bitwuzla_options_new();
-  BitwuzlaParser *parser =
+  BitwuzlaOptions* options = bitwuzla_options_new();
+  BitwuzlaParser* parser =
       bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>");
 
-  const char *error_msg;
+  const char* error_msg;
   bitwuzla_parser_parse(parser, "1 sort bitvec 1", true, false, &error_msg);
   ASSERT_EQ(error_msg, nullptr);
   ASSERT_EQ(bitwuzla_parser_parse_term(parser, "2 constd 1 1", &error_msg),
@@ -4126,10 +4126,10 @@ TEST_F(TestCApi, parser_btor2_string_term)
 
 TEST_F(TestCApi, parser_btor2_string_sort)
 {
-  BitwuzlaOptions *options = bitwuzla_options_new();
-  BitwuzlaParser *parser =
+  BitwuzlaOptions* options = bitwuzla_options_new();
+  BitwuzlaParser* parser =
       bitwuzla_parser_new(d_tm, options, "btor2", 10, "<stdout>");
-  const char *error_msg;
+  const char* error_msg;
   BitwuzlaSort bv1 =
       bitwuzla_parser_parse_sort(parser, "1 sort bitvec 1", &error_msg);
   ASSERT_EQ(error_msg, nullptr);
@@ -4167,11 +4167,11 @@ TEST_F(TestCApi, parser_btor2_print_model_sat)
   btor2 << "10 constraint 9\n";
   btor2.close();
 
-  const char *error_msg;
-  BitwuzlaOptions *options = bitwuzla_options_new();
+  const char* error_msg;
+  BitwuzlaOptions* options = bitwuzla_options_new();
   {
     // error, produce models not enabled
-    BitwuzlaParser *parser =
+    BitwuzlaParser* parser =
         bitwuzla_parser_new(d_tm, options, "btor2", 2, "<stdout>");
     bitwuzla_parser_configure_auto_print_model(parser, true);
     bitwuzla_parser_parse(parser, filename, false, true, &error_msg);
@@ -4185,7 +4185,7 @@ TEST_F(TestCApi, parser_btor2_print_model_sat)
   bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_MODELS, true);
   {
     // parse only
-    BitwuzlaParser *parser =
+    BitwuzlaParser* parser =
         bitwuzla_parser_new(d_tm, options, "btor2", 2, "<stdout>");
     bitwuzla_parser_configure_auto_print_model(parser, true);
     bitwuzla_parser_parse(parser, filename, true, true, &error_msg);
@@ -4193,7 +4193,7 @@ TEST_F(TestCApi, parser_btor2_print_model_sat)
     bitwuzla_parser_delete(parser);
   }
   {
-    BitwuzlaParser *parser =
+    BitwuzlaParser* parser =
         bitwuzla_parser_new(d_tm, options, "btor2", 2, "<stdout>");
     bitwuzla_parser_configure_auto_print_model(parser, true);
     bitwuzla_parser_parse(parser, filename, false, true, &error_msg);
@@ -4261,7 +4261,7 @@ TEST_F(TestCApi, sort_fun_get_domain_sorts)
   ASSERT_DEATH(bitwuzla_sort_fun_get_domain_sorts(d_bv_sort32, &size),
                d_error_exp_fun_sort);
 
-  BitwuzlaSort *domain_sorts =
+  BitwuzlaSort* domain_sorts =
       bitwuzla_sort_fun_get_domain_sorts(d_fun_sort, &size);
   ASSERT_EQ(size, 3);
   ASSERT_EQ(d_bv_sort8, domain_sorts[0]);
@@ -4468,7 +4468,7 @@ TEST_F(TestCApi, term_fun_get_domain_sorts)
   ASSERT_DEATH(bitwuzla_term_fun_get_domain_sorts(bv_term, &size),
                d_error_exp_fun_sort);
 
-  BitwuzlaSort *domain_sorts = bitwuzla_term_fun_get_domain_sorts(d_fun, &size);
+  BitwuzlaSort* domain_sorts = bitwuzla_term_fun_get_domain_sorts(d_fun, &size);
   ASSERT_EQ(size, 3);
   ASSERT_EQ(d_bv_sort8, domain_sorts[0]);
   ASSERT_EQ(d_fp_sort16, domain_sorts[1]);
@@ -4995,7 +4995,7 @@ TEST_F(TestCApi, indexed)
   BitwuzlaTerm rm      = bitwuzla_mk_rm_value(d_tm, BITWUZLA_RM_RNE);
 
   size_t size;
-  uint64_t *indices;
+  uint64_t* indices;
   BitwuzlaTerm idx =
       bitwuzla_mk_term2_indexed1(d_tm, BITWUZLA_KIND_FP_TO_SBV, rm, fp_term, 8);
   ASSERT_TRUE(bitwuzla_term_is_indexed(idx));
@@ -5302,7 +5302,7 @@ TEST_F(TestCApi, terms)
     ASSERT_NE(term, nullptr);
 
     size_t size;
-    BitwuzlaTerm *children = bitwuzla_term_get_children(term, &size);
+    BitwuzlaTerm* children = bitwuzla_term_get_children(term, &size);
 
     if (bitwuzla_term_is_const(term) || bitwuzla_term_is_var(term)
         || bitwuzla_term_is_value(term))
@@ -5333,7 +5333,7 @@ TEST_F(TestCApi, terms)
       if (bitwuzla_term_is_indexed(term))
       {
         size_t num_indices;
-        uint64_t *indices = bitwuzla_term_get_indices(term, &num_indices);
+        uint64_t* indices = bitwuzla_term_get_indices(term, &num_indices);
         tterm             = bitwuzla_mk_term_indexed(
             d_tm, kind, size, children, num_indices, indices);
       }
@@ -5589,7 +5589,7 @@ TEST_F(TestCApi, substitute2)
 
 TEST_F(TestCApi, term_copy_release)
 {
-  BitwuzlaTermManager *tm = bitwuzla_term_manager_new();
+  BitwuzlaTermManager* tm = bitwuzla_term_manager_new();
 
   ASSERT_TRUE(tm->d_alloc_terms.empty());
 
@@ -5626,7 +5626,7 @@ TEST_F(TestCApi, term_copy_release)
 
 TEST_F(TestCApi, sort_copy_release)
 {
-  BitwuzlaTermManager *tm = bitwuzla_term_manager_new();
+  BitwuzlaTermManager* tm = bitwuzla_term_manager_new();
 
   ASSERT_TRUE(tm->d_alloc_sorts.empty());
 
@@ -5663,7 +5663,7 @@ TEST_F(TestCApi, sort_copy_release)
 
 TEST_F(TestCApi, term_mgr_release)
 {
-  BitwuzlaTermManager *tm = bitwuzla_term_manager_new();
+  BitwuzlaTermManager* tm = bitwuzla_term_manager_new();
 
   auto t1 = bitwuzla_mk_true(tm);
   ASSERT_EQ(t1->d_refs, 1);
@@ -5769,7 +5769,7 @@ TEST_F(TestCApi, term_fp_val_to_real_str)
 
 namespace {
 int32_t
-test_terminate1(void *state)
+test_terminate1(void* state)
 {
   (void) state;
   return true;
@@ -5798,18 +5798,18 @@ TEST_F(TestCApi, terminate)
           bitwuzla_mk_term2(d_tm, BITWUZLA_KIND_BV_UADD_OVERFLOW, x, x)));
   // solved by rewriting
   {
-    BitwuzlaOptions *opts = bitwuzla_options_new();
+    BitwuzlaOptions* opts = bitwuzla_options_new();
     bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "bitblast");
-    Bitwuzla *bitwuzla = bitwuzla_new(d_tm, opts);
+    Bitwuzla* bitwuzla = bitwuzla_new(d_tm, opts);
     bitwuzla_assert(bitwuzla, a);
     ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNSAT);
     bitwuzla_options_delete(opts);
     bitwuzla_delete(bitwuzla);
   }
   {
-    BitwuzlaOptions *opts = bitwuzla_options_new();
+    BitwuzlaOptions* opts = bitwuzla_options_new();
     bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "prop");
-    Bitwuzla *bitwuzla = bitwuzla_new(d_tm, opts);
+    Bitwuzla* bitwuzla = bitwuzla_new(d_tm, opts);
     bitwuzla_assert(bitwuzla, a);
     ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNSAT);
     bitwuzla_options_delete(opts);
@@ -5833,19 +5833,19 @@ TEST_F(TestCApi, terminate)
 #endif
 #ifdef BZLA_USE_CADICAL
   {
-    BitwuzlaOptions *opts = bitwuzla_options_new();
+    BitwuzlaOptions* opts = bitwuzla_options_new();
     bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "bitblast");
-    Bitwuzla *bitwuzla = bitwuzla_new(d_tm, opts);
+    Bitwuzla* bitwuzla = bitwuzla_new(d_tm, opts);
     bitwuzla_assert(bitwuzla, b);
     ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNSAT);
     bitwuzla_options_delete(opts);
     bitwuzla_delete(bitwuzla);
   }
   {
-    BitwuzlaOptions *opts = bitwuzla_options_new();
+    BitwuzlaOptions* opts = bitwuzla_options_new();
     bitwuzla_set_option(opts, BITWUZLA_OPT_REWRITE_LEVEL, 0);
     bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "bitblast");
-    Bitwuzla *bitwuzla = bitwuzla_new(d_tm, opts);
+    Bitwuzla* bitwuzla = bitwuzla_new(d_tm, opts);
     bitwuzla_set_termination_callback(bitwuzla, test_terminate1, nullptr);
     bitwuzla_assert(bitwuzla, b);
     ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNKNOWN);
@@ -5853,10 +5853,10 @@ TEST_F(TestCApi, terminate)
     bitwuzla_delete(bitwuzla);
   }
   {
-    BitwuzlaOptions *opts = bitwuzla_options_new();
+    BitwuzlaOptions* opts = bitwuzla_options_new();
     bitwuzla_set_option(opts, BITWUZLA_OPT_REWRITE_LEVEL, 0);
     bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "prop");
-    Bitwuzla *bitwuzla = bitwuzla_new(d_tm, opts);
+    Bitwuzla* bitwuzla = bitwuzla_new(d_tm, opts);
     bitwuzla_set_termination_callback(bitwuzla, test_terminate1, nullptr);
     bitwuzla_assert(bitwuzla, b);
     ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNKNOWN);
@@ -5871,13 +5871,13 @@ TEST_F(TestCApi, terminate)
          << "(declare-const t (_ BitVec 4))"
          << "(assert (distinct (bvmul s (bvmul x t)) (bvmul (bvmul s x) t)))"
          << "(check-sat)" << std::endl;
-    BitwuzlaOptions *opts = bitwuzla_options_new();
+    BitwuzlaOptions* opts = bitwuzla_options_new();
     bitwuzla_set_option(opts, BITWUZLA_OPT_REWRITE_LEVEL, 0);
     bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "prop");
-    BitwuzlaParser *parser =
+    BitwuzlaParser* parser =
         bitwuzla_parser_new(d_tm, opts, "smt2", 2, "<stdout>");
     bitwuzla_parser_set_termination_callback(parser, test_terminate1, nullptr);
-    const char *error_msg;
+    const char* error_msg;
     testing::internal::CaptureStdout();
     bitwuzla_parser_parse(parser, smt2.str().c_str(), false, false, &error_msg);
     std::string output = testing::internal::GetCapturedStdout();
@@ -5892,11 +5892,11 @@ TEST_F(TestCApi, terminate)
   // terminator immediately would terminate the execution on the first call to
   // terminate).
   {
-    BitwuzlaOptions *opts = bitwuzla_options_new();
+    BitwuzlaOptions* opts = bitwuzla_options_new();
     bitwuzla_set_option(opts, BITWUZLA_OPT_REWRITE_LEVEL, 0);
     bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "bitblast");
     bitwuzla_set_option_mode(opts, BITWUZLA_OPT_SAT_SOLVER, "cms");
-    Bitwuzla *bitwuzla = bitwuzla_new(d_tm, opts);
+    Bitwuzla* bitwuzla = bitwuzla_new(d_tm, opts);
     ASSERT_DEATH(
         bitwuzla_set_termination_callback(bitwuzla, test_terminate1, nullptr),
         "terminator not supported in configured SAT solver");
@@ -5940,11 +5940,11 @@ TEST_F(TestCApi, terminate)
   }
   if (config::kissat_patched)
   {
-    BitwuzlaOptions *opts = bitwuzla_options_new();
+    BitwuzlaOptions* opts = bitwuzla_options_new();
     bitwuzla_set_option(opts, BITWUZLA_OPT_REWRITE_LEVEL, 0);
     bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "bitblast");
     bitwuzla_set_option_mode(opts, BITWUZLA_OPT_SAT_SOLVER, "kissat");
-    Bitwuzla *bitwuzla = bitwuzla_new(d_tm, opts);
+    Bitwuzla* bitwuzla = bitwuzla_new(d_tm, opts);
     bitwuzla_set_termination_callback(bitwuzla, test_terminate1, nullptr);
     bitwuzla_assert(bitwuzla, b);
     ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNKNOWN);
@@ -5953,11 +5953,11 @@ TEST_F(TestCApi, terminate)
   }
   if (config::kissat_patched)
   {
-    BitwuzlaOptions *opts = bitwuzla_options_new();
+    BitwuzlaOptions* opts = bitwuzla_options_new();
     bitwuzla_set_option(opts, BITWUZLA_OPT_REWRITE_LEVEL, 0);
     bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "prop");
     bitwuzla_set_option_mode(opts, BITWUZLA_OPT_SAT_SOLVER, "kissat");
-    Bitwuzla *bitwuzla = bitwuzla_new(d_tm, opts);
+    Bitwuzla* bitwuzla = bitwuzla_new(d_tm, opts);
     bitwuzla_set_termination_callback(bitwuzla, test_terminate1, nullptr);
     bitwuzla_assert(bitwuzla, b);
     ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNKNOWN);
@@ -6004,10 +6004,10 @@ TEST_F(TestCApi, terminate_sat)
   // not solved by bit-blasting without preprocessing, should be terminated in
   // the SAT solver when configured
   {
-    BitwuzlaOptions *opts = bitwuzla_options_new();
+    BitwuzlaOptions* opts = bitwuzla_options_new();
     bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "bitblast");
     bitwuzla_set_option(opts, BITWUZLA_OPT_PREPROCESS, 0);
-    Bitwuzla *bitwuzla = bitwuzla_new(d_tm, opts);
+    Bitwuzla* bitwuzla = bitwuzla_new(d_tm, opts);
     struct terminator_state state;
     gettimeofday(&state.start, NULL);
     state.time_limit_ms = 1000;
@@ -6018,10 +6018,10 @@ TEST_F(TestCApi, terminate_sat)
     bitwuzla_delete(bitwuzla);
   }
   {
-    BitwuzlaOptions *opts = bitwuzla_options_new();
+    BitwuzlaOptions* opts = bitwuzla_options_new();
     bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "prop");
     bitwuzla_set_option(opts, BITWUZLA_OPT_PREPROCESS, 0);
-    Bitwuzla *bitwuzla = bitwuzla_new(d_tm, opts);
+    Bitwuzla* bitwuzla = bitwuzla_new(d_tm, opts);
     struct terminator_state state;
     gettimeofday(&state.start, NULL);
     state.time_limit_ms = 1000;
@@ -6039,10 +6039,10 @@ TEST_F(TestCApi, terminate_sat)
          << "(declare-const t (_ BitVec 32))"
          << "(assert (distinct (bvmul s (bvmul x t)) (bvmul (bvmul s x) t)))"
          << "(check-sat)" << std::endl;
-    BitwuzlaOptions *opts = bitwuzla_options_new();
+    BitwuzlaOptions* opts = bitwuzla_options_new();
     bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "bitblast");
     bitwuzla_set_option(opts, BITWUZLA_OPT_PREPROCESS, 0);
-    BitwuzlaParser *parser =
+    BitwuzlaParser* parser =
         bitwuzla_parser_new(d_tm, opts, "smt2", 2, "<stdout>");
     struct terminator_state state;
     gettimeofday(&state.start, NULL);
@@ -6050,7 +6050,7 @@ TEST_F(TestCApi, terminate_sat)
     bitwuzla_parser_set_termination_callback(parser, test_terminate2, &state);
     std::stringstream unknown;
     unknown << "unknown" << std::endl;
-    const char *error_msg;
+    const char* error_msg;
     testing::internal::CaptureStdout();
     bitwuzla_parser_parse(parser, smt2.str().c_str(), false, false, &error_msg);
     std::string output = testing::internal::GetCapturedStdout();
@@ -6069,12 +6069,12 @@ TEST_F(TestCApi, terminate_sat)
 namespace {
 class TestException : public std::exception
 {
-  TestException(const std::string &msg) : d_msg(msg) {}
+  TestException(const std::string& msg) : d_msg(msg) {}
   std::string d_msg;
 };
 
 void
-test_abort(const char *msg)
+test_abort(const char* msg)
 {
   std::rethrow_if_nested(TestException(std::string(msg)));
 }
@@ -6088,7 +6088,7 @@ TEST_F(TestCApi, abort_callback)
   {
     bitwuzla_kind_to_string(BITWUZLA_KIND_NUM_KINDS);
   }
-  catch (TestException &e)
+  catch (TestException& e)
   {
     ASSERT_NE(e.d_msg.find("invalid term kind"), std::string::npos);
   }
