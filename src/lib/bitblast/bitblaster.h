@@ -58,6 +58,7 @@ class BitblasterInterface
   virtual Bits bv_value(const BitVector& bv_value)
   {
     Bits res;
+    res.reserve(bv_value.size());
     for (size_t i = 0, j = bv_value.size() - 1; i < bv_value.size(); ++i)
     {
       res.push_back(bv_value.bit(j - i) ? d_bit_mgr.mk_true()
@@ -585,6 +586,7 @@ class BitblasterInterface
     // Prepare divisor for subtraction operation: -d == ~d + 1
     // Note: The divisor is reversed here to have lsb at position 0.
     Bits d;
+    d.reserve(b.size());
     for (auto it = b.rbegin(); it != b.rend(); ++it)
     {
       d.push_back(d_bit_mgr.mk_not(*it));
@@ -592,8 +594,10 @@ class BitblasterInterface
 
     size_t size = a.size();
     Bits rem, carry, quot;
+
     rem.reserve(size + 1);
     carry.resize(size + 1);
+    quot.reserve(size);
 
     // Remainder is initially zero.
     for (size_t i = 0; i <= size; ++i)
