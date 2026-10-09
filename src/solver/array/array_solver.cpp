@@ -78,6 +78,7 @@ ArraySolver::check()
   d_updated_indices.clear();
   d_accesses.clear();
   d_const_array_eq_unknown = false;
+  d_in_check               = false;
 
   // Nothing to check
   if (d_equalities.empty() && d_selects.empty())
