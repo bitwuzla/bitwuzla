@@ -184,7 +184,8 @@ BvSolver::register_term(const Node& term)
 void
 BvSolver::register_eq_heuristic(const std::vector<Node>& nodes)
 {
-  if (d_cur_solver == option::BvSolver::BITBLAST)
+  // Register whenever the bit-blaster may be used.
+  if (d_solver_mode != option::BvSolver::PROP)
   {
     d_bitblast_solver.register_eq_heuristic(nodes);
   }
@@ -193,7 +194,7 @@ BvSolver::register_eq_heuristic(const std::vector<Node>& nodes)
 void
 BvSolver::register_distinct_heuristic(const std::vector<Node>& nodes)
 {
-  if (d_cur_solver == option::BvSolver::BITBLAST)
+  if (d_solver_mode != option::BvSolver::PROP)
   {
     d_bitblast_solver.register_distinct_heuristic(nodes);
   }
