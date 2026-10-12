@@ -1583,6 +1583,7 @@ tests_smt2 = [
   ['solver/quant/mbqi_partial_op_quant2.smt2'],
   ['solver/quant/mbqi_spurious_ce_fpmin.smt2'],
   ['solver/quant/mbqi_spurious_ce_incremental.smt2'],
+  ['solver/quant/mbqi_spurious_ce_loop.smt2'],
   ['solver/quant/mbqi_spurious_ce_toubv.smt2'],
   ['solver/quant/murxla-1bf2af511aa131a8.min.smt2'],
   ['solver/quant/murxla-79f138c989a0de5e.min1.smt2'],

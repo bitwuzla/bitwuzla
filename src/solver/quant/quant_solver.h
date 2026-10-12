@@ -137,19 +137,13 @@ class QuantSolver : public Solver
 
   /**
    * Collect the constants, ground terms and ground applications of partial
-   * floating-point operators that occur in given assertion. Ground terms that
-   * contain quantifiers are not collected.
+   * floating-point operators that occur in given assertion.
+   * @note Ground terms that contain quantifiers are not collected as
+   *       instantiation candidates, but ground applications of partial
+   *       operators are, even if they contain quantifiers.
    * @param q The assertion.
    */
   void process(const Node& q);
-
-  /**
-   * Replace all abstractions in the given node with their values in the
-   * current model.
-   * @param node The node.
-   * @return The node with all abstractions replaced by their values.
-   */
-  Node abstractions_to_values(const Node& node);
 
   /**
    * The MBQI check.
@@ -171,6 +165,15 @@ class QuantSolver : public Solver
    *         prefix replaced by their instantiation constants.
    */
   const Node& mbqi_inst(const Node& q);
+  /**
+   * Get the term t for the given partial operator applications with all
+   * abstractions and quantifiers replaced by their current model values.
+   * This is a helper for fixing the value of the given partial operator
+   * application in the MBQI solver by asserting back as t = value(node).
+   * @param node The partial operator application.
+   * @return The application with abstractions and quantifiers replaced.
+   */
+  Node mbqi_partial_op(const Node& node) const;
 
   /**
    * Generate and send an instantiation lemma `q => q[x := t]` for the given

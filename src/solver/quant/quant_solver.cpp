@@ -314,10 +314,13 @@ QuantSolver::process(const Node& q)
           if (!cur.node_info().quantifier)
           {
             d_ground_terms.push_back(cur);
-            if (KindInfo::is_partial(cur.kind()))
-            {
-              d_partial_ops.push_back(cur);
-            }
+          }
+
+          // Collect applications of partial operators, even if they contain
+          // quantifiers, for fixing their values in mbqi_check().
+          if (KindInfo::is_partial(cur.kind()))
+          {
+            d_partial_ops.push_back(cur);
           }
         }
       }
@@ -327,8 +330,15 @@ QuantSolver::process(const Node& q)
 }
 
 Node
-QuantSolver::abstractions_to_values(const Node& node)
+QuantSolver::mbqi_partial_op(const Node& node) const
 {
+  assert(node::KindInfo::is_partial(node.kind()));
+
+  if (!d_opt_abstraction && !node.node_info().quantifier)
+  {
+    return node;
+  }
+
   NodeManager& nm = d_env.nm();
   std::unordered_map<Node, Node> cache;
   node_ref_vector visit{node};
@@ -338,8 +348,7 @@ QuantSolver::abstractions_to_values(const Node& node)
     auto [it, inserted] = cache.try_emplace(cur);
     if (inserted)
     {
-      // Abstractions are replaced as a whole, no need to go below.
-      if (cur.kind() == Kind::AM_ABSTRACT)
+      if (cur.kind() == Kind::AM_ABSTRACT || cur.kind() == Kind::FORALL)
       {
         it->second = d_solver_state.value(cur);
       }
@@ -388,14 +397,15 @@ QuantSolver::mbqi_check(const std::vector<Node>& to_check)
     Node value = d_solver_state.value(c);
     d_mbqi_solver->assert_formula(nm.mk_node(Kind::EQUAL, {c, value}));
   }
-  // Partial operators outside of quantifiers may contain abstractions of the
-  // parent solver, which must not leak into the MBQI solver. We replace them
-  // with their values in the current model.
+  // Partial operators may contain abstractions of the parent solver, which
+  // must not leak into the MBQI solver. They may also contain quantifiers,
+  // whose values must not be fixed in the MBQI solver (else we would assume
+  // their current value when checking them for counterexamples). We replace
+  // them with their values in the current model.
   for (const Node& p : d_partial_ops)
   {
-    Node value = d_solver_state.value(p);
-    Node term  = d_opt_abstraction ? abstractions_to_values(p) : p;
-    d_mbqi_solver->assert_formula(nm.mk_node(Kind::EQUAL, {term, value}));
+    d_mbqi_solver->assert_formula(
+        nm.mk_node(Kind::EQUAL, {mbqi_partial_op(p), d_solver_state.value(p)}));
   }
 
   std::vector<Node> ce_q;
