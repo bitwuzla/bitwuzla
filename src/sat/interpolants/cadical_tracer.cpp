@@ -223,9 +223,7 @@ CadicalTracer::reset_assumptions()
 {
   for (int64_t id : d_assumption_clauses)
   {
-    d_clauses[id].d_clause.clear();
-    d_clauses[id].d_type   = ClauseType::NONE;
-    d_clauses[id].d_aig_id = 0;
+    d_clauses[id] = Clause();
   }
   d_assumptions.clear();
   d_assumption_clauses.clear();

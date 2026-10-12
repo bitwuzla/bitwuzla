@@ -38,7 +38,8 @@ class CadicalTracer : public Tracer
   };
   struct Clause
   {
-    Clause() {}
+    Clause() = default;
+
     Clause(const std::vector<int32_t>& clause,
            ClauseType type,
            int64_t aig_id,
