@@ -630,6 +630,7 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
   // Check current set of assertions for substitution candidates.
   assert(d_candidates.empty());
   std::unordered_map<Node, std::vector<std::pair<Node, Node>>> extract_map;
+  std::vector<std::tuple<Node, Node, Node, size_t>> concats;
   {
     util::Timer timer(d_stats.time_register);
     // Note: Normalized assertions added in this loop are checked, too.
@@ -646,8 +647,15 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
       auto [var, term] = find_substitution(assertion);
       if (!var.is_null())
       {
-        add_candidate(assertions, var, term, assertion, i);
-        continue;
+        if (is_concat_of_vars(term))
+        {
+          concats.emplace_back(var, term, assertion, i);
+          continue;
+        }
+        if (add_candidate(assertions, var, term, assertion, i))
+        {
+          continue;
+        }
       }
       // Try to normalize assertion for term substitution.
       auto normalized = normalize_for_substitution(assertion);
@@ -662,6 +670,59 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
         assertions.push_back(n, assertion);
       }
     }
+  }
+
+  // Splitting `var = (concat x_1 ... x_n)` over variables x_i yields
+  // substitutions of all x_i with slices of var instead of a single
+  // substitution of var, and keeps var for other substitutions. This is only
+  // beneficial if the x_i are not substituted otherwise, and if it does not
+  // require keeping the substitution constraint of some x_i while the
+  // substitution of var does not need to be kept.
+  auto split_keeps = [&](const Node& var, const Node& concat) {
+    if (occurs_in_previous(assertions, var))
+    {
+      return false;
+    }
+    node_ref_vector visit{concat};
+    do
+    {
+      const Node& cur = visit.back();
+      visit.pop_back();
+      if (cur.kind() == Kind::BV_CONCAT)
+      {
+        visit.insert(visit.end(), cur.begin(), cur.end());
+      }
+      else if (occurs_in_previous(assertions, cur))
+      {
+        return true;
+      }
+    } while (!visit.empty());
+    return false;
+  };
+  for (const auto& [var, term, assertion, index] : concats)
+  {
+    // The x_i may have gotten candidates since it was deferred.
+    if (is_concat_of_vars(term) && !split_keeps(var, term))
+    {
+      // Split into x_i = var[u_i:l_i]. Not done above, since normalization is
+      // skipped if a direct substitution was found.
+      auto normalized = normalize_for_substitution(assertion);
+      if (!normalized.empty())
+      {
+        for (const auto& n : normalized)
+        {
+          size_t i = assertions.size();
+          assertions.push_back(n, assertion);
+          auto [v, t] = find_substitution(n);
+          if (!v.is_null())
+          {
+            add_candidate(assertions, v, t, n, i);
+          }
+        }
+        continue;
+      }
+    }
+    add_candidate(assertions, var, term, assertion, index);
   }
 
   if (!extract_map.empty())
@@ -821,7 +882,33 @@ PassVariableSubstitution::can_substitute(const Node& var) const
          && d_exclude_consts.find(var) == d_exclude_consts.end();
 }
 
-void
+bool
+PassVariableSubstitution::is_concat_of_vars(const Node& term) const
+{
+  // Variables that already have a candidate are not considered.
+  if (term.kind() != Kind::BV_CONCAT)
+  {
+    return false;
+  }
+  node_ref_vector visit{term};
+  do
+  {
+    const Node& cur = visit.back();
+    visit.pop_back();
+    if (cur.kind() == Kind::BV_CONCAT)
+    {
+      visit.insert(visit.end(), cur.begin(), cur.end());
+    }
+    else if (!can_substitute(cur)
+             || d_candidates.find(cur) != d_candidates.end())
+    {
+      return false;
+    }
+  } while (!visit.empty());
+  return true;
+}
+
+bool
 PassVariableSubstitution::add_candidate(const AssertionVector& assertions,
                                         Node var,
                                         Node term,
@@ -848,7 +935,7 @@ PassVariableSubstitution::add_candidate(const AssertionVector& assertions,
   }
   else if (!can_substitute(var))
   {
-    return;
+    return false;
   }
 
   auto [it, inserted] = d_candidates.try_emplace(var);
@@ -870,6 +957,7 @@ PassVariableSubstitution::add_candidate(const AssertionVector& assertions,
     c.terms.emplace_back(term, assertion, index);
   }
   Log(2) << "Add substitution candidate: " << var << " -> " << term;
+  return true;
 }
 
 Node

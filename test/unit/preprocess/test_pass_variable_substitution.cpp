@@ -247,6 +247,76 @@ TEST_F(TestPassVariableSubstitution, cycle_fallback)
   ASSERT_EQ(d_as[2], d_nm.mk_value(true));
 }
 
+TEST_F(TestPassVariableSubstitution, concat_split)
+{
+  Type bv4 = d_nm.mk_bv_type(4);
+  Type bv8 = d_nm.mk_bv_type(8);
+  Node x   = d_nm.mk_const(bv8, "x");
+  Node a   = d_nm.mk_const(bv4, "a");
+  Node b   = d_nm.mk_const(bv4, "b");
+
+  // Substituting a and b with slices of x eliminates both of them.
+  d_as.push_back(
+      d_nm.mk_node(Kind::EQUAL, {x, d_nm.mk_node(Kind::BV_CONCAT, {a, b})}));
+
+  preprocess::AssertionVector assertions(d_as.view());
+  d_pass.apply(assertions);
+
+  const auto& substs = d_pass.substitutions();
+  ASSERT_EQ(substs.size(), 2);
+  ASSERT_EQ(substs.at(a), d_nm.mk_node(Kind::BV_EXTRACT, {x}, {7, 4}));
+  ASSERT_EQ(substs.at(b), d_nm.mk_node(Kind::BV_EXTRACT, {x}, {3, 0}));
+}
+
+TEST_F(TestPassVariableSubstitution, concat_no_split)
+{
+  Type bv4    = d_nm.mk_bv_type(4);
+  Type bv8    = d_nm.mk_bv_type(8);
+  Node x      = d_nm.mk_const(bv8, "x");
+  Node a      = d_nm.mk_const(bv4, "a");
+  Node b      = d_nm.mk_const(bv4, "b");
+  Node c      = d_nm.mk_const(bv4, "c");
+  Node d      = d_nm.mk_const(bv4, "d");
+  Node concat = d_nm.mk_node(Kind::BV_CONCAT, {a, b});
+
+  // a is substituted otherwise, substitute x instead of splitting.
+  d_as.push_back(d_nm.mk_node(Kind::EQUAL, {x, concat}));
+  d_as.push_back(
+      d_nm.mk_node(Kind::EQUAL, {a, d_nm.mk_node(Kind::BV_ADD, {c, d})}));
+
+  preprocess::AssertionVector assertions(d_as.view());
+  d_pass.apply(assertions);
+
+  const auto& substs = d_pass.substitutions();
+  ASSERT_EQ(substs.size(), 2);
+  ASSERT_NE(substs.find(x), substs.end());
+  ASSERT_NE(substs.find(a), substs.end());
+  ASSERT_EQ(substs.find(b), substs.end());
+}
+
+TEST_F(TestPassVariableSubstitution, excluded_normalize)
+{
+  Type bv4 = d_nm.mk_bv_type(4);
+  Type bv8 = d_nm.mk_bv_type(8);
+  Node x   = d_nm.mk_const(bv8, "x");
+  Node a   = d_nm.mk_const(bv4, "a");
+  Node b   = d_nm.mk_const(bv4, "b");
+  Node c   = d_nm.mk_const(bv4, "c");
+  Node concat =
+      d_nm.mk_node(Kind::BV_CONCAT, {a, d_nm.mk_node(Kind::BV_ADD, {b, c})});
+
+  // x can not be substituted, normalize to substitute a instead.
+  d_pass.exclude({x});
+  d_as.push_back(d_nm.mk_node(Kind::EQUAL, {x, concat}));
+
+  preprocess::AssertionVector assertions(d_as.view());
+  d_pass.apply(assertions);
+
+  const auto& substs = d_pass.substitutions();
+  ASSERT_EQ(substs.find(x), substs.end());
+  ASSERT_EQ(substs.at(a), d_nm.mk_node(Kind::BV_EXTRACT, {x}, {7, 4}));
+}
+
 TEST_F(TestPassVariableSubstitution, inc_swap)
 {
   SolvingContext ctx(d_nm, d_options, d_sat_factory);
@@ -307,6 +377,35 @@ TEST_F(TestPassVariableSubstitution, inc_previous)
   ctx.pop();
   ASSERT_EQ(pp.process(x), y_and_z);
   ASSERT_EQ(pp.process(w), w);
+}
+
+TEST_F(TestPassVariableSubstitution, inc_concat_no_split)
+{
+  option::Options opts;
+  opts.pp_embedded_constr.set(false);
+  SolvingContext ctx(d_nm, opts, d_sat_factory);
+  Preprocessor& pp = ctx.preprocessor();
+
+  Type bv4    = d_nm.mk_bv_type(4);
+  Type bv8    = d_nm.mk_bv_type(8);
+  Node x      = d_nm.mk_const(bv8, "x");
+  Node a      = d_nm.mk_const(bv4, "a");
+  Node b      = d_nm.mk_const(bv4, "b");
+  Node concat = d_nm.mk_node(Kind::BV_CONCAT, {a, b});
+
+  ctx.assert_formula(d_nm.mk_node(Kind::DISTINCT, {a, b}));
+  ctx.preprocess();
+  ctx.push();
+  // a and b occur in the assertions of the previous call, splitting would keep
+  // both substitution constraints, substitute x instead.
+  ctx.assert_formula(d_nm.mk_node(Kind::EQUAL, {x, concat}));
+  ctx.preprocess();
+  auto as = ctx.assertions();
+
+  ASSERT_EQ(as.size(), 2);
+  ASSERT_EQ(as[1], d_nm.mk_value(true));
+  ASSERT_EQ(pp.substitutions().size(), 1);
+  ASSERT_EQ(pp.substitutions().at(x), concat);
 }
 
 /* --- Incremental tests ---------------------------------------------------- */
