@@ -62,8 +62,9 @@ class PassVariableSubstitution : public PreprocessingPass
    * Register `var = term` derived from the assertion at index `index` as
    * substitution candidate. Swaps `var` and `term` if `term` is a variable
    * that is the better candidate.
+   * @return False if neither side can be substituted.
    */
-  void add_candidate(const AssertionVector& assertions,
+  bool add_candidate(const AssertionVector& assertions,
                      Node var,
                      Node term,
                      const Node& assertion,
@@ -71,6 +72,12 @@ class PassVariableSubstitution : public PreprocessingPass
 
   /** @return Whether `var` can be substituted at all. */
   bool can_substitute(const Node& var) const;
+
+  /**
+   * @return Whether `term` is a concatenation of variables that can be
+   *         substituted and do not have a substitution candidate yet.
+   */
+  bool is_concat_of_vars(const Node& term) const;
 
   /**
    * Substitute the current substitutions and candidates in `term`.
