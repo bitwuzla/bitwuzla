@@ -4,10 +4,12 @@ This file collects a summary of important and/or user-visible changes.
 
 - Improved MBQI engine by incorporating **invertibility condition-based
   instantiations** for quantified bit-vector variables. This instantiation
-  strategy is based on a CEGQI-based technique presented in
+  strategy is based on a CEGQI-based technique presented in  
   [Aina Niemetz, Mathias Preiner, Andrew Reynolds, Clark Barrett, Cesare
    Tinelli. Solving Quantified Bit-Vectors Using Invertibility Conditions.
    CAV 2018, Springer, 2018](http://dx.doi.org/10.1007/978-3-319-96142-2_16).
+  Enabled by default, can be disabled via option `--quant-ic`. This also
+  addresses performance issue #209.
 
 - Added a **preprocessing pass for quantified formulas**, enabled by default
   via option `--pp-quant`. The pass eliminates quantified variables by means of
@@ -17,6 +19,37 @@ This file collects a summary of important and/or user-visible changes.
   bound variables, which can be disabled separately via option
   `--pp-quant-alpha`.
 
+- Added full support for **equality over constant arrays**, based on the
+  technique presented in  
+  [Mathias Preiner, Aina Niemetz, Clark Barrett. Satisfiability Modulo
+   Extensional Constant Arrays. CAV 2026, Springer, 2026](
+   http://dx.doi.org/10.1007/978-3-032-32526-6_2).
+  This also greatly improves performance on quantified array logics.
+  Note that previously, equalities over constant arrays (except for some
+  special cases) were rejected as unsupported.
+  - New option `--adc-sat-propagator` (disabled by default) enables an
+    all-different-with-collisions SAT propagator for the cardinality
+    constraints generated for constant array equalities (CaDiCaL only).
+
+- Added C++ API exception class **`bitwuzla::Unsupported`** (derived from
+  `bitwuzla::Exception`), which is thrown on unsupported cases that cannot be
+  detected upfront, e.g., configuring a terminator while using a SAT solver
+  without terminator support. Previously, a generic `bitwuzla::Exception` was
+  thrown in these cases.
+
+- Enabling **unsat cores** or **unsat assumptions** while using **Kissat** or
+  **Gimsatul** as SAT solver is now rejected with an exception when creating
+  the solver instance.
+
+- **Function sorts** are now rejected as **index** and **element sorts** of
+  array sorts.
+
+- The configured **terminator** and resource limits (`--time-limit-per`,
+  `--memory-limit`) are now also honored by the MBQI sub-solver when solving
+  quantified formulas.
+
+- Fixed segfault when terms or sorts outlive their term manager (#184).
+
 - Removed **obsolete option** `--pp-contr-ands`. This preprocessing pass was
   disabled by default and does not have an observable positive impact.
 
@@ -24,10 +57,13 @@ This file collects a summary of important and/or user-visible changes.
   denominator, e.g., `((_ to_fp 5 11) RNE (/ 1 0))`. A zero denominator is now
   rejected with an error.
 
-- Improved **push/pop** support in the SAT backends. Now uses activation
-  variables to remove clauses on pop().
+- Improved **push/pop** support in the SAT backends (CaDiCaL, CryptoMiniSat).
+  Now uses activation variables to remove clauses on pop().
 
 - Bumped **CaDiCaL** to version 3.0.1, CaDiCaL >= 3.0 is now required.
+  The bundled CaDiCaL subproject is patched for use with SAT propagators and
+  decision heuristics. With a system-wide CaDiCaL, these features are disabled
+  (with a warning at configure time).
 
 - Bumped **mimalloc** to version 2.5.2. This fixes an issue in mimalloc that
   prevented freed memory from being returned to the OS, which increased peak
@@ -38,6 +74,37 @@ This file collects a summary of important and/or user-visible changes.
   This requires the bundled Kissat subproject, which is patched to call the
   terminate callback. A system-wide Kissat is unpatched, terminator support
   remains disabled in that case.
+
+- Reduced **CNF size** by encoding chains of AND gates as n-ary ANDs, and
+  reduced the **memory footprint** of AIGs.
+
+- **Build system**:
+  - New configure option `--extra-libdir` (meson option `extra_libdirs`) for
+    specifying custom install locations of CaDiCaL and Kissat, which do not
+    provide a pkg-config file (#226).
+  - GMP and MPFR may now be installed in different prefixes.
+  - SymFPU >= 1.2.0 is now required (#228).
+  - Compiler warnings from external dependencies are now suppressed (#230).
+
+- Fixed use-after-free in the function solver (#216) and non-terminating
+  normalization preprocessing (#219).
+
+- **SMT2 parser**: Fixed parsing of indexed bit-vector values, reject
+  `(_ repeat 0)`, and fixed stack overflow on deeply nested array sorts.
+
+- **BTOR2 parser**: Fixed handling of NUL bytes and of invalid constant values.
+
+- **Printer**: Fixed SMT2 logic detection, padding of hexadecimal values and
+  handling of shadowed let bindings, and BTOR2 printing of Boolean values.
+
+- **Command line**: Fixed crash on out-of-range values for numeric options,
+  and unreliable time limit (`-t`).
+
+- **C API**: An abort callback configured via `bitwuzla_set_abort_callback()`
+  is now also called on errors raised by the parser API.
+
+- Various fixes in the rewriter, the array, function and floating-point solvers,
+  the local search engine and interpolation.
 
 ## News for version 0.9.1
 
@@ -61,9 +128,9 @@ This file collects a summary of important and/or user-visible changes.
 
 - Add support for **interpolation**.  
   Bitwuzla now supports queries for a single interpolant and
-  (inductive) interpolation sequences, see
-  `Aina Niemetz and Mathias Preiner. Bit-Precise Interpolation in Bitwuzla.
-  TACAS 2026, Springer, 2026`.
+  (inductive) interpolation sequences, see  
+  [Aina Niemetz and Mathias Preiner. Bit-Precise Interpolation in Bitwuzla.
+  TACAS 2026, Springer, 2026](http://dx.doi.org/10.1007/978-3-032-22752-2_4).
   - **Full** interpolation support for **QF_BV**.
   - **Experimental** interpolation support for **floating-point arithmetic**.
     Produced interpolants may be Bitwuzla-specific if floating-point arithmetic
