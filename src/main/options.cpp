@@ -190,6 +190,8 @@ print_help()
                     format_longb("bv-output-format"),
                     format_dflt(std::to_string(dflt_opts.bv_format)),
                     "output number format for bit-vector values {2, 10, 16}");
+  opts.emplace_back(
+      "", format_longb("stats"), "", "print statistics");
   opts.emplace_back(format_shortn("t"),
                     format_longn("time-limit"),
                     format_dflt(std::to_string(dflt_opts.time_limit)),
