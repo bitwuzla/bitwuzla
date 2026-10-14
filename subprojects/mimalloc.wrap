@@ -1,9 +1,9 @@
 [wrap-file]
-directory = mimalloc-2.2.4
+directory = mimalloc-2.5.2
 
-source_url = https://github.com/microsoft/mimalloc/archive/refs/tags/v2.2.4.tar.gz
-source_filename = mimalloc-2.2.4.tar.gz
-source_hash = 754a98de5e2912fddbeaf24830f982b4540992f1bab4a0a8796ee118e0752bda
+source_url = https://github.com/microsoft/mimalloc/archive/refs/tags/v2.5.2.tar.gz
+source_filename = mimalloc-2.5.2.tar.gz
+source_hash = 5cf9d2a10fae5551b764e888a623da411c6c6beb0221b847f83492ab1932bdab
 
 patch_directory = mimalloc
 

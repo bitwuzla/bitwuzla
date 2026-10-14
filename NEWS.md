@@ -29,6 +29,10 @@ This file collects a summary of important and/or user-visible changes.
 
 - Bumped **CaDiCaL** to version 3.0.1, CaDiCaL >= 3.0 is now required.
 
+- Bumped **mimalloc** to version 2.5.2. This fixes an issue in mimalloc that
+  prevented freed memory from being returned to the OS, which increased peak
+  memory usage.
+
 - Added **terminator support** for SAT solver **Kissat**. Configuring a
   terminator while using Kissat as SAT solver no longer raises an error.
   This requires the bundled Kissat subproject, which is patched to call the

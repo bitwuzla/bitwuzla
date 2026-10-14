@@ -1,6 +1,6 @@
 project('mimalloc-static',
   'c', 'cpp',
-  version: '2.2.4',
+  version: '2.5.2',
   license: 'mit',
   default_options: [
     'c_std=c11',
