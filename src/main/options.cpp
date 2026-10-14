@@ -168,16 +168,20 @@ print_help()
                     format_longb("print-formula"),
                     "",
                     "print formula in smt2 format");
-  opts.emplace_back("",
-                    format_longb("print-unsat-core"),
-                    "",
-                    "print unsat core in smt2 format");
   opts.emplace_back(
-      "", format_longb("print-model"), "", "print model in smt2 format");
+      "",
+      format_longb("print-unsat-core"),
+      format_dflt(std::to_string(dflt_opts.print_unsat_core), true),
+      "print unsat core in smt2 format");
   opts.emplace_back("",
-                    format_longb("print-no-letify"),
-                    "",
-                    "do not letify expressions when printing");
+                    format_longb("print-model"),
+                    format_dflt(std::to_string(dflt_opts.print_model), true),
+                    "print model in smt2 format");
+  opts.emplace_back(
+      "",
+      format_longb("print-no-letify"),
+      format_dflt(std::to_string(dflt_opts.print_no_letify), true),
+      "do not letify expressions when printing");
   opts.emplace_back(format_shortb("P"),
                     format_longb("parse-only"),
                     format_dflt(std::to_string(dflt_opts.parse_only), true),
@@ -190,8 +194,10 @@ print_help()
                     format_longb("bv-output-format"),
                     format_dflt(std::to_string(dflt_opts.bv_format)),
                     "output number format for bit-vector values {2, 10, 16}");
-  opts.emplace_back(
-      "", format_longb("stats"), "", "print statistics");
+  opts.emplace_back("",
+                    format_longb("stats"),
+                    format_dflt(std::to_string(dflt_opts.print_model), true),
+                    "print statistics");
   opts.emplace_back(format_shortn("t"),
                     format_longn("time-limit"),
                     format_dflt(std::to_string(dflt_opts.time_limit)),
