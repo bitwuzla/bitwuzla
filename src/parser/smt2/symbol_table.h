@@ -11,8 +11,9 @@
 #ifndef BZLA_PARSER_SMT2_SYMBOL_TABLE_H_INCLUDED
 #define BZLA_PARSER_SMT2_SYMBOL_TABLE_H_INCLUDED
 
-#include <array>
+#include <memory>
 #include <string_view>
+#include <vector>
 
 #include "bitwuzla/cpp/bitwuzla.h"
 #include "parser/smt2/lexer.h"
@@ -32,7 +33,7 @@ class SymbolTable
      * @param symbol The string representation of the symbol.
      * @param assertion_level The assertion level (push/pop) of the symbol.
      */
-    Node(Token token, const std::string& symbol, uint64_t assertion_level);
+    Node(Token token, std::string_view symbol, uint64_t assertion_level);
     /** @return True if the symbol is non-empty() (for dbg purposes). */
     bool has_symbol() const;
     /** The token of the symbol. Serves as a kind. */
@@ -94,7 +95,7 @@ class SymbolTable
    * @param assertion_level The assertion level of the symbol.
    */
   Node* insert(Token token,
-               const std::string& symbol,
+               std::string_view symbol,
                bool is_pending          = false,
                uint64_t assertion_level = 0);
   /**
@@ -146,27 +147,61 @@ class SymbolTable
   void clear_pending_symbols();
 
  private:
-  /** Primes for hashing of symbol strings. */
-  inline static std::array<uint32_t, 4> s_primes = {
-      1000000007u, 2000000011u, 3000000019u, 4000000007u};
   /**
-   * The hash function for symbol strings.
-   * Considers piped symbols and their non-piped variants as equal.
+   * An entry of the symbol table. Maps the symbol to a symbol node (chain).
+   * Shadowed symbols are represented as a node chain, where the first node is
+   * the currently declared symbol, and a shadowed symbol is linked via
+   * Node::d_next. The symbol string of an entry is the symbol string of its
+   * first node.
    */
-  struct SymbolHash
+  struct Entry
   {
-    using is_transparent = void;
-    std::size_t operator()(std::string_view s) const;
+    /** The hash value of the symbol. */
+    size_t d_hash = 0;
+    /** The symbol node chain, nullptr if entry is empty. */
+    std::unique_ptr<Node> d_node;
   };
+
   /**
-   * The comparator for symbol strings.
-   * Considers piped symbols and their non-piped variants as equal.
+   * @return The given symbol without enclosing pipes if it is a quoted symbol.
+   *         Piped symbols are considered equal to their non-piped version,
+   *         i.e., "|a|" and "a" refer to the same symbol.
    */
-  struct SymbolEqual
+  static std::string_view strip_pipes(std::string_view symbol)
   {
-    using is_transparent = void;
-    bool operator()(std::string_view lhs, std::string_view rhs) const;
-  };
+    if (symbol.size() > 1 && symbol.front() == '|' && symbol.back() == '|')
+    {
+      return symbol.substr(1, symbol.size() - 2);
+    }
+    return symbol;
+  }
+
+  /** @return The hash value of the given (pipe-stripped) symbol. */
+  static size_t hash(std::string_view symbol);
+  /**
+   * @return True if the given symbols are equal. Equivalent to a == b, but
+   *         avoids calling memcmp() for short symbols, which are the
+   *         common case.
+   */
+  static bool equal(std::string_view a, std::string_view b);
+
+  /**
+   * Find the entry for the given symbol.
+   * @param symbol The pipe-stripped symbol.
+   * @param hash   The hash value of the symbol.
+   * @return The index of the entry for the symbol if it exists, else the
+   *         index of the empty entry where the symbol would be inserted.
+   */
+  size_t find_entry(std::string_view symbol, size_t hash) const;
+
+  /** Remove the entry at the given index. */
+  void erase_entry(size_t idx);
+
+  /**
+   * Resize the table to the given number of entries.
+   * @param size The new number of entries, must be a power of two.
+   */
+  void resize(size_t size);
 
   /** Initialize symbol table (insert reserved symbols). */
   void init();
@@ -183,14 +218,12 @@ class SymbolTable
   void init_core_symbols();
 
   /**
-   * The symbol table. Maps the string representation of the symbol to a
-   * symbol node (chain). Shadowed symbols are represented as a node chain,
-   * where the first node is the currently declared symbol, and a shadowed
-   * symbol is linked via Node::d_next.
+   * The symbol table, an open addressing hash table with linear probing.
+   * The number of entries is always a power of two.
    */
-  std::
-      unordered_map<std::string, std::unique_ptr<Node>, SymbolHash, SymbolEqual>
-          d_table;
+  std::vector<Entry> d_entries;
+  /** The number of non-empty entries in d_entries. */
+  size_t d_num_entries = 0;
   /**
    * Pending symbols cache.
    * This is mainly needed for var bindings of PARLETBIND since they are not

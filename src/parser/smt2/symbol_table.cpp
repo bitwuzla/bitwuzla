@@ -11,12 +11,13 @@
 #include "parser/smt2/symbol_table.h"
 
 #include <cassert>
+#include <cstring>
 
 namespace bzla {
 namespace parser::smt2 {
 
 SymbolTable::Node::Node(Token token,
-                        const std::string& symbol,
+                        std::string_view symbol,
                         uint64_t assertion_level)
     : d_token(token),
       d_symbol(symbol),
@@ -32,7 +33,8 @@ SymbolTable::~SymbolTable() {}
 void
 SymbolTable::reset()
 {
-  d_table.clear();
+  d_entries.clear();
+  d_num_entries = 0;
   init();
 }
 
@@ -44,7 +46,7 @@ SymbolTable::Node::has_symbol() const
 
 SymbolTable::Node*
 SymbolTable::insert(Token token,
-                    const std::string& symbol,
+                    std::string_view symbol,
                     bool is_pending,
                     uint64_t assertion_level)
 {
@@ -63,16 +65,24 @@ SymbolTable::insert(Token token,
 void
 SymbolTable::insert(Node* node)
 {
-  auto [it, inserted] = d_table.emplace(node->d_symbol, nullptr);
-  if (!inserted)
+  // keep the load factor <= 1/2
+  if (2 * (d_num_entries + 1) > d_entries.size())
   {
-    node->d_next = std::move(it->second);
-    it->second.reset(node);
+    resize(2 * d_entries.size());
+  }
+  std::string_view symbol = strip_pipes(node->d_symbol);
+  size_t h                = hash(symbol);
+  Entry& entry            = d_entries[find_entry(symbol, h)];
+  if (entry.d_node)
+  {
+    node->d_next = std::move(entry.d_node);
   }
   else
   {
-    it->second.reset(node);
+    entry.d_hash = h;
+    d_num_entries += 1;
   }
+  entry.d_node.reset(node);
 }
 
 void
@@ -94,95 +104,206 @@ SymbolTable::remove(Node* node)
 void
 SymbolTable::remove(const std::string& symbol)
 {
-  auto it = d_table.find(symbol);
-  assert(it != d_table.end());
-  assert(it->second->d_symbol == symbol);
-  it->second = std::move(it->second->d_next);
-  if (!it->second)
+  std::string_view s = strip_pipes(symbol);
+  size_t idx         = find_entry(s, hash(s));
+  Entry& entry       = d_entries[idx];
+  assert(entry.d_node);
+  assert(entry.d_node->d_symbol == symbol);
+  // Note: symbol may be a reference to the symbol of the removed node.
+  entry.d_node = std::move(entry.d_node->d_next);
+  if (!entry.d_node)
   {
-    d_table.erase(it);
+    erase_entry(idx);
   }
 }
 
 void
 SymbolTable::pop_level(uint64_t assertion_level)
 {
-  std::vector<std::string> erase;
-  for (auto& p : d_table)
+  for (size_t i = 0, n = d_entries.size(); i < n; ++i)
   {
-    assert(p.second);
-    while (p.second && p.second->d_assertion_level >= assertion_level)
+    Entry& entry = d_entries[i];
+    if (!entry.d_node)
     {
-      p.second = std::move(p.second->d_next);
+      continue;
     }
-    if (!p.second)
+    while (entry.d_node && entry.d_node->d_assertion_level >= assertion_level)
     {
-      erase.push_back(p.first);
+      entry.d_node = std::move(entry.d_node->d_next);
     }
-  }
-  for (auto& s : erase)
-  {
-    d_table.erase(s);
+    if (!entry.d_node)
+    {
+      // Erasing may move a subsequent entry into this slot, which then
+      // still needs to be processed. Entries are only moved into slots that
+      // either are revisited or have not been visited yet, or entries that
+      // were already processed.
+      erase_entry(i);
+      i -= 1;
+    }
   }
 }
 
 SymbolTable::Node*
 SymbolTable::find(std::string_view symbol) const
 {
-  auto it = d_table.find(symbol);
-  if (it == d_table.end())
-  {
-    return nullptr;
-  }
-  assert(it->second);
-  return it->second.get();
+  symbol = strip_pipes(symbol);
+  return d_entries[find_entry(symbol, hash(symbol))].d_node.get();
 }
 
 /* SymbolTable private ------------------------------------------------------ */
 
-std::size_t
-SymbolTable::SymbolHash::operator()(std::string_view s) const
+size_t
+SymbolTable::hash(std::string_view symbol)
 {
-  size_t res  = 0;
-  size_t pos  = 0;
-  size_t size = s.size();
-  assert(size > 0);
-
-  // ignore pipes in quoted symbols, '|x|' and 'x' have the same hash value
-  if (s[0] == '|' && s[size - 1] == '|')
+  // Process 8 bytes at a time and finalize with the 64-bit finalizer of
+  // MurmurHash3 to distribute the hash value over the lower bits used for
+  // indexing the table.
+  const char* p = symbol.data();
+  size_t n      = symbol.size();
+  uint64_t h    = 0x9e3779b97f4a7c15ull ^ (n * 0xff51afd7ed558ccdull);
+  for (; n >= 8; p += 8, n -= 8)
   {
-    pos = 1;
-    size -= 1;
+    uint64_t w;
+    std::memcpy(&w, p, 8);
+    h = (h ^ w) * 0xbf58476d1ce4e5b9ull;
+    h ^= h >> 31;
   }
-
-  for (size_t i = 0; pos < size; ++pos, i = (i + 1) % s_primes.size())
+  if (n > 0)
   {
-    res += s[pos];
-    res *= s_primes[i];
+    uint64_t w;
+    if (n >= 4)
+    {
+      uint32_t lo, hi;
+      std::memcpy(&lo, p, 4);
+      std::memcpy(&hi, p + n - 4, 4);
+      w = (static_cast<uint64_t>(hi) << 32) | lo;
+    }
+    else
+    {
+      w = (static_cast<uint64_t>(static_cast<uint8_t>(p[0])) << 16)
+          | (static_cast<uint64_t>(static_cast<uint8_t>(p[n >> 1])) << 8)
+          | static_cast<uint8_t>(p[n - 1]);
+    }
+    h = (h ^ w) * 0xbf58476d1ce4e5b9ull;
   }
-  return res;
+  h ^= h >> 33;
+  h *= 0xff51afd7ed558ccdull;
+  h ^= h >> 33;
+  h *= 0xc4ceb9fe1a85ec53ull;
+  h ^= h >> 33;
+  return h;
 }
 
 bool
-SymbolTable::SymbolEqual::operator()(std::string_view lhs,
-                                     std::string_view rhs) const
+SymbolTable::equal(std::string_view a, std::string_view b)
 {
-  size_t lhs_max = lhs.size() - 1;
-  if (lhs[0] == '|' && lhs[lhs_max] == '|' && rhs[0] != '|')
+  size_t n = a.size();
+  if (n != b.size())
   {
-    return lhs.compare(1, lhs_max - 1, rhs) == 0;
+    return false;
   }
-  size_t rhs_max = rhs.size() - 1;
-  if (rhs[0] == '|' && rhs[rhs_max] == '|' && lhs[0] != '|')
+  const char* pa = a.data();
+  const char* pb = b.data();
+  if (n >= 8 && n <= 16)
   {
-    return rhs.compare(1, rhs_max - 1, lhs) == 0;
+    // compare the first and last 8 bytes, which overlap if n < 16
+    uint64_t a0, a1, b0, b1;
+    std::memcpy(&a0, pa, 8);
+    std::memcpy(&b0, pb, 8);
+    std::memcpy(&a1, pa + n - 8, 8);
+    std::memcpy(&b1, pb + n - 8, 8);
+    return ((a0 ^ b0) | (a1 ^ b1)) == 0;
   }
-  return lhs == rhs;
+  if (n >= 4 && n < 8)
+  {
+    uint32_t a0, a1, b0, b1;
+    std::memcpy(&a0, pa, 4);
+    std::memcpy(&b0, pb, 4);
+    std::memcpy(&a1, pa + n - 4, 4);
+    std::memcpy(&b1, pb + n - 4, 4);
+    return ((a0 ^ b0) | (a1 ^ b1)) == 0;
+  }
+  if (n < 4)
+  {
+    for (size_t i = 0; i < n; ++i)
+    {
+      if (pa[i] != pb[i])
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+  return std::memcmp(pa, pb, n) == 0;
+}
+
+size_t
+SymbolTable::find_entry(std::string_view symbol, size_t hash) const
+{
+  assert(d_num_entries < d_entries.size());
+  size_t mask = d_entries.size() - 1;
+  for (size_t i = hash & mask;; i = (i + 1) & mask)
+  {
+    const Entry& entry = d_entries[i];
+    if (!entry.d_node
+        || (entry.d_hash == hash
+            && equal(strip_pipes(entry.d_node->d_symbol), symbol)))
+    {
+      return i;
+    }
+  }
+}
+
+void
+SymbolTable::erase_entry(size_t idx)
+{
+  assert(!d_entries[idx].d_node);
+  assert(d_num_entries > 0);
+  d_num_entries -= 1;
+  // Backward shift deletion: move subsequent entries of the probe sequence
+  // into the free slot if the free slot is between their home slot and their
+  // current slot.
+  size_t mask = d_entries.size() - 1;
+  for (size_t i = (idx + 1) & mask; d_entries[i].d_node; i = (i + 1) & mask)
+  {
+    size_t home = d_entries[i].d_hash & mask;
+    if (((i - home) & mask) >= ((i - idx) & mask))
+    {
+      d_entries[idx] = std::move(d_entries[i]);
+      idx            = i;
+    }
+  }
+}
+
+void
+SymbolTable::resize(size_t size)
+{
+  assert((size & (size - 1)) == 0);
+  assert(size > d_num_entries);
+  std::vector<Entry> entries(size);
+  std::swap(entries, d_entries);
+  size_t mask = size - 1;
+  for (Entry& entry : entries)
+  {
+    if (entry.d_node)
+    {
+      size_t i = entry.d_hash & mask;
+      while (d_entries[i].d_node)
+      {
+        i = (i + 1) & mask;
+      }
+      d_entries[i] = std::move(entry);
+    }
+  }
 }
 
 void
 SymbolTable::init()
 {
+  if (d_entries.empty())
+  {
+    d_entries.resize(1024);
+  }
   init_reserved_words();
   init_commands();
   init_keywords();
@@ -432,11 +553,14 @@ void
 SymbolTable::print() const
 {
   std::cout << "SymbolTable: " << std::endl;
-  for (auto& p : d_table)
+  for (const Entry& entry : d_entries)
   {
-    assert(!p.first.empty());
-    std::cout << "'" << p.first << "': ";
-    for (Node* n = p.second.get(); n; n = n->d_next.get())
+    if (!entry.d_node)
+    {
+      continue;
+    }
+    std::cout << "'" << entry.d_node->d_symbol << "': ";
+    for (Node* n = entry.d_node.get(); n; n = n->d_next.get())
     {
       std::cout << " (" << n->d_symbol << ", " << n->d_assertion_level << ")";
     }
@@ -447,15 +571,15 @@ void
 SymbolTable::print(const std::string& symbol) const
 {
   std::cout << "SymbolTable: ";
-  auto it = d_table.find(symbol);
-  if (it == d_table.end())
+  Node* node = find(symbol);
+  if (!node)
   {
     std::cout << "no entry for '" << symbol << "'" << std::endl;
   }
   else
   {
     std::cout << "'" << symbol << "': ";
-    for (Node* n = it->second.get(); n; n = n->d_next.get())
+    for (Node* n = node; n; n = n->d_next.get())
     {
       std::cout << " (" << n->d_symbol << ", " << n->d_assertion_level << ")";
     }
