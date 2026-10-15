@@ -218,6 +218,10 @@ BvBitblastSolver::solve()
   {
     const auto& bits = d_bitblaster.bits(assumption);
     assert(bits.size() == 1);
+    if (bits[0].is_true())
+    {
+      continue;
+    }
     d_sat_solver->assume(d_cnf_encoder->cnf_lit(bits[0]));
   }
 
@@ -328,6 +332,10 @@ BvBitblastSolver::unsat_core(std::vector<Node>& core) const
   {
     const auto& bits = d_bitblaster.bits(assumption);
     assert(bits.size() == 1);
+    if (bits[0].is_true())
+    {
+      continue;
+    }
     if (d_sat_solver->failed(d_cnf_encoder->cnf_lit(bits[0])))
     {
       core.push_back(assumption);
