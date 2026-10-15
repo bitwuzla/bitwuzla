@@ -1,0 +1,1 @@
+regress/parser/smt2perr250.smt2:2:36: symbol 'x' already bound in current let scope

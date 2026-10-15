@@ -1,0 +1,5 @@
+(set-info :status sat)
+(declare-const a (_ BitVec 1))
+(declare-const x (_ BitVec 1))
+(assert (let ((x (bvnot a)) (z (let ((y a)) x))) (distinct x z)))
+(check-sat)

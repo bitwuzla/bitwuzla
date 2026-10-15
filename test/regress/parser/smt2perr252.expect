@@ -1,0 +1,1 @@
+regress/parser/smt2perr252.smt2:2:246: symbol 'v3' already bound in current let scope

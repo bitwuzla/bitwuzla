@@ -372,6 +372,14 @@ class Parser : public bzla::parser::Parser
    */
   bool parse_open_term(Token token);
   /**
+   * Helper for parse_open_term, check that the given (most recently) bound
+   * variable of the currently open let binder is distinct from its
+   * previously bound variables.
+   * @param symbol The bound variable.
+   * @return False if the variable was already bound in the current let scope.
+   */
+  bool check_var_binding(SymbolTable::Node* symbol);
+  /**
    * Helper for parse_open_term, parse currently open (as ...) term.
    * @return False on error.
    */
@@ -880,7 +888,31 @@ class Parser : public bzla::parser::Parser
   bool d_is_sorted_var  = false;
   /** True if currently open term is a variable binding. */
   bool d_is_var_binding = false;
-  std::unordered_set<std::string> d_var_bindings;
+
+  /** The scope of the variable bindings of a currently open let binder. */
+  struct LetScope
+  {
+    /**
+     * The index of the first pending symbol (see SymbolTable::insert()) bound
+     * by this let binder. The pending symbols from this index on are the
+     * symbols bound by this let binder.
+     */
+    size_t d_pending_start = 0;
+    /**
+     * The symbols bound by this let binder, used to check that the bound
+     * symbols are distinct. Only populated for let binders with many
+     * variable bindings.
+     */
+    std::unordered_set<std::string_view> d_bindings;
+  };
+  /**
+   * The scopes of the variable bindings of currently open let binders, the
+   * first d_num_let_scopes entries are in use. Let binders may be nested
+   * within variable bindings of other let binders.
+   */
+  std::vector<LetScope> d_let_scopes;
+  /** The number of currently open let binder scopes. */
+  size_t d_num_let_scopes = 0;
 
   /** True if next token must be RPAR. Only relevant for binders. */
   bool d_expect_rpar = false;
