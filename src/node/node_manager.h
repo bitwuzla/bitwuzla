@@ -271,8 +271,13 @@ class NodeManager
   /** Indicates whether node manager is in garbage collection mode. */
   bool d_in_gc_mode = false;
 
-  /** Stores allocated node data objects for constants and variables. */
+#ifndef NDEBUG
+  /**
+   * Stores allocated node data objects for constants and variables, only
+   * used for checking that all of them are deallocated on destruction.
+   */
   std::unordered_set<node::NodeData*> d_alloc_nodes;
+#endif
 
   /** Lookup data structure for hash consing of node data. */
   node::NodeUniqueTable d_unique_table;

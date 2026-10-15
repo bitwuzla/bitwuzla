@@ -62,7 +62,9 @@ NodeManager::mk_const(const Type& t, const std::optional<std::string>& symbol)
   NodeData* data = NodeData::alloc(Kind::CONSTANT, symbol);
   data->d_type   = t;
   init_id(data);
+#ifndef NDEBUG
   d_alloc_nodes.emplace(data);
+#endif
   return Node(data);
 }
 
@@ -88,7 +90,9 @@ NodeManager::mk_var(const Type& t, const std::optional<std::string>& symbol)
   NodeData* data = NodeData::alloc(Kind::VARIABLE, symbol);
   data->d_type   = t;
   init_id(data);
+#ifndef NDEBUG
   d_alloc_nodes.emplace(data);
+#endif
   return Node(data);
 }
 
@@ -949,10 +953,12 @@ NodeManager::garbage_collect(NodeData* data)
         }
       }
     }
+#ifndef NDEBUG
     else if (kind == Kind::CONSTANT || kind == Kind::VARIABLE)
     {
       d_alloc_nodes.erase(cur);
     }
+#endif
     NodeData::dealloc(cur);
     --d_stats.d_num_node_data;
     ++d_stats.d_num_node_data_dealloc;

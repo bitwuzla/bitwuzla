@@ -126,7 +126,9 @@ class NodeUniqueTable
   {
     for (size_t i = 0; i < size; ++i)
     {
-      hash += s_primes[i % s_primes.size()] * children[i].id();
+      // access node data directly, Node::id() is not inlined
+      assert(children[i].d_data);
+      hash += s_primes[i % s_primes.size()] * children[i].d_data->get_id();
     }
     return hash;
   }
