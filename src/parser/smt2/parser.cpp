@@ -10,7 +10,10 @@
 
 #include "parser/smt2/parser.h"
 
+#include <sys/stat.h>
+
 #include <algorithm>
+#include <cstdio>
 #include <iostream>
 
 #include "solver/fp/floating_point.h"
@@ -138,7 +141,12 @@ Parser::parse(const std::string& input, bool parse_only, bool parse_file)
   {
     if (input == "<stdin>")
     {
-      d_lexer->configure_buffer(1);
+      // Interactive input must be read character by character, since reading
+      // ahead could block on input that is not yet available. If stdin is
+      // redirected from a regular file, reading ahead never blocks.
+      struct stat st;
+      bool is_file = fstat(fileno(stdin), &st) == 0 && S_ISREG(st.st_mode);
+      d_lexer->configure_buffer(is_file ? Lexer::s_default_buf_size : 1);
     }
     else
     {
@@ -300,6 +308,10 @@ Parser::get_declared_funs() const
 bool
 Parser::parse_command(bool parse_only)
 {
+  // Make sure that all responses to previous commands have been written
+  // before we potentially block on reading interactive input.
+  d_lexer->flush_tied_output();
+
   Token token = next_token();
 
   if (token == Token::ENDOFFILE)

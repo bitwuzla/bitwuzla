@@ -15,8 +15,6 @@
 #include <sstream>
 #include <vector>
 
-#include "util/util.h"
-
 namespace bzla {
 namespace parser::smt2 {
 
@@ -43,6 +41,8 @@ CharacterClasses::init()
     d_char_classes[c] |= static_cast<uint32_t>(CharacterClass::SYMBOL);
     d_char_classes[c] |= static_cast<uint32_t>(CharacterClass::KEYWORD);
   }
+  d_char_classes['0'] |= static_cast<uint32_t>(CharacterClass::BINARY_DIGIT);
+  d_char_classes['1'] |= static_cast<uint32_t>(CharacterClass::BINARY_DIGIT);
   for (size_t i = 0; s_hexadecimal_digit_chars[i] != 0; ++i)
   {
     uint8_t c = s_hexadecimal_digit_chars[i];
@@ -80,30 +80,40 @@ void
 Lexer::init(std::istream* input)
 {
   assert(input);
-  d_input = input;
-  d_buf_idx         = d_buf_size;
-  d_buf_eof         = d_buf_size + 1;
-  d_saved           = false;
-  d_coo             = {1, 1};
-  d_cur_coo         = {1, 1};
-  d_last_coo        = {1, 1};
-  d_last_coo_nl_col = 1;
+  d_input     = input;
+  d_cur       = d_buffer.data();
+  d_end       = d_cur;
+  d_tok_start = nullptr;
+  d_tok       = std::string_view();
+  d_token.clear();
+  d_buf_offset = 0;
+  d_eof        = false;
+  d_coo        = {1, 1};
+  d_last_coo   = {1, 1};
+  d_line       = 1;
+  d_line_start = 0;
 }
 
 void
 Lexer::configure_buffer(size_t buf_size)
 {
+  assert(buf_size > 0);
   d_buf_size = buf_size;
-  d_buf_idx  = d_buf_size;
-  d_buf_eof  = d_buf_size + 1;
-  d_buffer   = std::vector<unsigned char>(d_buf_size, 0);
+  // reserve space for the sentinel
+  d_buffer.assign(d_buf_size + 1, 0);
+  d_cur = d_buffer.data();
+  d_end = d_cur;
 }
 
-Token
-Lexer::next_token()
+const char*
+Lexer::token() const
 {
-  d_last_coo = d_coo;
-  return next_token_aux();
+  if (d_tok.data() != d_token.data())
+  {
+    d_token.assign(d_tok);
+    d_tok = d_token;
+  }
+  return d_token.c_str();
 }
 
 bool
@@ -150,308 +160,321 @@ Lexer::is_valid_quoted_symbol(const std::string& s)
 
 /* Lexer private ------------------------------------------------------------ */
 
+bool
+Lexer::fill_buffer()
+{
+  assert(d_cur == d_end);
+  if (d_eof)
+  {
+    return false;
+  }
+  // spill the characters of the current token, the buffer is overwritten
+  if (d_tok_start)
+  {
+    d_token.append(d_tok_start, d_end - d_tok_start);
+  }
+  d_buf_offset += d_end - d_buffer.data();
+  char* buf = d_buffer.data();
+  size_t n  = 0;
+  if (d_buf_size == 1)
+  {
+    // Interactive input: read only a single character, reading ahead could
+    // block on input that is not yet available. We read via the stream
+    // buffer to bypass the sentry of the input stream, which flushes the tied
+    // output stream on every read (see flush_tied_output()).
+    std::streambuf* sb = d_input->rdbuf();
+    int32_t ch         = sb ? sb->sbumpc() : EOF;
+    if (ch != EOF)
+    {
+      buf[n++] = static_cast<char>(ch);
+    }
+    else
+    {
+      d_eof = true;
+    }
+  }
+  else
+  {
+    d_input->read(buf, d_buf_size);
+    n = d_input->gcount();
+    // istream::read() only reads less than requested at the end of the input
+    d_eof = n < d_buf_size;
+  }
+  buf[n] = 0;  // sentinel
+  d_cur  = buf;
+  d_end  = buf + n;
+  if (d_tok_start)
+  {
+    d_tok_start = d_cur;
+  }
+  return n > 0;
+}
+
+void
+Lexer::consume_chars(CharacterClasses::CharacterClass cclass)
+{
+  for (;;)
+  {
+    // no bounds check required, the sentinel is not in any class
+    const char* p = d_cur;
+    while (
+        CharacterClasses::is_in_class(static_cast<unsigned char>(*p), cclass))
+    {
+      ++p;
+    }
+    d_cur = p;
+    if (p < d_end || !fill_buffer())
+    {
+      return;
+    }
+  }
+}
+
+std::string
+Lexer::cur_token() const
+{
+  assert(d_tok_start);
+  return d_token + std::string(d_tok_start, d_cur - d_tok_start);
+}
+
 Token
 Lexer::next_token_aux()
 {
-  int32_t ch;
   d_token.clear();
+  d_tok_start = nullptr;
 
   // skip whitespace and comments
+  int32_t ch;
   for (;;)
   {
-    do
+    while (d_cur < d_end)
     {
-      d_coo = d_cur_coo;
-      if ((ch = next_char()) == EOF)
+      char c = *d_cur;
+      if (c == ' ' || c == '\t' || c == '\r')
       {
-        d_token.push_back(0);
-        return Token::ENDOFFILE;
+        ++d_cur;
       }
-    } while (CharacterClasses::is_printable(ch) && util::is_space(ch));
-
-    if (ch != ';')
+      else if (c == '\n')
+      {
+        ++d_cur;
+        new_line();
+      }
+      else if (c == ';')
+      {
+        // skip comment
+        for (;;)
+        {
+          const char* nl =
+              static_cast<const char*>(std::memchr(d_cur, '\n', d_end - d_cur));
+          if (nl)
+          {
+            d_cur = nl + 1;
+            new_line();
+            break;
+          }
+          d_cur = d_end;
+          if (!fill_buffer())
+          {
+            return error("unexpected end of file in comment");
+          }
+        }
+      }
+      else
+      {
+        break;
+      }
+    }
+    if (d_cur < d_end || !fill_buffer())
     {
       break;
     }
-    while ((ch = next_char()) != '\n')
-    {
-      if (ch == EOF)
-      {
-        d_token.push_back(0);
-        return error(ch, "unexpected end of file in comment");
-      }
-    }
   }
 
-  if (ch == '(')
+  d_coo       = cur_coo();
+  d_tok_start = d_cur;
+  ch          = peek_char();
+  switch (ch)
   {
-    push_char(ch);
-    d_token.push_back(0);
-    return Token::LPAR;
-  }
-  if (ch == ')')
-  {
-    push_char(ch);
-    d_token.push_back(0);
-    return Token::RPAR;
-  }
-  if (ch == '#')
-  {
-    push_char(ch);
-    if ((ch = next_char()) == EOF)
-    {
-      d_token.push_back(0);
-      return error(ch, "unexpected end of file after '#'");
-    }
-    if (ch == 'b')
-    {
-      push_char(ch);
-      if ((ch = next_char()) == EOF)
+    case EOF: return Token::ENDOFFILE;
+
+    case '(': consume_char(); return Token::LPAR;
+
+    case ')': consume_char(); return Token::RPAR;
+
+    case '#':
+      consume_char();
+      ch = peek_char();
+      if (ch == EOF)
       {
-        d_token.push_back(0);
-        return error(ch, "unexpected end of file after '#b'");
+        return error("unexpected end of file after '#'");
       }
-      if (ch != '0' && ch != '1')
+      if (ch == 'b')
       {
-        d_token.push_back(0);
-        return error(ch, "expected '0' or '1' after '#b'");
+        consume_char();
+        ch = peek_char();
+        if (ch == EOF)
+        {
+          return error("unexpected end of file after '#b'");
+        }
+        if (ch != '0' && ch != '1')
+        {
+          return error("expected '0' or '1' after '#b'");
+        }
+        consume_chars(CharacterClasses::CharacterClass::BINARY_DIGIT);
+        return Token::BINARY_VALUE;
       }
-      push_char(ch);
-      for (;;)
+      if (ch == 'x')
       {
-        ch = next_char();
-        if (ch != '0' && ch != '1') break;
-        push_char(ch);
-      }
-      save_char(ch);
-      d_token.push_back(0);
-      return Token::BINARY_VALUE;
-    }
-    if (ch == 'x')
-    {
-      push_char(ch);
-      if ((ch = next_char()) == EOF)
-      {
-        d_token.push_back(0);
-        return error(ch, "unexpected end of file after '#x'");
-      }
-      if (!CharacterClasses::is_in_class(
-              ch, CharacterClasses::CharacterClass::HEXADECIMAL_DIGIT))
-      {
-        d_token.push_back(0);
-        return error(ch, "expected hexa-decimal digit after '#x'");
-      }
-      push_char(ch);
-      for (;;)
-      {
-        ch = next_char();
+        consume_char();
+        ch = peek_char();
+        if (ch == EOF)
+        {
+          return error("unexpected end of file after '#x'");
+        }
         if (!CharacterClasses::is_in_class(
                 ch, CharacterClasses::CharacterClass::HEXADECIMAL_DIGIT))
         {
-          break;
+          return error("expected hexa-decimal digit after '#x'");
         }
-        push_char(ch);
+        consume_chars(CharacterClasses::CharacterClass::HEXADECIMAL_DIGIT);
+        return Token::HEXADECIMAL_VALUE;
       }
-      save_char(ch);
-      d_token.push_back(0);
-      return Token::HEXADECIMAL_VALUE;
-    }
-    d_token.push_back(0);
-    return error(ch, "expected 'x' or 'b' after '#'");
-  }
-  if (ch == '"')
-  {
-    push_char(ch);
-    for (;;)
-    {
-      if ((ch = next_char()) == EOF)
+      return error("expected 'x' or 'b' after '#'");
+
+    case '"':
+      consume_char();
+      for (;;)
       {
-        d_token.push_back(0);
-        return error(ch, "unexpected end of file in string");
-      }
-      if (ch == '"')
-      {
-        push_char(ch);
-        ch = next_char();
-        if (ch != '"')
+        ch = peek_char();
+        if (ch == EOF)
         {
-          save_char(ch);
-          d_token.push_back(0);
-          return Token::STRING_VALUE;
+          return error("unexpected end of file in string");
         }
-      }
-      if (!CharacterClasses::is_in_class(
-              ch, CharacterClasses::CharacterClass::STRING))
-      {
-        if (CharacterClasses::is_printable(ch))
+        if (ch == '"')
         {
-          d_token.push_back(0);
-          return error(ch, "illegal " + err_char(ch) + " in string");
+          consume_char();
+          if (peek_char() != '"')
+          {
+            return Token::STRING_VALUE;
+          }
         }
-        d_token.push_back(0);
-        return error(ch,
-                     "illegal (non-printable) character (code "
-                         + std::to_string(static_cast<unsigned char>(ch))
-                         + ") in string");
+        else if (!CharacterClasses::is_in_class(
+                     ch, CharacterClasses::CharacterClass::STRING))
+        {
+          if (CharacterClasses::is_printable(ch))
+          {
+            return error("illegal " + err_char(ch) + " in string");
+          }
+          return error("illegal (non-printable) character (code "
+                       + std::to_string(ch) + ") in string");
+        }
+        consume_char();
       }
-      push_char(ch);
-    }
-  }
-  else if (ch == '|')
-  {
-    push_char(ch);
-    for (;;)
-    {
-      if ((ch = next_char()) == EOF)
+
+    case '|':
+      consume_char();
+      for (;;)
       {
-        d_token.push_back(0);
-        return error(ch, "unexpected end of file in quoted symbol");
+        if (d_cur == d_end && !fill_buffer())
+        {
+          return error("unexpected end of file in quoted symbol");
+        }
+        const char* p =
+            static_cast<const char*>(std::memchr(d_cur, '|', d_end - d_cur));
+        if (!p)
+        {
+          p = d_end;
+        }
+        // quoted symbols may span multiple lines
+        for (const char* nl = d_cur;
+             (nl = static_cast<const char*>(std::memchr(nl, '\n', p - nl)));)
+        {
+          d_line += 1;
+          nl += 1;
+          d_line_start = d_buf_offset + (nl - d_buffer.data());
+        }
+        d_cur = p;
+        if (p < d_end)
+        {
+          consume_char();
+          return Token::SYMBOL;
+        }
       }
-      push_char(ch);
-      if (ch == '|')
+
+    case ':':
+      consume_char();
+      ch = peek_char();
+      if (ch == EOF)
       {
-        d_token.push_back(0);
-        return Token::SYMBOL;
+        return error("unexpected end of file after ':'");
       }
-    }
-  }
-  else if (ch == ':')
-  {
-    push_char(ch);
-    if ((ch = next_char()) == EOF)
-    {
-      d_token.push_back(0);
-      return error(ch, "unexpected end of file after ':'");
-    }
-    if (!CharacterClasses::is_in_class(
-            ch, CharacterClasses::CharacterClass::KEYWORD))
-    {
-      d_token.push_back(0);
-      return error(ch, "unexpected " + err_char(ch) + " after ':'");
-    }
-    push_char(ch);
-    for (;;)
-    {
-      ch = next_char();
       if (!CharacterClasses::is_in_class(
               ch, CharacterClasses::CharacterClass::KEYWORD))
       {
-        break;
+        return error("unexpected " + err_char(ch) + " after ':'");
       }
-      assert(ch != EOF);
-      push_char(ch);
-    }
-    save_char(ch);
-    d_token.push_back(0);
-    return Token::ATTRIBUTE;
-  }
-  else if (ch == '0')
-  {
-    Token res = Token::DECIMAL_VALUE;
-    push_char(ch);
-    ch = next_char();
-    if (ch == '.')
-    {
-      res = Token::REAL_VALUE;
-      push_char(ch);
-      if ((ch = next_char()) == EOF)
+      consume_chars(CharacterClasses::CharacterClass::KEYWORD);
+      return Token::ATTRIBUTE;
+
+    case '0':
+      consume_char();
+      if (peek_char() == '.')
       {
-        d_token.push_back(0);
-        return error(ch, "unexpected end of file after '0.'");
-      }
-      if (!CharacterClasses::is_in_class(
-              ch, CharacterClasses::CharacterClass::DECIMAL_DIGIT))
-      {
-        d_token.push_back(0);
-        return error(ch, "expected decimal digit after '0.'");
-      }
-      push_char(ch);
-      for (;;)
-      {
-        ch = next_char();
+        consume_char();
+        ch = peek_char();
+        if (ch == EOF)
+        {
+          return error("unexpected end of file after '0.'");
+        }
         if (!CharacterClasses::is_in_class(
                 ch, CharacterClasses::CharacterClass::DECIMAL_DIGIT))
         {
-          break;
+          return error("expected decimal digit after '0.'");
         }
-        push_char(ch);
+        consume_chars(CharacterClasses::CharacterClass::DECIMAL_DIGIT);
+        return Token::REAL_VALUE;
       }
-    }
-    save_char(ch);
-    d_token.push_back(0);
-    return res;
+      return Token::DECIMAL_VALUE;
+
+    default: break;
   }
-  else if (CharacterClasses::is_in_class(
-               ch, CharacterClasses::CharacterClass::DECIMAL_DIGIT))
+
+  if (CharacterClasses::is_in_class(
+          ch, CharacterClasses::CharacterClass::DECIMAL_DIGIT))
   {
-    Token res = Token::DECIMAL_VALUE;
-    push_char(ch);
-    for (;;)
+    consume_chars(CharacterClasses::CharacterClass::DECIMAL_DIGIT);
+    if (peek_char() == '.')
     {
-      ch = next_char();
-      if (!CharacterClasses::is_in_class(
-              ch, CharacterClasses::CharacterClass::DECIMAL_DIGIT))
+      consume_char();
+      if (peek_char() == EOF)
       {
-        break;
+        return error("unexpected end of file after '" + cur_token() + "'");
       }
-      push_char(ch);
+      consume_char();
+      consume_chars(CharacterClasses::CharacterClass::DECIMAL_DIGIT);
+      return Token::REAL_VALUE;
     }
-    if (ch == '.')
-    {
-      res = Token::REAL_VALUE;
-      push_char(ch);
-      if ((ch = next_char()) == EOF)
-      {
-        d_token.push_back(0);
-        return error(
-            ch, "unexpected end of file after '" + std::string(token()) + "'");
-      }
-      push_char(ch);
-      for (;;)
-      {
-        ch = next_char();
-        if (!CharacterClasses::is_in_class(
-                ch, CharacterClasses::CharacterClass::DECIMAL_DIGIT))
-        {
-          break;
-        }
-        push_char(ch);
-      }
-    }
-    save_char(ch);
-    d_token.push_back(0);
-    return res;
+    return Token::DECIMAL_VALUE;
   }
-  else if (CharacterClasses::is_in_class(
-               ch, CharacterClasses::CharacterClass::SYMBOL))
+
+  if (CharacterClasses::is_in_class(ch,
+                                    CharacterClasses::CharacterClass::SYMBOL))
   {
-    push_char(ch);
-    for (;;)
-    {
-      ch = next_char();
-      if (!CharacterClasses::is_in_class(
-              ch, CharacterClasses::CharacterClass::SYMBOL))
-      {
-        break;
-      }
-      push_char(ch);
-    }
-    save_char(ch);
-    d_token.push_back(0);
-    if (d_token[0] == '_' && d_token[1] == 0)
+    consume_chars(CharacterClasses::CharacterClass::SYMBOL);
+    size_t len = d_token.size() + (d_cur - d_tok_start);
+    if (len == 1 && (d_token.empty() ? *d_tok_start : d_token[0]) == '_')
     {
       return Token::UNDERSCORE;
     }
     return Token::SYMBOL;
   }
-  d_token.push_back(0);
+
   if (CharacterClasses::is_printable(ch))
   {
-    return error(ch, "illegal " + err_char(ch));
+    return error("illegal " + err_char(ch));
   }
-  return error(ch,
-               "illegal (non-printable) character (code "
-                   + std::to_string(static_cast<unsigned char>(ch)) + ")");
+  return error("illegal (non-printable) character (code " + std::to_string(ch)
+               + ")");
 }
 
 std::string
@@ -463,13 +486,9 @@ Lexer::err_char(int32_t ch) const
 }
 
 Token
-Lexer::error(int32_t ch, const std::string& error_msg)
+Lexer::error(const std::string& error_msg)
 {
-  if (!d_saved)
-  {
-    save_char(ch);
-  }
-  d_coo   = d_cur_coo;
+  d_coo   = cur_coo();
   d_error = error_msg;
   return Token::INVALID;
 }
