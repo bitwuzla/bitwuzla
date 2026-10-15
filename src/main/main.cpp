@@ -87,6 +87,13 @@ main(int32_t argc, char* argv[])
         os << name << ": " << val << std::endl;
       }
     }
+#ifdef NDEBUG
+    // Exit without destroying the parser, which destroys the solver and all
+    // terms. This is not required since the process terminates anyway, and
+    // costly for large inputs. Builds with assertions still destroy it to
+    // check teardown.
+    std::exit(EXIT_SUCCESS);
+#endif
   }
   catch (const bitwuzla::parser::Exception& e)
   {
