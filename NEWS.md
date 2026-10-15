@@ -103,6 +103,12 @@ This file collects a summary of important and/or user-visible changes.
 - **C API**: An abort callback configured via `bitwuzla_set_abort_callback()`
   is now also called on errors raised by the parser API.
 
+- **C++ API**: Reduced the overhead of creating and handling terms and sorts,
+  which also improves parsing performance and reduces memory usage.
+  `Term` and `Sort` now hold the internal node and type directly instead of
+  via a `std::shared_ptr`. This changes the size of `Term` and `Sort`
+  (**ABI change**), applications using the C++ API must be recompiled.
+
 - Various fixes in the rewriter, the array, function and floating-point solvers,
   the local search engine and interpolation.
 

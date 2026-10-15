@@ -94,6 +94,12 @@ class BitwuzlaOptionExceptionStream
 #define BITWUZLA_CHECK_NOT_NULL_AT_IDX(arg, i) \
   BITWUZLA_CHECK((arg) != nullptr) << "expected non-null object at index " << i
 
+#define BITWUZLA_CHECK_HANDLE_NOT_NULL(arg) \
+  BITWUZLA_CHECK(!(arg)->is_null()) << "expected non-null object"
+
+#define BITWUZLA_CHECK_HANDLE_NOT_NULL_AT_IDX(arg, i) \
+  BITWUZLA_CHECK(!(arg)->is_null()) << "expected non-null object at index " << i
+
 #define BITWUZLA_CHECK_NOT_ZERO(arg) \
   BITWUZLA_CHECK((arg) != 0) << "argument '" << #arg << "' must be > 0"
 
@@ -191,107 +197,107 @@ class BitwuzlaOptionExceptionStream
       << "cannot " << what << " if input formula is not unsat";
 
 #define BITWUZLA_CHECK_TERM_NOT_NULL(arg) \
-  BITWUZLA_CHECK((arg).d_node != nullptr) << "expected non-null term";
+  BITWUZLA_CHECK(!(arg).d_node->is_null()) << "expected non-null term";
 
 #define BITWUZLA_CHECK_TERM_NOT_NULL_AT_IDX(args, i) \
-  BITWUZLA_CHECK((args)[i].d_node != nullptr)        \
+  BITWUZLA_CHECK(!(args)[i].d_node->is_null())       \
       << "expected non-null term at index " << i;
 
-#define BITWUZLA_CHECK_TERM_IS_ARRAY(arg)                         \
-  BITWUZLA_CHECK((arg).d_node && (arg).d_node->type().is_array()) \
+#define BITWUZLA_CHECK_TERM_IS_ARRAY(arg)                                     \
+  BITWUZLA_CHECK(!(arg).d_node->is_null() && (arg).d_node->type().is_array()) \
       << "expected array term";
 
-#define BITWUZLA_CHECK_TERM_IS_ARRAY_AT_IDX(args, i)                      \
-  BITWUZLA_CHECK((args)[i].d_node && (args)[i].d_node->type().is_array()) \
+#define BITWUZLA_CHECK_TERM_IS_ARRAY_AT_IDX(args, i)     \
+  BITWUZLA_CHECK(!(args)[i].d_node->is_null()            \
+                 && (args)[i].d_node->type().is_array()) \
       << "expected array term at index " << i;
 
-#define BITWUZLA_CHECK_TERM_IS_BV(arg)                         \
-  BITWUZLA_CHECK((arg).d_node && (arg).d_node->type().is_bv()) \
+#define BITWUZLA_CHECK_TERM_IS_BV(arg)                                     \
+  BITWUZLA_CHECK(!(arg).d_node->is_null() && (arg).d_node->type().is_bv()) \
       << "expected bit-vector term";
 
-#define BITWUZLA_CHECK_TERM_IS_BOOL_VALUE(arg)            \
-  BITWUZLA_CHECK((arg).d_node && (arg).d_node->is_value() \
-                 && (arg).d_node->type().is_bool())       \
+#define BITWUZLA_CHECK_TERM_IS_BOOL_VALUE(arg)                        \
+  BITWUZLA_CHECK(!(arg).d_node->is_null() && (arg).d_node->is_value() \
+                 && (arg).d_node->type().is_bool())                   \
       << "expected boolean value";
 
-#define BITWUZLA_CHECK_TERM_IS_BV_VALUE(arg)              \
-  BITWUZLA_CHECK((arg).d_node && (arg).d_node->is_value() \
-                 && (arg).d_node->type().is_bv())         \
+#define BITWUZLA_CHECK_TERM_IS_BV_VALUE(arg)                          \
+  BITWUZLA_CHECK(!(arg).d_node->is_null() && (arg).d_node->is_value() \
+                 && (arg).d_node->type().is_bv())                     \
       << "expected bit-vector value";
 
-#define BITWUZLA_CHECK_TERM_IS_FP(arg)                         \
-  BITWUZLA_CHECK((arg).d_node && (arg).d_node->type().is_fp()) \
+#define BITWUZLA_CHECK_TERM_IS_FP(arg)                                     \
+  BITWUZLA_CHECK(!(arg).d_node->is_null() && (arg).d_node->type().is_fp()) \
       << "expected floating-point term";
 
-#define BITWUZLA_CHECK_TERM_IS_RM(arg)                    \
-  BITWUZLA_CHECK((arg).d_node && !(arg).d_node->is_null() \
-                 && (arg).d_node->type().is_rm())         \
-      << "expected rounding-mode "                        \
+#define BITWUZLA_CHECK_TERM_IS_RM(arg)                                     \
+  BITWUZLA_CHECK(!(arg).d_node->is_null() && (arg).d_node->type().is_rm()) \
+      << "expected rounding-mode "                                         \
          "term";
-#define BITWUZLA_CHECK_TERM_IS_RM_AT_IDX(args, i)                 \
-  BITWUZLA_CHECK((args)[i].d_node && !(args)[i].d_node->is_null() \
-                 && (args)[i].d_node->type().is_rm())             \
+#define BITWUZLA_CHECK_TERM_IS_RM_AT_IDX(args, i)     \
+  BITWUZLA_CHECK(!(args)[i].d_node->is_null()         \
+                 && (args)[i].d_node->type().is_rm()) \
       << "expected rounding-mode term at index " << i;
 
-#define BITWUZLA_CHECK_TERM_IS_RM_VALUE(arg)                                  \
-  BITWUZLA_CHECK((arg).d_node && !(arg).d_node->is_null()                     \
-                 && (arg).d_node->is_value() && (arg).d_node->type().is_rm()) \
+#define BITWUZLA_CHECK_TERM_IS_RM_VALUE(arg)                          \
+  BITWUZLA_CHECK(!(arg).d_node->is_null() && (arg).d_node->is_value() \
+                 && (arg).d_node->type().is_rm())                     \
       << "expected rounding-mode value";
 
-#define BITWUZLA_CHECK_TERM_IS_BOOL(arg)                  \
-  BITWUZLA_CHECK((arg).d_node && !(arg).d_node->is_null() \
-                 && (arg).d_node->type().is_bool())       \
+#define BITWUZLA_CHECK_TERM_IS_BOOL(arg)                                     \
+  BITWUZLA_CHECK(!(arg).d_node->is_null() && (arg).d_node->type().is_bool()) \
       << "expected Boolean term";
 
-#define BITWUZLA_CHECK_TERM_IS_BOOL_AT_IDX(args, i)               \
-  BITWUZLA_CHECK((args)[i].d_node && !(args)[i].d_node->is_null() \
-                 && (args)[i].d_node->type().is_bool())           \
+#define BITWUZLA_CHECK_TERM_IS_BOOL_AT_IDX(args, i)     \
+  BITWUZLA_CHECK(!(args)[i].d_node->is_null()           \
+                 && (args)[i].d_node->type().is_bool()) \
       << "expected Boolean term at index " << i;
 
-#define BITWUZLA_CHECK_TERM_IS_VAR_AT_IDX(args, i)                    \
-  BITWUZLA_CHECK((args)[i].d_node && (args)[i].d_node->is_variable()) \
+#define BITWUZLA_CHECK_TERM_IS_VAR_AT_IDX(args, i)   \
+  BITWUZLA_CHECK(!(args)[i].d_node->is_null()        \
+                 && (args)[i].d_node->is_variable()) \
       << "expected variable at index " << i;
 
-#define BITWUZLA_CHECK_TERM_IS_NOT_VAR(arg)                    \
-  BITWUZLA_CHECK((arg).d_node && !(arg).d_node->is_variable()) \
-      << "expected non-variable "                              \
+#define BITWUZLA_CHECK_TERM_IS_NOT_VAR(arg)                                \
+  BITWUZLA_CHECK(!(arg).d_node->is_null() && !(arg).d_node->is_variable()) \
+      << "expected non-variable "                                          \
          "term";
 
-#define BITWUZLA_CHECK_TERM_IS_FUN_AT_IDX(args, i)                \
-  BITWUZLA_CHECK((args)[i].d_node && !(args)[i].d_node->is_null() \
-                 && (args)[i].d_node->type().is_fun())            \
+#define BITWUZLA_CHECK_TERM_IS_FUN_AT_IDX(args, i)     \
+  BITWUZLA_CHECK(!(args)[i].d_node->is_null()          \
+                 && (args)[i].d_node->type().is_fun()) \
       << "expected non-function term at index " << i;
 
-#define BITWUZLA_CHECK_TERM_NOT_IS_FUN_AT_IDX(args, i)            \
-  BITWUZLA_CHECK((args)[i].d_node && !(args)[i].d_node->is_null() \
-                 && !(args)[i].d_node->type().is_fun())           \
+#define BITWUZLA_CHECK_TERM_NOT_IS_FUN_AT_IDX(args, i)  \
+  BITWUZLA_CHECK(!(args)[i].d_node->is_null()           \
+                 && !(args)[i].d_node->type().is_fun()) \
       << "expected non-function term at index " << i;
 
 #define BITWUZLA_CHECK_SORT_NOT_NULL(arg) \
-  BITWUZLA_CHECK((arg).d_type != nullptr) << "expected non-null sort";
+  BITWUZLA_CHECK(!(arg).d_type->is_null()) << "expected non-null sort";
 
-#define BITWUZLA_CHECK_SORT_IS_ARRAY(arg)                  \
-  BITWUZLA_CHECK((arg).d_type && (arg).d_type->is_array()) \
+#define BITWUZLA_CHECK_SORT_IS_ARRAY(arg)                              \
+  BITWUZLA_CHECK(!(arg).d_type->is_null() && (arg).d_type->is_array()) \
       << "expected array sort";
 
-#define BITWUZLA_CHECK_SORT_IS_BV(arg)                  \
-  BITWUZLA_CHECK((arg).d_type && (arg).d_type->is_bv()) \
+#define BITWUZLA_CHECK_SORT_IS_BV(arg)                              \
+  BITWUZLA_CHECK(!(arg).d_type->is_null() && (arg).d_type->is_bv()) \
       << "expected bit-vector sort";
 
-#define BITWUZLA_CHECK_SORT_IS_FP(arg)                  \
-  BITWUZLA_CHECK((arg).d_type && (arg).d_type->is_fp()) \
+#define BITWUZLA_CHECK_SORT_IS_FP(arg)                              \
+  BITWUZLA_CHECK(!(arg).d_type->is_null() && (arg).d_type->is_fp()) \
       << "expected floating-point sort";
 
-#define BITWUZLA_CHECK_SORT_IS_FUN(arg)                  \
-  BITWUZLA_CHECK((arg).d_type && (arg).d_type->is_fun()) \
+#define BITWUZLA_CHECK_SORT_IS_FUN(arg)                              \
+  BITWUZLA_CHECK(!(arg).d_type->is_null() && (arg).d_type->is_fun()) \
       << "expected function sort";
 
-#define BITWUZLA_CHECK_SORT_NOT_IS_FUN(arg)               \
-  BITWUZLA_CHECK((arg).d_type && !(arg).d_type->is_fun()) \
+#define BITWUZLA_CHECK_SORT_NOT_IS_FUN(arg)                           \
+  BITWUZLA_CHECK(!(arg).d_type->is_null() && !(arg).d_type->is_fun()) \
       << "expected non-function sort";
 
-#define BITWUZLA_CHECK_SORT_IS_UNINTEPRETED(arg)                   \
-  BITWUZLA_CHECK((arg).d_type && (arg).d_type->is_uninterpreted()) \
+#define BITWUZLA_CHECK_SORT_IS_UNINTEPRETED(arg)                               \
+  BITWUZLA_CHECK(!(arg).d_type->is_null() && (arg).d_type->is_uninterpreted()) \
       << "expected uninterpreted sort";
 
 #define BITWUZLA_CHECK_MK_TERM_ARGC(kind, is_nary, argc_expected, argc)       \
@@ -311,7 +317,7 @@ class BitwuzlaOptionExceptionStream
   {                                                                            \
     for (size_t i = 0, argc = args.size(); i < argc; ++i)                      \
     {                                                                          \
-      BITWUZLA_CHECK_NOT_NULL_AT_IDX(args[i].d_node, i);                       \
+      BITWUZLA_CHECK_HANDLE_NOT_NULL_AT_IDX(args[i].d_node, i);                \
       BITWUZLA_CHECK(d_nm.get() == args[i].d_node->nm())                       \
           << "mismatching term manager for term at index " << i;               \
       if (i == start || i > start)                                             \
@@ -333,7 +339,7 @@ class BitwuzlaOptionExceptionStream
   {                                                                            \
     for (size_t i = 0, argc = args.size(); i < argc; ++i)                      \
     {                                                                          \
-      BITWUZLA_CHECK_NOT_NULL_AT_IDX(args[i].d_node, i);                       \
+      BITWUZLA_CHECK_HANDLE_NOT_NULL_AT_IDX(args[i].d_node, i);                \
       if (i > (start) && match)                                                \
       {                                                                        \
         BITWUZLA_CHECK(args[i].d_node->type() == args[i - 1].d_node->type())   \

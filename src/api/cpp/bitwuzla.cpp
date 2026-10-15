@@ -820,7 +820,7 @@ OptionInfo::value() const
 
 /* Term public -------------------------------------------------------------- */
 
-Term::Term() : d_node(nullptr) {}
+Term::Term() = default;
 
 Term::Term(const Term& other) = default;
 
@@ -835,41 +835,41 @@ Term::~Term() {}
 bool
 Term::is_null() const
 {
-  return d_node == nullptr;
+  return d_node->is_null();
 }
 
 uint64_t
 Term::id() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_node);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_node);
   return d_node->id();
 }
 
 Kind
 Term::kind() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_node);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_node);
   return s_kinds.at(d_node->kind());
 }
 
 Sort
 Term::sort() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_node);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_node);
   return d_node->type();
 }
 
 size_t
 Term::num_children() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_node);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_node);
   return d_node->num_children();
 }
 
 std::vector<Term>
 Term::children() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_node);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_node);
   std::vector<Term> res;
   for (const bzla::Node& node : *d_node)
   {
@@ -881,7 +881,7 @@ Term::children() const
 Term
 Term::operator[](size_t index) const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_node);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_node);
   BITWUZLA_CHECK(index < d_node->num_children())
       << "invalid access into term children, index '" << index
       << "' is greater than number of children";
@@ -891,14 +891,14 @@ Term::operator[](size_t index) const
 size_t
 Term::num_indices() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_node);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_node);
   return d_node->num_indices();
 }
 
 std::vector<uint64_t>
 Term::indices() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_node);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_node);
   auto indices = d_node->indices();
   return std::vector<uint64_t>(indices.begin(), indices.end());
 }
@@ -906,46 +906,46 @@ Term::indices() const
 std::optional<std::reference_wrapper<const std::string>>
 Term::symbol() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_node);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_node);
   return d_node->symbol();
 }
 
 bool
 Term::is_const() const
 {
-  return d_node != nullptr && d_node->kind() == bzla::node::Kind::CONSTANT;
+  return !d_node->is_null() && d_node->kind() == bzla::node::Kind::CONSTANT;
 }
 
 bool
 Term::is_variable() const
 {
-  return d_node != nullptr && d_node->kind() == bzla::node::Kind::VARIABLE;
+  return !d_node->is_null() && d_node->kind() == bzla::node::Kind::VARIABLE;
 }
 
 bool
 Term::is_value() const
 {
-  return d_node != nullptr && d_node->kind() == bzla::node::Kind::VALUE;
+  return !d_node->is_null() && d_node->kind() == bzla::node::Kind::VALUE;
 }
 
 bool
 Term::is_true() const
 {
-  return d_node != nullptr && d_node->is_value() && d_node->type().is_bool()
+  return !d_node->is_null() && d_node->is_value() && d_node->type().is_bool()
          && d_node->value<bool>();
 }
 
 bool
 Term::is_false() const
 {
-  return d_node != nullptr && d_node->is_value() && d_node->type().is_bool()
+  return !d_node->is_null() && d_node->is_value() && d_node->type().is_bool()
          && !d_node->value<bool>();
 }
 
 bool
 Term::is_bv_value_zero() const
 {
-  return d_node != nullptr && d_node->kind() == bzla::node::Kind::VALUE
+  return !d_node->is_null() && d_node->kind() == bzla::node::Kind::VALUE
          && d_node->type().is_bv()
          && d_node->value<bzla::BitVector>().is_zero();
 }
@@ -953,14 +953,14 @@ Term::is_bv_value_zero() const
 bool
 Term::is_bv_value_one() const
 {
-  return d_node != nullptr && d_node->kind() == bzla::node::Kind::VALUE
+  return !d_node->is_null() && d_node->kind() == bzla::node::Kind::VALUE
          && d_node->type().is_bv() && d_node->value<bzla::BitVector>().is_one();
 }
 
 bool
 Term::is_bv_value_ones() const
 {
-  return d_node != nullptr && d_node->kind() == bzla::node::Kind::VALUE
+  return !d_node->is_null() && d_node->kind() == bzla::node::Kind::VALUE
          && d_node->type().is_bv()
          && d_node->value<bzla::BitVector>().is_ones();
 }
@@ -968,7 +968,7 @@ Term::is_bv_value_ones() const
 bool
 Term::is_bv_value_min_signed() const
 {
-  return d_node != nullptr && d_node->kind() == bzla::node::Kind::VALUE
+  return !d_node->is_null() && d_node->kind() == bzla::node::Kind::VALUE
          && d_node->type().is_bv()
          && d_node->value<bzla::BitVector>().is_min_signed();
 }
@@ -976,7 +976,7 @@ Term::is_bv_value_min_signed() const
 bool
 Term::is_bv_value_max_signed() const
 {
-  return d_node != nullptr && d_node->kind() == bzla::node::Kind::VALUE
+  return !d_node->is_null() && d_node->kind() == bzla::node::Kind::VALUE
          && d_node->type().is_bv()
          && d_node->value<bzla::BitVector>().is_max_signed();
 }
@@ -984,7 +984,7 @@ Term::is_bv_value_max_signed() const
 bool
 Term::is_fp_value_pos_zero() const
 {
-  if (d_node == nullptr || d_node->kind() != bzla::node::Kind::VALUE
+  if (d_node->is_null() || d_node->kind() != bzla::node::Kind::VALUE
       || !d_node->type().is_fp())
   {
     return false;
@@ -996,7 +996,7 @@ Term::is_fp_value_pos_zero() const
 bool
 Term::is_fp_value_neg_zero() const
 {
-  if (d_node == nullptr || d_node->kind() != bzla::node::Kind::VALUE
+  if (d_node->is_null() || d_node->kind() != bzla::node::Kind::VALUE
       || !d_node->type().is_fp())
   {
     return false;
@@ -1008,7 +1008,7 @@ Term::is_fp_value_neg_zero() const
 bool
 Term::is_fp_value_pos_inf() const
 {
-  if (d_node == nullptr || d_node->kind() != bzla::node::Kind::VALUE
+  if (d_node->is_null() || d_node->kind() != bzla::node::Kind::VALUE
       || !d_node->type().is_fp())
   {
     return false;
@@ -1020,7 +1020,7 @@ Term::is_fp_value_pos_inf() const
 bool
 Term::is_fp_value_neg_inf() const
 {
-  if (d_node == nullptr || d_node->kind() != bzla::node::Kind::VALUE
+  if (d_node->is_null() || d_node->kind() != bzla::node::Kind::VALUE
       || !d_node->type().is_fp())
   {
     return false;
@@ -1032,7 +1032,7 @@ Term::is_fp_value_neg_inf() const
 bool
 Term::is_fp_value_nan() const
 {
-  return d_node != nullptr && d_node->kind() == bzla::node::Kind::VALUE
+  return !d_node->is_null() && d_node->kind() == bzla::node::Kind::VALUE
          && d_node->type().is_fp()
          && d_node->value<bzla::FloatingPoint>().fpisnan();
 }
@@ -1040,7 +1040,7 @@ Term::is_fp_value_nan() const
 bool
 Term::is_rm_value_rna() const
 {
-  return d_node != nullptr && d_node->kind() == bzla::node::Kind::VALUE
+  return !d_node->is_null() && d_node->kind() == bzla::node::Kind::VALUE
          && d_node->type().is_rm()
          && d_node->value<bzla::RoundingMode>() == bzla::RoundingMode::RNA;
 }
@@ -1048,7 +1048,7 @@ Term::is_rm_value_rna() const
 bool
 Term::is_rm_value_rne() const
 {
-  return d_node != nullptr && d_node->kind() == bzla::node::Kind::VALUE
+  return !d_node->is_null() && d_node->kind() == bzla::node::Kind::VALUE
          && d_node->type().is_rm()
          && d_node->value<bzla::RoundingMode>() == bzla::RoundingMode::RNE;
 }
@@ -1056,7 +1056,7 @@ Term::is_rm_value_rne() const
 bool
 Term::is_rm_value_rtn() const
 {
-  return d_node != nullptr && d_node->kind() == bzla::node::Kind::VALUE
+  return !d_node->is_null() && d_node->kind() == bzla::node::Kind::VALUE
          && d_node->type().is_rm()
          && d_node->value<bzla::RoundingMode>() == bzla::RoundingMode::RTN;
 }
@@ -1064,7 +1064,7 @@ Term::is_rm_value_rtn() const
 bool
 Term::is_rm_value_rtp() const
 {
-  return d_node != nullptr && d_node->kind() == bzla::node::Kind::VALUE
+  return !d_node->is_null() && d_node->kind() == bzla::node::Kind::VALUE
          && d_node->type().is_rm()
          && d_node->value<bzla::RoundingMode>() == bzla::RoundingMode::RTP;
 }
@@ -1072,7 +1072,7 @@ Term::is_rm_value_rtp() const
 bool
 Term::is_rm_value_rtz() const
 {
-  return d_node != nullptr && d_node->kind() == bzla::node::Kind::VALUE
+  return !d_node->is_null() && d_node->kind() == bzla::node::Kind::VALUE
          && d_node->type().is_rm()
          && d_node->value<bzla::RoundingMode>() == bzla::RoundingMode::RTZ;
 }
@@ -1080,8 +1080,8 @@ Term::is_rm_value_rtz() const
 std::string
 Term::str(uint8_t base) const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_node);
-  if (!d_node)
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_node);
+  if (d_node->is_null())
   {
     return "(nil)";
   }
@@ -1091,7 +1091,7 @@ Term::str(uint8_t base) const
 std::string
 Term::fp_value_to_real_str() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_node);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_node);
   BITWUZLA_CHECK(d_node->type().is_fp() && d_node->is_value())
       << "expected floating-point value term";
   const bzla::FloatingPoint& fpval = d_node->value<bzla::FloatingPoint>();
@@ -1107,7 +1107,7 @@ bool
 Term::value(uint8_t base) const
 {
   (void) base;
-  BITWUZLA_CHECK_NOT_NULL(d_node);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_node);
   BITWUZLA_CHECK_TERM_IS_BOOL_VALUE(*this);
   return d_node->value<bool>();
 }
@@ -1117,7 +1117,7 @@ RoundingMode
 Term::value(uint8_t base) const
 {
   (void) base;
-  BITWUZLA_CHECK_NOT_NULL(d_node);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_node);
   BITWUZLA_CHECK_TERM_IS_RM_VALUE(*this);
   return s_rms.at(d_node->value<bzla::RoundingMode>());
 }
@@ -1127,7 +1127,7 @@ template <>
 std::string
 Term::value(uint8_t base) const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_node);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_node);
   BITWUZLA_CHECK(d_node->is_value()) << "expected value term";
   const auto& type = d_node->type();
   if (type.is_bool())
@@ -1161,7 +1161,7 @@ template <>
 std::tuple<std::string, std::string, std::string>
 Term::value(uint8_t base) const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_node);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_node);
   BITWUZLA_CHECK_TERM_IS_FP(*this);
   BITWUZLA_CHECK_VALUE_BASE(base);
   const bzla::FloatingPoint& fp_value = d_node->value<bzla::FloatingPoint>();
@@ -1178,11 +1178,11 @@ Term::value(uint8_t base) const
 bool
 operator==(const Term& a, const Term& b)
 {
-  if (a.d_node == nullptr)
+  if (a.d_node->is_null())
   {
-    return b.d_node == nullptr;
+    return b.d_node->is_null();
   }
-  if (b.d_node == nullptr)
+  if (b.d_node->is_null())
   {
     return false;
   }
@@ -1192,12 +1192,12 @@ operator==(const Term& a, const Term& b)
 bool
 operator!=(const Term& a, const Term& b)
 {
-  if (a.d_node == nullptr)
+  if (a.d_node->is_null())
   {
-    return b.d_node != nullptr;
+    return !b.d_node->is_null();
     ;
   }
-  if (b.d_node == nullptr)
+  if (b.d_node->is_null())
   {
     return true;
   }
@@ -1207,7 +1207,7 @@ operator!=(const Term& a, const Term& b)
 std::ostream&
 operator<<(std::ostream& out, const Term& term)
 {
-  if (term.d_node)
+  if (!term.d_node->is_null())
   {
     out << *term.d_node;
   }
@@ -1220,7 +1220,7 @@ operator<<(std::ostream& out, const Term& term)
 
 /* Sort public -------------------------------------------------------------- */
 
-Sort::Sort() : d_type(nullptr) {}
+Sort::Sort() = default;
 
 Sort::Sort(const Sort& other) = default;
 
@@ -1235,20 +1235,20 @@ Sort::~Sort() {}
 bool
 Sort::is_null() const
 {
-  return d_type == nullptr;
+  return d_type->is_null();
 }
 
 uint64_t
 Sort::id() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_type);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_type);
   return d_type->id();
 }
 
 uint64_t
 Sort::bv_size() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_type);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_type);
   BITWUZLA_CHECK_SORT_IS_BV(*this);
   return d_type->bv_size();
 }
@@ -1256,7 +1256,7 @@ Sort::bv_size() const
 uint64_t
 Sort::fp_exp_size() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_type);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_type);
   BITWUZLA_CHECK_SORT_IS_FP(*this);
   return d_type->fp_exp_size();
 }
@@ -1264,7 +1264,7 @@ Sort::fp_exp_size() const
 uint64_t
 Sort::fp_sig_size() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_type);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_type);
   BITWUZLA_CHECK_SORT_IS_FP(*this);
   return d_type->fp_sig_size();
 }
@@ -1272,7 +1272,7 @@ Sort::fp_sig_size() const
 Sort
 Sort::array_index() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_type);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_type);
   BITWUZLA_CHECK_SORT_IS_ARRAY(*this);
   return d_type->array_index();
 }
@@ -1280,7 +1280,7 @@ Sort::array_index() const
 Sort
 Sort::array_element() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_type);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_type);
   BITWUZLA_CHECK_SORT_IS_ARRAY(*this);
   return d_type->array_element();
 }
@@ -1288,7 +1288,7 @@ Sort::array_element() const
 std::vector<Sort>
 Sort::fun_domain() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_type);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_type);
   BITWUZLA_CHECK_SORT_IS_FUN(*this);
   const std::vector<bzla::Type> types = d_type->fun_types();
   assert(types.size() > 0);
@@ -1303,7 +1303,7 @@ Sort::fun_domain() const
 Sort
 Sort::fun_codomain() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_type);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_type);
   BITWUZLA_CHECK_SORT_IS_FUN(*this);
   const std::vector<bzla::Type> types = d_type->fun_types();
   assert(types.size() > 0);
@@ -1313,7 +1313,7 @@ Sort::fun_codomain() const
 size_t
 Sort::fun_arity() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_type);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_type);
   BITWUZLA_CHECK_SORT_IS_FUN(*this);
   return d_type->fun_arity();
 }
@@ -1321,7 +1321,7 @@ Sort::fun_arity() const
 std::optional<std::string>
 Sort::uninterpreted_symbol() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_type);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_type);
   BITWUZLA_CHECK_SORT_IS_UNINTEPRETED(*this);
   return d_type->uninterpreted_symbol();
 }
@@ -1329,50 +1329,50 @@ Sort::uninterpreted_symbol() const
 bool
 Sort::is_array() const
 {
-  return d_type != nullptr && d_type->is_array();
+  return !d_type->is_null() && d_type->is_array();
 }
 
 bool
 Sort::is_bool() const
 {
-  return d_type != nullptr && d_type->is_bool();
+  return !d_type->is_null() && d_type->is_bool();
 }
 
 bool
 Sort::is_bv() const
 {
-  return d_type != nullptr && d_type->is_bv();
+  return !d_type->is_null() && d_type->is_bv();
 }
 
 bool
 Sort::is_fp() const
 {
-  return d_type != nullptr && d_type->is_fp();
+  return !d_type->is_null() && d_type->is_fp();
 }
 
 bool
 Sort::is_fun() const
 {
-  return d_type != nullptr && d_type->is_fun();
+  return !d_type->is_null() && d_type->is_fun();
 }
 
 bool
 Sort::is_rm() const
 {
-  return d_type != nullptr && d_type->is_rm();
+  return !d_type->is_null() && d_type->is_rm();
 }
 
 bool
 Sort::is_uninterpreted() const
 {
-  return d_type != nullptr && d_type->is_uninterpreted();
+  return !d_type->is_null() && d_type->is_uninterpreted();
 }
 
 std::string
 Sort::str() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_type);
-  if (!d_type)
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_type);
+  if (d_type->is_null())
   {
     return "(nil)";
   }
@@ -1382,12 +1382,12 @@ Sort::str() const
 bool
 operator==(const Sort& a, const Sort& b)
 {
-  if (a.d_type == nullptr)
+  if (a.d_type->is_null())
   {
-    return b.d_type == nullptr;
+    return b.d_type->is_null();
     ;
   }
-  if (b.d_type == nullptr)
+  if (b.d_type->is_null())
   {
     return false;
   }
@@ -1397,12 +1397,12 @@ operator==(const Sort& a, const Sort& b)
 bool
 operator!=(const Sort& a, const Sort& b)
 {
-  if (a.d_type == nullptr)
+  if (a.d_type->is_null())
   {
-    return b.d_type != nullptr;
+    return !b.d_type->is_null();
     ;
   }
-  if (b.d_type == nullptr)
+  if (b.d_type->is_null())
   {
     return true;
   }
@@ -1412,7 +1412,7 @@ operator!=(const Sort& a, const Sort& b)
 std::ostream&
 operator<<(std::ostream& out, const Sort& sort)
 {
-  if (sort.d_type)
+  if (!sort.d_type->is_null())
   {
     out << *sort.d_type;
   }
@@ -1654,7 +1654,7 @@ Bitwuzla::check_sat(const std::vector<Term>& assumptions)
     for (size_t i = 0, size = assumptions.size(); i < size; ++i)
     {
       const Term& term = assumptions[i];
-      BITWUZLA_CHECK_NOT_NULL_AT_IDX(term.d_node, i);
+      BITWUZLA_CHECK_HANDLE_NOT_NULL_AT_IDX(term.d_node, i);
       BITWUZLA_CHECK_TERM_TERM_MGR_BITWUZLA(
           term, "assumption at position " + std::to_string(i));
       d_ctx->assert_formula(*term.d_node);
@@ -1707,7 +1707,7 @@ Bitwuzla::get_interpolant(const std::vector<Term>& A)
     for (size_t i = 0, size = A.size(); i < size; ++i)
     {
       const Term& term = A[i];
-      BITWUZLA_CHECK_NOT_NULL_AT_IDX(term.d_node, i);
+      BITWUZLA_CHECK_HANDLE_NOT_NULL_AT_IDX(term.d_node, i);
       BITWUZLA_CHECK_TERM_TERM_MGR_BITWUZLA(
           term, "assertion at position " + std::to_string(i));
       BITWUZLA_CHECK(_orig_assertions.find(*term.d_node)
@@ -1754,7 +1754,7 @@ Bitwuzla::get_interpolants(const std::vector<std::vector<Term>>& A)
       for (size_t j = 0, size = part.size(); j < size; ++j)
       {
         const Term& term = A[i][j];
-        BITWUZLA_CHECK(term.d_node != nullptr)
+        BITWUZLA_CHECK(!term.d_node->is_null())
             << "expected non-null term at A[" << i << "][" << j << "]";
         BITWUZLA_CHECK_TERM_TERM_MGR_BITWUZLA(
             term,
@@ -2302,6 +2302,23 @@ TermManager::mk_term(Kind kind,
                      const std::vector<Term>& args,
                      const std::vector<uint64_t>& indices)
 {
+  // The internal nodes of the arguments, the vector is reused to avoid
+  // allocating a vector for every created term. Released on return.
+  thread_local std::vector<bzla::Node> t_children;
+  assert(t_children.empty());
+  struct Release
+  {
+    ~Release() { t_children.clear(); }
+  } release;
+  auto children = [&args]() -> const std::vector<bzla::Node>& {
+    t_children.reserve(args.size());
+    for (const Term& arg : args)
+    {
+      t_children.push_back(*arg.d_node);
+    }
+    return t_children;
+  };
+
   switch (kind)
   {
     // left/right associative, chainable, pairwise
@@ -2374,15 +2391,13 @@ TermManager::mk_term(Kind kind,
       if (kind == Kind::IFF)
       {
         return bzla::node::utils::mk_nary(
-            *d_nm, bzla::node::Kind::EQUAL, Term::term_vector_to_nodes(args));
+            *d_nm, bzla::node::Kind::EQUAL, children());
       }
       else if (kind == Kind::DISTINCT)
       {
-        return d_nm->mk_node(bzla::node::Kind::DISTINCT,
-                             Term::term_vector_to_nodes(args));
+        return d_nm->mk_node(bzla::node::Kind::DISTINCT, children());
       }
-      return bzla::node::utils::mk_nary(
-          *d_nm, internal_kind(kind), Term::term_vector_to_nodes(args));
+      return bzla::node::utils::mk_nary(*d_nm, internal_kind(kind), children());
     // unary
     case Kind::NOT:
     case Kind::BV_DEC:
@@ -2547,7 +2562,7 @@ TermManager::mk_term(Kind kind,
       const auto& types = type_fun.fun_types();
       for (size_t i = 1; i <= paramc; ++i)
       {
-        BITWUZLA_CHECK_NOT_NULL_AT_IDX(args[i].d_node, i);
+        BITWUZLA_CHECK_HANDLE_NOT_NULL_AT_IDX(args[i].d_node, i);
         BITWUZLA_CHECK_TERM_NOT_IS_FUN_AT_IDX(args, i);
         BITWUZLA_CHECK(types[i - 1] == args[i].d_node->type())
             << "sort of argument at index " << i
@@ -2645,8 +2660,7 @@ TermManager::mk_term(Kind kind,
       BITWUZLA_CHECK(false) << "unexpected operator kind '" << kind << "'";
   }
 
-  return d_nm->mk_node(
-      internal_kind(kind), Term::term_vector_to_nodes(args), indices);
+  return d_nm->mk_node(internal_kind(kind), children(), indices);
 }
 
 Term
@@ -2780,21 +2794,9 @@ TermManager::substitute_terms(std::vector<Term>& terms,
 
 /* Term private ------------------------------------------------------------- */
 
-Term::Term(const bzla::Node& node) : d_node(std::make_shared<bzla::Node>(node))
-{
-}
+Term::Term(const bzla::Node& node) : d_node(node) {}
 
-std::vector<bzla::Node>
-Term::term_vector_to_nodes(const std::vector<Term>& terms)
-{
-  std::vector<bzla::Node> res;
-  res.reserve(terms.size());
-  for (const auto& term : terms)
-  {
-    res.emplace_back(*term.d_node);
-  }
-  return res;
-}
+Term::Term(bzla::Node&& node) : d_node(std::move(node)) {}
 
 std::vector<bitwuzla::Term>
 Term::node_vector_to_terms(const std::vector<bzla::Node>& nodes)
@@ -2809,9 +2811,9 @@ Term::node_vector_to_terms(const std::vector<bzla::Node>& nodes)
 
 /* Sort private ------------------------------------------------------------- */
 
-Sort::Sort(const bzla::Type& type) : d_type(std::make_shared<bzla::Type>(type))
-{
-}
+Sort::Sort(const bzla::Type& type) : d_type(type) {}
+
+Sort::Sort(bzla::Type&& type) : d_type(std::move(type)) {}
 
 std::vector<bzla::Type>
 Sort::sort_vector_to_types(const std::vector<Sort>& sorts)
