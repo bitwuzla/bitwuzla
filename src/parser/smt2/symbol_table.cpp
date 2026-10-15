@@ -92,13 +92,14 @@ SymbolTable::insert(Node* node)
 }
 
 void
-SymbolTable::insert_pending_symbols()
+SymbolTable::insert_pending_symbols(size_t start)
 {
-  for (Node* symbol : d_pending_symbols)
+  assert(start <= d_pending_symbols.size());
+  for (size_t i = start, n = d_pending_symbols.size(); i < n; ++i)
   {
-    insert(symbol);
+    insert(d_pending_symbols[i]);
   }
-  d_pending_symbols.clear();
+  d_pending_symbols.resize(start);
 }
 
 void

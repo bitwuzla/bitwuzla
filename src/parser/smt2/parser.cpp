@@ -126,6 +126,7 @@ Parser::reset()
   d_is_sorted_var           = false;
   d_is_var_binding          = false;
   d_skip_attribute_value    = false;
+  d_num_let_scopes          = 0;
   d_last_node               = nullptr;
   d_save_repr               = false;
   d_record_named_assertions = false;
@@ -1699,8 +1700,7 @@ Parser::parse_open_term(Token token)
       }
       assert(peek_is_node_arg());
       SymbolTable::Node* var_symbol = peek_node_arg();
-      auto [it, inserted] = d_var_bindings.insert(var_symbol->d_symbol);
-      if (!inserted)
+      if (!check_var_binding(var_symbol))
       {
         return error_arg("symbol '" + var_symbol->d_symbol
                          + "' already bound in current let scope");
@@ -1827,6 +1827,37 @@ Parser::parse_open_term(Token token)
     return error("unexpected token");
   }
   return true;
+}
+
+bool
+Parser::check_var_binding(SymbolTable::Node* symbol)
+{
+  assert(d_num_let_scopes > 0);
+  LetScope& scope = d_let_scopes[d_num_let_scopes - 1];
+  const std::vector<SymbolTable::Node*>& pending = d_table.pending_symbols();
+  assert(!pending.empty() && pending.back() == symbol);
+  assert(scope.d_pending_start < pending.size());
+  // the number of variables bound before the given variable
+  size_t n = pending.size() - 1 - scope.d_pending_start;
+  // most let binders bind only a few variables, check with linear search
+  if (n < 16)
+  {
+    for (size_t i = scope.d_pending_start; i < pending.size() - 1; ++i)
+    {
+      if (pending[i]->d_symbol == symbol->d_symbol)
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+  // add previously bound variables not yet in the set
+  size_t start = scope.d_pending_start + scope.d_bindings.size();
+  for (size_t i = start; i < pending.size() - 1; ++i)
+  {
+    scope.d_bindings.insert(pending[i]->d_symbol);
+  }
+  return scope.d_bindings.insert(symbol->d_symbol).second;
 }
 
 bitwuzla::Term
@@ -2184,7 +2215,13 @@ Parser::parse_open_term_symbol()
       push_item(Token::PARLETBIND, d_lexer->coo());
       assert(!d_is_var_binding);
       d_is_var_binding = true;
-      d_var_bindings.clear();
+      if (d_num_let_scopes == d_let_scopes.size())
+      {
+        d_let_scopes.emplace_back();
+      }
+      LetScope& scope       = d_let_scopes[d_num_let_scopes++];
+      scope.d_pending_start = d_table.pending_symbols().size();
+      scope.d_bindings.clear();
     }
     else if (token == Token::FORALL || token == Token::EXISTS)
     {
@@ -2544,7 +2581,12 @@ Parser::close_term()
       // the var bindings of the current PARLETBIND are not yet inserted in the
       // symbol table since they may only be used (and thus inserted) after
       // binding all of them in parallel, we have to insert them now
-      d_table.insert_pending_symbols();
+      // note: pending var bindings of enclosing let binders (if this let
+      //       binder occurs in a variable binding) must not be inserted yet
+      assert(d_num_let_scopes > 0);
+      d_num_let_scopes -= 1;
+      d_table.insert_pending_symbols(
+          d_let_scopes[d_num_let_scopes].d_pending_start);
       d_work.erase(d_work.begin() + idx - 1, d_work.begin() + idx + 1);
       d_work_control.pop_back();
     }

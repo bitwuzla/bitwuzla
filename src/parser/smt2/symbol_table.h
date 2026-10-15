@@ -106,8 +106,18 @@ class SymbolTable
    * @param node The node.
    */
   void insert(Node* node);
-  /** Insert all pending symbols cached in d_pending_symbols. */
-  void insert_pending_symbols();
+  /**
+   * Insert pending symbols cached in d_pending_symbols.
+   * @param start The index of the first pending symbol to insert. All pending
+   *              symbols from this index on are inserted and removed from the
+   *              pending symbols cache.
+   */
+  void insert_pending_symbols(size_t start);
+  /** @return The currently pending symbols. */
+  const std::vector<Node*>& pending_symbols() const
+  {
+    return d_pending_symbols;
+  }
   /**
    * Remove a symbol node from the symbol table.
    * If the symbol is shadowed, this only removes the most recent declaration
