@@ -174,119 +174,162 @@ static const std::unordered_map<RoundingMode, bzla::RoundingMode>
 static const std::unordered_map<bzla::RoundingMode, RoundingMode> s_rms =
     _init_reverse(s_internal_rms);
 
-/** Map api node kind to internal node kind. */
-static const std::unordered_map<Kind, bzla::node::Kind> s_internal_kinds = {
-    {Kind::CONSTANT, bzla::node::Kind::CONSTANT},
-    {Kind::CONST_ARRAY, bzla::node::Kind::CONST_ARRAY},
-    {Kind::VALUE, bzla::node::Kind::VALUE},
-    {Kind::VARIABLE, bzla::node::Kind::VARIABLE},
+// Kind::NUM_KINDS is only defined in debug builds
+static constexpr size_t s_num_kinds = static_cast<size_t>(Kind::FP_TO_UBV) + 1;
 
-    {Kind::AND, bzla::node::Kind::AND},
-    {Kind::DISTINCT, bzla::node::Kind::DISTINCT},
-    {Kind::EQUAL, bzla::node::Kind::EQUAL},
-    {Kind::IMPLIES, bzla::node::Kind::IMPLIES},
-    {Kind::NOT, bzla::node::Kind::NOT},
-    {Kind::OR, bzla::node::Kind::OR},
-    {Kind::XOR, bzla::node::Kind::XOR},
+/**
+ * Map api node kind to internal node kind, indexed by api node kind.
+ * Kinds without an internal kind (Kind::IFF) map to
+ * bzla::node::Kind::NUM_KINDS.
+ */
+static constexpr auto s_internal_kinds = [] {
+  const std::pair<Kind, bzla::node::Kind> kinds[] = {
+      {Kind::CONSTANT, bzla::node::Kind::CONSTANT},
+      {Kind::CONST_ARRAY, bzla::node::Kind::CONST_ARRAY},
+      {Kind::VALUE, bzla::node::Kind::VALUE},
+      {Kind::VARIABLE, bzla::node::Kind::VARIABLE},
 
-    {Kind::ITE, bzla::node::Kind::ITE},
+      {Kind::AND, bzla::node::Kind::AND},
+      {Kind::DISTINCT, bzla::node::Kind::DISTINCT},
+      {Kind::EQUAL, bzla::node::Kind::EQUAL},
+      {Kind::IMPLIES, bzla::node::Kind::IMPLIES},
+      {Kind::NOT, bzla::node::Kind::NOT},
+      {Kind::OR, bzla::node::Kind::OR},
+      {Kind::XOR, bzla::node::Kind::XOR},
 
-    {Kind::EXISTS, bzla::node::Kind::EXISTS},
-    {Kind::FORALL, bzla::node::Kind::FORALL},
+      {Kind::ITE, bzla::node::Kind::ITE},
 
-    {Kind::APPLY, bzla::node::Kind::APPLY},
-    {Kind::LAMBDA, bzla::node::Kind::LAMBDA},
+      {Kind::EXISTS, bzla::node::Kind::EXISTS},
+      {Kind::FORALL, bzla::node::Kind::FORALL},
 
-    {Kind::ARRAY_SELECT, bzla::node::Kind::SELECT},
-    {Kind::ARRAY_STORE, bzla::node::Kind::STORE},
+      {Kind::APPLY, bzla::node::Kind::APPLY},
+      {Kind::LAMBDA, bzla::node::Kind::LAMBDA},
 
-    {Kind::BV_ADD, bzla::node::Kind::BV_ADD},
-    {Kind::BV_AND, bzla::node::Kind::BV_AND},
-    {Kind::BV_ASHR, bzla::node::Kind::BV_ASHR},
-    {Kind::BV_COMP, bzla::node::Kind::BV_COMP},
-    {Kind::BV_CONCAT, bzla::node::Kind::BV_CONCAT},
-    {Kind::BV_DEC, bzla::node::Kind::BV_DEC},
-    {Kind::BV_INC, bzla::node::Kind::BV_INC},
-    {Kind::BV_MUL, bzla::node::Kind::BV_MUL},
-    {Kind::BV_NAND, bzla::node::Kind::BV_NAND},
-    {Kind::BV_NEG, bzla::node::Kind::BV_NEG},
-    {Kind::BV_NEG_OVERFLOW, bzla::node::Kind::BV_NEGO},
-    {Kind::BV_NOR, bzla::node::Kind::BV_NOR},
-    {Kind::BV_NOT, bzla::node::Kind::BV_NOT},
-    {Kind::BV_OR, bzla::node::Kind::BV_OR},
-    {Kind::BV_REDAND, bzla::node::Kind::BV_REDAND},
-    {Kind::BV_REDOR, bzla::node::Kind::BV_REDOR},
-    {Kind::BV_REDXOR, bzla::node::Kind::BV_REDXOR},
-    {Kind::BV_ROL, bzla::node::Kind::BV_ROL},
-    {Kind::BV_ROR, bzla::node::Kind::BV_ROR},
-    {Kind::BV_SADD_OVERFLOW, bzla::node::Kind::BV_SADDO},
-    {Kind::BV_SDIV_OVERFLOW, bzla::node::Kind::BV_SDIVO},
-    {Kind::BV_SDIV, bzla::node::Kind::BV_SDIV},
-    {Kind::BV_SGE, bzla::node::Kind::BV_SGE},
-    {Kind::BV_SGT, bzla::node::Kind::BV_SGT},
-    {Kind::BV_SHL, bzla::node::Kind::BV_SHL},
-    {Kind::BV_SHR, bzla::node::Kind::BV_SHR},
-    {Kind::BV_SLE, bzla::node::Kind::BV_SLE},
-    {Kind::BV_SLT, bzla::node::Kind::BV_SLT},
-    {Kind::BV_SMOD, bzla::node::Kind::BV_SMOD},
-    {Kind::BV_SMUL_OVERFLOW, bzla::node::Kind::BV_SMULO},
-    {Kind::BV_SREM, bzla::node::Kind::BV_SREM},
-    {Kind::BV_SSUB_OVERFLOW, bzla::node::Kind::BV_SSUBO},
-    {Kind::BV_SUB, bzla::node::Kind::BV_SUB},
-    {Kind::BV_UADD_OVERFLOW, bzla::node::Kind::BV_UADDO},
-    {Kind::BV_UDIV, bzla::node::Kind::BV_UDIV},
-    {Kind::BV_UGE, bzla::node::Kind::BV_UGE},
-    {Kind::BV_UGT, bzla::node::Kind::BV_UGT},
-    {Kind::BV_ULE, bzla::node::Kind::BV_ULE},
-    {Kind::BV_ULT, bzla::node::Kind::BV_ULT},
-    {Kind::BV_UMUL_OVERFLOW, bzla::node::Kind::BV_UMULO},
-    {Kind::BV_UREM, bzla::node::Kind::BV_UREM},
-    {Kind::BV_USUB_OVERFLOW, bzla::node::Kind::BV_USUBO},
-    {Kind::BV_XNOR, bzla::node::Kind::BV_XNOR},
-    {Kind::BV_XOR, bzla::node::Kind::BV_XOR},
-    {Kind::BV_EXTRACT, bzla::node::Kind::BV_EXTRACT},
-    {Kind::BV_REPEAT, bzla::node::Kind::BV_REPEAT},
-    {Kind::BV_ROLI, bzla::node::Kind::BV_ROLI},
-    {Kind::BV_RORI, bzla::node::Kind::BV_RORI},
-    {Kind::BV_SIGN_EXTEND, bzla::node::Kind::BV_SIGN_EXTEND},
-    {Kind::BV_ZERO_EXTEND, bzla::node::Kind::BV_ZERO_EXTEND},
+      {Kind::ARRAY_SELECT, bzla::node::Kind::SELECT},
+      {Kind::ARRAY_STORE, bzla::node::Kind::STORE},
 
-    {Kind::FP_ABS, bzla::node::Kind::FP_ABS},
-    {Kind::FP_ADD, bzla::node::Kind::FP_ADD},
-    {Kind::FP_DIV, bzla::node::Kind::FP_DIV},
-    {Kind::FP_EQUAL, bzla::node::Kind::FP_EQUAL},
-    {Kind::FP_FMA, bzla::node::Kind::FP_FMA},
-    {Kind::FP_FP, bzla::node::Kind::FP_FP},
-    {Kind::FP_GEQ, bzla::node::Kind::FP_GEQ},
-    {Kind::FP_GT, bzla::node::Kind::FP_GT},
-    {Kind::FP_IS_INF, bzla::node::Kind::FP_IS_INF},
-    {Kind::FP_IS_NAN, bzla::node::Kind::FP_IS_NAN},
-    {Kind::FP_IS_NEG, bzla::node::Kind::FP_IS_NEG},
-    {Kind::FP_IS_NORMAL, bzla::node::Kind::FP_IS_NORMAL},
-    {Kind::FP_IS_POS, bzla::node::Kind::FP_IS_POS},
-    {Kind::FP_IS_SUBNORMAL, bzla::node::Kind::FP_IS_SUBNORMAL},
-    {Kind::FP_IS_ZERO, bzla::node::Kind::FP_IS_ZERO},
-    {Kind::FP_LEQ, bzla::node::Kind::FP_LEQ},
-    {Kind::FP_LT, bzla::node::Kind::FP_LT},
-    {Kind::FP_MAX, bzla::node::Kind::FP_MAX},
-    {Kind::FP_MIN, bzla::node::Kind::FP_MIN},
-    {Kind::FP_MUL, bzla::node::Kind::FP_MUL},
-    {Kind::FP_NEG, bzla::node::Kind::FP_NEG},
-    {Kind::FP_REM, bzla::node::Kind::FP_REM},
-    {Kind::FP_RTI, bzla::node::Kind::FP_RTI},
-    {Kind::FP_SQRT, bzla::node::Kind::FP_SQRT},
-    {Kind::FP_SUB, bzla::node::Kind::FP_SUB},
-    {Kind::FP_TO_FP_FROM_BV, bzla::node::Kind::FP_TO_FP_FROM_BV},
-    {Kind::FP_TO_FP_FROM_FP, bzla::node::Kind::FP_TO_FP_FROM_FP},
-    {Kind::FP_TO_FP_FROM_SBV, bzla::node::Kind::FP_TO_FP_FROM_SBV},
-    {Kind::FP_TO_FP_FROM_UBV, bzla::node::Kind::FP_TO_FP_FROM_UBV},
-    {Kind::FP_TO_SBV, bzla::node::Kind::FP_TO_SBV},
-    {Kind::FP_TO_UBV, bzla::node::Kind::FP_TO_UBV},
-};
+      {Kind::BV_ADD, bzla::node::Kind::BV_ADD},
+      {Kind::BV_AND, bzla::node::Kind::BV_AND},
+      {Kind::BV_ASHR, bzla::node::Kind::BV_ASHR},
+      {Kind::BV_COMP, bzla::node::Kind::BV_COMP},
+      {Kind::BV_CONCAT, bzla::node::Kind::BV_CONCAT},
+      {Kind::BV_DEC, bzla::node::Kind::BV_DEC},
+      {Kind::BV_INC, bzla::node::Kind::BV_INC},
+      {Kind::BV_MUL, bzla::node::Kind::BV_MUL},
+      {Kind::BV_NAND, bzla::node::Kind::BV_NAND},
+      {Kind::BV_NEG, bzla::node::Kind::BV_NEG},
+      {Kind::BV_NEG_OVERFLOW, bzla::node::Kind::BV_NEGO},
+      {Kind::BV_NOR, bzla::node::Kind::BV_NOR},
+      {Kind::BV_NOT, bzla::node::Kind::BV_NOT},
+      {Kind::BV_OR, bzla::node::Kind::BV_OR},
+      {Kind::BV_REDAND, bzla::node::Kind::BV_REDAND},
+      {Kind::BV_REDOR, bzla::node::Kind::BV_REDOR},
+      {Kind::BV_REDXOR, bzla::node::Kind::BV_REDXOR},
+      {Kind::BV_ROL, bzla::node::Kind::BV_ROL},
+      {Kind::BV_ROR, bzla::node::Kind::BV_ROR},
+      {Kind::BV_SADD_OVERFLOW, bzla::node::Kind::BV_SADDO},
+      {Kind::BV_SDIV_OVERFLOW, bzla::node::Kind::BV_SDIVO},
+      {Kind::BV_SDIV, bzla::node::Kind::BV_SDIV},
+      {Kind::BV_SGE, bzla::node::Kind::BV_SGE},
+      {Kind::BV_SGT, bzla::node::Kind::BV_SGT},
+      {Kind::BV_SHL, bzla::node::Kind::BV_SHL},
+      {Kind::BV_SHR, bzla::node::Kind::BV_SHR},
+      {Kind::BV_SLE, bzla::node::Kind::BV_SLE},
+      {Kind::BV_SLT, bzla::node::Kind::BV_SLT},
+      {Kind::BV_SMOD, bzla::node::Kind::BV_SMOD},
+      {Kind::BV_SMUL_OVERFLOW, bzla::node::Kind::BV_SMULO},
+      {Kind::BV_SREM, bzla::node::Kind::BV_SREM},
+      {Kind::BV_SSUB_OVERFLOW, bzla::node::Kind::BV_SSUBO},
+      {Kind::BV_SUB, bzla::node::Kind::BV_SUB},
+      {Kind::BV_UADD_OVERFLOW, bzla::node::Kind::BV_UADDO},
+      {Kind::BV_UDIV, bzla::node::Kind::BV_UDIV},
+      {Kind::BV_UGE, bzla::node::Kind::BV_UGE},
+      {Kind::BV_UGT, bzla::node::Kind::BV_UGT},
+      {Kind::BV_ULE, bzla::node::Kind::BV_ULE},
+      {Kind::BV_ULT, bzla::node::Kind::BV_ULT},
+      {Kind::BV_UMUL_OVERFLOW, bzla::node::Kind::BV_UMULO},
+      {Kind::BV_UREM, bzla::node::Kind::BV_UREM},
+      {Kind::BV_USUB_OVERFLOW, bzla::node::Kind::BV_USUBO},
+      {Kind::BV_XNOR, bzla::node::Kind::BV_XNOR},
+      {Kind::BV_XOR, bzla::node::Kind::BV_XOR},
+      {Kind::BV_EXTRACT, bzla::node::Kind::BV_EXTRACT},
+      {Kind::BV_REPEAT, bzla::node::Kind::BV_REPEAT},
+      {Kind::BV_ROLI, bzla::node::Kind::BV_ROLI},
+      {Kind::BV_RORI, bzla::node::Kind::BV_RORI},
+      {Kind::BV_SIGN_EXTEND, bzla::node::Kind::BV_SIGN_EXTEND},
+      {Kind::BV_ZERO_EXTEND, bzla::node::Kind::BV_ZERO_EXTEND},
 
-/** Map internal node kind to api node kind. */
-static const std::unordered_map<bzla::node::Kind, Kind> s_kinds =
-    _init_reverse(s_internal_kinds);
+      {Kind::FP_ABS, bzla::node::Kind::FP_ABS},
+      {Kind::FP_ADD, bzla::node::Kind::FP_ADD},
+      {Kind::FP_DIV, bzla::node::Kind::FP_DIV},
+      {Kind::FP_EQUAL, bzla::node::Kind::FP_EQUAL},
+      {Kind::FP_FMA, bzla::node::Kind::FP_FMA},
+      {Kind::FP_FP, bzla::node::Kind::FP_FP},
+      {Kind::FP_GEQ, bzla::node::Kind::FP_GEQ},
+      {Kind::FP_GT, bzla::node::Kind::FP_GT},
+      {Kind::FP_IS_INF, bzla::node::Kind::FP_IS_INF},
+      {Kind::FP_IS_NAN, bzla::node::Kind::FP_IS_NAN},
+      {Kind::FP_IS_NEG, bzla::node::Kind::FP_IS_NEG},
+      {Kind::FP_IS_NORMAL, bzla::node::Kind::FP_IS_NORMAL},
+      {Kind::FP_IS_POS, bzla::node::Kind::FP_IS_POS},
+      {Kind::FP_IS_SUBNORMAL, bzla::node::Kind::FP_IS_SUBNORMAL},
+      {Kind::FP_IS_ZERO, bzla::node::Kind::FP_IS_ZERO},
+      {Kind::FP_LEQ, bzla::node::Kind::FP_LEQ},
+      {Kind::FP_LT, bzla::node::Kind::FP_LT},
+      {Kind::FP_MAX, bzla::node::Kind::FP_MAX},
+      {Kind::FP_MIN, bzla::node::Kind::FP_MIN},
+      {Kind::FP_MUL, bzla::node::Kind::FP_MUL},
+      {Kind::FP_NEG, bzla::node::Kind::FP_NEG},
+      {Kind::FP_REM, bzla::node::Kind::FP_REM},
+      {Kind::FP_RTI, bzla::node::Kind::FP_RTI},
+      {Kind::FP_SQRT, bzla::node::Kind::FP_SQRT},
+      {Kind::FP_SUB, bzla::node::Kind::FP_SUB},
+      {Kind::FP_TO_FP_FROM_BV, bzla::node::Kind::FP_TO_FP_FROM_BV},
+      {Kind::FP_TO_FP_FROM_FP, bzla::node::Kind::FP_TO_FP_FROM_FP},
+      {Kind::FP_TO_FP_FROM_SBV, bzla::node::Kind::FP_TO_FP_FROM_SBV},
+      {Kind::FP_TO_FP_FROM_UBV, bzla::node::Kind::FP_TO_FP_FROM_UBV},
+      {Kind::FP_TO_SBV, bzla::node::Kind::FP_TO_SBV},
+      {Kind::FP_TO_UBV, bzla::node::Kind::FP_TO_UBV},
+  };
+  std::array<bzla::node::Kind, s_num_kinds> res{};
+  res.fill(bzla::node::Kind::NUM_KINDS);
+  for (const auto& [k, v] : kinds)
+  {
+    assert(res[static_cast<size_t>(k)] == bzla::node::Kind::NUM_KINDS);
+    res[static_cast<size_t>(k)] = v;
+  }
+  return res;
+}();
+
+/**
+ * Map internal node kind to api node kind, indexed by internal node kind.
+ * Internal kinds without an api kind map to std::nullopt.
+ */
+static constexpr auto s_kinds = [] {
+  std::array<std::optional<Kind>,
+             static_cast<size_t>(bzla::node::Kind::NUM_KINDS)>
+      res;
+  for (size_t i = 0; i < s_num_kinds; ++i)
+  {
+    bzla::node::Kind k = s_internal_kinds[i];
+    if (k != bzla::node::Kind::NUM_KINDS)
+    {
+      assert(!res[static_cast<size_t>(k)]);
+      res[static_cast<size_t>(k)] = static_cast<Kind>(i);
+    }
+  }
+  return res;
+}();
+
+/** @return The internal node kind of the given api node kind. */
+static bzla::node::Kind
+internal_kind(Kind kind)
+{
+  assert(static_cast<size_t>(kind) < s_num_kinds);
+  assert(s_internal_kinds[static_cast<size_t>(kind)]
+         != bzla::node::Kind::NUM_KINDS);
+  return s_internal_kinds[static_cast<size_t>(kind)];
+}
 
 /* -------------------------------------------------------------------------- */
 
@@ -321,7 +364,7 @@ operator<<(std::ostream& out, Kind kind)
     }
     else
     {
-      out << s_internal_kinds.at(kind);
+      out << s_internal_kinds.at(static_cast<size_t>(kind));
     }
     return out;
   }
@@ -796,7 +839,7 @@ OptionInfo::value() const
 
 /* Term public -------------------------------------------------------------- */
 
-Term::Term() : d_node(nullptr) {}
+Term::Term() = default;
 
 Term::Term(const Term& other) = default;
 
@@ -811,41 +854,43 @@ Term::~Term() {}
 bool
 Term::is_null() const
 {
-  return d_node == nullptr;
+  return d_node->is_null();
 }
 
 uint64_t
 Term::id() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_node);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_node);
   return d_node->id();
 }
 
 Kind
 Term::kind() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_node);
-  return s_kinds.at(d_node->kind());
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_node);
+  const auto& api_kind = s_kinds[static_cast<size_t>(d_node->kind())];
+  BITWUZLA_CHECK(api_kind.has_value()) << "unexpected internal term kind";
+  return *api_kind;
 }
 
 Sort
 Term::sort() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_node);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_node);
   return d_node->type();
 }
 
 size_t
 Term::num_children() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_node);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_node);
   return d_node->num_children();
 }
 
 std::vector<Term>
 Term::children() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_node);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_node);
   std::vector<Term> res;
   for (const bzla::Node& node : *d_node)
   {
@@ -857,7 +902,7 @@ Term::children() const
 Term
 Term::operator[](size_t index) const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_node);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_node);
   BITWUZLA_CHECK(index < d_node->num_children())
       << "invalid access into term children, index '" << index
       << "' is greater than number of children";
@@ -867,14 +912,14 @@ Term::operator[](size_t index) const
 size_t
 Term::num_indices() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_node);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_node);
   return d_node->num_indices();
 }
 
 std::vector<uint64_t>
 Term::indices() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_node);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_node);
   auto indices = d_node->indices();
   return std::vector<uint64_t>(indices.begin(), indices.end());
 }
@@ -882,46 +927,46 @@ Term::indices() const
 std::optional<std::reference_wrapper<const std::string>>
 Term::symbol() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_node);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_node);
   return d_node->symbol();
 }
 
 bool
 Term::is_const() const
 {
-  return d_node != nullptr && d_node->kind() == bzla::node::Kind::CONSTANT;
+  return !d_node->is_null() && d_node->kind() == bzla::node::Kind::CONSTANT;
 }
 
 bool
 Term::is_variable() const
 {
-  return d_node != nullptr && d_node->kind() == bzla::node::Kind::VARIABLE;
+  return !d_node->is_null() && d_node->kind() == bzla::node::Kind::VARIABLE;
 }
 
 bool
 Term::is_value() const
 {
-  return d_node != nullptr && d_node->kind() == bzla::node::Kind::VALUE;
+  return !d_node->is_null() && d_node->kind() == bzla::node::Kind::VALUE;
 }
 
 bool
 Term::is_true() const
 {
-  return d_node != nullptr && d_node->is_value() && d_node->type().is_bool()
+  return !d_node->is_null() && d_node->is_value() && d_node->type().is_bool()
          && d_node->value<bool>();
 }
 
 bool
 Term::is_false() const
 {
-  return d_node != nullptr && d_node->is_value() && d_node->type().is_bool()
+  return !d_node->is_null() && d_node->is_value() && d_node->type().is_bool()
          && !d_node->value<bool>();
 }
 
 bool
 Term::is_bv_value_zero() const
 {
-  return d_node != nullptr && d_node->kind() == bzla::node::Kind::VALUE
+  return !d_node->is_null() && d_node->kind() == bzla::node::Kind::VALUE
          && d_node->type().is_bv()
          && d_node->value<bzla::BitVector>().is_zero();
 }
@@ -929,14 +974,14 @@ Term::is_bv_value_zero() const
 bool
 Term::is_bv_value_one() const
 {
-  return d_node != nullptr && d_node->kind() == bzla::node::Kind::VALUE
+  return !d_node->is_null() && d_node->kind() == bzla::node::Kind::VALUE
          && d_node->type().is_bv() && d_node->value<bzla::BitVector>().is_one();
 }
 
 bool
 Term::is_bv_value_ones() const
 {
-  return d_node != nullptr && d_node->kind() == bzla::node::Kind::VALUE
+  return !d_node->is_null() && d_node->kind() == bzla::node::Kind::VALUE
          && d_node->type().is_bv()
          && d_node->value<bzla::BitVector>().is_ones();
 }
@@ -944,7 +989,7 @@ Term::is_bv_value_ones() const
 bool
 Term::is_bv_value_min_signed() const
 {
-  return d_node != nullptr && d_node->kind() == bzla::node::Kind::VALUE
+  return !d_node->is_null() && d_node->kind() == bzla::node::Kind::VALUE
          && d_node->type().is_bv()
          && d_node->value<bzla::BitVector>().is_min_signed();
 }
@@ -952,7 +997,7 @@ Term::is_bv_value_min_signed() const
 bool
 Term::is_bv_value_max_signed() const
 {
-  return d_node != nullptr && d_node->kind() == bzla::node::Kind::VALUE
+  return !d_node->is_null() && d_node->kind() == bzla::node::Kind::VALUE
          && d_node->type().is_bv()
          && d_node->value<bzla::BitVector>().is_max_signed();
 }
@@ -960,7 +1005,7 @@ Term::is_bv_value_max_signed() const
 bool
 Term::is_fp_value_pos_zero() const
 {
-  if (d_node == nullptr || d_node->kind() != bzla::node::Kind::VALUE
+  if (d_node->is_null() || d_node->kind() != bzla::node::Kind::VALUE
       || !d_node->type().is_fp())
   {
     return false;
@@ -972,7 +1017,7 @@ Term::is_fp_value_pos_zero() const
 bool
 Term::is_fp_value_neg_zero() const
 {
-  if (d_node == nullptr || d_node->kind() != bzla::node::Kind::VALUE
+  if (d_node->is_null() || d_node->kind() != bzla::node::Kind::VALUE
       || !d_node->type().is_fp())
   {
     return false;
@@ -984,7 +1029,7 @@ Term::is_fp_value_neg_zero() const
 bool
 Term::is_fp_value_pos_inf() const
 {
-  if (d_node == nullptr || d_node->kind() != bzla::node::Kind::VALUE
+  if (d_node->is_null() || d_node->kind() != bzla::node::Kind::VALUE
       || !d_node->type().is_fp())
   {
     return false;
@@ -996,7 +1041,7 @@ Term::is_fp_value_pos_inf() const
 bool
 Term::is_fp_value_neg_inf() const
 {
-  if (d_node == nullptr || d_node->kind() != bzla::node::Kind::VALUE
+  if (d_node->is_null() || d_node->kind() != bzla::node::Kind::VALUE
       || !d_node->type().is_fp())
   {
     return false;
@@ -1008,7 +1053,7 @@ Term::is_fp_value_neg_inf() const
 bool
 Term::is_fp_value_nan() const
 {
-  return d_node != nullptr && d_node->kind() == bzla::node::Kind::VALUE
+  return !d_node->is_null() && d_node->kind() == bzla::node::Kind::VALUE
          && d_node->type().is_fp()
          && d_node->value<bzla::FloatingPoint>().fpisnan();
 }
@@ -1016,7 +1061,7 @@ Term::is_fp_value_nan() const
 bool
 Term::is_rm_value_rna() const
 {
-  return d_node != nullptr && d_node->kind() == bzla::node::Kind::VALUE
+  return !d_node->is_null() && d_node->kind() == bzla::node::Kind::VALUE
          && d_node->type().is_rm()
          && d_node->value<bzla::RoundingMode>() == bzla::RoundingMode::RNA;
 }
@@ -1024,7 +1069,7 @@ Term::is_rm_value_rna() const
 bool
 Term::is_rm_value_rne() const
 {
-  return d_node != nullptr && d_node->kind() == bzla::node::Kind::VALUE
+  return !d_node->is_null() && d_node->kind() == bzla::node::Kind::VALUE
          && d_node->type().is_rm()
          && d_node->value<bzla::RoundingMode>() == bzla::RoundingMode::RNE;
 }
@@ -1032,7 +1077,7 @@ Term::is_rm_value_rne() const
 bool
 Term::is_rm_value_rtn() const
 {
-  return d_node != nullptr && d_node->kind() == bzla::node::Kind::VALUE
+  return !d_node->is_null() && d_node->kind() == bzla::node::Kind::VALUE
          && d_node->type().is_rm()
          && d_node->value<bzla::RoundingMode>() == bzla::RoundingMode::RTN;
 }
@@ -1040,7 +1085,7 @@ Term::is_rm_value_rtn() const
 bool
 Term::is_rm_value_rtp() const
 {
-  return d_node != nullptr && d_node->kind() == bzla::node::Kind::VALUE
+  return !d_node->is_null() && d_node->kind() == bzla::node::Kind::VALUE
          && d_node->type().is_rm()
          && d_node->value<bzla::RoundingMode>() == bzla::RoundingMode::RTP;
 }
@@ -1048,7 +1093,7 @@ Term::is_rm_value_rtp() const
 bool
 Term::is_rm_value_rtz() const
 {
-  return d_node != nullptr && d_node->kind() == bzla::node::Kind::VALUE
+  return !d_node->is_null() && d_node->kind() == bzla::node::Kind::VALUE
          && d_node->type().is_rm()
          && d_node->value<bzla::RoundingMode>() == bzla::RoundingMode::RTZ;
 }
@@ -1056,8 +1101,8 @@ Term::is_rm_value_rtz() const
 std::string
 Term::str(uint8_t base) const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_node);
-  if (!d_node)
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_node);
+  if (d_node->is_null())
   {
     return "(nil)";
   }
@@ -1067,7 +1112,7 @@ Term::str(uint8_t base) const
 std::string
 Term::fp_value_to_real_str() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_node);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_node);
   BITWUZLA_CHECK(d_node->type().is_fp() && d_node->is_value())
       << "expected floating-point value term";
   const bzla::FloatingPoint& fpval = d_node->value<bzla::FloatingPoint>();
@@ -1083,7 +1128,7 @@ bool
 Term::value(uint8_t base) const
 {
   (void) base;
-  BITWUZLA_CHECK_NOT_NULL(d_node);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_node);
   BITWUZLA_CHECK_TERM_IS_BOOL_VALUE(*this);
   return d_node->value<bool>();
 }
@@ -1093,7 +1138,7 @@ RoundingMode
 Term::value(uint8_t base) const
 {
   (void) base;
-  BITWUZLA_CHECK_NOT_NULL(d_node);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_node);
   BITWUZLA_CHECK_TERM_IS_RM_VALUE(*this);
   return s_rms.at(d_node->value<bzla::RoundingMode>());
 }
@@ -1103,7 +1148,7 @@ template <>
 std::string
 Term::value(uint8_t base) const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_node);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_node);
   BITWUZLA_CHECK(d_node->is_value()) << "expected value term";
   const auto& type = d_node->type();
   if (type.is_bool())
@@ -1137,7 +1182,7 @@ template <>
 std::tuple<std::string, std::string, std::string>
 Term::value(uint8_t base) const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_node);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_node);
   BITWUZLA_CHECK_TERM_IS_FP(*this);
   BITWUZLA_CHECK_VALUE_BASE(base);
   const bzla::FloatingPoint& fp_value = d_node->value<bzla::FloatingPoint>();
@@ -1154,11 +1199,11 @@ Term::value(uint8_t base) const
 bool
 operator==(const Term& a, const Term& b)
 {
-  if (a.d_node == nullptr)
+  if (a.d_node->is_null())
   {
-    return b.d_node == nullptr;
+    return b.d_node->is_null();
   }
-  if (b.d_node == nullptr)
+  if (b.d_node->is_null())
   {
     return false;
   }
@@ -1168,12 +1213,12 @@ operator==(const Term& a, const Term& b)
 bool
 operator!=(const Term& a, const Term& b)
 {
-  if (a.d_node == nullptr)
+  if (a.d_node->is_null())
   {
-    return b.d_node != nullptr;
+    return !b.d_node->is_null();
     ;
   }
-  if (b.d_node == nullptr)
+  if (b.d_node->is_null())
   {
     return true;
   }
@@ -1183,7 +1228,7 @@ operator!=(const Term& a, const Term& b)
 std::ostream&
 operator<<(std::ostream& out, const Term& term)
 {
-  if (term.d_node)
+  if (!term.d_node->is_null())
   {
     out << *term.d_node;
   }
@@ -1196,7 +1241,7 @@ operator<<(std::ostream& out, const Term& term)
 
 /* Sort public -------------------------------------------------------------- */
 
-Sort::Sort() : d_type(nullptr) {}
+Sort::Sort() = default;
 
 Sort::Sort(const Sort& other) = default;
 
@@ -1211,20 +1256,20 @@ Sort::~Sort() {}
 bool
 Sort::is_null() const
 {
-  return d_type == nullptr;
+  return d_type->is_null();
 }
 
 uint64_t
 Sort::id() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_type);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_type);
   return d_type->id();
 }
 
 uint64_t
 Sort::bv_size() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_type);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_type);
   BITWUZLA_CHECK_SORT_IS_BV(*this);
   return d_type->bv_size();
 }
@@ -1232,7 +1277,7 @@ Sort::bv_size() const
 uint64_t
 Sort::fp_exp_size() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_type);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_type);
   BITWUZLA_CHECK_SORT_IS_FP(*this);
   return d_type->fp_exp_size();
 }
@@ -1240,7 +1285,7 @@ Sort::fp_exp_size() const
 uint64_t
 Sort::fp_sig_size() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_type);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_type);
   BITWUZLA_CHECK_SORT_IS_FP(*this);
   return d_type->fp_sig_size();
 }
@@ -1248,7 +1293,7 @@ Sort::fp_sig_size() const
 Sort
 Sort::array_index() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_type);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_type);
   BITWUZLA_CHECK_SORT_IS_ARRAY(*this);
   return d_type->array_index();
 }
@@ -1256,7 +1301,7 @@ Sort::array_index() const
 Sort
 Sort::array_element() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_type);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_type);
   BITWUZLA_CHECK_SORT_IS_ARRAY(*this);
   return d_type->array_element();
 }
@@ -1264,7 +1309,7 @@ Sort::array_element() const
 std::vector<Sort>
 Sort::fun_domain() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_type);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_type);
   BITWUZLA_CHECK_SORT_IS_FUN(*this);
   const std::vector<bzla::Type> types = d_type->fun_types();
   assert(types.size() > 0);
@@ -1279,7 +1324,7 @@ Sort::fun_domain() const
 Sort
 Sort::fun_codomain() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_type);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_type);
   BITWUZLA_CHECK_SORT_IS_FUN(*this);
   const std::vector<bzla::Type> types = d_type->fun_types();
   assert(types.size() > 0);
@@ -1289,7 +1334,7 @@ Sort::fun_codomain() const
 size_t
 Sort::fun_arity() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_type);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_type);
   BITWUZLA_CHECK_SORT_IS_FUN(*this);
   return d_type->fun_arity();
 }
@@ -1297,7 +1342,7 @@ Sort::fun_arity() const
 std::optional<std::string>
 Sort::uninterpreted_symbol() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_type);
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_type);
   BITWUZLA_CHECK_SORT_IS_UNINTEPRETED(*this);
   return d_type->uninterpreted_symbol();
 }
@@ -1305,50 +1350,50 @@ Sort::uninterpreted_symbol() const
 bool
 Sort::is_array() const
 {
-  return d_type != nullptr && d_type->is_array();
+  return !d_type->is_null() && d_type->is_array();
 }
 
 bool
 Sort::is_bool() const
 {
-  return d_type != nullptr && d_type->is_bool();
+  return !d_type->is_null() && d_type->is_bool();
 }
 
 bool
 Sort::is_bv() const
 {
-  return d_type != nullptr && d_type->is_bv();
+  return !d_type->is_null() && d_type->is_bv();
 }
 
 bool
 Sort::is_fp() const
 {
-  return d_type != nullptr && d_type->is_fp();
+  return !d_type->is_null() && d_type->is_fp();
 }
 
 bool
 Sort::is_fun() const
 {
-  return d_type != nullptr && d_type->is_fun();
+  return !d_type->is_null() && d_type->is_fun();
 }
 
 bool
 Sort::is_rm() const
 {
-  return d_type != nullptr && d_type->is_rm();
+  return !d_type->is_null() && d_type->is_rm();
 }
 
 bool
 Sort::is_uninterpreted() const
 {
-  return d_type != nullptr && d_type->is_uninterpreted();
+  return !d_type->is_null() && d_type->is_uninterpreted();
 }
 
 std::string
 Sort::str() const
 {
-  BITWUZLA_CHECK_NOT_NULL(d_type);
-  if (!d_type)
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_type);
+  if (d_type->is_null())
   {
     return "(nil)";
   }
@@ -1358,12 +1403,12 @@ Sort::str() const
 bool
 operator==(const Sort& a, const Sort& b)
 {
-  if (a.d_type == nullptr)
+  if (a.d_type->is_null())
   {
-    return b.d_type == nullptr;
+    return b.d_type->is_null();
     ;
   }
-  if (b.d_type == nullptr)
+  if (b.d_type->is_null())
   {
     return false;
   }
@@ -1373,12 +1418,12 @@ operator==(const Sort& a, const Sort& b)
 bool
 operator!=(const Sort& a, const Sort& b)
 {
-  if (a.d_type == nullptr)
+  if (a.d_type->is_null())
   {
-    return b.d_type != nullptr;
+    return !b.d_type->is_null();
     ;
   }
-  if (b.d_type == nullptr)
+  if (b.d_type->is_null())
   {
     return true;
   }
@@ -1388,7 +1433,7 @@ operator!=(const Sort& a, const Sort& b)
 std::ostream&
 operator<<(std::ostream& out, const Sort& sort)
 {
-  if (sort.d_type)
+  if (!sort.d_type->is_null())
   {
     out << *sort.d_type;
   }
@@ -1630,7 +1675,7 @@ Bitwuzla::check_sat(const std::vector<Term>& assumptions)
     for (size_t i = 0, size = assumptions.size(); i < size; ++i)
     {
       const Term& term = assumptions[i];
-      BITWUZLA_CHECK_NOT_NULL_AT_IDX(term.d_node, i);
+      BITWUZLA_CHECK_HANDLE_NOT_NULL_AT_IDX(term.d_node, i);
       BITWUZLA_CHECK_TERM_TERM_MGR_BITWUZLA(
           term, "assumption at position " + std::to_string(i));
       d_ctx->assert_formula(*term.d_node);
@@ -1683,7 +1728,7 @@ Bitwuzla::get_interpolant(const std::vector<Term>& A)
     for (size_t i = 0, size = A.size(); i < size; ++i)
     {
       const Term& term = A[i];
-      BITWUZLA_CHECK_NOT_NULL_AT_IDX(term.d_node, i);
+      BITWUZLA_CHECK_HANDLE_NOT_NULL_AT_IDX(term.d_node, i);
       BITWUZLA_CHECK_TERM_TERM_MGR_BITWUZLA(
           term, "assertion at position " + std::to_string(i));
       BITWUZLA_CHECK(_orig_assertions.find(*term.d_node)
@@ -1730,7 +1775,7 @@ Bitwuzla::get_interpolants(const std::vector<std::vector<Term>>& A)
       for (size_t j = 0, size = part.size(); j < size; ++j)
       {
         const Term& term = A[i][j];
-        BITWUZLA_CHECK(term.d_node != nullptr)
+        BITWUZLA_CHECK(!term.d_node->is_null())
             << "expected non-null term at A[" << i << "][" << j << "]";
         BITWUZLA_CHECK_TERM_TERM_MGR_BITWUZLA(
             term,
@@ -2278,6 +2323,23 @@ TermManager::mk_term(Kind kind,
                      const std::vector<Term>& args,
                      const std::vector<uint64_t>& indices)
 {
+  // The internal nodes of the arguments, the vector is reused to avoid
+  // allocating a vector for every created term. Released on return.
+  thread_local std::vector<bzla::Node> t_children;
+  assert(t_children.empty());
+  struct Release
+  {
+    ~Release() { t_children.clear(); }
+  } release;
+  auto children = [&args]() -> const std::vector<bzla::Node>& {
+    t_children.reserve(args.size());
+    for (const Term& arg : args)
+    {
+      t_children.push_back(*arg.d_node);
+    }
+    return t_children;
+  };
+
   switch (kind)
   {
     // left/right associative, chainable, pairwise
@@ -2350,15 +2412,13 @@ TermManager::mk_term(Kind kind,
       if (kind == Kind::IFF)
       {
         return bzla::node::utils::mk_nary(
-            *d_nm, bzla::node::Kind::EQUAL, Term::term_vector_to_nodes(args));
+            *d_nm, bzla::node::Kind::EQUAL, children());
       }
       else if (kind == Kind::DISTINCT)
       {
-        return d_nm->mk_node(bzla::node::Kind::DISTINCT,
-                             Term::term_vector_to_nodes(args));
+        return d_nm->mk_node(bzla::node::Kind::DISTINCT, children());
       }
-      return bzla::node::utils::mk_nary(
-          *d_nm, s_internal_kinds.at(kind), Term::term_vector_to_nodes(args));
+      return bzla::node::utils::mk_nary(*d_nm, internal_kind(kind), children());
     // unary
     case Kind::NOT:
     case Kind::BV_DEC:
@@ -2523,7 +2583,7 @@ TermManager::mk_term(Kind kind,
       const auto& types = type_fun.fun_types();
       for (size_t i = 1; i <= paramc; ++i)
       {
-        BITWUZLA_CHECK_NOT_NULL_AT_IDX(args[i].d_node, i);
+        BITWUZLA_CHECK_HANDLE_NOT_NULL_AT_IDX(args[i].d_node, i);
         BITWUZLA_CHECK_TERM_NOT_IS_FUN_AT_IDX(args, i);
         BITWUZLA_CHECK(types[i - 1] == args[i].d_node->type())
             << "sort of argument at index " << i
@@ -2621,8 +2681,7 @@ TermManager::mk_term(Kind kind,
       BITWUZLA_CHECK(false) << "unexpected operator kind '" << kind << "'";
   }
 
-  return d_nm->mk_node(
-      s_internal_kinds.at(kind), Term::term_vector_to_nodes(args), indices);
+  return d_nm->mk_node(internal_kind(kind), children(), indices);
 }
 
 Term
@@ -2756,18 +2815,9 @@ TermManager::substitute_terms(std::vector<Term>& terms,
 
 /* Term private ------------------------------------------------------------- */
 
-Term::Term(const bzla::Node& node) : d_node(new bzla::Node(node)) {}
+Term::Term(const bzla::Node& node) : d_node(node) {}
 
-std::vector<bzla::Node>
-Term::term_vector_to_nodes(const std::vector<Term>& terms)
-{
-  std::vector<bzla::Node> res;
-  for (const auto& term : terms)
-  {
-    res.emplace_back(*term.d_node);
-  }
-  return res;
-}
+Term::Term(bzla::Node&& node) : d_node(std::move(node)) {}
 
 std::vector<bitwuzla::Term>
 Term::node_vector_to_terms(const std::vector<bzla::Node>& nodes)
@@ -2782,7 +2832,9 @@ Term::node_vector_to_terms(const std::vector<bzla::Node>& nodes)
 
 /* Sort private ------------------------------------------------------------- */
 
-Sort::Sort(const bzla::Type& type) : d_type(new bzla::Type(type)) {}
+Sort::Sort(const bzla::Type& type) : d_type(type) {}
+
+Sort::Sort(bzla::Type&& type) : d_type(std::move(type)) {}
 
 std::vector<bzla::Type>
 Sort::sort_vector_to_types(const std::vector<Sort>& sorts)
@@ -2829,7 +2881,7 @@ to_string(bitwuzla::Kind kind)
     }
     else
     {
-      ss << bitwuzla::s_internal_kinds.at(kind);
+      ss << bitwuzla::s_internal_kinds.at(static_cast<size_t>(kind));
     }
     return ss.str();
   }

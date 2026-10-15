@@ -22,6 +22,7 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <new>
 #include <optional>
 #include <unordered_map>
 #include <unordered_set>
@@ -48,6 +49,59 @@ class SatSolverFactory;
 namespace bitwuzla {
 class Term;
 class Sort;
+
+#ifndef DOXYGEN_SKIP
+namespace detail {
+/**
+ * Stores a value of the opaque type T in place, where T is a reference
+ * counted handle of the size of a pointer (bzla::Node or bzla::Type).
+ *
+ * The members of this class are only instantiated in the implementation of
+ * the API, where T is a complete type. This keeps T opaque to users of the
+ * API while avoiding a heap allocation for every handle.
+ */
+template <class T>
+class Opaque
+{
+ public:
+  Opaque() { new (d_storage) T(); }
+  Opaque(const T& t) { new (d_storage) T(t); }
+  Opaque(T&& t) noexcept { new (d_storage) T(std::move(t)); }
+  Opaque(const Opaque& other) { new (d_storage) T(*other); }
+  Opaque(Opaque&& other) noexcept { new (d_storage) T(std::move(*other)); }
+  ~Opaque() { get()->~T(); }
+  Opaque& operator=(const Opaque& other)
+  {
+    *get() = *other;
+    return *this;
+  }
+  Opaque& operator=(Opaque&& other) noexcept
+  {
+    *get() = std::move(*other);
+    return *this;
+  }
+
+  T& operator*() { return *get(); }
+  const T& operator*() const { return *get(); }
+  T* operator->() { return get(); }
+  const T* operator->() const { return get(); }
+
+ private:
+  T* get()
+  {
+    static_assert(sizeof(T) <= sizeof(d_storage));
+    static_assert(alignof(T) <= alignof(void*));
+    return std::launder(reinterpret_cast<T*>(d_storage));
+  }
+  const T* get() const
+  {
+    return std::launder(reinterpret_cast<const T*>(d_storage));
+  }
+  /** The storage of the handle. */
+  alignas(void*) unsigned char d_storage[sizeof(void*)];
+};
+}  // namespace detail
+#endif
 }  // namespace bitwuzla
 
 /* -------------------------------------------------------------------------- */
@@ -843,16 +897,15 @@ class Term
   T value(uint8_t base = 2) const;
 
  private:
-  /** Convert vector of terms to internal nodes. */
-  static std::vector<bzla::Node> term_vector_to_nodes(
-      const std::vector<Term>& terms);
   /** Convert vector of internal nodes to terms. */
   static std::vector<bitwuzla::Term> node_vector_to_terms(
       const std::vector<bzla::Node>& nodes);
   /** Constructor from internal node. */
   Term(const bzla::Node& node);
+  /** Constructor from internal node. */
+  Term(bzla::Node&& node);
   /** The internal node wrapped by this term. */
-  std::shared_ptr<bzla::Node> d_node;
+  detail::Opaque<bzla::Node> d_node;
 };
 
 #ifndef DOXYGEN_SKIP
@@ -1091,8 +1144,10 @@ class Sort
       const std::vector<Sort>& sorts);
   /** Constructor from internal type. */
   Sort(const bzla::Type& type);
+  /** Constructor from internal type. */
+  Sort(bzla::Type&& type);
   /** The internal type wrapped by this sort. */
-  std::shared_ptr<bzla::Type> d_type;
+  detail::Opaque<bzla::Type> d_type;
 };
 
 /**
