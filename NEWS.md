@@ -2,6 +2,19 @@
 
 This file collects a summary of important and/or user-visible changes.
 
+- New option `--bv-cnf-scope` selects the assertion level at which the
+  definitional clauses of AIG nodes are added in incremental mode. Clauses of
+  a popped level are disabled in the SAT solver, and their AIG nodes are
+  re-encoded when they are needed after the pop. By default (`adaptive`), an
+  AIG node takes the highest level of its children, where inputs take the
+  level their term was created at. An AIG node that is first required by an
+  assertion of a pushed level but only depends on terms of lower levels thus
+  keeps its clauses after the pop of that level. If most of these AIG nodes
+  were not needed again after recent pops, new ones take the assertion level
+  instead. The previous behavior, the level of the first assertion that
+  requires the AIG node, is available via `--bv-cnf-scope=assertion`. With
+  `--bv-cnf-scope=permanent`, definitional clauses are never disabled.
+
 - Release builds configured via `configure.py` now use **link-time
   optimization** by default if the compiler generates fat objects and the
   linker supports link-time optimization, e.g., with GCC, or with Clang on

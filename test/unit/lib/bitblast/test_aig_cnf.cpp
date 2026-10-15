@@ -1434,4 +1434,221 @@ TEST_F(TestAigCnf, maj3_is_variant_sensitive)
   ASSERT_LT(ite_form.size.clauses, carry_form.size.clauses);
 }
 
+/* -------------------------------------------------------------------------
+ * Assertion levels
+ * ------------------------------------------------------------------------- */
+
+namespace {
+
+/** Records the assertion level of each added clause. */
+class LevelSatSolver : public DummySatSolver
+{
+ public:
+  void add(int64_t lit, int64_t aig_id = 0) override
+  {
+    if (lit == 0)
+    {
+      d_levels.push_back(d_level);
+    }
+    DummySatSolver::add(lit, aig_id);
+  }
+
+  void set_level(uint32_t level) override { d_level = level; }
+
+  /** @return The levels of the clauses added since the last call. */
+  std::vector<uint32_t> new_levels()
+  {
+    std::vector<uint32_t> res(d_levels.begin() + d_num_seen, d_levels.end());
+    d_num_seen = d_levels.size();
+    return res;
+  }
+
+ private:
+  uint32_t d_level = 0;
+  std::vector<uint32_t> d_levels;
+  size_t d_num_seen = 0;
+};
+
+using LevelMode = bitblast::AigCnfEncoder::LevelMode;
+using Levels    = std::vector<uint32_t>;
+
+}  // namespace
+
+TEST_F(TestAigCnf, level_assertion)
+{
+  bitblast::BitInterface<bitblast::AigNode> aigmgr;
+  LevelSatSolver solver;
+  bitblast::AigCnfEncoder enc(solver, LevelMode::ASSERTION);
+
+  bitblast::AigNode a = aigmgr.mk_bit();
+  bitblast::AigNode b = aigmgr.mk_bit();
+  bitblast::AigNode g = aigmgr.mk_and(a, b);
+
+  enc.push();
+  enc.encode(g, false, 1);
+  ASSERT_EQ(solver.new_levels(), Levels({1, 1, 1}));
+  enc.pop();
+  ASSERT_FALSE(enc.is_encoded(g));
+  ASSERT_FALSE(enc.is_encoded(a));
+
+  enc.encode(g, false, 0);
+  ASSERT_EQ(solver.new_levels(), Levels({0, 0, 0}));
+  ASSERT_EQ(enc.statistics().pop.num_reencoded_aigs, 3);
+}
+
+TEST_F(TestAigCnf, level_assertion_true)
+{
+  bitblast::BitInterface<bitblast::AigNode> aigmgr;
+  LevelSatSolver solver;
+  bitblast::AigCnfEncoder enc(solver, LevelMode::ASSERTION);
+
+  bitblast::AigNode t = aigmgr.mk_true();
+
+  enc.push();
+  enc.encode(t, false, 1);
+  ASSERT_EQ(solver.new_levels(), Levels({1}));
+  ASSERT_EQ(enc.cnf_var(t), enc.true_var());
+  ASSERT_EQ(enc.statistics().pop.num_reencoded_aigs, 0);
+  enc.pop();
+  ASSERT_FALSE(enc.is_encoded(t));
+
+  enc.encode(t, false, 0);
+  ASSERT_EQ(solver.new_levels(), Levels({0}));
+  ASSERT_EQ(enc.cnf_var(t), enc.true_var());
+  ASSERT_EQ(enc.statistics().allocated_vars, 1);
+  ASSERT_EQ(enc.statistics().pop.num_reencoded_aigs, 1);
+  ASSERT_EQ(enc.statistics().pop.num_reencoded_clauses, 1);
+}
+
+TEST_F(TestAigCnf, level_permanent)
+{
+  bitblast::BitInterface<bitblast::AigNode> aigmgr;
+  LevelSatSolver solver;
+  bitblast::AigCnfEncoder enc(solver, LevelMode::PERMANENT);
+
+  bitblast::AigNode a   = aigmgr.mk_bit();
+  bitblast::AigNode b   = aigmgr.mk_bit();
+  bitblast::AigNode c   = aigmgr.mk_bit();
+  bitblast::AigNode g   = aigmgr.mk_and(a, b);
+  bitblast::AigNode top = aigmgr.mk_or(g, c);
+
+  enc.push();
+  enc.encode(g, false, 1);
+  ASSERT_EQ(solver.new_levels(), Levels({0, 0, 0}));
+  // Only the clause asserting the top-level OR is scoped.
+  enc.encode(top, true, 1);
+  ASSERT_EQ(solver.new_levels(), Levels({1}));
+  enc.pop();
+  ASSERT_TRUE(enc.is_encoded(g));
+  ASSERT_EQ(enc.statistics().pop.num_reset_aigs, 0);
+}
+
+TEST_F(TestAigCnf, level_input)
+{
+  bitblast::BitInterface<bitblast::AigNode> aigmgr;
+  LevelSatSolver solver;
+  bitblast::AigCnfEncoder enc(solver, LevelMode::ADAPTIVE);
+
+  bitblast::AigNode a = aigmgr.mk_bit();
+  bitblast::AigNode b = aigmgr.mk_bit();
+  bitblast::AigNode c = aigmgr.mk_bit();
+  bitblast::AigNode g = aigmgr.mk_and(a, b);
+  bitblast::AigNode h = aigmgr.mk_and(g, c);
+
+  std::unordered_map<int64_t, uint32_t> levels{{c.get_id(), 1}};
+  enc.set_input_level([&levels](const bitblast::AigNode& aig) {
+    auto it = levels.find(aig.get_id());
+    return it == levels.end() ? 0 : it->second;
+  });
+
+  enc.push();
+  enc.encode(g, false, 1);
+  ASSERT_EQ(solver.new_levels(), Levels({0, 0, 0}));
+  enc.encode(h, false, 1);
+  ASSERT_EQ(solver.new_levels(), Levels({1, 1, 1}));
+  enc.pop();
+  ASSERT_TRUE(enc.is_encoded(a));
+  ASSERT_TRUE(enc.is_encoded(g));
+  ASSERT_FALSE(enc.is_encoded(c));
+  ASSERT_FALSE(enc.is_encoded(h));
+
+  // Encoding at a lower assertion level (e.g., a lemma) does not lower the
+  // level of a node over an input of a higher level.
+  enc.push();
+  enc.encode(h, false, 0);
+  ASSERT_EQ(solver.new_levels(), Levels({1, 1, 1}));
+  enc.pop();
+  ASSERT_FALSE(enc.is_encoded(h));
+}
+
+TEST_F(TestAigCnf, level_lemma)
+{
+  bitblast::BitInterface<bitblast::AigNode> aigmgr;
+  LevelSatSolver solver;
+  bitblast::AigCnfEncoder enc(solver, LevelMode::ADAPTIVE);
+
+  bitblast::AigNode a = aigmgr.mk_bit();
+  bitblast::AigNode b = aigmgr.mk_bit();
+  bitblast::AigNode c = aigmgr.mk_bit();
+  bitblast::AigNode g = aigmgr.mk_and(a, b);
+
+  std::unordered_map<int64_t, uint32_t> levels{{c.get_id(), 1}};
+  enc.set_input_level([&levels](const bitblast::AigNode& aig) {
+    auto it = levels.find(aig.get_id());
+    return it == levels.end() ? 0 : it->second;
+  });
+
+  // The clauses asserting a top-level node encoded at level 0 (e.g., a lemma)
+  // take the level of the nodes they refer to.
+  enc.push();
+  enc.encode(a, true, 0);
+  ASSERT_EQ(solver.new_levels(), Levels({0}));
+  enc.encode(c, true, 0);
+  ASSERT_EQ(solver.new_levels(), Levels({1}));
+  enc.encode(aigmgr.mk_or(g, c), true, 0);
+  ASSERT_EQ(solver.new_levels(), Levels({0, 0, 0, 1}));
+  enc.pop();
+  ASSERT_TRUE(enc.is_encoded(g));
+  ASSERT_FALSE(enc.is_encoded(c));
+  // Nodes encoded at level 0 are no reuse candidates.
+  ASSERT_EQ(enc.statistics().adaptive.num_candidates, 0);
+}
+
+TEST_F(TestAigCnf, level_adaptive)
+{
+  bitblast::BitInterface<bitblast::AigNode> aigmgr;
+  LevelSatSolver solver;
+  bitblast::AigCnfEncoder enc(solver, LevelMode::ADAPTIVE);
+  enc.set_input_level([](const bitblast::AigNode&) { return 0; });
+
+  // Nodes encoded in a pushed level over level 0 inputs are permanent until
+  // the estimated fraction of them needed again after a pop drops below the
+  // threshold.
+  std::vector<bitblast::AigNode> nodes;
+  std::vector<Levels> expected = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {1, 1, 1}};
+  for (const Levels& levels : expected)
+  {
+    nodes.push_back(aigmgr.mk_and(aigmgr.mk_bit(), aigmgr.mk_bit()));
+    enc.push();
+    enc.encode(nodes.back(), false, 1);
+    ASSERT_EQ(solver.new_levels(), levels);
+    enc.pop();
+  }
+  ASSERT_TRUE(enc.is_encoded(nodes[0]));
+  ASSERT_FALSE(enc.is_encoded(nodes.back()));
+  ASSERT_EQ(enc.statistics().adaptive.num_candidates, 4);
+  ASSERT_EQ(enc.statistics().adaptive.num_candidates_kept, 3);
+  ASSERT_EQ(enc.statistics().adaptive.num_candidates_at_assertion_level, 1);
+
+  // A later encoding that refers to a candidate of a popped level reuses it.
+  enc.encode(aigmgr.mk_and(nodes[0], aigmgr.mk_bit()), false, 0);
+  ASSERT_EQ(enc.statistics().adaptive.num_candidates_needed_again, 1);
+
+  // A candidate reset by pop() is reused when it is merged into the gate of a
+  // later encoding instead of being encoded again.
+  enc.encode(aigmgr.mk_and(nodes.back(), aigmgr.mk_bit()), false, 0);
+  ASSERT_FALSE(enc.is_encoded(nodes.back()));
+  ASSERT_EQ(enc.statistics().adaptive.num_candidates_needed_again, 2);
+}
+
 }  // namespace bzla::test

@@ -208,10 +208,8 @@ class NodeManager
       const std::vector<Node>& children,
       std::span<const uint64_t> indices = {});
 
-#ifndef NDEBUG
-  /** @return Current maximum node id. */
+  /** @return The id the next created node will get. */
   uint64_t max_node_id() const { return d_node_id_counter; }
-#endif
 
   const auto& statistics() const { return d_stats; }
 

@@ -10,11 +10,13 @@
 
 #include "solver/solver_engine.h"
 
+#include <algorithm>
 #include <iomanip>
 #include <unordered_set>
 
 #include "env.h"
 #include "node/node.h"
+#include "node/node_manager.h"
 #include "node/node_ref_vector.h"
 #include "node/node_utils.h"
 #include "printer/smt2_printer.h"
@@ -39,6 +41,7 @@ SolverEngine::SolverEngine(SolvingContext& context)
       d_distinct_n(&d_backtrack_mgr),
       d_lemma_cache(&d_backtrack_mgr),
       d_unsupported(&d_backtrack_mgr),
+      d_creation_levels(context.backtrack_mgr(), context.env().nm()),
       d_sat_state(Result::UNKNOWN),
       d_in_solving_mode(false),
       d_stats(context.env().statistics(), "solver::engine::"),
@@ -927,6 +930,25 @@ SolverEngine::cached_value(const Node& term) const
   assert(it != d_value_cache.end());
   assert(!it->second.is_null());
   return it->second;
+}
+
+uint32_t
+SolverEngine::creation_level(uint64_t id) const
+{
+  return d_creation_levels.level(id);
+}
+
+void
+SolverEngine::CreationLevels::push()
+{
+  d_ids.push_back(d_nm.max_node_id());
+}
+
+uint32_t
+SolverEngine::CreationLevels::level(uint64_t id) const
+{
+  return static_cast<uint32_t>(std::upper_bound(d_ids.begin(), d_ids.end(), id)
+                               - d_ids.begin());
 }
 
 uint32_t

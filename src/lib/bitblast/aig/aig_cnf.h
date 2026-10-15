@@ -10,6 +10,12 @@
 
 #ifndef BZLA__BITBLAST_AIG_CNF_H
 #define BZLA__BITBLAST_AIG_CNF_H
+
+#include <cstdint>
+#include <cstdlib>
+#include <functional>
+#include <vector>
+
 #include "bitblast/aig/aig_node.h"
 
 namespace bzla::bitblast {
@@ -74,6 +80,30 @@ class SatInterface
 class AigCnfEncoder
 {
  public:
+  /**
+   * Determines the assertion level of the clauses that define the CNF variable
+   * of an AIG node. Clauses of a popped level are disabled and the AIG nodes
+   * they define are encoded again when needed.
+   */
+  enum class LevelMode
+  {
+    /** The level of the first assertion that requires the node. */
+    ASSERTION,
+    /**
+     * Level 0, definitions are never disabled. Only the clauses that assert a
+     * top-level node are added at the given level.
+     */
+    PERMANENT,
+    /**
+     * The maximum level of the children of the node, an input takes the level
+     * given by set_input_level(). Nodes required by an assertion of the
+     * current pushed level but with a lower level (reuse candidates) instead
+     * take the assertion level while the estimated fraction of them needed
+     * again after a pop is below s_reuse_threshold.
+     */
+    ADAPTIVE,
+  };
+
   struct Statistics
   {
     uint64_t allocated_vars = 0;  // Number of allocated SAT variables
@@ -84,9 +114,56 @@ class AigCnfEncoder
     uint64_t num_xors       = 0;  // Number of extracted xor/xnor gates
     uint64_t num_merged     = 0;  // Number of AND nodes merged into an n-ary AND
     uint64_t num_top_ors    = 0;  // Number of top-level ORs encoded as a clause
+    /** Encodings discarded by pop() and encoded again, in all modes. */
+    struct
+    {
+      /**
+       * Number of AIGs whose encoding pop() reset, including inputs. An AIG
+       * reset by several pops is counted for each.
+       */
+      uint64_t num_reset_aigs = 0;
+      /** Number of times a reset AIG was encoded again. */
+      uint64_t num_reencoded_aigs = 0;
+      /** Number of clauses added to encode reset AIGs again. */
+      uint64_t num_reencoded_clauses = 0;
+    } pop;
+    /** Reuse candidates of mode ADAPTIVE, which are always AND nodes. */
+    struct
+    {
+      /** Number of times a candidate was encoded. */
+      uint64_t num_candidates = 0;
+      /**
+       * Number of candidates encoded at the level of their children, below the
+       * assertion level, such that they stay encoded when it is popped.
+       */
+      uint64_t num_candidates_kept = 0;
+      /**
+       * Number of candidates encoded at the assertion level, such that they
+       * are reset when it is popped.
+       */
+      uint64_t num_candidates_at_assertion_level = 0;
+      /**
+       * Number of candidates needed again after their level was popped,
+       * whether they were kept or reset (see pop.num_reencoded_aigs).
+       */
+      uint64_t num_candidates_needed_again = 0;
+    } adaptive;
   };
 
-  AigCnfEncoder(SatInterface& sat_solver);
+  AigCnfEncoder(SatInterface& sat_solver,
+                LevelMode mode = LevelMode::ASSERTION);
+
+  /** @return The level mode. */
+  LevelMode level_mode() const { return d_mode; }
+
+  /**
+   * Set the function that determines the level of an AIG input for mode
+   * ADAPTIVE. If not set, inputs take level 0.
+   */
+  void set_input_level(std::function<uint32_t(const AigNode&)> fun)
+  {
+    d_input_level = std::move(fun);
+  }
 
   /**
    * Recursively encodes AIG node to CNF.
@@ -95,6 +172,9 @@ class AigCnfEncoder
    * @param top_level Indicates whether given node is at the top level, which
    *        enables certain optimization.
    * @param level Assertion level to encode at (forwarded to the SAT solver).
+   *        The clauses that assert a top-level node are added at the level of
+   *        the nodes they refer to if it is higher, which allows to encode a
+   *        lemma at level 0 in mode ADAPTIVE.
    * */
   void encode(const AigNode& node, bool top_level = false, uint32_t level = 0);
 
@@ -132,6 +212,11 @@ class AigCnfEncoder
   static constexpr size_t s_max_and_size = 64;
   /** Maximum number of literals in the clause emitted for a top-level OR. */
   static constexpr size_t s_max_top_or_size = 256;
+  /**
+   * ADAPTIVE: Reuse candidates are encoded at the assertion level while the
+   * estimated fraction of them needed again after pop() is below this value.
+   */
+  static constexpr double s_reuse_threshold = 0.5;
 
   /** Lazily initializes d_true_var on the first encode() call. */
   void initialize();
@@ -167,10 +252,39 @@ class AigCnfEncoder
   void collect_and(const AigNode& aig,
                    std::vector<AigNode>& leafs,
                    size_t max_size);
+  /** @return The index of `aig` in d_aig_encoded. */
+  static size_t aig_pos(const AigNode& aig)
+  {
+    return static_cast<size_t>(std::abs(aig.get_id()) - 1);
+  }
   /** Ensure that `d_aig_encoded` is big enough to store `aig`. */
   void resize(const AigNode& aig);
-  /** Mark `aig` as encoded. */
-  void set_encoded(const AigNode& aig);
+  /**
+   * Mark `aig` as encoded at given level.
+   * @return True if `aig` was encoded before and reset by pop().
+   */
+  bool set_encoded(const AigNode& aig, uint32_t level);
+  /** @return The level the clauses defining encoded `aig` were added at. */
+  uint32_t level(const AigNode& aig) const;
+  /** @return The level an AIG input is encoded at, only used by ADAPTIVE. */
+  uint32_t input_level(const AigNode& aig) const;
+  /**
+   * Mark the ADAPTIVE reuse candidates in the cone of encoded `aig` as reused.
+   */
+  void mark_reused(const AigNode& aig);
+  /**
+   * Mark `aig` as reused if it is a pending ADAPTIVE reuse candidate.
+   * @return True if `aig` was pending.
+   */
+  bool reuse_pending(const AigNode& aig);
+  /** Update the ADAPTIVE reuse estimate on pop(). */
+  void update_reuse(const std::vector<size_t>& candidates);
+  /**
+   * ADAPTIVE: @return True if reuse candidates are estimated to be needed
+   *           again after pop() often enough to keep the level of their
+   *           children instead of taking the assertion level.
+   */
+  bool reuse_expected() const { return d_reuse >= s_reuse_threshold; }
 
   /**
    * Maps AIG id to CNF id, which indicates whether the AIG was encoded.
@@ -183,10 +297,40 @@ class AigCnfEncoder
    * pop() does not fully delete the entry, but sets AIGs back to state (2).
    */
   std::vector<int32_t> d_aig_encoded;
-  /** Tracks the AIGs encoded since last push. */
-  std::vector<size_t> d_aig_encoded_ids;
-  /** Tracks encoded AIGs by assertion level. */
-  std::vector<size_t> d_aig_encoded_ids_control;
+  /** The level of encoded AIGs, indexed like d_aig_encoded. */
+  std::vector<uint32_t> d_aig_level;
+  /** The AIGs of a pushed level, indices into d_aig_encoded. */
+  struct Level
+  {
+    /** The AIGs encoded at this level, reset on pop(). */
+    std::vector<size_t> ids;
+    /**
+     * ADAPTIVE: AIGs encoded in this level over inputs of lower levels (reuse
+     * candidates).
+     */
+    std::vector<size_t> candidates;
+  };
+  /** The pushed levels. */
+  std::vector<Level> d_levels;
+
+  /** The level mode. */
+  LevelMode d_mode;
+  /** The assertion level of the current encode() call. */
+  uint32_t d_level = 0;
+  /** Determines the level of AIG inputs, see set_input_level(). */
+  std::function<uint32_t(const AigNode&)> d_input_level;
+
+  /**
+   * ADAPTIVE: Marks reuse candidates of popped levels that were not needed
+   * again yet, indexed like d_aig_encoded.
+   */
+  std::vector<bool> d_pending;
+  /** ADAPTIVE: Number of candidates marked pending at the last pop(). */
+  uint64_t d_num_pending_last = 0;
+  /** ADAPTIVE: Number of pending candidates needed again since last pop(). */
+  uint64_t d_num_reused_since = 0;
+  /** ADAPTIVE: Estimated fraction of candidates needed again after pop(). */
+  double d_reuse = 1.0;
   /** Marks AND nodes expanded during traversal in _encode(). */
   std::vector<bool> d_expanded;
   /** Stack of collect_and(), a member to save an allocation per call. */

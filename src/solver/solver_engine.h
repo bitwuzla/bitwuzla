@@ -167,6 +167,35 @@ class SolverEngine
   /** Record unsupported message, see SolverState::mark_unsupported(). */
   void mark_unsupported(const std::string& msg);
 
+  /**
+   * @return The user scope level the node with given id was created at. Node
+   *         ids are increasing, nodes created before the push of a scope that
+   *         is still active belong to a lower level.
+   */
+  uint32_t creation_level(uint64_t id) const;
+
+  /**
+   * Records the node id counter at the push of each user scope. Registered with
+   * the backtrack manager of the solving context, which is pushed on each user
+   * push, whereas d_backtrack_mgr is synced lazily.
+   */
+  class CreationLevels : public backtrack::Backtrackable
+  {
+   public:
+    CreationLevels(backtrack::BacktrackManager* mgr, const NodeManager& nm)
+        : backtrack::Backtrackable(mgr), d_nm(nm)
+    {
+    }
+    void push() override;
+    void pop() override { d_ids.pop_back(); }
+    /** @return The number of active scopes pushed before node `id`. */
+    uint32_t level(uint64_t id) const;
+
+   private:
+    const NodeManager& d_nm;
+    std::vector<uint64_t> d_ids;
+  };
+
   /** Counter for how often a statistics line was printed. */
   uint64_t d_num_printed_stats = 0;
 
@@ -204,6 +233,8 @@ class SolverEngine
   backtrack::unordered_set<Node> d_lemma_cache;
   /** First message passed to mark_unsupported() in scope, empty if none. */
   backtrack::object<std::string> d_unsupported;
+  /** Tracks the creation level of nodes, see creation_level(). */
+  CreationLevels d_creation_levels;
 
   /** Result of latest solve() call. */
   Result d_sat_state;

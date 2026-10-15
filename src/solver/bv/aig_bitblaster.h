@@ -54,6 +54,22 @@ class AigBitblaster
    */
   bitblast::AigNode get_node(int64_t id) { return d_bitblaster.get_node(id); }
 
+  /**
+   * Record the term each AIG input created from now on is created for, see
+   * input_term_id().
+   */
+  void track_input_terms() { d_track_input_terms = true; }
+
+  /**
+   * @return The id of the term the given AIG input was created for, 0 if it
+   *         was created while input terms were not tracked.
+   */
+  uint64_t input_term_id(const bitblast::AigNode& aig) const
+  {
+    auto it = d_input_term_ids.find(std::abs(aig.get_id()));
+    return it == d_input_term_ids.end() ? 0 : it->second;
+  }
+
   const std::unordered_map<Node, bitblast::AigBitblaster::Bits>&
   bitblaster_cache() const
   {
@@ -69,6 +85,14 @@ class AigBitblaster
   std::unordered_map<Node, bitblast::AigBitblaster::Bits> d_bitblaster_cache;
 
   bool d_bool_bv1_mode = false;
+
+  /** @return Fresh AIG inputs of given size, created for `term`. */
+  bitblast::AigBitblaster::Bits mk_inputs(const Node& term, uint64_t size);
+
+  /** Indicates whether input terms are tracked. */
+  bool d_track_input_terms = false;
+  /** Maps AIG input id to the id of the term it was created for. */
+  std::unordered_map<int64_t, uint64_t> d_input_term_ids;
 };
 
 }  // namespace bzla::bv

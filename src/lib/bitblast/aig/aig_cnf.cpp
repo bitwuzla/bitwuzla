@@ -10,6 +10,7 @@
 
 #include "bitblast/aig/aig_cnf.h"
 
+#include <algorithm>
 #include <cstdlib>
 #include <functional>
 #include <span>
@@ -18,8 +19,8 @@
 
 namespace bzla::bitblast {
 
-AigCnfEncoder::AigCnfEncoder(SatInterface& sat_solver)
-    : d_sat_solver(sat_solver), d_true_var(0)
+AigCnfEncoder::AigCnfEncoder(SatInterface& sat_solver, LevelMode mode)
+    : d_mode(mode), d_sat_solver(sat_solver), d_true_var(0)
 {
   // Reserve slot for true, the actual SAT variable is allocated in
   // initialize().
@@ -29,10 +30,9 @@ AigCnfEncoder::AigCnfEncoder(SatInterface& sat_solver)
 void
 AigCnfEncoder::initialize()
 {
-  // Allocate SAT variable for true.
+  // Allocate SAT variable for true, set_encoded() assigns it to true.
   assert(d_true_var == 0);
-  d_true_var       = d_sat_solver.new_var();
-  d_aig_encoded[0] = d_true_var;
+  d_true_var = d_sat_solver.new_var();
   ++d_statistics.allocated_vars;
 }
 
@@ -50,7 +50,7 @@ AigCnfEncoder::encode(const AigNode& node, bool top_level, uint32_t level)
     d_expanded.resize(size, false);
   }
 
-  d_sat_solver.set_level(level);
+  d_level = level;
   if (top_level)
   {
     // flatten, thus only add leafs of top-level AIGs
@@ -90,10 +90,13 @@ AigCnfEncoder::encode(const AigNode& node, bool top_level, uint32_t level)
       {
         leafs.clear();
         collect_and(child, leafs, s_max_top_or_size);
+        uint32_t clause_level = level;
         for (const AigNode& leaf : leafs)
         {
           _encode(leaf);
+          clause_level = std::max(clause_level, this->level(leaf));
         }
+        d_sat_solver.set_level(clause_level);
         // leafs of top-level AIGs are associated with the top-most AIG
         for (const AigNode& leaf : leafs)
         {
@@ -110,6 +113,7 @@ AigCnfEncoder::encode(const AigNode& node, bool top_level, uint32_t level)
       else
       {
         _encode(child);
+        d_sat_solver.set_level(std::max(level, this->level(child)));
         // leafs of top-level AIGs are associated with the top-most AIG
         d_sat_solver.add_clause({cnf_lit(child)}, node.get_id());
         ++d_statistics.num_clauses;
@@ -183,8 +187,7 @@ int32_t
 AigCnfEncoder::cnf_var(const AigNode& aig) const
 {
   assert(is_encoded(aig));
-  int64_t id = aig.get_id();
-  size_t pos = static_cast<size_t>(std::abs(id) - 1);
+  size_t pos = aig_pos(aig);
   assert(pos < d_aig_encoded.size());
   return std::abs(d_aig_encoded[pos]);
 }
@@ -200,23 +203,23 @@ AigCnfEncoder::cnf_lit(const AigNode& aig) const
 void
 AigCnfEncoder::push()
 {
-  d_aig_encoded_ids_control.push_back(d_aig_encoded_ids.size());
+  d_levels.emplace_back();
 }
 
 void
 AigCnfEncoder::pop()
 {
-  assert(!d_aig_encoded_ids_control.empty());
-  size_t size = d_aig_encoded_ids_control.back();
-  d_aig_encoded_ids_control.pop_back();
-  while (d_aig_encoded_ids.size() > size)
+  assert(!d_levels.empty());
+  const Level& top = d_levels.back();
+  for (size_t pos : top.ids)
   {
-    size_t pos = d_aig_encoded_ids.back();
-    d_aig_encoded_ids.pop_back();
     // Flip back from encoded (<0) to allocated-but-not-encoded (>0).
     d_aig_encoded[pos] *= -1;
     --d_statistics.num_vars;
+    ++d_statistics.pop.num_reset_aigs;
   }
+  update_reuse(top.candidates);
+  d_levels.pop_back();
 }
 
 const AigCnfEncoder::Statistics&
@@ -368,6 +371,8 @@ AigCnfEncoder::collect_and(const AigNode& aig,
     if (cur.is_and() && !cur.is_negated() && is_mergeable(cur)
         && leafs.size() + d_visit.size() < max_size)
     {
+      // A reuse candidate merged into the gate of `aig` is needed again.
+      reuse_pending(cur);
       d_visit.push_back(cur[1]);
       d_visit.push_back(cur[0]);
     }
@@ -394,6 +399,10 @@ AigCnfEncoder::_encode(const AigNode& aig)
     AigNode cur = visit.back();
     if (is_encoded(cur))
     {
+      if (!d_pending.empty())
+      {
+        mark_reused(cur);
+      }
       visit.pop_back();
       continue;
     }
@@ -402,19 +411,29 @@ AigCnfEncoder::_encode(const AigNode& aig)
     {
       assert(cur.is_const() || cur.is_true() || cur.is_false());
       visit.pop_back();
-      set_encoded(cur);
 
       if (cur.is_true() || cur.is_false())
       {
+        uint32_t level = d_mode == LevelMode::ASSERTION ? d_level : 0;
+        bool reencoded = set_encoded(cur, level);
+        d_sat_solver.set_level(level);
         d_sat_solver.add_clause({cnf_var(cur)}, std::abs(cur.get_id()));
         ++d_statistics.num_clauses;
         ++d_statistics.num_literals;
+        if (reencoded)
+        {
+          ++d_statistics.pop.num_reencoded_clauses;
+        }
+      }
+      else
+      {
+        set_encoded(cur, input_level(cur));
       }
     }
     else
     {
       assert(cur.is_and());
-      size_t pos = static_cast<size_t>(std::abs(cur.get_id()) - 1);
+      size_t pos = aig_pos(cur);
       assert(pos < d_expanded.size());
       if (!d_expanded[pos])
       {
@@ -434,12 +453,46 @@ AigCnfEncoder::_encode(const AigNode& aig)
       {
         d_expanded[pos] = false;
         visit.pop_back();
-        set_encoded(cur);
 
         auto [start, ite] = segments.back();
         segments.pop_back();
         std::span<const AigNode> children(pending.begin() + start,
                                           pending.end());
+
+        uint32_t level = 0;
+        if (d_mode == LevelMode::ASSERTION)
+        {
+          level = d_level;
+        }
+        // ADAPTIVE: without pushed levels, all levels are 0.
+        else if (d_mode == LevelMode::ADAPTIVE && !d_levels.empty())
+        {
+          for (const AigNode& child : children)
+          {
+            level = std::max(level, this->level(child));
+          }
+          // A node required by an assertion of a pushed level over inputs of
+          // lower levels may be needed again after the pop. Unless this is
+          // expected, it takes the assertion level. Lemmas are encoded at
+          // level 0 and are not considered.
+          if (level < d_level)
+          {
+            d_levels.back().candidates.push_back(pos);
+            ++d_statistics.adaptive.num_candidates;
+            if (reuse_expected())
+            {
+              ++d_statistics.adaptive.num_candidates_kept;
+            }
+            else
+            {
+              level = d_level;
+              ++d_statistics.adaptive.num_candidates_at_assertion_level;
+            }
+          }
+        }
+        bool reencoded = set_encoded(cur, level);
+        d_sat_solver.set_level(level);
+        uint64_t num_clauses = d_statistics.num_clauses;
 
         auto id = std::abs(cur.get_id());
         auto x  = cnf_var(cur);
@@ -491,6 +544,11 @@ AigCnfEncoder::_encode(const AigNode& aig)
           // variable and 2 clauses of one merged AND node.
           d_statistics.num_merged += children.size() - 2;
         }
+        if (reencoded)
+        {
+          d_statistics.pop.num_reencoded_clauses +=
+              d_statistics.num_clauses - num_clauses;
+        }
         pending.resize(start);
       }
     }
@@ -498,10 +556,103 @@ AigCnfEncoder::_encode(const AigNode& aig)
   assert(pending.empty() && segments.empty());
 }
 
+uint32_t
+AigCnfEncoder::level(const AigNode& aig) const
+{
+  assert(is_encoded(aig));
+  size_t pos = aig_pos(aig);
+  return pos < d_aig_level.size() ? d_aig_level[pos] : 0;
+}
+
+uint32_t
+AigCnfEncoder::input_level(const AigNode& aig) const
+{
+  assert(aig.is_const());
+  // Without pushed levels, all levels are 0.
+  if (d_mode != LevelMode::ADAPTIVE || d_levels.empty())
+  {
+    return 0;
+  }
+  uint32_t level = d_input_level ? d_input_level(aig) : 0;
+  // Inputs of levels that have no clauses yet are encoded at the current one.
+  return std::min(level, static_cast<uint32_t>(d_levels.size()));
+}
+
+void
+AigCnfEncoder::mark_reused(const AigNode& aig)
+{
+  assert(d_mode == LevelMode::ADAPTIVE);
+  if (!reuse_pending(aig))
+  {
+    return;
+  }
+  // Clear the pending candidates, which are AND nodes, in the cone of `aig`.
+  // The cone of an encoded node consists of encoded nodes and AND nodes merged
+  // into their parent's gate, which are not encoded themselves.
+  std::vector<AigNode> visit{aig[0], aig[1]};
+  do
+  {
+    AigNode cur = visit.back();
+    visit.pop_back();
+    if (reuse_pending(cur) || (cur.is_and() && !is_encoded(cur)))
+    {
+      assert(cur.is_and());
+      visit.push_back(cur[0]);
+      visit.push_back(cur[1]);
+    }
+  } while (!visit.empty());
+}
+
+bool
+AigCnfEncoder::reuse_pending(const AigNode& aig)
+{
+  size_t pos = aig_pos(aig);
+  if (pos >= d_pending.size() || !d_pending[pos])
+  {
+    return false;
+  }
+  d_pending[pos] = false;
+  ++d_num_reused_since;
+  ++d_statistics.adaptive.num_candidates_needed_again;
+  return true;
+}
+
+void
+AigCnfEncoder::update_reuse(const std::vector<size_t>& candidates)
+{
+  assert(d_mode == LevelMode::ADAPTIVE || candidates.empty());
+  uint64_t num_new = 0;
+  for (size_t pos : candidates)
+  {
+    if (pos >= d_pending.size())
+    {
+      d_pending.resize(d_aig_encoded.size(), false);
+    }
+    if (!d_pending[pos])
+    {
+      d_pending[pos] = true;
+      ++num_new;
+    }
+  }
+  // The candidates of a popped level are needed again (if at all) before the
+  // candidates of the next popped level, close the current window.
+  if (num_new > 0)
+  {
+    if (d_num_pending_last > 0)
+    {
+      double reused = std::min(
+          1.0, static_cast<double>(d_num_reused_since) / d_num_pending_last);
+      d_reuse = (d_reuse + reused) / 2;
+    }
+    d_num_pending_last = num_new;
+    d_num_reused_since = 0;
+  }
+}
+
 void
 AigCnfEncoder::resize(const AigNode& aig)
 {
-  size_t pos = static_cast<size_t>(std::abs(aig.get_id()) - 1);
+  size_t pos = aig_pos(aig);
   if (pos < d_aig_encoded.size())
   {
     return;
@@ -512,7 +663,7 @@ AigCnfEncoder::resize(const AigNode& aig)
 bool
 AigCnfEncoder::is_encoded(const AigNode& aig) const
 {
-  size_t pos = static_cast<size_t>(std::abs(aig.get_id()) - 1);
+  size_t pos = aig_pos(aig);
   if (pos < d_aig_encoded.size())
   {
     return d_aig_encoded[pos] < 0;
@@ -520,27 +671,64 @@ AigCnfEncoder::is_encoded(const AigNode& aig) const
   return false;
 }
 
-void
-AigCnfEncoder::set_encoded(const AigNode& aig)
+bool
+AigCnfEncoder::set_encoded(const AigNode& aig, uint32_t level)
 {
   resize(aig);
-  size_t pos = static_cast<size_t>(std::abs(aig.get_id()) - 1);
+  size_t pos = aig_pos(aig);
   assert(pos < d_aig_encoded.size());
-  auto& encoded = d_aig_encoded[pos];
+  auto& encoded  = d_aig_encoded[pos];
+  bool reencoded = encoded != 0;
   // No variable allocated in SAT solver yet.
   if (encoded == 0)
   {
-    encoded = d_sat_solver.new_var();
-    ++d_statistics.allocated_vars;
+    if (pos == 0)
+    {
+      encoded = d_true_var;
+    }
+    else
+    {
+      encoded = d_sat_solver.new_var();
+      ++d_statistics.allocated_vars;
+    }
+  }
+  else
+  {
+    ++d_statistics.pop.num_reencoded_aigs;
   }
   // Variable allocated, but not yet encoded.
   assert(encoded > 0);
   encoded *= -1;
   ++d_statistics.num_vars;
-  if (!d_aig_encoded_ids_control.empty())
+
+  if (d_mode == LevelMode::ASSERTION)
   {
-    d_aig_encoded_ids.push_back(pos);
+    // All AIGs encoded while a level is pushed are reset on its pop, including
+    // AIGs of lemmas encoded at a lower level.
+    if (!d_levels.empty())
+    {
+      d_levels.back().ids.push_back(pos);
+    }
   }
+  else if (d_mode == LevelMode::ADAPTIVE)
+  {
+    assert(level <= d_levels.size());
+    if (level > 0)
+    {
+      if (pos >= d_aig_level.size())
+      {
+        d_aig_level.resize(d_aig_encoded.size(), 0);
+      }
+      d_levels[level - 1].ids.push_back(pos);
+    }
+    // AIGs beyond the end of d_aig_level have level 0.
+    if (pos < d_aig_level.size())
+    {
+      d_aig_level[pos] = level;
+    }
+    reuse_pending(aig);
+  }
+  return reencoded;
 }
 
 }  // namespace bzla::bitblast

@@ -73,6 +73,9 @@ class SolverState
   /** @return The assertion level associated with a term. */
   uint32_t term_level(const Node& term);
 
+  /** @return The user scope level the node with given id was created at. */
+  uint32_t creation_level(uint64_t id) const;
+
  private:
   /** Associated solver engine. */
   SolverEngine& d_solver_engine;

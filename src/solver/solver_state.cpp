@@ -94,4 +94,10 @@ SolverState::term_level(const Node& term)
   return d_solver_engine.term_level(term);
 }
 
+uint32_t
+SolverState::creation_level(uint64_t id) const
+{
+  return d_solver_engine.creation_level(id);
+}
+
 }  // namespace bzla

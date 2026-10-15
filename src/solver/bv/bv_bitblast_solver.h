@@ -63,7 +63,7 @@ class BvBitblastSolver : public Solver,
   /** Get statistics. */
   const auto& statistics() const { return d_stats; }
 
-  void push() override {}
+  void push() override;
   void pop() override;
 
   /** Get the associated SAT solver instance. */
@@ -188,6 +188,13 @@ class BvBitblastSolver : public Solver,
     uint64_t& num_cnf_xors;
     uint64_t& num_cnf_merged;
     uint64_t& num_cnf_top_ors;
+    uint64_t& num_cnf_pop_reset_aigs;
+    uint64_t& num_cnf_pop_reencoded_aigs;
+    uint64_t& num_cnf_pop_reencoded_clauses;
+    uint64_t& num_cnf_adaptive_candidates;
+    uint64_t& num_cnf_adaptive_candidates_kept;
+    uint64_t& num_cnf_adaptive_candidates_needed_again;
+    uint64_t& num_cnf_adaptive_candidates_at_assertion_level;
   } d_stats;
 };
 

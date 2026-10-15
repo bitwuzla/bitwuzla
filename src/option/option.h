@@ -37,6 +37,7 @@ enum class Option
   REWRITE_LEVEL,       // numeric
   SAT_SOLVER,          // enum
   ADC_SAT_PROPAGATOR,  // bool
+  BV_CNF_SCOPE,        // enum
 
   WRITE_AIGER,  // str
   WRITE_CNF,    // str
@@ -129,6 +130,13 @@ enum class BvSolver
   PREPROP,
 };
 std::ostream& operator<<(std::ostream& out, BvSolver solver);
+
+enum class BvCnfScope
+{
+  ASSERTION,
+  PERMANENT,
+  ADAPTIVE,
+};
 
 enum class InterpolantsAlgo
 {
@@ -586,6 +594,7 @@ class Options
   OptionModeT<BvSolver> bv_solver;
   OptionModeT<SatSolver> sat_solver;
   OptionBool adc_sat_propagator;
+  OptionModeT<BvCnfScope> bv_cnf_scope;
   OptionStr write_aiger;
   OptionStr write_cnf;
   OptionNumeric rewrite_level;

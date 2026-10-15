@@ -274,6 +274,14 @@ Options::Options()
                          "use ADC SAT propagator for DISTINCT_N "
                          "(default: theory-level handling in solver engine)",
                          "adc-sat-propagator"),
+      bv_cnf_scope(this,
+                   Option::BV_CNF_SCOPE,
+                   BvCnfScope::ADAPTIVE,
+                   {{BvCnfScope::ASSERTION, "assertion"},
+                    {BvCnfScope::PERMANENT, "permanent"},
+                    {BvCnfScope::ADAPTIVE, "adaptive"}},
+                   "assertion level of the CNF encoding of bit-blasted terms",
+                   "bv-cnf-scope"),
       write_aiger(this,
                   Option::WRITE_AIGER,
                   "",
@@ -1041,6 +1049,7 @@ Options::data(Option opt)
     case Option::PRODUCE_INTERPOLANTS: return &produce_interpolants;
     case Option::SAT_SOLVER: return &sat_solver;
     case Option::ADC_SAT_PROPAGATOR: return &adc_sat_propagator;
+    case Option::BV_CNF_SCOPE: return &bv_cnf_scope;
     case Option::WRITE_AIGER: return &write_aiger;
     case Option::WRITE_CNF: return &write_cnf;
     case Option::SEED: return &seed;

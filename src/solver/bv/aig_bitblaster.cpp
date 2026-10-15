@@ -67,7 +67,7 @@ AigBitblaster::bitblast(const Node& t)
             if (!push)
             {
               assert(type.is_bool() || (type.is_bv() && type.bv_size() == 1));
-              it->second = d_bitblaster.bv_constant(1);
+              it->second = mk_inputs(cur, 1);
               continue;
             }
           }
@@ -112,9 +112,7 @@ AigBitblaster::bitblast(const Node& t)
         case Kind::APPLY:
         case Kind::CONSTANT:
           assert(BvSolver::is_leaf(cur));
-          it->second = type.is_bool()
-                           ? d_bitblaster.bv_constant(1)
-                           : d_bitblaster.bv_constant(type.bv_size());
+          it->second = mk_inputs(cur, type.is_bool() ? 1 : type.bv_size());
           break;
         // FP components, bit-blasted as BV consts
         case Kind::FP_SYMFPU_RM:
@@ -124,7 +122,7 @@ AigBitblaster::bitblast(const Node& t)
         case Kind::FP_SYMFPU_SIG:
         case Kind::FP_SYMFPU_SIGN:
         case Kind::FP_SYMFPU_ZERO:
-          it->second = d_bitblaster.bv_constant(type.bv_size());
+          it->second = mk_inputs(cur, type.bv_size());
           break;
 
         case Kind::NOT:
@@ -166,12 +164,12 @@ AigBitblaster::bitblast(const Node& t)
           else
           {
             // For all other cases we abstract equality as a Boolean constant.
-            it->second = d_bitblaster.bv_constant(1);
+            it->second = mk_inputs(cur, 1);
           }
         }
         break;
 
-        case Kind::DISTINCT_N: it->second = d_bitblaster.bv_constant(1); break;
+        case Kind::DISTINCT_N: it->second = mk_inputs(cur, 1); break;
 
         case Kind::BV_COMP:
           assert(type.is_bv());
@@ -256,6 +254,20 @@ AigBitblaster::bitblast(const Node& t)
     }
     visit.pop_back();
   } while (!visit.empty());
+}
+
+bitblast::AigBitblaster::Bits
+AigBitblaster::mk_inputs(const Node& term, uint64_t size)
+{
+  bitblast::AigBitblaster::Bits bits = d_bitblaster.bv_constant(size);
+  if (d_track_input_terms)
+  {
+    for (const auto& bit : bits)
+    {
+      d_input_term_ids.emplace(std::abs(bit.get_id()), term.id());
+    }
+  }
+  return bits;
 }
 
 const bitblast::AigBitblaster::Bits&

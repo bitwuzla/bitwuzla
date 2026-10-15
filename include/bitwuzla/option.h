@@ -191,6 +191,28 @@ enum ENUM(Option)
    *  - **0**: disable (use theory-level handling) [**default**]
    */
   EVALUE(ADC_SAT_PROPAGATOR),
+  /*!
+   * **Assertion level of the CNF encoding of bit-blasted terms.**
+   *
+   * Determines the assertion level at which definitional clauses of AIG nodes
+   * are added in incremental mode. Clauses of a popped level are disabled in
+   * the SAT solver. Their AIG nodes are re-encoded when they are needed after
+   * the pop.
+   *
+   * *Values:*
+   * \verbatim embed:rst:leading-asterisk
+   *  - **assertion**: The level of the first assertion that requires the
+   *    AIG node.
+   *  - **permanent**: Level 0, definitional clauses are never disabled.
+   *  - **adaptive**: The highest level of the children of the AIG node,
+   *    where inputs take the level their term was created at. An AIG node
+   *    that is first required by an assertion of a pushed level but only
+   *    depends on terms of lower levels thus keeps its clauses after the pop
+   *    of that level. If most of these AIG nodes were not needed again after
+   *    recent pops, new ones take the assertion level instead. [**default**]
+   * \endverbatim
+   */
+  EVALUE(BV_CNF_SCOPE),
   /*! **Print bit-vector abstraction as AIG in binary or ascii AIGER format.**
    *
    * Expects a filename (as string) as the configuration value.

@@ -266,11 +266,20 @@ BvBitblastSolver::register_assertion(const Node& assertion,
 
   uint32_t level =
       static_cast<uint32_t>(d_solver_state.backtrack_mgr()->num_levels());
-  // Lemmas are globally valid, their clauses are only tied to the level their
-  // terms were introduced at. Determine it now, solve() may run at a higher
-  // level.
-  uint32_t level_encode =
-      is_lemma ? d_solver_state.term_level(assertion) : level;
+  // Lemmas are globally valid, so their clauses only need to be tied to the
+  // level of the definitions they refer to. With --bv-cnf-scope=permanent,
+  // definitions are never disabled, so neither are lemmas, else a pop leaves
+  // encoded variables unconstrained. With adaptive, the encoder raises level 0
+  // to the level of the definitions. With assertion, the level of the lemma's
+  // terms is used, determined now since solve() may run at a higher level.
+  uint32_t level_encode = level;
+  if (is_lemma)
+  {
+    level_encode = d_cnf_encoder->level_mode()
+                           == bitblast::AigCnfEncoder::LevelMode::ASSERTION
+                       ? d_solver_state.term_level(assertion)
+                       : 0;
+  }
   assert(level_encode <= level);
 
   d_encode_queue.emplace_back(assertion, top_level, level, level_encode);
@@ -344,6 +353,18 @@ BvBitblastSolver::unsat_core(std::vector<Node>& core) const
 }
 
 void
+BvBitblastSolver::push()
+{
+  // Input levels are only needed once a level is pushed. Inputs created before
+  // are created for assertions of level 0 and take level 0.
+  if (d_cnf_encoder->level_mode()
+      == bitblast::AigCnfEncoder::LevelMode::ADAPTIVE)
+  {
+    d_bitblaster.track_input_terms();
+  }
+}
+
+void
 BvBitblastSolver::pop()
 {
   if (d_produce_interpolants)
@@ -403,7 +424,29 @@ BvBitblastSolver::init_sat_solver()
   {
     d_bitblast_sat_solver.reset(new BitblastSatSolver(*d_sat_solver));
   }
-  d_cnf_encoder.reset(new bitblast::AigCnfEncoder(*d_bitblast_sat_solver));
+  // Interpolants are produced without SAT-level push/pop, see solve().
+  using LevelMode = bitblast::AigCnfEncoder::LevelMode;
+  LevelMode mode  = LevelMode::ASSERTION;
+  if (!d_produce_interpolants)
+  {
+    switch (d_env.options().bv_cnf_scope())
+    {
+      case option::BvCnfScope::ASSERTION: break;
+      case option::BvCnfScope::PERMANENT: mode = LevelMode::PERMANENT; break;
+      case option::BvCnfScope::ADAPTIVE: mode = LevelMode::ADAPTIVE; break;
+    }
+  }
+  d_cnf_encoder.reset(
+      new bitblast::AigCnfEncoder(*d_bitblast_sat_solver, mode));
+  if (mode == LevelMode::ADAPTIVE)
+  {
+    // An AIG input takes the level its term was created at, untracked inputs
+    // take level 0 (see push()).
+    d_cnf_encoder->set_input_level([this](const bitblast::AigNode& aig) {
+      uint64_t id = d_bitblaster.input_term_id(aig);
+      return id == 0 ? 0 : d_solver_state.creation_level(id);
+    });
+  }
   if (d_produce_interpolants)
   {
 #ifdef BZLA_USE_CADICAL
@@ -448,6 +491,9 @@ BvBitblastSolver::register_distinct_n(const Node& node)
   const auto& bit = d_bitblaster.bits(node)[0];
   d_cnf_encoder->encode(bit, false);
   util::Integer card(node[0].value<BitVector>());
+  // Propagators are never unregistered and may outlive the encoding of these
+  // bits on pop (see --bv-cnf-scope). This is sound since the constraint holds
+  // for the values they encode, and encoding them again reuses their variables.
   std::unique_ptr<sat::DistinctNPropagator> distinct_n(
       new sat::DistinctNPropagator(
           card, d_cnf_encoder->cnf_var(bit), bits, node.id()));
@@ -548,6 +594,18 @@ BvBitblastSolver::update_statistics()
   d_stats.num_cnf_xors           = cnf_stats.num_xors;
   d_stats.num_cnf_merged         = cnf_stats.num_merged;
   d_stats.num_cnf_top_ors        = cnf_stats.num_top_ors;
+
+  d_stats.num_cnf_pop_reset_aigs        = cnf_stats.pop.num_reset_aigs;
+  d_stats.num_cnf_pop_reencoded_aigs    = cnf_stats.pop.num_reencoded_aigs;
+  d_stats.num_cnf_pop_reencoded_clauses = cnf_stats.pop.num_reencoded_clauses;
+
+  d_stats.num_cnf_adaptive_candidates = cnf_stats.adaptive.num_candidates;
+  d_stats.num_cnf_adaptive_candidates_kept =
+      cnf_stats.adaptive.num_candidates_kept;
+  d_stats.num_cnf_adaptive_candidates_needed_again =
+      cnf_stats.adaptive.num_candidates_needed_again;
+  d_stats.num_cnf_adaptive_candidates_at_assertion_level =
+      cnf_stats.adaptive.num_candidates_at_assertion_level;
 }
 
 BvBitblastSolver::Statistics::Statistics(util::Statistics& stats,
@@ -569,7 +627,21 @@ BvBitblastSolver::Statistics::Statistics(util::Statistics& stats,
       num_cnf_ites(stats.new_stat<uint64_t>(prefix + "cnf::num_ites")),
       num_cnf_xors(stats.new_stat<uint64_t>(prefix + "cnf::num_xors")),
       num_cnf_merged(stats.new_stat<uint64_t>(prefix + "cnf::num_merged")),
-      num_cnf_top_ors(stats.new_stat<uint64_t>(prefix + "cnf::num_top_ors"))
+      num_cnf_top_ors(stats.new_stat<uint64_t>(prefix + "cnf::num_top_ors")),
+      num_cnf_pop_reset_aigs(
+          stats.new_stat<uint64_t>(prefix + "cnf::pop::num_reset_aigs")),
+      num_cnf_pop_reencoded_aigs(
+          stats.new_stat<uint64_t>(prefix + "cnf::pop::num_reencoded_aigs")),
+      num_cnf_pop_reencoded_clauses(
+          stats.new_stat<uint64_t>(prefix + "cnf::pop::num_reencoded_clauses")),
+      num_cnf_adaptive_candidates(
+          stats.new_stat<uint64_t>(prefix + "cnf::adaptive::num_candidates")),
+      num_cnf_adaptive_candidates_kept(stats.new_stat<uint64_t>(
+          prefix + "cnf::adaptive::num_candidates_kept")),
+      num_cnf_adaptive_candidates_needed_again(stats.new_stat<uint64_t>(
+          prefix + "cnf::adaptive::num_candidates_needed_again")),
+      num_cnf_adaptive_candidates_at_assertion_level(stats.new_stat<uint64_t>(
+          prefix + "cnf::adaptive::num_candidates_at_assertion_level"))
 {
 }
 
