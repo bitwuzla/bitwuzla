@@ -934,6 +934,11 @@ class Parser : public bzla::parser::Parser
   /** The work stack. */
   std::vector<ParsedItem> d_work;
   /**
+   * The arguments of the currently closed term, reused to avoid allocating
+   * a vector for every closed term.
+   */
+  std::vector<bitwuzla::Term> d_args;
+  /**
    * The control stack for the work stack, maintains the start indices of open
    * parsed items.
    */

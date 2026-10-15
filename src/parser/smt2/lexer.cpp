@@ -379,14 +379,19 @@ Lexer::next_token_aux()
         {
           return error("unexpected end of file in quoted symbol");
         }
-        const char* p = d_cur;
-        for (; p < d_end && *p != '|'; ++p)
+        const char* p =
+            static_cast<const char*>(std::memchr(d_cur, '|', d_end - d_cur));
+        if (!p)
         {
-          if (*p == '\n')
-          {
-            d_line += 1;
-            d_line_start = d_buf_offset + (p + 1 - d_buffer.data());
-          }
+          p = d_end;
+        }
+        // quoted symbols may span multiple lines
+        for (const char* nl = d_cur;
+             (nl = static_cast<const char*>(std::memchr(nl, '\n', p - nl)));)
+        {
+          d_line += 1;
+          nl += 1;
+          d_line_start = d_buf_offset + (nl - d_buffer.data());
         }
         d_cur = p;
         if (p < d_end)

@@ -188,6 +188,12 @@ class SymbolTable
 
   /** @return The hash value of the given (pipe-stripped) symbol. */
   static size_t hash(std::string_view symbol);
+  /**
+   * @return True if the given symbols are equal. Equivalent to a == b, but
+   *         avoids calling memcmp() for short symbols, which are the
+   *         common case.
+   */
+  static bool equal(std::string_view a, std::string_view b);
 
   /**
    * Find the entry for the given symbol.

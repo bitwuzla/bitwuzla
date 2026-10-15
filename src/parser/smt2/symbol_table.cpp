@@ -195,6 +195,49 @@ SymbolTable::hash(std::string_view symbol)
   return h;
 }
 
+bool
+SymbolTable::equal(std::string_view a, std::string_view b)
+{
+  size_t n = a.size();
+  if (n != b.size())
+  {
+    return false;
+  }
+  const char* pa = a.data();
+  const char* pb = b.data();
+  if (n >= 8 && n <= 16)
+  {
+    // compare the first and last 8 bytes, which overlap if n < 16
+    uint64_t a0, a1, b0, b1;
+    std::memcpy(&a0, pa, 8);
+    std::memcpy(&b0, pb, 8);
+    std::memcpy(&a1, pa + n - 8, 8);
+    std::memcpy(&b1, pb + n - 8, 8);
+    return ((a0 ^ b0) | (a1 ^ b1)) == 0;
+  }
+  if (n >= 4 && n < 8)
+  {
+    uint32_t a0, a1, b0, b1;
+    std::memcpy(&a0, pa, 4);
+    std::memcpy(&b0, pb, 4);
+    std::memcpy(&a1, pa + n - 4, 4);
+    std::memcpy(&b1, pb + n - 4, 4);
+    return ((a0 ^ b0) | (a1 ^ b1)) == 0;
+  }
+  if (n < 4)
+  {
+    for (size_t i = 0; i < n; ++i)
+    {
+      if (pa[i] != pb[i])
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+  return std::memcmp(pa, pb, n) == 0;
+}
+
 size_t
 SymbolTable::find_entry(std::string_view symbol, size_t hash) const
 {
@@ -205,7 +248,7 @@ SymbolTable::find_entry(std::string_view symbol, size_t hash) const
     const Entry& entry = d_entries[i];
     if (!entry.d_node
         || (entry.d_hash == hash
-            && strip_pipes(entry.d_node->d_symbol) == symbol))
+            && equal(strip_pipes(entry.d_node->d_symbol), symbol)))
     {
       return i;
     }

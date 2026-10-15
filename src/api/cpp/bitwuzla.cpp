@@ -288,6 +288,30 @@ static const std::unordered_map<Kind, bzla::node::Kind> s_internal_kinds = {
 static const std::unordered_map<bzla::node::Kind, Kind> s_kinds =
     _init_reverse(s_internal_kinds);
 
+/**
+ * @return The internal node kind of the given api node kind.
+ * @note Same as s_internal_kinds.at(kind), but avoids the hash map lookup in
+ *       hot paths such as TermManager::mk_term().
+ */
+static bzla::node::Kind
+internal_kind(Kind kind)
+{
+  // Kind::NUM_KINDS is only defined in debug builds
+  static const auto s_kinds_array = [] {
+    std::array<bzla::node::Kind, static_cast<size_t>(Kind::FP_TO_UBV) + 1> res;
+    res.fill(bzla::node::Kind::NUM_KINDS);
+    for (const auto& [k, v] : s_internal_kinds)
+    {
+      res[static_cast<size_t>(k)] = v;
+    }
+    return res;
+  }();
+  assert(static_cast<size_t>(kind) < s_kinds_array.size());
+  assert(s_kinds_array[static_cast<size_t>(kind)]
+         != bzla::node::Kind::NUM_KINDS);
+  return s_kinds_array[static_cast<size_t>(kind)];
+}
+
 /* -------------------------------------------------------------------------- */
 
 const char*
@@ -2358,7 +2382,7 @@ TermManager::mk_term(Kind kind,
                              Term::term_vector_to_nodes(args));
       }
       return bzla::node::utils::mk_nary(
-          *d_nm, s_internal_kinds.at(kind), Term::term_vector_to_nodes(args));
+          *d_nm, internal_kind(kind), Term::term_vector_to_nodes(args));
     // unary
     case Kind::NOT:
     case Kind::BV_DEC:
@@ -2622,7 +2646,7 @@ TermManager::mk_term(Kind kind,
   }
 
   return d_nm->mk_node(
-      s_internal_kinds.at(kind), Term::term_vector_to_nodes(args), indices);
+      internal_kind(kind), Term::term_vector_to_nodes(args), indices);
 }
 
 Term
@@ -2764,6 +2788,7 @@ std::vector<bzla::Node>
 Term::term_vector_to_nodes(const std::vector<Term>& terms)
 {
   std::vector<bzla::Node> res;
+  res.reserve(terms.size());
   for (const auto& term : terms)
   {
     res.emplace_back(*term.d_node);
