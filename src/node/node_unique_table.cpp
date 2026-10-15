@@ -221,7 +221,8 @@ NodeUniqueTable::equals(const NodeData& data,
 
     for (size_t i = 0; i < num_children; ++i)
     {
-      if (payload.d_children[i] != children[i])
+      // compare node data directly, operator!= is not inlined
+      if (payload.d_children[i].d_data != children[i].d_data)
       {
         return false;
       }
