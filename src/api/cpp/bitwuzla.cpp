@@ -2756,7 +2756,9 @@ TermManager::substitute_terms(std::vector<Term>& terms,
 
 /* Term private ------------------------------------------------------------- */
 
-Term::Term(const bzla::Node& node) : d_node(new bzla::Node(node)) {}
+Term::Term(const bzla::Node& node) : d_node(std::make_shared<bzla::Node>(node))
+{
+}
 
 std::vector<bzla::Node>
 Term::term_vector_to_nodes(const std::vector<Term>& terms)
@@ -2782,7 +2784,9 @@ Term::node_vector_to_terms(const std::vector<bzla::Node>& nodes)
 
 /* Sort private ------------------------------------------------------------- */
 
-Sort::Sort(const bzla::Type& type) : d_type(new bzla::Type(type)) {}
+Sort::Sort(const bzla::Type& type) : d_type(std::make_shared<bzla::Type>(type))
+{
+}
 
 std::vector<bzla::Type>
 Sort::sort_vector_to_types(const std::vector<Sort>& sorts)

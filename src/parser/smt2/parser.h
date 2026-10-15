@@ -90,28 +90,55 @@ class Parser : public bzla::parser::Parser
      */
     template <typename T>
     ParsedItem(Token token, T item, const Lexer::Coordinate& coo)
-        : d_token(token), d_coo(coo), d_item(item)
+        : d_token(token), d_coo(coo), d_item(std::move(item))
     {
     }
+    /**
+     * Additional data of open term items with indices or values given as
+     * strings. This is only required for few items and thus only allocated
+     * on demand to keep items small.
+     */
+    struct Ext
+    {
+      /** Cache for the indices of an open (indexed) term item. */
+      std::vector<uint64_t> d_uints;
+      /** The coordinates associated with the indices in the index cache. */
+      std::vector<Lexer::Coordinate> d_uints_coo;
+      /** Cache for strings (representing values) of an open term item. */
+      std::vector<std::string> d_strs;
+      /** The coordinates associated with the strings in the string cache. */
+      std::vector<Lexer::Coordinate> d_strs_coo;
+      /**
+       * True if this open item is a to_fp from rational conversion term.
+       * Needed to be able to determine how many strings we require to be
+       * cached.
+       */
+      bool d_from_rational = false;
+    };
+    /** @return The additional data of this item, created on demand. */
+    Ext& mk_ext()
+    {
+      if (!d_ext)
+      {
+        d_ext = std::make_unique<Ext>();
+      }
+      return *d_ext;
+    }
+    /** @return The additional data of this item, empty if not created. */
+    const Ext& ext() const
+    {
+      static const Ext s_empty;
+      return d_ext ? *d_ext : s_empty;
+    }
+
     /** The token of this item, doubles as kind. */
     Token d_token;
     /** The coordinate in the input file of this item. */
     Lexer::Coordinate d_coo;
     /** The associated object. */
     std::variant<SymbolTable::Node*, bitwuzla::Sort, bitwuzla::Term> d_item;
-    /** Cache for the indices of an open (indexed) term item. */
-    std::vector<uint64_t> d_uints;
-    /** The coordinates associated with the indices in the index cache. */
-    std::vector<Lexer::Coordinate> d_uints_coo;
-    /** Cache for strings (representing values) of an open term item. */
-    std::vector<std::string> d_strs;
-    /** The coordinates associated with the strings in the string cache. */
-    std::vector<Lexer::Coordinate> d_strs_coo;
-    /**
-     * True if this open item is a to_fp from rational conversion term.
-     * Needed to be able to determine how many strings we require to be cached.
-     */
-    bool d_from_rational = false;
+    /** The additional data of this item, nullptr if not created. */
+    std::unique_ptr<Ext> d_ext;
   };
 
   bool print_model();
@@ -149,22 +176,22 @@ class Parser : public bzla::parser::Parser
       assert(d_lexer->has_token());
       // Look up the symbol via a string_view to avoid a heap-allocated
       // temporary std::string on every symbol/attribute token.
-      std::string_view symbol = d_lexer->token();
+      std::string_view symbol = d_lexer->token_view();
       SymbolTable::Node* node = d_table.find(symbol);
       if (!node || is_pending)
       {
-        node = d_table.insert(
-            token, std::string(symbol), is_pending, d_assertion_level);
+        node = d_table.insert(token, symbol, is_pending, d_assertion_level);
       }
       d_last_node = node;
       token       = d_last_node->d_token;
     }
     if (d_save_repr)
     {
-      d_repr +=
-          (d_repr.size() && d_repr.back() != '(' && token != Token::RPAR ? " "
-                                                                         : "")
-          + std::string(d_lexer->token());
+      if (d_repr.size() && d_repr.back() != '(' && token != Token::RPAR)
+      {
+        d_repr += ' ';
+      }
+      d_repr += d_lexer->token_view();
     }
     return token;
   }
@@ -380,6 +407,27 @@ class Parser : public bzla::parser::Parser
    */
   bool check_var_binding(SymbolTable::Node* symbol);
   /**
+   * Helper for parse_open_term, create bit-vector value from the current
+   * binary or hexadecimal value token.
+   * @param token The current token, either Token::BINARY_VALUE or
+   *              Token::HEXADECIMAL_VALUE.
+   * @return The bit-vector value.
+   */
+  bitwuzla::Term mk_bv_value(Token token);
+  /**
+   * Bit-vector values are frequently repeated, short values are cached to
+   * avoid re-creating sort and value from their string representation.
+   * @param key The cache key, e.g., the value token.
+   * @return The cached bit-vector value, a null term if not cached.
+   */
+  bitwuzla::Term lookup_bv_value(std::string_view key) const;
+  /**
+   * Cache bit-vector value.
+   * @param key   The cache key, e.g., the value token.
+   * @param value The bit-vector value.
+   */
+  void cache_bv_value(std::string_view key, const bitwuzla::Term& value);
+  /**
    * Helper for parse_open_term, parse currently open (as ...) term.
    * @return False on error.
    */
@@ -513,8 +561,7 @@ class Parser : public bzla::parser::Parser
    * of the opening '(') on the work stack.
    * @param term Saved as argument on the work stack, if given.
    */
-  void close_term_scope(
-      const std::optional<bitwuzla::Term>& term = std::nullopt);
+  void close_term_scope(std::optional<bitwuzla::Term> term = std::nullopt);
 
   /**
    * Skip the given number of s-expressions.
@@ -676,11 +723,11 @@ class Parser : public bzla::parser::Parser
   {
     if (peek_item_is_token(Token::OPEN))
     {
-      set_item(d_work.back(), token, item, coo);
+      set_item(d_work.back(), token, std::move(item), coo);
     }
     else
     {
-      d_work.emplace_back(token, item, coo);
+      d_work.emplace_back(token, std::move(item), coo);
     }
     return d_work.back();
   }
@@ -724,7 +771,7 @@ class Parser : public bzla::parser::Parser
                 const std::optional<Lexer::Coordinate>& coo = std::nullopt)
   {
     item.d_token = token;
-    item.d_item  = t;
+    item.d_item  = std::move(t);
     if (coo)
     {
       item.d_coo = *coo;
@@ -787,6 +834,20 @@ class Parser : public bzla::parser::Parser
   {
     assert(peek_is_node_arg(idx));
     return std::get<SymbolTable::Node*>(d_work[idx].d_item);
+  }
+
+  /**
+   * Move the associated term out of the item at the given index on the work
+   * stack. Asserts that the item at the given index is a Token::TERM item.
+   * @note Only to be used for items that are popped from the work stack
+   *       afterwards.
+   * @param idx The index on the work stack.
+   * @return The associated term.
+   */
+  bitwuzla::Term take_term_arg(size_t idx)
+  {
+    assert(peek_is_term_arg(idx));
+    return std::move(std::get<bitwuzla::Term>(d_work[idx].d_item));
   }
 
   /** @return True if the top item on the work stack is a term. */
@@ -942,6 +1003,26 @@ class Parser : public bzla::parser::Parser
    */
   backtrack::unordered_map<bitwuzla::Term, SymbolTable::Node*>
       d_named_assertions;
+
+  /** Hash function for heterogeneous lookup of strings via string views. */
+  struct StringHash
+  {
+    using is_transparent = void;
+    size_t operator()(std::string_view s) const
+    {
+      return std::hash<std::string_view>{}(s);
+    }
+  };
+  /** The maximum length of keys of cached bit-vector values. */
+  static constexpr size_t s_bv_value_cache_max_len = 2 + 64;
+  /** The maximum number of entries in d_bv_value_cache before it's cleared. */
+  static constexpr size_t s_bv_value_cache_max_size = 1 << 16;
+  /**
+   * Cache for bit-vector values, maps value tokens (e.g., #b01) and keys
+   * representing (_ bvX n) values to terms.
+   */
+  std::unordered_map<std::string, bitwuzla::Term, StringHash, std::equal_to<>>
+      d_bv_value_cache;
 
   /** The set of currently active assumptions. */
   std::unordered_map<bitwuzla::Term, std::string> d_assumptions;

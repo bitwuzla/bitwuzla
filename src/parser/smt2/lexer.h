@@ -15,6 +15,8 @@
 #include <cassert>
 #include <cstring>
 #include <sstream>
+#include <string>
+#include <string_view>
 #include <vector>
 
 #include "parser/smt2/token.h"
@@ -38,6 +40,7 @@ class CharacterClasses
     SYMBOL            = (1 << 3),
     QUOTED_SYMBOL     = (1 << 4),
     KEYWORD           = (1 << 5),
+    BINARY_DIGIT      = (1 << 6),
   };
 
   /**
@@ -136,26 +139,59 @@ class Lexer
     uint64_t col;
   };
 
+  /** Constructor. */
+  Lexer() { configure_buffer(); }
+  /** Disallow copying, the lexer maintains pointers into its read buffer. */
+  Lexer(const Lexer&)            = delete;
+  Lexer& operator=(const Lexer&) = delete;
   /**
-   * Constructor.
-   * @param infile The input file.
+   * @return The next token.
+   * @note implemented here for inlining
    */
-  Lexer() { d_buffer = std::vector<unsigned char>(d_buf_size, 0); }
-  /** @return The next token. */
-  Token next_token();
+  Token next_token()
+  {
+    d_last_coo = d_coo;
+    Token res  = next_token_aux();
+    // The token is the sequence of characters consumed since d_tok_start,
+    // prefixed by d_token if it was spilled on refilling the buffer.
+    if (!d_tok_start)
+    {
+      d_tok = std::string_view();
+    }
+    else if (d_token.empty())
+    {
+      d_tok = std::string_view(d_tok_start, d_cur - d_tok_start);
+    }
+    else
+    {
+      d_token.append(d_tok_start, d_cur - d_tok_start);
+      d_tok = d_token;
+    }
+    d_tok_start = nullptr;
+    return res;
+  }
   /**
    * @return True if lexer parsed a token that has a non-unique string
    *         representation (e.g., symbols, attributes, binary values, etc.).
    *         This string representation can then be queried via token().
    */
-  bool has_token() const { return !d_token.empty(); }
+  bool has_token() const { return !d_tok.empty(); }
   /**
    * Get a string representation of the last parsed token. Empty if
-   * !has_token(), i.e., if token has a unique string representation (e.g.,
-   * left/right parenthesis, underscore, etc.).
+   * !has_token().
+   * @note The returned string is only valid until the next call to
+   *       next_token().
    * @return The string representation of the token.
    */
-  const char* token() const { return d_token.data(); }
+  const char* token() const;
+  /**
+   * Get a string representation of the last parsed token, without copying it
+   * if possible.
+   * @note The returned string view is only valid until the next call to
+   *       next_token().
+   * @return The string representation of the token.
+   */
+  std::string_view token_view() const { return d_tok; }
   /** @return True if lexer encountered an error. */
   bool error() const;
   /** @return The error message, empty if !error(). */
@@ -176,104 +212,94 @@ class Lexer
 
   /**
    * Configure read buffer.
-   * @param buf_size The size of the buffer.
+   * @param buf_size The size of the buffer. A buffer size of 1 configures the
+   *                 lexer for interactive input: characters are then read one
+   *                 at a time, as reading ahead could block on input that is
+   *                 not yet available.
    */
-  void configure_buffer(size_t buf_size = 1024);
+  void configure_buffer(size_t buf_size = s_default_buf_size);
 
-  /** The size of the chunks to be read into the input file buffer d_buffer. */
-  size_t d_buf_size = 1024;
-  /** The index of the next character to be read from the buffer. */
-  size_t d_buf_idx = d_buf_size;
-  /** The (virtual) index of the EOF character in the buffer. */
-  size_t d_buf_eof = d_buf_size + 1;
+  /**
+   * Flush the output stream tied to the input stream (if any).
+   * In interactive mode, the input stream is read via its stream buffer, which
+   * bypasses the automatic flush of the tied stream on every read. This must
+   * be called before the lexer may block on input (e.g., before parsing the
+   * next command) to ensure that all responses have been written.
+   */
+  void flush_tied_output()
+  {
+    if (d_buf_size == 1 && d_input && d_input->tie())
+    {
+      d_input->tie()->flush();
+    }
+  }
+
+  /** The default size of the read buffer. */
+  static constexpr size_t s_default_buf_size = 1 << 16;
 
  private:
   /** Helper for next_token(). */
   Token next_token_aux();
 
   /**
-   * @return The next character in the input file.
+   * @return The string representation of the token currently being lexed.
+   * @note Only for error messages, this is not zero-copy.
+   */
+  std::string cur_token() const;
+
+  /**
+   * Refill the read buffer from the input stream.
+   * @return False if the end of the input stream has been reached.
+   */
+  bool fill_buffer();
+
+  /**
+   * @return The next character in the input stream without consuming it, EOF
+   *         if the end of the input stream has been reached.
    * @note implemented here for inlining
    */
-  int32_t next_char()
+  int32_t peek_char()
   {
-    if (d_buf_idx == d_buf_size)
-    {
-      assert(!d_saved);
-      d_input->read(reinterpret_cast<char*>(d_buffer.data()), d_buf_size);
-      if (d_input->eof())
-      {
-        d_buf_eof = d_input->gcount();
-      }
-      d_buf_idx = 0;
-    }
-
-    if (d_buf_idx == d_buf_eof)
+    if (d_cur == d_end && !fill_buffer())
     {
       return EOF;
     }
-
-    d_saved     = false;
-    int32_t res = d_buffer[d_buf_idx++];
-    if (res == '\n')
-    {
-      d_cur_coo.line += 1;
-      assert(d_cur_coo.line > 0);
-      d_last_coo_nl_col = d_cur_coo.col;
-      d_cur_coo.col     = 1;
-    }
-    else
-    {
-      d_cur_coo.col += 1;
-      assert(d_cur_coo.col > 0);
-    }
-    return res;
+    return static_cast<unsigned char>(*d_cur);
   }
 
   /**
-   * Push given character onto the token stack.
+   * Consume the current character, which must have been peeked at via
+   * peek_char().
    * @note implemented here for inlining
    */
-  void push_char(int32_t ch)
+  void consume_char()
   {
-    assert(ch != EOF);
-    // We cannot assert 'ch' to be in this range since users do not follow the
-    // standard and abuse the set-info command with keyword `:source` for
-    // adding, e.g., author information that is not sanitized.
-    // assert(ch >= 0 && ch < 256);
-    d_token.push_back(static_cast<char>(ch));
+    assert(d_cur < d_end);
+    if (*d_cur++ == '\n')
+    {
+      new_line();
+    }
+  }
+
+  /** Record a new line, d_cur points to the first character of the line. */
+  void new_line()
+  {
+    d_line += 1;
+    d_line_start = offset();
   }
 
   /**
-   * Store given character as a look ahead.
-   * @note implemented here for inlining
+   * Consume the longest sequence of characters of the given class.
+   * @note Characters of all classes passed to this function are on a single
+   *       line, the current coordinate thus only changes in its column.
    */
-  void save_char(int32_t ch)
-  {
-    assert(!d_saved);
+  void consume_chars(CharacterClasses::CharacterClass cclass);
 
-    d_saved = true;
-    if (ch == EOF)
-    {
-      d_buf_eof = d_buf_idx;
-      return;
-    }
+  /** @return The absolute offset of the current character in the input. */
+  uint64_t offset() const { return d_buf_offset + (d_cur - d_buffer.data()); }
 
-    assert(d_buf_idx > 0);
-    d_buf_idx -= 1;
-    assert(d_buffer[d_buf_idx] == ch);
-    if (ch == '\n')
-    {
-      assert(d_cur_coo.line > 1);
-      d_cur_coo.line -= 1;
-      d_cur_coo.col = d_last_coo_nl_col;
-    }
-    else
-    {
-      assert(d_cur_coo.col > 1);
-      d_cur_coo.col -= 1;
-    }
-  }
+  /** @return The coordinate of the current character in the input. */
+  Coordinate cur_coo() const { return {d_line, offset() - d_line_start + 1}; }
 
   /**
    * Helper for error().
@@ -284,37 +310,57 @@ class Lexer
   /**
    * Helper for error handling.
    * Compiles all data required for aborting on error (coordinate, message).
-   * @param ch Character, saved as look ahead.
+   * The coordinate of the error is the coordinate of the current character,
+   * i.e., the first character that has not yet been consumed.
    * @param error_msg The error message to set.
    * @return The invalid token.
    */
-  Token error(int32_t ch, const std::string& error_msg);
+  Token error(const std::string& error_msg);
 
   /** The input stream. */
   std::istream* d_input = nullptr;
   /** The coordinate of the current token. */
   Coordinate d_coo{1, 1};
-  /** The current coordinate in the input file. */
-  Coordinate d_cur_coo{1, 1};
   /** The coordinate of the last token. */
   Coordinate d_last_coo{1, 1};
-  /** The column of the last new line. */
-  uint64_t d_last_coo_nl_col = 1;
+  /** The current line. */
+  uint64_t d_line = 1;
+  /** The absolute offset of the first character of the current line. */
+  uint64_t d_line_start = 0;
 
   /**
-   * The string representation of the current token (if not a token with unique
-   * representation, e.g., (, ), _, ...).
+   * The string representation of the last token. Points into the read buffer
+   * if the token does not cross a buffer boundary, else to d_token.
    */
-  std::vector<char> d_token;
+  mutable std::string_view d_tok;
+  /**
+   * Holds the string representation of the current token if it does not fit
+   * into the read buffer, i.e., the characters of the token that were
+   * consumed before the buffer was refilled. Also used to provide a
+   * null-terminated string representation via token().
+   */
+  mutable std::string d_token;
+  /** The first character of the current token in the read buffer. */
+  const char* d_tok_start = nullptr;
 
+  /** The size of the chunks to be read into the input file buffer d_buffer. */
+  size_t d_buf_size = s_default_buf_size;
   /**
    * The read buffer.
    * Characters are read from the input file into the buffer in d_buf_size
-   * chunks, and next_char() then reads character by character from the buffer.
+   * chunks, and the lexer then scans the buffer directly. The valid
+   * characters in the buffer are followed by a null character as sentinel,
+   * which does not belong to any character class.
    */
-  std::vector<unsigned char> d_buffer;  // value-initialized to 0
-  /** True if we saved a character that has not been consumed yet. */
-  bool d_saved = false;
+  std::vector<char> d_buffer;
+  /** The current character in the buffer. */
+  const char* d_cur = nullptr;
+  /** The end of the valid characters in the buffer (the sentinel). */
+  const char* d_end = nullptr;
+  /** The absolute offset of the first character of the buffer in the input. */
+  uint64_t d_buf_offset = 0;
+  /** True if the end of the input stream has been reached. */
+  bool d_eof = false;
 
   /** The error message. */
   std::string d_error;
