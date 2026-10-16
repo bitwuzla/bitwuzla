@@ -160,6 +160,7 @@ AbstractionModule::process(const Node& term)
   NodeManager& nm = d_env.nm();
 
   node_ref_vector visit{term};
+  std::vector<Node> children;
   do
   {
     const Node& cur     = visit.back();
@@ -180,8 +181,16 @@ AbstractionModule::process(const Node& term)
     }
     else if (it->second.is_null())
     {
-      Node rebuilt = d_env.rewriter().rewrite(
-          utils::rebuild_node(nm, cur, d_abstraction_cache));
+      // Processed terms and their children are rewritten, hence only rebuilt
+      // nodes need to be rewritten, and only locally. Rewriting them with
+      // rewrite() traverses unchanged children again after every cache reset
+      // of the rewriter.
+      children.clear();
+      for (const Node& child : cur)
+      {
+        children.push_back(d_abstraction_cache.at(child));
+      }
+      Node rebuilt = d_env.rewriter().rebuild_node(cur, children);
 
       if (abstract(rebuilt))
       {
@@ -204,8 +213,6 @@ AbstractionModule::process(const Node& term)
 Node
 AbstractionModule::process_value(const Node& term)
 {
-  NodeManager& nm = d_env.nm();
-
   // Abstractions created since the last value query invalidate the cache: a
   // term previously rebuilt as-is may now have to map to its abstraction.
   if (d_value_cache_num_abstractions != d_num_abstractions)
@@ -241,8 +248,9 @@ AbstractionModule::process_value(const Node& term)
     }
     else if (it->second.is_null())
     {
-      it->second =
-          d_env.rewriter().rewrite(utils::rebuild_node(nm, cur, d_value_cache));
+      // Terms queried in solving mode are rewritten, hence only rebuilt nodes
+      // need to be rewritten.
+      it->second = d_env.rewriter().rebuild_node(cur, d_value_cache);
     }
     visit.pop_back();
   } while (!visit.empty());
