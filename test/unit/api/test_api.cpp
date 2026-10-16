@@ -3868,6 +3868,14 @@ TEST_F(TestApi, parser_smt2_string_term)
   ASSERT_NE(decl_funs_strs.find("a"), decl_funs_strs.end());
   ASSERT_NE(decl_funs_strs.find("b"), decl_funs_strs.end());
   ASSERT_NE(decl_funs_strs.find("c"), decl_funs_strs.end());
+
+  // input that does not denote a term
+  for (const auto& str :
+       {"5", "5.0", "(and true 5 true)", "and", "!", "/", ":foo", ":named a"})
+  {
+    bitwuzla::parser::Parser p(d_tm, options);
+    ASSERT_THROW(p.parse_term(str), bitwuzla::parser::Exception);
+  }
 }
 
 TEST_F(TestApi, parser_smt2_string_sort)

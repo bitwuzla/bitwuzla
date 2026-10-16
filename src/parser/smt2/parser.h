@@ -354,6 +354,13 @@ class Parser : public bzla::parser::Parser
    */
   bool parse_term(bool look_ahead = false, Token la_char = Token::INVALID);
   /**
+   * Parse term and check that it is of the given sort.
+   * @param sort The expected sort.
+   * @param res  The resulting term.
+   * @return False on error.
+   */
+  bool parse_term_of_sort(const bitwuzla::Sort& sort, bitwuzla::Term& res);
+  /**
    * Parse list of terms.
    * @param repr The resulting list of terms.
    * @return False on error.

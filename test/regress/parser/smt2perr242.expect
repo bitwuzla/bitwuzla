@@ -1,0 +1,1 @@
+regress/parser/smt2perr242.smt2:1:9: invalid term, '/' only allowed to represent rational values under 'to_fp'

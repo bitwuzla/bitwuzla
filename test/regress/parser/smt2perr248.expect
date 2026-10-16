@@ -1,0 +1,1 @@
+regress/parser/smt2perr248.smt2:2:35: expected rounding mode before real value in 'to_fp'

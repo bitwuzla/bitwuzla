@@ -1,0 +1,1 @@
+regress/parser/smt2perr246.smt2:1:23: expected term of sort 'Bool' but got 'String'

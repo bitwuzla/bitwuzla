@@ -243,7 +243,10 @@ Parser::parse_term(const std::string& input, bitwuzla::Term& res)
   {
     return false;
   }
-  assert(peek_is_term_arg());
+  if (!peek_is_term_arg())
+  {
+    return error("expected term");
+  }
   res = pop_term_arg();
   assert(!res.is_null());
   return true;
@@ -613,16 +616,10 @@ Parser::parse_command_define_const()
     return false;
   }
 
-  if (!parse_term())
+  bitwuzla::Term body;
+  if (!parse_term_of_sort(sort, body))
   {
     return false;
-  }
-
-  bitwuzla::Term body = pop_term_arg();
-  if (body.sort() != sort)
-  {
-    return error_arg("expected term of sort '" + sort.str() + "' but got '"
-                     + body.sort().str());
   }
 
   symbol->d_term = body;
@@ -707,16 +704,10 @@ Parser::parse_command_define_fun()
     return false;
   }
 
-  if (!parse_term())
+  bitwuzla::Term body;
+  if (!parse_term_of_sort(sort, body))
   {
     return false;
-  }
-
-  bitwuzla::Term body = pop_term_arg();
-  if (body.sort() != sort)
-  {
-    return error_arg("expected term of sort '" + sort.str() + "' but got '"
-                     + body.sort().str());
   }
 
   if (args.size())
@@ -1605,6 +1596,43 @@ Parser::parse_term(bool look_ahead, Token la)
 }
 
 bool
+Parser::parse_term_of_sort(const bitwuzla::Sort& sort, bitwuzla::Term& res)
+{
+  Token la = next_token();
+  // Numerals, decimals and string literals are terms of sort Int, Real and
+  // String, which we don't support and thus can't construct, so we report the
+  // mismatch up front.
+  std::string la_sort;
+  switch (la)
+  {
+    case Token::DECIMAL_VALUE: la_sort = "Int"; break;
+    case Token::REAL_VALUE: la_sort = "Real"; break;
+    case Token::STRING_VALUE: la_sort = "String"; break;
+    default: break;
+  }
+  if (!la_sort.empty())
+  {
+    return error("expected term of sort '" + sort.str() + "' but got '"
+                 + la_sort + "'");
+  }
+  if (!parse_term(true, la))
+  {
+    return false;
+  }
+  if (!peek_is_term_arg())
+  {
+    return error("expected term");
+  }
+  if (peek_term_arg().sort() != sort)
+  {
+    return error_arg("expected term of sort '" + sort.str() + "' but got '"
+                     + peek_term_arg().sort().str() + "'");
+  }
+  res = pop_term_arg();
+  return true;
+}
+
+bool
 Parser::parse_term_list(std::vector<bitwuzla::Term>& terms,
                         std::vector<std::string>* repr)
 {
@@ -1715,7 +1743,8 @@ Parser::parse_open_term(Token token)
     }
     symbol->d_coo = d_lexer->coo();
   }
-  else if (token == Token::ATTRIBUTE && item_open().d_token == Token::BANG)
+  else if (token == Token::ATTRIBUTE && nopen()
+           && item_open().d_token == Token::BANG)
   {
     // Catch-all for all unsupported annotation attributes, we ignore the
     // value of unsupported annotation attributes. For this, we have to ignore
@@ -1725,6 +1754,16 @@ Parser::parse_open_term(Token token)
     // any symbols that occur in that term are defined.
     push_item(Token::SYMBOL, d_last_node, d_lexer->coo());
     d_skip_attribute_value = true;
+  }
+  else if (d_skip_attribute_value && nopen()
+           && item_open().d_token == Token::BANG
+           && (token == Token::DECIMAL_VALUE || token == Token::REAL_VALUE
+               || token == Token::STRING_VALUE))
+  {
+    // Literal value of an unsupported annotation attribute. We don't construct
+    // a term but push a placeholder that close_term_bang() skips as the
+    // attribute value.
+    push_item(token, d_lexer->coo());
   }
   else if (is_symbol(token))
   {
@@ -1759,6 +1798,24 @@ Parser::parse_open_term(Token token)
   else if (token == Token::DECIMAL_VALUE || token == Token::REAL_VALUE)
   {
     assert(d_lexer->has_token());
+    // Int and Real are not supported, numerals and decimals only occur as the
+    // real value argument of to_fp (directly, or as operands of '/').
+    if (!nopen()
+        || (item_open().d_token != Token::FP_TO_FP
+            && item_open().d_token != Token::REAL_DIV))
+    {
+      return error("invalid term '" + std::string(d_lexer->token())
+                   + "', numerals and decimals only allowed to represent real "
+                     "values under '"
+                   + std::to_string(Token::FP_TO_FP) + "'");
+    }
+    // The real value is stored separately from the term arguments, its
+    // position relative to the rounding mode must be checked here.
+    if (item_open().d_token == Token::FP_TO_FP && nargs() == 0)
+    {
+      return error("expected rounding mode before real value in '"
+                   + std::to_string(Token::FP_TO_FP) + "'");
+    }
     ParsedItem& item = item_open();
     item.d_strs.emplace_back(d_lexer->token());
     item.d_strs_coo.emplace_back(d_lexer->coo());
@@ -2097,7 +2154,7 @@ Parser::parse_open_term_symbol()
     }
     else if (token == Token::BANG)
     {
-      if (d_work[d_work.size() - 2].d_token != Token::LPAR)
+      if (!peek_item_is_token(Token::LPAR, d_work.size() - 2))
       {
         return error("missing '(' before '" + std::to_string(token) + "'");
       }
@@ -2169,10 +2226,17 @@ Parser::parse_open_term_symbol()
   else if (d_fp_enabled)
   {
     if (token == Token::REAL_DIV
-        && !peek_item_is_token(Token::FP_TO_FP, idx_prev()))
+        && (!nopen() || !peek_item_is_token(Token::FP_TO_FP, idx_prev())))
     {
       return error("invalid term, '" + std::to_string(token)
                    + "' only allowed to represent rational values under '"
+                   + std::to_string(Token::FP_TO_FP) + "'");
+    }
+    // The '(' of '/' directly following to_fp means that no rounding mode
+    // precedes the real value.
+    if (token == Token::REAL_DIV && idx_open() - 2 == idx_prev())
+    {
+      return error("expected rounding mode before real value in '"
                    + std::to_string(Token::FP_TO_FP) + "'");
     }
     if (is_token_class(token, TokenClass::FP))

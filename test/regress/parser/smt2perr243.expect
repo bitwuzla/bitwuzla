@@ -1,0 +1,1 @@
+regress/parser/smt2perr243.smt2:1:19: invalid term '5', numerals and decimals only allowed to represent real values under 'to_fp'
