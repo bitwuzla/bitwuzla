@@ -162,18 +162,11 @@ QuantSolver::instantiate(const Node& q,
     body = body[1];
   }
 
-  Node result = substitute(body, substs);
+  Node result = utils::substitute(d_env.nm(), body, substs, false);
 
   // TODO: instance tracking?
 
   return result;
-}
-
-Node
-QuantSolver::substitute(const Node& n,
-                        const std::unordered_map<Node, Node>& substs)
-{
-  return utils::substitute(d_env.nm(), n, substs, false);
 }
 
 const Node&
@@ -520,7 +513,7 @@ QuantSolver::mbqi_inst(const Node& q)
     cur = cur[1];
   }
 
-  Node inst = substitute(cur, map);
+  Node inst = utils::substitute(d_env.nm(), cur, map, false);
   auto [iit, inserted] =
       d_mbqi_inst.emplace(q, d_env.nm().mk_node(Kind::NOT, {inst}));
   return iit->second;
@@ -659,14 +652,16 @@ QuantSolver::mbqi_lemma(
     assert(!ic.is_null());
     cur = cur[1];
   }
-  Node inst = substitute(cur, map);
+  // The conditions are instantiated with the same map, share the cache.
+  utils::Substituter substituter(nm, map, false);
+  Node inst = substituter.substitute(cur);
   Node lem  = nm.mk_node(Kind::IMPLIES, {q, inst});
   // Inverse term instantiations are potentially conditional, we conjunct
   // these conditions to the instantiation lemma.
   if (!conditions.empty())
   {
     Node cond = utils::mk_nary(nm, Kind::AND, conditions);
-    cond      = substitute(cond, map);
+    cond      = substituter.substitute(cond);
     lem       = nm.mk_node(Kind::AND, {cond, lem});
   }
   // This is mainly to document that this can never happen since we ensure
@@ -747,7 +742,7 @@ QuantSolver::get_value_for_operands(
     cur = cur[1];
   }
 
-  Node instantiated = substitute(node, substs);
+  Node instantiated = utils::substitute(d_env.nm(), node, substs, false);
   // Rewrite the operands before querying their value. Querying a value
   // registers the term, and terms registered as theory leafs must be in
   // rewritten form.

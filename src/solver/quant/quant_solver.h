@@ -97,13 +97,6 @@ class QuantSolver : public Solver
    * @return The body of `q` instantiated with `substs`.
    */
   Node instantiate(const Node& q, const std::unordered_map<Node, Node>& substs);
-  /**
-   * Convenience wrapper for node::utils::substitute.
-   * @param n      The node.
-   * @param substs The substitution map.
-   * @return The node with `substs` applied.
-   */
-  Node substitute(const Node& n, const std::unordered_map<Node, Node>& substs);
 
   /**
    * Get the instantiation constant for the variable of the given quantifier.
