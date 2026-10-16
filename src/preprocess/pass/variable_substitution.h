@@ -94,6 +94,15 @@ class PassVariableSubstitution : public PreprocessingPass
   /** Clear the substitution cache if substitutions were popped. */
   void sync_cache();
 
+  /** Start a new substitution epoch for the current candidates. */
+  void new_epoch();
+
+  /**
+   * @return The id below which nodes of the substitution term of `var`
+   *         cannot contain variables that still need to be substituted.
+   */
+  uint64_t subst_id_threshold(const Node& var) const;
+
   /**
    * Determines whether `var` occurs in the assertions of previous
    * preprocessing calls. These assertions are not reprocessed, so the
@@ -167,6 +176,27 @@ class PassVariableSubstitution : public PreprocessingPass
    * Nodes with smaller ids cannot contain any of them.
    */
   uint64_t d_min_subst_id = UINT64_MAX;
+
+  /**
+   * Substitution epoch, incremented whenever apply() finds new candidates.
+   *
+   * A substitution term is fully substituted with respect to the variables
+   * substituted up to the epoch it was computed in. When it is substituted
+   * again, it can only contain variables of later epochs, so nodes with ids
+   * below the smallest id of these variables are unchanged. This avoids
+   * re-traversing (chains of) substitution terms whenever the cache is reset.
+   */
+  size_t d_epoch = 0;
+  /**
+   * Maps epoch e to the smallest id of all variables that became
+   * substitution candidates in epoch e or later.
+   */
+  std::vector<uint64_t> d_epoch_min_id{UINT64_MAX};
+  /**
+   * Maps substituted variable to the latest epoch its substitution term is
+   * known to be fully substituted in.
+   */
+  std::unordered_map<Node, size_t> d_subst_epoch;
 
   /**
    * Nodes occurring in the assertions of previous preprocessing calls up to
