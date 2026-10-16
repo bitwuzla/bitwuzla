@@ -33,7 +33,7 @@ class SymFPUFloatingPointTypeInfo
    * @param esize The size of the exponent.
    * @param ssize The size of the significand.
    */
-  SymFPUFloatingPointTypeInfo(uint32_t esize, uint32_t ssize);
+  SymFPUFloatingPointTypeInfo(uint64_t esize, uint64_t ssize);
   /** Copy constructor. */
   SymFPUFloatingPointTypeInfo(const SymFPUFloatingPointTypeInfo& other);
   /** Move constructor. */
@@ -61,30 +61,30 @@ class SymFPUFloatingPointTypeInfo
   /* symFPU interface --------------------------------------------- */
 
   /** @return The exponent size of this format. */
-  uint32_t exponentWidth() const { return d_esize; }
+  uint64_t exponentWidth() const { return d_esize; }
   /** @return The significand size of this format (incl. the sign bit). */
-  uint32_t significandWidth() const { return d_ssize; }
+  uint64_t significandWidth() const { return d_ssize; }
   /**
    * @return The bit-width of the IEEE-754 representation of a floating-point
    *         of this size.
    */
-  uint32_t packedWidth() const { return d_esize + d_ssize; }
+  uint64_t packedWidth() const { return d_esize + d_ssize; }
   /**
    * @return The exponent size of this format in the IEEE-754 representation
    *         (same as exponentWidth()).
    */
-  uint32_t packedExponentWidth() const { return d_esize; }
+  uint64_t packedExponentWidth() const { return d_esize; }
   /**
    * @return The actual significand size of this format in the IEEE-754
    *         representation (without sign bit).
    */
-  uint32_t packedSignificandWidth() const { return d_ssize - 1; }
+  uint64_t packedSignificandWidth() const { return d_ssize - 1; }
 
  private:
   /** The size of exponent. */
-  uint32_t d_esize;
+  uint64_t d_esize;
   /** The size of significand. */
-  uint32_t d_ssize;
+  uint64_t d_ssize;
   /** The wrapped floating-point type. */
   Type d_type;
 };

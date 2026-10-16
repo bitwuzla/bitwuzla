@@ -23,10 +23,10 @@ using namespace node;
 /* --- SymFpuBV public ------------------------------------------------------ */
 
 template <bool is_signed>
-SymFpuBV<is_signed>::SymFpuBV(const uint32_t bw, const uint32_t val)
+SymFpuBV<is_signed>::SymFpuBV(const uint64_t bw, const uint64_t val)
 {
   assert(bw);
-  d_bv = BitVector::from_ui(bw, static_cast<uint64_t>(val));
+  d_bv = BitVector::from_ui(bw, val);
 }
 
 template <bool is_signed>
@@ -64,7 +64,7 @@ SymFpuBV<is_signed>::str() const
 }
 
 template <bool is_signed>
-uint32_t
+uint64_t
 SymFpuBV<is_signed>::getWidth(void) const
 {
   assert(!d_bv.is_null());
@@ -73,7 +73,7 @@ SymFpuBV<is_signed>::getWidth(void) const
 
 template <bool is_signed>
 SymFpuBV<is_signed>
-SymFpuBV<is_signed>::one(const uint32_t& bw)
+SymFpuBV<is_signed>::one(const uint64_t& bw)
 {
   assert(bw);
   return BitVector::mk_one(bw);
@@ -81,7 +81,7 @@ SymFpuBV<is_signed>::one(const uint32_t& bw)
 
 template <bool is_signed>
 SymFpuBV<is_signed>
-SymFpuBV<is_signed>::zero(const uint32_t& bw)
+SymFpuBV<is_signed>::zero(const uint64_t& bw)
 {
   assert(bw);
   return BitVector::mk_zero(bw);
@@ -89,7 +89,7 @@ SymFpuBV<is_signed>::zero(const uint32_t& bw)
 
 template <bool is_signed>
 SymFpuBV<is_signed>
-SymFpuBV<is_signed>::allOnes(const uint32_t& bw)
+SymFpuBV<is_signed>::allOnes(const uint64_t& bw)
 {
   assert(bw);
   return BitVector::mk_ones(bw);
@@ -113,7 +113,7 @@ SymFpuBV<is_signed>::isAllZeros() const
 
 template <bool is_signed>
 SymFpuBV<is_signed>
-SymFpuBV<is_signed>::maxValue(const uint32_t& bw)
+SymFpuBV<is_signed>::maxValue(const uint64_t& bw)
 {
   assert(bw);
   return is_signed ? BitVector::mk_max_signed(bw) : BitVector::mk_ones(bw);
@@ -121,7 +121,7 @@ SymFpuBV<is_signed>::maxValue(const uint32_t& bw)
 
 template <bool is_signed>
 SymFpuBV<is_signed>
-SymFpuBV<is_signed>::minValue(const uint32_t& bw)
+SymFpuBV<is_signed>::minValue(const uint64_t& bw)
 {
   assert(bw);
   return is_signed ? BitVector::mk_min_signed(bw) : BitVector::mk_zero(bw);
@@ -255,8 +255,8 @@ SymFpuBV<is_signed>::signExtendRightShift(const SymFpuBV<is_signed>& op) const
 {
   assert(!d_bv.is_null());
   assert(!op.d_bv.is_null());
-  uint32_t bw   = d_bv.size();
-  uint32_t bwop = op.d_bv.size();
+  uint64_t bw   = d_bv.size();
+  uint64_t bwop = op.d_bv.size();
   assert(bwop <= bw);
   return d_bv.bvashr(op.d_bv.bvsext(bw - bwop));
 }
@@ -388,7 +388,7 @@ SymFpuBV<is_signed>::toUnsigned(void) const
 
 template <bool is_signed>
 SymFpuBV<is_signed>
-SymFpuBV<is_signed>::extend(uint32_t extension) const
+SymFpuBV<is_signed>::extend(uint64_t extension) const
 {
   assert(!d_bv.is_null());
   return is_signed ? d_bv.bvsext(extension) : d_bv.bvzext(extension);
@@ -396,20 +396,20 @@ SymFpuBV<is_signed>::extend(uint32_t extension) const
 
 template <bool is_signed>
 SymFpuBV<is_signed>
-SymFpuBV<is_signed>::contract(uint32_t reduction) const
+SymFpuBV<is_signed>::contract(uint64_t reduction) const
 {
   assert(!d_bv.is_null());
-  uint32_t bw = getWidth();
+  uint64_t bw = getWidth();
   assert(bw - 1 - reduction < bw);
   return d_bv.bvextract(bw - 1 - reduction, 0);
 }
 
 template <bool is_signed>
 SymFpuBV<is_signed>
-SymFpuBV<is_signed>::resize(uint32_t newSize) const
+SymFpuBV<is_signed>::resize(uint64_t newSize) const
 {
   assert(!d_bv.is_null());
-  uint32_t bw = getWidth();
+  uint64_t bw = getWidth();
   if (newSize > bw)
   {
     return extend(newSize - bw);
@@ -427,7 +427,7 @@ SymFpuBV<is_signed>::matchWidth(const SymFpuBV<is_signed>& op) const
 {
   assert(!d_bv.is_null());
   assert(!op.d_bv.is_null());
-  uint32_t bw = getWidth();
+  uint64_t bw = getWidth();
   assert(bw <= op.getWidth());
   return extend(op.getWidth() - bw);
 }
@@ -443,7 +443,7 @@ SymFpuBV<is_signed>::append(const SymFpuBV<is_signed>& op) const
 
 template <bool is_signed>
 SymFpuBV<is_signed>
-SymFpuBV<is_signed>::extract(uint32_t upper, uint32_t lower) const
+SymFpuBV<is_signed>::extract(uint64_t upper, uint64_t lower) const
 {
   assert(!d_bv.is_null());
   assert(upper >= lower);
@@ -629,9 +629,10 @@ SymFpuSymBV<is_signed>::SymFpuSymBV(bool v)
 }
 
 template <bool is_signed>
-SymFpuSymBV<is_signed>::SymFpuSymBV(const uint32_t w, const uint32_t val)
-    : d_node(SymFpuNM::get().mk_value(is_signed ? BitVector::from_si(w, val)
-                                                : BitVector::from_ui(w, val)))
+SymFpuSymBV<is_signed>::SymFpuSymBV(const uint64_t w, const uint64_t val)
+    : d_node(SymFpuNM::get().mk_value(
+          is_signed ? BitVector::from_si(w, static_cast<int64_t>(val))
+                    : BitVector::from_ui(w, val)))
 {
 }
 
@@ -687,7 +688,7 @@ SymFpuSymBV<is_signed>::operator=(const SymFpuSymBV<is_signed>& other)
 }
 
 template <bool is_signed>
-uint32_t
+uint64_t
 SymFpuSymBV<is_signed>::getWidth(void) const
 {
   return d_node.type().bv_size();
@@ -695,21 +696,21 @@ SymFpuSymBV<is_signed>::getWidth(void) const
 
 template <bool is_signed>
 SymFpuSymBV<is_signed>
-SymFpuSymBV<is_signed>::one(const uint32_t& w)
+SymFpuSymBV<is_signed>::one(const uint64_t& w)
 {
   return SymFpuNM::get().mk_value(BitVector::mk_one(w));
 }
 
 template <bool is_signed>
 SymFpuSymBV<is_signed>
-SymFpuSymBV<is_signed>::zero(const uint32_t& w)
+SymFpuSymBV<is_signed>::zero(const uint64_t& w)
 {
   return SymFpuNM::get().mk_value(BitVector::mk_zero(w));
 }
 
 template <bool is_signed>
 SymFpuSymBV<is_signed>
-SymFpuSymBV<is_signed>::allOnes(const uint32_t& w)
+SymFpuSymBV<is_signed>::allOnes(const uint64_t& w)
 {
   return SymFpuNM::get().mk_value(BitVector::mk_ones(w));
 }
@@ -730,7 +731,7 @@ SymFpuSymBV<is_signed>::isAllZeros() const
 
 template <bool is_signed>
 SymFpuSymBV<is_signed>
-SymFpuSymBV<is_signed>::maxValue(const uint32_t& w)
+SymFpuSymBV<is_signed>::maxValue(const uint64_t& w)
 {
   return is_signed ? SymFpuNM::get().mk_value(BitVector::mk_max_signed(w))
                    : SymFpuNM::get().mk_value(BitVector::mk_ones(w));
@@ -738,7 +739,7 @@ SymFpuSymBV<is_signed>::maxValue(const uint32_t& w)
 
 template <bool is_signed>
 SymFpuSymBV<is_signed>
-SymFpuSymBV<is_signed>::minValue(const uint32_t& w)
+SymFpuSymBV<is_signed>::minValue(const uint64_t& w)
 {
   return is_signed ? SymFpuNM::get().mk_value(BitVector::mk_min_signed(w))
                    : SymFpuNM::get().mk_value(BitVector::mk_zero(w));
@@ -999,7 +1000,7 @@ SymFpuSymBV<is_signed>::toUnsigned(void) const
 
 template <bool is_signed>
 SymFpuSymBV<is_signed>
-SymFpuSymBV<is_signed>::extend(uint32_t extension) const
+SymFpuSymBV<is_signed>::extend(uint64_t extension) const
 {
   return is_signed ? SymFpuNM::get().mk_node(
                          Kind::BV_SIGN_EXTEND, {d_node}, {extension})
@@ -1009,7 +1010,7 @@ SymFpuSymBV<is_signed>::extend(uint32_t extension) const
 
 template <bool is_signed>
 SymFpuSymBV<is_signed>
-SymFpuSymBV<is_signed>::contract(uint32_t reduction) const
+SymFpuSymBV<is_signed>::contract(uint64_t reduction) const
 {
   return SymFpuNM::get().mk_node(
       Kind::BV_EXTRACT, {d_node}, {getWidth() - 1 - reduction, 0});
@@ -1017,9 +1018,9 @@ SymFpuSymBV<is_signed>::contract(uint32_t reduction) const
 
 template <bool is_signed>
 SymFpuSymBV<is_signed>
-SymFpuSymBV<is_signed>::resize(uint32_t newSize) const
+SymFpuSymBV<is_signed>::resize(uint64_t newSize) const
 {
-  uint32_t bw = getWidth();
+  uint64_t bw = getWidth();
   if (newSize > bw) return extend(newSize - bw);
   if (newSize < bw) return contract(bw - newSize);
   return *this;
@@ -1042,7 +1043,7 @@ SymFpuSymBV<is_signed>::append(const SymFpuSymBV<is_signed>& op) const
 
 template <bool is_signed>
 SymFpuSymBV<is_signed>
-SymFpuSymBV<is_signed>::extract(uint32_t upper, uint32_t lower) const
+SymFpuSymBV<is_signed>::extract(uint64_t upper, uint64_t lower) const
 {
   return SymFpuNM::get().mk_node(Kind::BV_EXTRACT, {d_node}, {upper, lower});
 }

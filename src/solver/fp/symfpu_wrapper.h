@@ -70,7 +70,7 @@ class SymFpuBV
   friend ::symfpu::ite<bool, SymFpuBV<is_signed> >; /* For ite. */
 
  public:
-  SymFpuBV(const uint32_t bw, const uint32_t val);
+  SymFpuBV(const uint64_t bw, const uint64_t val);
   SymFpuBV(const bool& val);
   SymFpuBV(const SymFpuBV<is_signed>& other);
   SymFpuBV(const SymFpuBV<!is_signed>& other);
@@ -81,18 +81,18 @@ class SymFpuBV
 
   std::string str() const;
 
-  uint32_t getWidth(void) const;
+  uint64_t getWidth(void) const;
   const BitVector& getBv(void) const { return d_bv; }
 
-  static SymFpuBV<is_signed> one(const uint32_t& bw);
-  static SymFpuBV<is_signed> zero(const uint32_t& bw);
-  static SymFpuBV<is_signed> allOnes(const uint32_t& bw);
+  static SymFpuBV<is_signed> one(const uint64_t& bw);
+  static SymFpuBV<is_signed> zero(const uint64_t& bw);
+  static SymFpuBV<is_signed> allOnes(const uint64_t& bw);
 
   bool isAllOnes() const;
   bool isAllZeros() const;
 
-  static SymFpuBV<is_signed> maxValue(const uint32_t& bw);
-  static SymFpuBV<is_signed> minValue(const uint32_t& bw);
+  static SymFpuBV<is_signed> maxValue(const uint64_t& bw);
+  static SymFpuBV<is_signed> minValue(const uint64_t& bw);
 
   SymFpuBV<is_signed>& operator=(const SymFpuBV<is_signed>& other);
   /** Move assignment. */
@@ -139,12 +139,12 @@ class SymFpuBV
   SymFpuBV<false> toUnsigned(void) const;
 
   /*** Bit hacks ***/
-  SymFpuBV<is_signed> extend(uint32_t extension) const;
-  SymFpuBV<is_signed> contract(uint32_t reduction) const;
-  SymFpuBV<is_signed> resize(uint32_t newSize) const;
+  SymFpuBV<is_signed> extend(uint64_t extension) const;
+  SymFpuBV<is_signed> contract(uint64_t reduction) const;
+  SymFpuBV<is_signed> resize(uint64_t newSize) const;
   SymFpuBV<is_signed> matchWidth(const SymFpuBV<is_signed>& op) const;
   SymFpuBV<is_signed> append(const SymFpuBV<is_signed>& op) const;
-  SymFpuBV<is_signed> extract(uint32_t upper, uint32_t lower) const;
+  SymFpuBV<is_signed> extract(uint64_t upper, uint64_t lower) const;
 
  private:
   BitVector d_bv;
@@ -161,7 +161,7 @@ class SymFpuTraits
 {
  public:
   /* The six key types that SymFPU uses. */
-  using bwt  = uint32_t;
+  using bwt  = uint64_t;
   using rm   = RoundingMode;
   using fpt  = SymFPUFloatingPointTypeInfo;
   using prop = bool;
@@ -263,7 +263,7 @@ class SymFpuSymBV
  public:
   /** Constructors for bit-vector nodes. */
   SymFpuSymBV(const Node& node);
-  SymFpuSymBV(const uint32_t w, const uint32_t val);
+  SymFpuSymBV(const uint64_t w, const uint64_t val);
   SymFpuSymBV(const SymFpuSymProp& p);
   SymFpuSymBV(const SymFpuSymBV<is_signed>& other);
   SymFpuSymBV(const SymFpuSymBV<!is_signed>& other);
@@ -283,19 +283,19 @@ class SymFpuSymBV
   SymFpuSymBV<is_signed>& operator=(SymFpuSymBV<is_signed>&& other) noexcept =
       default;
 
-  uint32_t getWidth(void) const;
+  uint64_t getWidth(void) const;
   const Node& getNode(void) const { return d_node; }
 
   /** Constant creation and test */
-  static SymFpuSymBV<is_signed> one(const uint32_t& w);
-  static SymFpuSymBV<is_signed> zero(const uint32_t& w);
-  static SymFpuSymBV<is_signed> allOnes(const uint32_t& w);
+  static SymFpuSymBV<is_signed> one(const uint64_t& w);
+  static SymFpuSymBV<is_signed> zero(const uint64_t& w);
+  static SymFpuSymBV<is_signed> allOnes(const uint64_t& w);
 
   SymFpuSymProp isAllOnes() const;
   SymFpuSymProp isAllZeros() const;
 
-  static SymFpuSymBV<is_signed> maxValue(const uint32_t& w);
-  static SymFpuSymBV<is_signed> minValue(const uint32_t& w);
+  static SymFpuSymBV<is_signed> maxValue(const uint64_t& w);
+  static SymFpuSymBV<is_signed> minValue(const uint64_t& w);
 
   /** Operators */
   SymFpuSymBV<is_signed> operator<<(const SymFpuSymBV<is_signed>& op) const;
@@ -348,12 +348,12 @@ class SymFpuSymBV
   SymFpuSymBV<false> toUnsigned(void) const;
 
   /** Bit hacks */
-  SymFpuSymBV<is_signed> extend(uint32_t extension) const;
-  SymFpuSymBV<is_signed> contract(uint32_t reduction) const;
-  SymFpuSymBV<is_signed> resize(uint32_t newSize) const;
+  SymFpuSymBV<is_signed> extend(uint64_t extension) const;
+  SymFpuSymBV<is_signed> contract(uint64_t reduction) const;
+  SymFpuSymBV<is_signed> resize(uint64_t newSize) const;
   SymFpuSymBV<is_signed> matchWidth(const SymFpuSymBV<is_signed>& op) const;
   SymFpuSymBV<is_signed> append(const SymFpuSymBV<is_signed>& op) const;
-  SymFpuSymBV<is_signed> extract(uint32_t upper, uint32_t lower) const;
+  SymFpuSymBV<is_signed> extract(uint64_t upper, uint64_t lower) const;
 
  protected:
   using literalType = typename BzlaSignedToLitSort<is_signed>::BzlaLitSort;
@@ -415,7 +415,7 @@ class SymFpuSymTraits
 {
  public:
   /* The six key types that SymFPU uses. */
-  using bwt  = uint32_t;
+  using bwt  = uint64_t;
   using rm   = SymFpuSymRM;
   using fpt  = SymFPUFloatingPointTypeInfo;
   using prop = SymFpuSymProp;

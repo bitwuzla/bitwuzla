@@ -24,8 +24,8 @@ SymFPUFloatingPointTypeInfo::SymFPUFloatingPointTypeInfo(const Type& type)
   d_type = type;
 }
 
-SymFPUFloatingPointTypeInfo::SymFPUFloatingPointTypeInfo(uint32_t esize,
-                                                         uint32_t ssize)
+SymFPUFloatingPointTypeInfo::SymFPUFloatingPointTypeInfo(uint64_t esize,
+                                                         uint64_t ssize)
     : d_esize(esize), d_ssize(ssize)
 {
   NodeManager& nm = fp::SymFpuNM::get();

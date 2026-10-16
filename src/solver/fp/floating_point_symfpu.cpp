@@ -704,12 +704,12 @@ FloatingPointSymFPU::convert_from_rational_aux(NodeManager& nm,
   /* Significand ------------------------------------------------------- */
 
   /* sig bits of type + guard and sticky bits */
-  uint32_t n_sig_bits = type.fp_sig_size() + 2;
+  uint64_t n_sig_bits = type.fp_sig_size() + 2;
   BitVector sig       = BitVector::mk_zero(n_sig_bits);
   mpq_t tmp_sig, mid;
   util::mpq_from_ui(tmp_sig, 0, 1);
   mpq_init(mid);
-  for (uint32_t i = 0, n = n_sig_bits - 1; i < n; ++i)
+  for (uint64_t i = 0, n = n_sig_bits - 1; i < n; ++i)
   {
     mpq_add(mid, tmp_sig, tmp_exp);
     if (mpq_cmp(mid, r) <= 0)
@@ -743,7 +743,7 @@ FloatingPointSymFPU::convert_from_rational_aux(NodeManager& nm,
 
   /* If the format has n_exp_bits, the unpacked format may have more to allow
    * subnormals to be normalised. */
-  uint32_t extension = UnpackedFloat::exponentWidth(exact_format) - n_exp_bits;
+  uint64_t extension = UnpackedFloat::exponentWidth(exact_format) - n_exp_bits;
 
   BitVector sign = sgn < 0 ? BitVector::mk_true() : BitVector::mk_false();
   char* str      = mpz_get_str(nullptr, 10, iexp);

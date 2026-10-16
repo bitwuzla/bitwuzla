@@ -310,7 +310,7 @@ WordBlaster::word_blasted(const Node& node) const
   return res;
 }
 
-uint32_t
+uint64_t
 WordBlaster::unpacked_sig_size(const Node& node)
 {
   assert(node.type().is_fp());
@@ -318,7 +318,7 @@ WordBlaster::unpacked_sig_size(const Node& node)
       SymFPUFloatingPointTypeInfo(node.type()));
 }
 
-uint32_t
+uint64_t
 WordBlaster::unpacked_exp_size(const Node& node)
 {
   assert(node.type().is_fp());
