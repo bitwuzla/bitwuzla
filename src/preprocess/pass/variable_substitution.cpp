@@ -748,6 +748,7 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
   {
     // Cached results do not reflect the new candidates.
     d_cache.clear();
+    new_epoch();
     // Substituting a candidate variable resolves its cycles. Process them in
     // the order they were found, which determines which candidate of a cycle
     // is dropped.
@@ -770,6 +771,7 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
       assert(it != d_cache.end());
       d_substitutions.emplace(var, it->second);
       d_substitution_assertions.emplace(var, assertion);
+      d_subst_epoch.insert_or_assign(var, d_epoch);
       if (c.keep)
       {
         d_keep.emplace(start_index + index, var);
@@ -991,16 +993,18 @@ PassVariableSubstitution::substitute(const Node& term)
   struct VisitEntry
   {
     ConstNodeRef node;
+    /** Nodes with smaller ids are unchanged by the substitution. */
+    uint64_t thresh;
     /** Result entry in d_cache, null if the node was not expanded yet. */
     Node* result = nullptr;
     /** Size of the result stack when the node was expanded. */
     size_t base = 0;
-    /** True if the node was expanded to its substitution term. */
-    bool subst = false;
+    /** The substitution term the node was expanded to, if any. */
+    const Node* subst = nullptr;
     /** True if the substitution term is a candidate term. */
     bool candidate = false;
   };
-  std::vector<VisitEntry> visit{{term}};
+  std::vector<VisitEntry> visit{{term, d_min_subst_id}};
   // Results of processed nodes, in the order the nodes were completed.
   std::vector<ConstNodeRef> results;
   // Stack positions of expanded candidate variables.
@@ -1013,7 +1017,7 @@ PassVariableSubstitution::substitute(const Node& term)
 
     if (!entry.result)
     {
-      if (cur.id() < d_min_subst_id)
+      if (cur.id() < entry.thresh)
       {
         results.push_back(cur);
         visit.pop_back();
@@ -1028,19 +1032,24 @@ PassVariableSubstitution::substitute(const Node& term)
         auto [subst, is_candidate] = get_subst(cur);
         if (subst)
         {
-          entry.subst     = true;
+          entry.subst     = subst;
           entry.candidate = is_candidate;
           if (is_candidate)
           {
             expanded.push_back(visit.size() - 1);
+            visit.push_back({*subst, d_min_subst_id});
           }
-          visit.push_back({*subst});
+          else
+          {
+            visit.push_back({*subst, subst_id_threshold(cur)});
+          }
         }
         else
         {
+          uint64_t thresh = entry.thresh;
           for (const Node& child : cur)
           {
-            visit.push_back({child});
+            visit.push_back({child, thresh});
           }
         }
         continue;
@@ -1076,7 +1085,7 @@ PassVariableSubstitution::substitute(const Node& term)
       const Node& var = var_entry.node;
       d_cache.erase(var);
       var_entry.result    = nullptr;
-      var_entry.subst     = false;
+      var_entry.subst     = nullptr;
       var_entry.candidate = false;
       Candidate& c        = d_candidates.at(var);
       Log(2) << "Remove cyclic substitution candidate: " << var << " -> "
@@ -1095,6 +1104,12 @@ PassVariableSubstitution::substitute(const Node& term)
       {
         assert(expanded.back() == visit.size() - 1);
         expanded.pop_back();
+      }
+      else if (res == *entry.subst)
+      {
+        // The substitution term does not contain any of the variables
+        // substituted so far.
+        d_subst_epoch.at(cur) = d_epoch;
       }
     }
     else if (cur.num_children() > 0)
@@ -1135,6 +1150,33 @@ PassVariableSubstitution::sync_cache()
     d_cache.clear();
     d_cache_num_substs = d_substitutions.size();
   }
+}
+
+void
+PassVariableSubstitution::new_epoch()
+{
+  uint64_t min_id = UINT64_MAX;
+  for (const Node& var : d_candidate_vars)
+  {
+    min_id = std::min(min_id, var.id());
+  }
+  ++d_epoch;
+  d_epoch_min_id.push_back(min_id);
+  // Minima over all later epochs are non-decreasing in the epoch, stop at the
+  // first one that is not affected.
+  for (size_t e = d_epoch; e-- > 0 && d_epoch_min_id[e] > min_id;)
+  {
+    d_epoch_min_id[e] = min_id;
+  }
+}
+
+uint64_t
+PassVariableSubstitution::subst_id_threshold(const Node& var) const
+{
+  auto it = d_subst_epoch.find(var);
+  assert(it != d_subst_epoch.end());
+  size_t e = it->second + 1;
+  return e < d_epoch_min_id.size() ? d_epoch_min_id[e] : UINT64_MAX;
 }
 
 bool
