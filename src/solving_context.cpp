@@ -63,6 +63,7 @@ SolvingContext::solve()
   // We sometimes have to know if the SAT result came from the PP or the
   // actual solve call, i.e., in case of interpolant generation.
   d_sat_state = d_sat_state_pp;
+  ++d_stats.num_solve;
   if (d_sat_state == Result::UNKNOWN)
   {
     try
@@ -84,6 +85,9 @@ SolvingContext::solve()
 
   check();
   d_stats.max_memory = util::maximum_memory_usage();
+  Msg(1) << "status:      " << d_sat_state;
+  Msg(1) << "solve time:  " << timer.elapsed() << "ms";
+  Msg(1) << "solve calls: " << d_stats.num_solve;
   return d_sat_state;
 }
 
@@ -427,6 +431,7 @@ SolvingContext::Statistics::Statistics(util::Statistics& stats)
           "solving_context::time_check_interpolant")),
       time_check_interpolant_inductive(stats.new_stat<util::TimerStatistic>(
           "solving_context::time_check_interpolant_inductive")),
+      num_solve(stats.new_stat<uint64_t>("solving_context::num_solve")),
       max_memory(stats.new_stat<uint64_t>("solving_context::max_memory")),
       formula_kinds_pre(
           stats.new_stat<util::HistogramStatistic>("formula::pre::node")),
