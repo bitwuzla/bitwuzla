@@ -1602,6 +1602,12 @@ Parser::parse_term(bool look_ahead, Token la)
         return false;
       }
     }
+    // the body of a binder is a single term, enclosed in parentheses or not
+    if (d_work.size() > 1
+        && d_work[d_work.size() - 2].d_token == Token::BINDER_BODY)
+    {
+      d_expect_rpar = true;
+    }
   } while (nopen() > 0);
   assert(d_work.size() > 0);
   return true;
@@ -2610,11 +2616,6 @@ Parser::close_term()
     }
   }
 
-  if (d_work.size() > 1
-      && d_work[d_work.size() - 2].d_token == Token::BINDER_BODY)
-  {
-    d_expect_rpar = true;
-  }
   return res;
 }
 
