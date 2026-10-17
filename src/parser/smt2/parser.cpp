@@ -187,9 +187,8 @@ Parser::parse(const std::string& infile_name,
 
   BITWUZLA_CHECK(input.operator bool()) << "invalid input stream";
 
-  if (!d_error.empty())
+  if (!check_safe_state())
   {
-    d_error = "parser in unsafe state after parse error";
     return false;
   }
 
@@ -243,6 +242,10 @@ Parser::parse(const std::string& infile_name,
 bool
 Parser::parse_term(const std::string& input, bitwuzla::Term& res)
 {
+  if (!check_safe_state())
+  {
+    return false;
+  }
   init_logic();
   std::stringstream instring;
   instring << input;
@@ -265,6 +268,10 @@ Parser::parse_term(const std::string& input, bitwuzla::Term& res)
 bool
 Parser::parse_sort(const std::string& input, bitwuzla::Sort& res)
 {
+  if (!check_safe_state())
+  {
+    return false;
+  }
   init_logic();
   std::stringstream instring;
   instring << input;
