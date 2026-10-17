@@ -1,0 +1,1 @@
+regress/parser/smt2perr261.smt2:2:19: expected '_' before '+oo'
