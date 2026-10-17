@@ -1,0 +1,1 @@
+regress/parser/smt2perr254.smt2:2:22: symbol '|x|' already bound in current let scope

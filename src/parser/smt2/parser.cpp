@@ -1839,12 +1839,13 @@ Parser::check_var_binding(SymbolTable::Node* symbol)
   assert(scope.d_pending_start < pending.size());
   // the number of variables bound before the given variable
   size_t n = pending.size() - 1 - scope.d_pending_start;
+  std::string_view sym = SymbolTable::strip_pipes(symbol->d_symbol);
   // most let binders bind only a few variables, check with linear search
   if (n < 16)
   {
     for (size_t i = scope.d_pending_start; i < pending.size() - 1; ++i)
     {
-      if (pending[i]->d_symbol == symbol->d_symbol)
+      if (SymbolTable::strip_pipes(pending[i]->d_symbol) == sym)
       {
         return false;
       }
@@ -1855,9 +1856,9 @@ Parser::check_var_binding(SymbolTable::Node* symbol)
   size_t start = scope.d_pending_start + scope.d_bindings.size();
   for (size_t i = start; i < pending.size() - 1; ++i)
   {
-    scope.d_bindings.insert(pending[i]->d_symbol);
+    scope.d_bindings.insert(SymbolTable::strip_pipes(pending[i]->d_symbol));
   }
-  return scope.d_bindings.insert(symbol->d_symbol).second;
+  return scope.d_bindings.insert(sym).second;
 }
 
 bitwuzla::Term

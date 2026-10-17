@@ -156,6 +156,20 @@ class SymbolTable
   /** Clear the pending symbols cache. Only needed for error handling. */
   void clear_pending_symbols();
 
+  /**
+   * @return The given symbol without enclosing pipes if it is a quoted symbol.
+   *         Piped symbols are considered equal to their non-piped version,
+   *         i.e., "|a|" and "a" refer to the same symbol.
+   */
+  static std::string_view strip_pipes(std::string_view symbol)
+  {
+    if (symbol.size() > 1 && symbol.front() == '|' && symbol.back() == '|')
+    {
+      return symbol.substr(1, symbol.size() - 2);
+    }
+    return symbol;
+  }
+
  private:
   /**
    * An entry of the symbol table. Maps the symbol to a symbol node (chain).
@@ -171,20 +185,6 @@ class SymbolTable
     /** The symbol node chain, nullptr if entry is empty. */
     std::unique_ptr<Node> d_node;
   };
-
-  /**
-   * @return The given symbol without enclosing pipes if it is a quoted symbol.
-   *         Piped symbols are considered equal to their non-piped version,
-   *         i.e., "|a|" and "a" refer to the same symbol.
-   */
-  static std::string_view strip_pipes(std::string_view symbol)
-  {
-    if (symbol.size() > 1 && symbol.front() == '|' && symbol.back() == '|')
-    {
-      return symbol.substr(1, symbol.size() - 2);
-    }
-    return symbol;
-  }
 
   /** @return The hash value of the given (pipe-stripped) symbol. */
   static size_t hash(std::string_view symbol);
