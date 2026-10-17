@@ -2361,6 +2361,13 @@ Parser::parse_open_term_symbol()
       {
         return error("unexpected '" + std::to_string(token) + "'");
       }
+      // floating-point constants are only valid as indexed terms
+      if (token == Token::FP_NOTANUMBER || token == Token::FP_NEG_INF
+          || token == Token::FP_NEG_ZERO || token == Token::FP_POS_INF
+          || token == Token::FP_POS_ZERO)
+      {
+        return error("expected '_' before '" + std::to_string(token) + "'");
+      }
 
       if (token == Token::FP_RM_RNA_LONG || token == Token::FP_RM_RNA)
       {
@@ -2515,12 +2522,7 @@ Parser::close_term()
     case Token::FP_MAX:
     case Token::FP_MIN:
     case Token::FP_MUL:
-    case Token::FP_NOTANUMBER:
     case Token::FP_NEG:
-    case Token::FP_NEG_INF:
-    case Token::FP_NEG_ZERO:
-    case Token::FP_POS_INF:
-    case Token::FP_POS_ZERO:
     case Token::FP_REM:
     case Token::FP_RTI:
     case Token::FP_SQRT:
@@ -3563,7 +3565,6 @@ Parser::pop_args(const ParsedItem& item, std::vector<bitwuzla::Term>& args)
     case Token::BV_USUBO:
     case Token::FP_MAX:
     case Token::FP_MIN:
-    case Token::FP_NOTANUMBER:
     case Token::FP_REM:
     case Token::FP_RTI:
     case Token::FP_SQRT: n_args = 2; break;
@@ -3933,12 +3934,7 @@ Parser::pop_args(const ParsedItem& item, std::vector<bitwuzla::Term>& args)
     case Token::FP_LT:
     case Token::FP_MAX:
     case Token::FP_MIN:
-    case Token::FP_NOTANUMBER:
     case Token::FP_NEG:
-    case Token::FP_NEG_INF:
-    case Token::FP_NEG_ZERO:
-    case Token::FP_POS_INF:
-    case Token::FP_POS_ZERO:
     case Token::FP_REM:
     case Token::FP_ABS:
     case Token::FP_EQ:
