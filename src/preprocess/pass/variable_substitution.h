@@ -11,11 +11,10 @@
 #ifndef BZLA_PREPROCESS_PASS_VARIABLE_SUBSTITUTION_H_INCLUDED
 #define BZLA_PREPROCESS_PASS_VARIABLE_SUBSTITUTION_H_INCLUDED
 
+#include <functional>
 #include <tuple>
 
-#include "backtrack/object.h"
 #include "backtrack/unordered_map.h"
-#include "backtrack/unordered_set.h"
 #include "preprocess/preprocessing_pass.h"
 #include "util/statistics.h"
 
@@ -199,11 +198,50 @@ class PassVariableSubstitution : public PreprocessingPass
   std::unordered_map<Node, size_t> d_subst_epoch;
 
   /**
-   * Nodes occurring in the assertions of previous preprocessing calls up to
-   * stack index d_prev_scanned, computed on demand by occurs_in_previous().
+   * Nodes occurring in the assertions of previous preprocessing calls,
+   * collected on demand by occurs_in_previous(). Nodes are associated with the
+   * scope level of the assertion they occur in rather than the level of the
+   * scan, since scans are triggered at higher levels and would otherwise be
+   * discarded and repeated on every pop.
    */
-  backtrack::unordered_set<Node> d_prev_nodes;
-  backtrack::object<size_t> d_prev_scanned;
+  class PreviousNodes : public backtrack::Backtrackable
+  {
+   public:
+    PreviousNodes(backtrack::BacktrackManager* mgr) : Backtrackable(mgr) {}
+
+    void push() override { ++d_num_levels; }
+    void pop() override;
+
+    /** @return The assertion stack index up to which assertions are scanned. */
+    size_t num_scanned() const { return d_num_scanned; }
+
+    /** Collect the nodes of all previous assertions not scanned yet. */
+    void scan(const AssertionVector& assertions);
+
+    bool contains(const Node& node) const
+    {
+      return d_nodes.find(node) != d_nodes.end();
+    }
+
+   private:
+    struct Level
+    {
+      /** The scope level of the scanned assertions. */
+      size_t level;
+      /** Assertion stack index of the first scanned assertion of the level. */
+      size_t index;
+      /** Size of d_trail before the level was scanned. */
+      size_t trail_size;
+    };
+
+    std::unordered_set<Node> d_nodes;
+    /** The nodes of d_nodes in insertion order. */
+    std::vector<std::reference_wrapper<const Node>> d_trail;
+    /** One entry per scope level with scanned assertions, ordered by level. */
+    std::vector<Level> d_levels;
+    size_t d_num_scanned = 0;
+    size_t d_num_levels  = 0;
+  } d_prev_nodes;
 
   /** Do not substitute these consts. */
   std::unordered_set<Node> d_exclude_consts;

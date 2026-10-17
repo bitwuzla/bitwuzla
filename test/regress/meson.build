@@ -528,6 +528,7 @@ tests_smt2 = [
   ['preprocess/varsubst38.smt2'],
   ['preprocess/varsubst39.smt2'],
   ['preprocess/varsubst40.smt2'],
+  ['preprocess/varsubst41.smt2'],
   ['preprocess/varsubstextract1.smt2'],
   ['preprocess/issue51.smt2'],
   ['preprocess/issue162.smt2'],

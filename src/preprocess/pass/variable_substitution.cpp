@@ -603,7 +603,6 @@ PassVariableSubstitution::PassVariableSubstitution(
       d_substitution_assertions(backtrack_mgr),
       d_keep(backtrack_mgr),
       d_prev_nodes(backtrack_mgr),
-      d_prev_scanned(backtrack_mgr),
       d_stats(env.statistics(), "preprocess::" + name() + "::")
 {
 }
@@ -1189,27 +1188,62 @@ PassVariableSubstitution::occurs_in_previous(const AssertionVector& assertions,
   }
 
   // Collect nodes of assertions of previous preprocessing calls on demand.
-  size_t end = assertions.start_index();
-  if (d_prev_scanned.get() < end)
+  if (d_prev_nodes.num_scanned() < assertions.start_index())
   {
     util::Timer timer(d_stats.time_scan_previous);
-    node::node_ref_vector visit;
-    for (size_t i = d_prev_scanned.get(); i < end; ++i)
-    {
-      visit.push_back(assertions.previous(i));
-      do
-      {
-        const Node& cur = visit.back();
-        visit.pop_back();
-        if (d_prev_nodes.insert(cur).second)
-        {
-          visit.insert(visit.end(), cur.begin(), cur.end());
-        }
-      } while (!visit.empty());
-    }
-    d_prev_scanned = end;
+    d_prev_nodes.scan(assertions);
   }
-  return d_prev_nodes.find(var) != d_prev_nodes.end();
+  return d_prev_nodes.contains(var);
+}
+
+void
+PassVariableSubstitution::PreviousNodes::pop()
+{
+  assert(d_num_levels > 0);
+  assert(d_levels.empty() || d_levels.back().level <= d_num_levels);
+  // Discard the nodes of the assertions of the popped level.
+  if (!d_levels.empty() && d_levels.back().level == d_num_levels)
+  {
+    const Level& level = d_levels.back();
+    while (d_trail.size() > level.trail_size)
+    {
+      d_nodes.erase(d_trail.back());
+      d_trail.pop_back();
+    }
+    d_num_scanned = level.index;
+    d_levels.pop_back();
+  }
+  --d_num_levels;
+}
+
+void
+PassVariableSubstitution::PreviousNodes::scan(const AssertionVector& assertions)
+{
+  node::node_ref_vector visit;
+  for (size_t i = d_num_scanned, end = assertions.start_index(); i < end; ++i)
+  {
+    // Assertions are ordered by scope level.
+    size_t level = assertions.previous_level(i);
+    assert(level <= d_num_levels);
+    assert(d_levels.empty() || d_levels.back().level <= level);
+    if (d_levels.empty() || d_levels.back().level < level)
+    {
+      d_levels.push_back({level, i, d_trail.size()});
+    }
+    visit.push_back(assertions.previous(i));
+    do
+    {
+      const Node& cur = visit.back();
+      visit.pop_back();
+      auto [it, inserted] = d_nodes.insert(cur);
+      if (inserted)
+      {
+        d_trail.emplace_back(*it);
+        visit.insert(visit.end(), cur.begin(), cur.end());
+      }
+    } while (!visit.empty());
+  }
+  d_num_scanned = assertions.start_index();
 }
 
 namespace {

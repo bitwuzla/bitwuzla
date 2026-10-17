@@ -54,6 +54,13 @@ class AssertionVector
   const Node& previous(std::size_t index) const;
 
   /**
+   * Get scope level of an assertion of a previous preprocessing call.
+   * @param index The assertion stack index, must be less than start_index().
+   * @return The scope level of the assertion at given assertion stack index.
+   */
+  size_t previous_level(std::size_t index) const;
+
+  /**
    * Replace assertion at index i.
    *
    * @note Increments d_changed if contents of vector was modified.
