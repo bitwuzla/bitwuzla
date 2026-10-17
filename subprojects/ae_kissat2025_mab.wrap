@@ -1,0 +1,10 @@
+[wrap-git]
+directory = ae_kissat2025_mab
+
+url = https://github.com/FSQH-dh/AE_kissat2025_MAB.git
+revision = da40eb952502cc1b5e0a262a8a400d492584c4d8
+
+patch_directory = ae_kissat2025_mab
+
+[provide]
+ae_kissat2025_mab = ae_kissat2025_mab_dep
