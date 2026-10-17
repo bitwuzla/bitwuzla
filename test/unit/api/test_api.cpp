@@ -3878,6 +3878,20 @@ TEST_F(TestApi, parser_smt2_string_term)
   }
 }
 
+TEST_F(TestApi, parser_smt2_string_term_error)
+{
+  bitwuzla::Options options;
+  bitwuzla::parser::Parser parser(d_tm, options);
+  parser.parse("(declare-const v Bool)", true, false);
+  ASSERT_THROW(parser.parse_term("(let ((q v)) (let ((r"), bitwuzla::Exception);
+  ASSERT_EXCEPTION(parser.parse_term("q"),
+                   bitwuzla::Exception,
+                   "parser in unsafe state after parse error");
+  ASSERT_EXCEPTION(parser.parse_sort("Bool"),
+                   bitwuzla::Exception,
+                   "parser in unsafe state after parse error");
+}
+
 TEST_F(TestApi, parser_smt2_string_sort)
 {
   bitwuzla::Options options;

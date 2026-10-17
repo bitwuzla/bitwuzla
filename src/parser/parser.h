@@ -203,6 +203,20 @@ class Parser
   {
     return d_terminator != nullptr && d_terminator->terminate();
   }
+  /**
+   * Check that no previous parse query failed. Reusing the parser after a
+   * parse error is not safe.
+   * @return False (and sets the error message) if a previous query failed.
+   */
+  bool check_safe_state()
+  {
+    if (!d_error.empty())
+    {
+      d_error = "parser in unsafe state after parse error";
+      return false;
+    }
+    return true;
+  }
 
   /** The original Bitwuzla configuration options. */
   bitwuzla::Options& d_options_orig;

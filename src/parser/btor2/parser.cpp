@@ -99,9 +99,8 @@ Parser::parse(const std::string& infile_name,
   d_infile_name = infile_name;
   d_lexer->init(&input);
 
-  if (!d_error.empty())
+  if (!check_safe_state())
   {
-    d_error = "parser in unsafe state after parse error";
     return false;
   }
 
