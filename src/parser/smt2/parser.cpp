@@ -1325,7 +1325,7 @@ Parser::parse_command_set_option()
   {
     return false;
   }
-  if (token == Token::RPAR)
+  if (!is_token_class(token, TokenClass::KEYWORD) && token != Token::ATTRIBUTE)
   {
     return error("missing keyword after 'set-option'");
   }
