@@ -13,6 +13,7 @@
 
 #include "backtrack/assertion_stack.h"
 #include "backtrack/backtrackable.h"
+#include "backtrack/object.h"
 #include "backtrack/pop_callback.h"
 #include "backtrack/unordered_map.h"
 #include "backtrack/unordered_set.h"
@@ -163,6 +164,9 @@ class SolverEngine
    */
   uint32_t term_level(const Node& term);
 
+  /** Record unsupported message, see SolverState::mark_unsupported(). */
+  void mark_unsupported(const std::string& msg);
+
   /** Counter for how often a statistics line was printed. */
   uint64_t d_num_printed_stats = 0;
 
@@ -198,6 +202,8 @@ class SolverEngine
   bool d_new_terms_registered = false;
   /** Lemma cache. */
   backtrack::unordered_set<Node> d_lemma_cache;
+  /** First message passed to mark_unsupported() in scope, empty if none. */
+  backtrack::object<std::string> d_unsupported;
 
   /** Result of latest solve() call. */
   Result d_sat_state;

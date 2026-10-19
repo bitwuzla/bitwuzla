@@ -50,6 +50,14 @@ class SolverState
   /** Throw Unsupported exception to terminate solver. */
   void unsupported(const std::string& msg);
 
+  /**
+   * Mark the current scope as unsupported. Unlike unsupported(), this does not
+   * throw and is safe to call during term registration. The solver engine
+   * terminates with an Unsupported exception before its next solving round,
+   * until the current scope is popped.
+   */
+  void mark_unsupported(const std::string& msg);
+
   /** Print solver engine statistics. */
   void print_statistics();
 

@@ -42,18 +42,15 @@ def matches(testfile, expected, actual):
 
 
 def check(testfile, expected, out, err, output_dir):
-    out = out.decode()
-    err = err.decode()
+    # Remove \r from output of Windows binaries
+    out = out.decode().replace('\r', '')
+    err = err.decode().replace('\r', '')
     if err:
         try:
             pos = err.index('regress/')
             err = err[pos:]
         except ValueError:
             pass
-
-    # Remove \r from output of cross-compiled Windows binaries
-    if out:
-        out = out.replace('\r', '')
 
     ignore_output = False
     cmp = out

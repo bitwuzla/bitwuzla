@@ -171,13 +171,13 @@ FunSolver::register_term(const Node& term)
     assert(term.kind() == Kind::EQUAL);
     if (term[0].type().is_fun())
     {
-      d_solver_state.unsupported(
+      d_solver_state.mark_unsupported(
           "Equalities over functions not yet supported.");
       d_fun_equalities.push_back(term);
     }
     else
     {
-      d_solver_state.unsupported(
+      d_solver_state.mark_unsupported(
           "Equalities over uninterpreted sorts not yet supported.");
       d_equalities.push_back(term);
     }

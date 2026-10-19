@@ -1573,6 +1573,8 @@ tests_smt2 = [
   ['solver/fp/uf_tosbv.smt2'],
   ['solver/fp/uf_toubv.smt2'],
   ['solver/fp/uf_to_sbv_ubv.smt2'],
+  ['solver/fun/bzla-5708-pushpop.smt2'],
+  ['solver/fun/bzla-5708.smt2'],
   ['solver/fun/fun1.smt2'],
   ['solver/fun/fun_select_uninterpreted.smt2'],
   ['solver/fun/fun_unregistered_apply.smt2'],

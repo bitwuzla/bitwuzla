@@ -38,6 +38,7 @@ SolverEngine::SolverEngine(SolvingContext& context)
       d_term_level_cache(&d_backtrack_mgr),
       d_distinct_n(&d_backtrack_mgr),
       d_lemma_cache(&d_backtrack_mgr),
+      d_unsupported(&d_backtrack_mgr),
       d_sat_state(Result::UNKNOWN),
       d_in_solving_mode(false),
       d_stats(context.env().statistics(), "solver::engine::"),
@@ -79,6 +80,12 @@ SolverEngine::solve()
 
     // Process lemmas generated in previous iteration.
     process_lemmas();
+
+    // Give up if registration encountered unsupported terms.
+    if (!d_unsupported.get().empty())
+    {
+      d_solver_state.unsupported(d_unsupported.get());
+    }
 
     // Reset term registration flag. Reset flag after new terms were registered
     // in process_lemma().
@@ -950,6 +957,15 @@ SolverEngine::term_level(const Node& term)
     visit.pop_back();
   } while (!visit.empty());
   return d_term_level_cache.at(term);
+}
+
+void
+SolverEngine::mark_unsupported(const std::string& msg)
+{
+  if (d_unsupported.get().empty())
+  {
+    d_unsupported = msg;
+  }
 }
 
 void

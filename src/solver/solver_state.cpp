@@ -59,6 +59,12 @@ SolverState::unsupported(const std::string& msg)
 }
 
 void
+SolverState::mark_unsupported(const std::string& msg)
+{
+  d_solver_engine.mark_unsupported(msg);
+}
+
+void
 SolverState::print_statistics()
 {
   d_solver_engine.print_statistics();
