@@ -767,7 +767,13 @@ SolverEngine::_value(const Node& term)
         case Kind::FP_TO_UBV:
         case Kind::FP_MAX:
         case Kind::FP_MIN:
-          if (registered(cur))
+          // fp.min/fp.max are not theory leaves and may be registered without
+          // ever being word-blasted. After solving, compute their value from
+          // the argument values instead.
+          if (registered(cur)
+              && (d_in_solving_mode || k == Kind::FP_TO_SBV
+                  || k == Kind::FP_TO_UBV
+                  || d_fp_solver.word_blaster().is_word_blasted(cur)))
           {
             // Partial floating-point operators should always have a consistent
             // value in the bit-vector abstraction.

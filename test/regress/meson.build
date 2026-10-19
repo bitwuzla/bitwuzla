@@ -1875,6 +1875,7 @@ tests_smt2_unsat_core_assumptions = [
   ['get-unsat-core/fp_misc.smt2'],
   ['parser/issue175.smt2'],
   ['solver/abstract/unsatcore1.smt2'],
+  ['solver/fp/murxla-3cba32b7584c439b.min.smt2'],
 ]
 if get_option('cadical') or get_option('cryptominisat')
   tests_smt2 += tests_smt2_unsat_core_assumptions

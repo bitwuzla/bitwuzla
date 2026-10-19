@@ -1,0 +1,5 @@
+(set-option :produce-unsat-assumptions true)
+(declare-const x Float128)
+(declare-const a (Array (_ BitVec 5) (Array (_ BitVec 16) Float16)))
+(set-info :status sat)
+(check-sat-assuming ((= a ((as const (Array (_ BitVec 5) (Array (_ BitVec 16) Float16))) ((as const (Array (_ BitVec 16) Float16)) ((_ to_fp 5 11) RNA (fp.max x (fp (_ bv0 1) (_ bv0 15) (_ bv0 112)))))))))
