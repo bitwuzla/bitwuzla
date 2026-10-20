@@ -278,8 +278,8 @@ class QuantSolver : public Solver
    */
   backtrack::vector<Node> d_partial_ops;
   /**
-   * The ground terms in the assertions, considered for instantiation. May
-   * contain abstractions.
+   * The ground terms in the assertions, considered for instantiation. Their
+   * abstractions are removed.
    */
   backtrack::vector<Node> d_ground_terms;
   /**
@@ -325,8 +325,6 @@ class QuantSolver : public Solver
   bool d_opt_quant_ic_filter;
   /** Cache configuration of option QUANT_IC_VALUE_LIMIT. */
   uint64_t d_opt_quant_ic_value_limit;
-  /** Cache configuration of option ABSTRACTION. */
-  bool d_opt_abstraction;
 
   struct Statistics
   {

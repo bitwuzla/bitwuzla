@@ -16,7 +16,6 @@
 #include "node/kind_info.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
-#include "node/node_utils.h"
 #include "solver/abstract/abstraction_lemmas.h"
 #include "util/hash.h"
 
@@ -321,30 +320,51 @@ AbstractionModule::get_processed(const Node& node)
 }
 
 Node
-AbstractionModule::remove_abstractions(const Node& node) const
+AbstractionModule::remove_abstractions(Rewriter& rewriter,
+                                       const Node& node,
+                                       std::unordered_map<Node, Node>& cache)
 {
-  NodeManager& nm = d_env.nm();
+  if (!node.node_info().abstraction)
+  {
+    return node;
+  }
 
-  std::unordered_map<Node, Node> cache;
+  // Only nodes that contain abstractions are traversed and cached.
+  auto removed = [&cache](const Node& n) -> const Node& {
+    return n.node_info().abstraction ? cache.at(n) : n;
+  };
+
   node_ref_vector visit{node};
+  std::vector<Node> children;
   do
   {
     const Node& cur     = visit.back();
     auto [it, inserted] = cache.try_emplace(cur);
     if (inserted)
     {
-      visit.insert(visit.end(), cur.begin(), cur.end());
+      for (const Node& child : cur)
+      {
+        if (child.node_info().abstraction)
+        {
+          visit.push_back(child);
+        }
+      }
       continue;
     }
     else if (it->second.is_null())
     {
       if (cur.kind() == Kind::AM_ABSTRACT)
       {
-        it->second = cache.at(cur[0]);
+        it->second = removed(cur[0]);
       }
       else
       {
-        it->second = utils::rebuild_node(nm, cur, cache);
+        children.clear();
+        for (const Node& child : cur)
+        {
+          children.push_back(removed(child));
+        }
+        it->second = rewriter.rebuild_node(cur, children);
       }
     }
     visit.pop_back();

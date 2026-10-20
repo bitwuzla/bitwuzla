@@ -40,15 +40,17 @@ class NodeUniqueTable;
  */
 struct NodeInfo
 {
-  uint8_t quantifier : 1;  // Is EXISTS/FORALL node below?
-  uint8_t lambda : 1;      // Is LAMBDA node below?
+  uint8_t quantifier : 1;   // Is EXISTS/FORALL node below?
+  uint8_t lambda : 1;       // Is LAMBDA node below?
+  uint8_t abstraction : 1;  // Is AM_ABSTRACT node below?
 
-  NodeInfo() : quantifier(0), lambda(0) {}
+  NodeInfo() : quantifier(0), lambda(0), abstraction(0) {}
 
   void set(const NodeInfo& info)
   {
     quantifier |= info.quantifier;
     lambda |= info.lambda;
+    abstraction |= info.abstraction;
   }
 };
 

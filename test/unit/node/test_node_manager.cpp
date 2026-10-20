@@ -197,6 +197,40 @@ TEST_F(TestNodeManager, mk_node)
   ASSERT_EQ(or_z, nm.mk_node(Kind::OR, {nm.mk_node(Kind::AND, {x, y}), z}));
 }
 
+TEST_F(TestNodeManager, node_info)
+{
+  NodeManager nm;
+
+  Type bv_type = nm.mk_bv_type(8);
+
+  Node x   = nm.mk_const(bv_type);
+  Node var = nm.mk_var(bv_type);
+  Node mul = nm.mk_node(Kind::BV_MUL, {x, x});
+
+  NodeInfo info = mul.node_info();
+  ASSERT_FALSE(info.quantifier);
+  ASSERT_FALSE(info.lambda);
+  ASSERT_FALSE(info.abstraction);
+
+  Node abstr = nm.mk_node(Kind::AM_ABSTRACT, {mul});
+  Node add   = nm.mk_node(Kind::BV_ADD, {abstr, x});
+  ASSERT_TRUE(abstr.node_info().abstraction);
+  ASSERT_TRUE(add.node_info().abstraction);
+  ASSERT_FALSE(add.node_info().quantifier);
+  ASSERT_FALSE(add.node_info().lambda);
+
+  Node forall =
+      nm.mk_node(Kind::FORALL, {var, nm.mk_node(Kind::EQUAL, {var, add})});
+  ASSERT_TRUE(forall.node_info().quantifier);
+  ASSERT_TRUE(forall.node_info().abstraction);
+  ASSERT_FALSE(forall.node_info().lambda);
+
+  Node lambda = nm.mk_node(Kind::LAMBDA, {var, var});
+  ASSERT_TRUE(lambda.node_info().lambda);
+  ASSERT_FALSE(lambda.node_info().quantifier);
+  ASSERT_FALSE(lambda.node_info().abstraction);
+}
+
 TEST_F(TestNodeManager, mk_apply)
 {
   NodeManager nm;

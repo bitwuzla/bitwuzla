@@ -14,6 +14,7 @@
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
 #include "node/node_utils.h"
+#include "solver/abstract/abstraction_module.h"
 #include "solving_context.h"
 #include "util/logger.h"
 
@@ -57,7 +58,6 @@ QuantSolver::QuantSolver(Env& env, SolverState& state)
       d_opt_quant_ic_bounds(env.options().quant_ic_bounds()),
       d_opt_quant_ic_filter(env.options().quant_ic_filter()),
       d_opt_quant_ic_value_limit(env.options().quant_ic_value_limit()),
-      d_opt_abstraction(env.options().abstraction()),
       d_stats(env.statistics(), "solver::quant::")
 {
 }
@@ -261,6 +261,8 @@ QuantSolver::process(const Node& q)
   node::node_ref_vector visit{q};
   std::unordered_map<Node, bool> cache;
   std::unordered_map<Node, std::unordered_set<Node>> vars_map;
+  // Shared by the ground terms of `q` to remove each abstraction only once.
+  std::unordered_map<Node, Node> abstraction_free_cache;
   do
   {
     const Node& cur = visit.back();
@@ -303,10 +305,17 @@ QuantSolver::process(const Node& q)
 
         if (vars.empty() && d_process_cache.insert(cur).second)
         {
-          // Do not consider terms for instantiation that contain quantifiers
-          if (!cur.node_info().quantifier)
+          // Do not consider terms for instantiation that contain quantifiers.
+          // Abstractions are skipped since the abstracted term is collected
+          // as their child.
+          if (!cur.node_info().quantifier && cur.kind() != Kind::AM_ABSTRACT)
           {
-            d_ground_terms.push_back(cur);
+            // Instantiation terms are substituted into nested quantifiers,
+            // which the abstraction module does not process. Abstractions
+            // would leak into the MBQI solver via these quantifiers.
+            d_ground_terms.push_back(
+                abstract::AbstractionModule::remove_abstractions(
+                    d_env.rewriter(), cur, abstraction_free_cache));
           }
 
           // Collect applications of partial operators, even if they contain
@@ -327,7 +336,7 @@ QuantSolver::mbqi_partial_op(const Node& node) const
 {
   assert(node::KindInfo::is_partial(node.kind()));
 
-  if (!d_opt_abstraction && !node.node_info().quantifier)
+  if (!node.node_info().abstraction && !node.node_info().quantifier)
   {
     return node;
   }
@@ -397,8 +406,10 @@ QuantSolver::mbqi_check(const std::vector<Node>& to_check)
   // them with their values in the current model.
   for (const Node& p : d_partial_ops)
   {
+    Node fixed = mbqi_partial_op(p);
+    assert(!fixed.node_info().abstraction);
     d_mbqi_solver->assert_formula(
-        nm.mk_node(Kind::EQUAL, {mbqi_partial_op(p), d_solver_state.value(p)}));
+        nm.mk_node(Kind::EQUAL, {fixed, d_solver_state.value(p)}));
   }
 
   std::vector<Node> ce_q;
@@ -408,6 +419,9 @@ QuantSolver::mbqi_check(const std::vector<Node>& to_check)
   {
     ++d_stats.mbqi_checks;
     d_mbqi_solver->push();
+    // Abstractions of this solver must not leak into the MBQI solver, which
+    // treats them as unconstrained terms.
+    assert(!mbqi_inst(q).node_info().abstraction);
     d_mbqi_solver->assert_formula(mbqi_inst(q));
     Log(2) << "mbqi check: " << mbqi_inst(q);
     auto res = d_mbqi_solver->solve();
