@@ -224,7 +224,9 @@ SolverEngine::interpolant(const std::unordered_set<Node>& ppA,
     {
       _ppB.push_back(d_am->get_processed(a));
     }
-    return d_am->remove_abstractions(d_bv_solver.interpolant(_ppA, _ppB));
+    std::unordered_map<Node, Node> cache;
+    return abstract::AbstractionModule::remove_abstractions(
+        d_env.rewriter(), d_bv_solver.interpolant(_ppA, _ppB), cache);
   }
   std::vector<Node> _ppA(ppA.begin(), ppA.end()), _ppB(ppB.begin(), ppB.end());
   return d_bv_solver.interpolant(_ppA, _ppB);

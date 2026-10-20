@@ -95,6 +95,10 @@ NodeData::alloc(Kind kind,
     {
       data->info().lambda = 1;
     }
+    else if (kind == Kind::AM_ABSTRACT)
+    {
+      data->info().abstraction = 1;
+    }
   }
 
   // Connect indices payload

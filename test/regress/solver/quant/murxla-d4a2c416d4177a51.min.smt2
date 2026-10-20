@@ -1,0 +1,5 @@
+(set-logic BV)
+(declare-const x (_ BitVec 45))
+(assert (ite (bvssubo (_ bv0 45) x) (= (bvmul (ite (exists ((b Bool) (y (_ BitVec 45)) (w (_ BitVec 45)) (z (_ BitVec 45))) (and (bvugt y (bvror w x)) (exists ((v (_ BitVec 45))) (= b (bvuaddo v (bvudiv z #b000000000000000000001111001110111110101000011)))))) (bvxnor x (_ bv0 45)) x) x) (_ bv0 45)) true))
+(set-info :status sat)
+(check-sat)

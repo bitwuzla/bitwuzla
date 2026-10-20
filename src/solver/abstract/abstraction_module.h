@@ -80,13 +80,17 @@ class AbstractionModule
   const Node& get_processed(const Node& node);
 
   /**
-   * Process given node to substitute abstractions with corresponding original
-   * (abstracted) terms.
-   * @param node The node to process.
-   * @return The 'sanitized' node, with all abstractions substituted with the
-   *         corresponding original terms.
+   * Replace the abstractions in the given node with the terms they abstract.
+   * @param rewriter The rewriter. Only rebuilt nodes are rewritten, hence
+   *                 `node` must be rewritten.
+   * @param node     The node.
+   * @param cache    The cache, may be shared across calls. Only nodes that
+   *                 contain abstractions are cached.
+   * @return The rewritten node without abstractions.
    */
-  Node remove_abstractions(const Node& node) const;
+  static Node remove_abstractions(Rewriter& rewriter,
+                                  const Node& node,
+                                  std::unordered_map<Node, Node>& cache);
 
  private:
   /** @return Whether this term should be abstracted. */
