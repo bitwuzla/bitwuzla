@@ -1,0 +1,20 @@
+sat
+(
+  (|let| false)
+  (|as| #b0011)
+  (|assert| true)
+)
+sat
+(
+  (define-fun |as| () (_ BitVec 4) #b0011)
+  (define-fun |STRING| () Bool true)
+  (define-fun |par| () (_ BitVec 4) #b0100)
+  (define-fun |:named| () Bool false)
+  (define-fun |declare-fun| () Bool true)
+  (define-fun x () (_ BitVec 4) #b0101)
+)
+sat
+(
+  (|:foo| true)
+  (|:bar| false)
+)

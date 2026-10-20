@@ -191,4 +191,59 @@ TEST_F(TestSmt2SymbolTable, find_transparent)
   std::string qbuf = "|foo|baz";
   ASSERT_EQ(table.find(std::string_view(qbuf.data(), 5)), foo);
 }
+
+// Quoted reserved words and keywords are symbols distinct from the reserved
+// word or keyword, only quoted simple symbols equal their unquoted version.
+TEST_F(TestSmt2SymbolTable, quoted_reserved)
+{
+  SymbolTable table;
+  for (const char* s : {"|par|", "|assert|", "|:named|", "|_|"})
+  {
+    ASSERT_EQ(table.find(s), nullptr);
+  }
+  SymbolTable::Node* par    = table.find("par");
+  SymbolTable::Node* assert = table.find("assert");
+  SymbolTable::Node* named  = table.find(":named");
+  ASSERT_EQ(par->d_token, Token::PAR);
+  ASSERT_EQ(assert->d_token, Token::ASSERT);
+  ASSERT_EQ(named->d_token, Token::NAMED);
+
+  table.insert(Token::SYMBOL, "|par|", false, 0);
+  table.insert(Token::SYMBOL, "|:named|", false, 0);
+  SymbolTable::Node* qpar   = table.find("|par|");
+  SymbolTable::Node* qnamed = table.find("|:named|");
+  ASSERT_NE(qpar, nullptr);
+  ASSERT_NE(qnamed, nullptr);
+  ASSERT_EQ(qpar->d_token, Token::SYMBOL);
+  ASSERT_EQ(qnamed->d_token, Token::SYMBOL);
+  ASSERT_EQ(table.find("par"), par);
+  ASSERT_EQ(table.find(":named"), named);
+  ASSERT_EQ(table.find("|assert|"), nullptr);
+
+  // shadowing and removal of quoted reserved words
+  table.insert(Token::SYMBOL, "|par|", false, 1);
+  SymbolTable::Node* qpar1 = table.find("|par|");
+  ASSERT_NE(qpar1, qpar);
+  ASSERT_EQ(qpar1->d_assertion_level, 1);
+  table.pop_level(1);
+  ASSERT_EQ(table.find("|par|"), qpar);
+  table.remove(qpar);
+  ASSERT_EQ(table.find("|par|"), nullptr);
+  ASSERT_EQ(table.find("par"), par);
+
+  // keywords not known to the table are inserted when parsed, in any order
+  // relative to the quoted symbol
+  table.insert(Token::ATTRIBUTE, ":foo", false, 0);
+  ASSERT_EQ(table.find("|:foo|"), nullptr);
+  table.insert(Token::SYMBOL, "|:foo|", false, 0);
+  table.insert(Token::SYMBOL, "|:bar|", false, 0);
+  ASSERT_EQ(table.find(":foo")->d_token, Token::ATTRIBUTE);
+  ASSERT_EQ(table.find("|:foo|")->d_token, Token::SYMBOL);
+  ASSERT_EQ(table.find(":bar"), nullptr);
+
+  // theory symbols are simple symbols
+  table.init_bv_symbols();
+  ASSERT_EQ(table.find("|bvadd|"), table.find("bvadd"));
+  ASSERT_EQ(table.find("|bvadd|")->d_token, Token::BV_ADD);
+}
 }  // namespace bzla::test
