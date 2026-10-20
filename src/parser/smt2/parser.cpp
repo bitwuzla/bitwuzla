@@ -125,7 +125,7 @@ Parser::reset()
   d_expect_rpar             = false;
   d_is_sorted_var           = false;
   d_is_var_binding          = false;
-  d_skip_attribute_value    = false;
+  d_skip_attribute          = SkipAttribute::NONE;
   d_num_let_scopes          = 0;
   d_last_node               = nullptr;
   d_save_repr               = false;
@@ -1589,6 +1589,18 @@ Parser::parse_term(bool look_ahead, Token la)
     {
       return false;
     }
+    if (d_skip_attribute != SkipAttribute::NONE)
+    {
+      bool skipped;
+      if (!skip_attribute_value(token, skipped))
+      {
+        return false;
+      }
+      if (skipped)
+      {
+        continue;
+      }
+    }
     if (d_expect_rpar && token != Token::RPAR)
     {
       return error("missing ')'");
@@ -1751,7 +1763,6 @@ Parser::parse_open_term(Token token)
   }
   else if (token == Token::NAMED)
   {
-    d_skip_attribute_value = false;
     push_item(Token::SYMBOL, d_last_node, d_lexer->coo());
     if (!parse_symbol("as attribute value to :named", false))
     {
@@ -1767,27 +1778,12 @@ Parser::parse_open_term(Token token)
     }
     symbol->d_coo = d_lexer->coo();
   }
-  else if (token == Token::ATTRIBUTE && nopen()
-           && item_open().d_token == Token::BANG)
+  else if (is_keyword(token) && nopen() && item_open().d_token == Token::BANG)
   {
-    // Catch-all for all unsupported annotation attributes, we ignore the
-    // value of unsupported annotation attributes. For this, we have to ignore
-    // undefined symbols that occur as value in '<attribute> <value>' in
-    // parse_open_term_symbol(). If the attribute value is not a symbol but a
-    // parentheses-enclosed term (e.g., (bvadd x y)), however, we require that
-    // any symbols that occur in that term are defined.
+    // Catch-all for all unsupported annotation attributes (including
+    // :pattern). Their value is ignored, it is skipped in parse_term().
     push_item(Token::SYMBOL, d_last_node, d_lexer->coo());
-    d_skip_attribute_value = true;
-  }
-  else if (d_skip_attribute_value && nopen()
-           && item_open().d_token == Token::BANG
-           && (token == Token::DECIMAL_VALUE || token == Token::REAL_VALUE
-               || token == Token::STRING_VALUE))
-  {
-    // Literal value of an unsupported annotation attribute. We don't construct
-    // a term but push a placeholder that close_term_bang() skips as the
-    // attribute value.
-    push_item(token, d_lexer->coo());
+    d_skip_attribute = SkipAttribute::VALUE;
   }
   else if (is_symbol(token))
   {
@@ -2278,28 +2274,22 @@ Parser::parse_open_term_symbol()
     // true if the symbol is the currently open item, i.e., the function of a
     // function application
     bool is_open = idx_open() == d_work.size() - 1;
-    // the symbol item is kept as is if it is the value of an unsupported
-    // attribute, else it is replaced (in place) by its term
-    if (!d_skip_attribute_value || is_open
-        || item_open().d_token != Token::BANG)
+    if (node->d_term.is_null())
     {
-      if (node->d_term.is_null())
-      {
-        assert(node->has_symbol());
-        return error("undefined symbol '" + node->d_symbol + "'");
-      }
-      assert(!node->d_term.is_null());
-      if (is_open)
-      {
-        cur.d_token = Token::FUN_APP;
-        cur.d_item  = static_cast<SymbolTable::Node*>(nullptr);
-        push_item(Token::TERM, node->d_term, d_lexer->coo());
-      }
-      else
-      {
-        cur.d_token = Token::TERM;
-        cur.d_item  = node->d_term;
-      }
+      assert(node->has_symbol());
+      return error("undefined symbol '" + node->d_symbol + "'");
+    }
+    // the symbol item is replaced (in place) by its term
+    if (is_open)
+    {
+      cur.d_token = Token::FUN_APP;
+      cur.d_item  = static_cast<SymbolTable::Node*>(nullptr);
+      push_item(Token::TERM, node->d_term, d_lexer->coo());
+    }
+    else
+    {
+      cur.d_token = Token::TERM;
+      cur.d_item  = node->d_term;
     }
   }
   else if (token == Token::TRUE)
@@ -2646,10 +2636,10 @@ bool
 Parser::close_term_bang(ParsedItem& item)
 {
   size_t n = nargs();
-  if (n < 3)
+  if (n < 2)
   {
     return error(
-        "invalid annotation syntax, expected at least 3 arguments, got "
+        "invalid annotation syntax, expected at least 2 arguments, got "
             + std::to_string(n),
         item.d_coo);
   }
@@ -2675,8 +2665,7 @@ Parser::close_term_bang(ParsedItem& item)
                    d_work[idx].d_coo);
     }
     SymbolTable::Node* attribute = peek_node_arg(idx);
-    if (attribute->d_token != Token::NAMED
-        && attribute->d_token != Token::ATTRIBUTE)
+    if (!is_keyword(attribute->d_token))
     {
       return error("invalid annotation syntax, expected attribute",
                    d_work[idx].d_coo);
@@ -2699,16 +2688,14 @@ Parser::close_term_bang(ParsedItem& item)
         d_named_assertions.emplace(symbol->d_term, symbol);
       }
     }
-    // all other attributes are ignored
+    // all other attributes are ignored, their values were skipped
     else
     {
-      idx += 1;  // ignore attribute value
       set_item(item, Token::TERM, term);
       Msg(1) << "warning: unsupported annotation attribute '"
              << attribute->d_symbol << "'";
     }
   }
-  d_skip_attribute_value = false;
   d_work.resize(size - n);
   return true;
 }
@@ -3300,6 +3287,30 @@ Parser::close_term_scope(std::optional<bitwuzla::Term> term)
 }
 
 /* -------------------------------------------------------------------------- */
+
+bool
+Parser::skip_attribute_value(Token token, bool& skipped)
+{
+  assert(d_skip_attribute != SkipAttribute::NONE);
+  skipped = false;
+  if (token == Token::RPAR || is_keyword(token))
+  {
+    d_skip_attribute = SkipAttribute::NONE;
+    return true;
+  }
+  // only another attribute or the closing ')' may follow the value
+  if (d_skip_attribute == SkipAttribute::SKIPPED)
+  {
+    return error("invalid annotation syntax, expected attribute");
+  }
+  if (token == Token::LPAR && !skip_sexprs(1))
+  {
+    return false;
+  }
+  d_skip_attribute = SkipAttribute::SKIPPED;
+  skipped          = true;
+  return true;
+}
 
 bool
 Parser::skip_sexprs(uint64_t nopen)

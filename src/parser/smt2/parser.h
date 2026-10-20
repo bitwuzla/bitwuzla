@@ -564,6 +564,15 @@ class Parser : public bzla::parser::Parser
   void close_term_scope(std::optional<bitwuzla::Term> term = std::nullopt);
 
   /**
+   * Skip the value of an unsupported annotation attribute, which is optional
+   * and may be any s-expression.
+   * @param token   The current token.
+   * @param skipped Set to true if the token was skipped as (the start of) the
+   *                value, else it must be processed as usual.
+   * @return False on error.
+   */
+  bool skip_attribute_value(Token token, bool& skipped);
+  /**
    * Skip the given number of s-expressions.
    * @param nopen The number of open s-expressions to skip.
    * @return False on error.
@@ -620,6 +629,14 @@ class Parser : public bzla::parser::Parser
       return error_invalid();
     }
     return true;
+  }
+
+  /** @return True if the given token is a keyword, e.g., an attribute name. */
+  static bool is_keyword(Token token)
+  {
+    return token == Token::ATTRIBUTE
+           || (static_cast<uint32_t>(token)
+               & static_cast<uint32_t>(TokenClass::KEYWORD));
   }
 
   /** @return True if the given token is a symbol token. */
@@ -983,11 +1000,18 @@ class Parser : public bzla::parser::Parser
   /** True if next token must be RPAR. Only relevant for binders. */
   bool d_expect_rpar = false;
 
-  /**
-   * True to ignore any undefined symbols when parsing unsupported attribute
-   * values of unsupported annotation attributes.
-   */
-  bool d_skip_attribute_value = false;
+  /** States of skipping the value of an unsupported annotation attribute. */
+  enum class SkipAttribute
+  {
+    /** Not skipping. */
+    NONE,
+    /** The next token may start the (optional) value. */
+    VALUE,
+    /** The value was skipped, the next token must not be another value. */
+    SKIPPED,
+  };
+  /** The state of skipping the value of an unsupported annotation attribute. */
+  SkipAttribute d_skip_attribute = SkipAttribute::NONE;
 
   /** The most recently parsed symbol node. */
   SymbolTable::Node* d_last_node = nullptr;
