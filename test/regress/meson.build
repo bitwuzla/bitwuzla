@@ -54,6 +54,7 @@ tests_smt2 = [
   ['options/time_limit_out_of_range.smt2', ['-t', '99999999999999999999999']],
   ['options/bv_output_format_overflow.smt2', ['--bv-output-format', '258']],
   ## parser
+  ['parser/annotation_attribute_values.smt2'],
   ['parser/echo.smt2'],
   ['parser/issue59-1.smt2'],
   ['parser/issue59-2.smt2'],
@@ -275,7 +276,6 @@ tests_smt2 = [
   ['parser/smt2perr198.smt2'],
   ['parser/smt2perr199.smt2'],
   ['parser/smt2perr200.smt2'],
-  ['parser/smt2perr201.smt2'],
   ['parser/smt2perr202.smt2'],
   ['parser/smt2perr203.smt2'],
   ['parser/smt2perr204.smt2'],
@@ -336,6 +336,8 @@ tests_smt2 = [
   ['parser/smt2perr259.smt2'],
   ['parser/smt2perr260.smt2'],
   ['parser/smt2perr261.smt2'],
+  ['parser/smt2perr266.smt2'],
+  ['parser/smt2perr267.smt2'],
   ## preprocess
   ['preprocess/array/nondestr_subst10.smt2', ['--print-model']],
   ['preprocess/array/nondestr_subst11.smt2'],
