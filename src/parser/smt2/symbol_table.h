@@ -38,6 +38,13 @@ class SymbolTable
     bool has_symbol() const;
     /** The token of the symbol. Serves as a kind. */
     Token d_token;
+    /**
+     * True if the symbol is a quoted reserved word or keyword, e.g., |par|.
+     * Such a symbol is distinct from the reserved word or keyword and is thus
+     * stored with its enclosing pipes. Next to d_token to share its cache
+     * line with d_symbol on lookup.
+     */
+    bool d_quoted_reserved = false;
     /** The string representation of the symbol. */
     std::string d_symbol;
     /** The assertion level of the symbol. */
@@ -77,8 +84,9 @@ class SymbolTable
 
   /**
    * Find a given symbol in the symbol table.
-   * Piped symbols are considered equal to their non-pided version, i.e.,
-   * "|a|" and "a" refer to the same symbol.
+   * Piped symbols are considered equal to their non-piped version, i.e.,
+   * "|a|" and "a" refer to the same symbol, unless "a" is a reserved word or
+   * a keyword.
    * @return The symbol node, if found, else nullptr. If symbol is shadowed,
    *         the most recent declaration of the symbol is returned.
    */
@@ -197,12 +205,36 @@ class SymbolTable
 
   /**
    * Find the entry for the given symbol.
-   * @param symbol The pipe-stripped symbol.
-   * @param hash   The hash value of the symbol.
+   * A quoted symbol |a| is looked up as "a", unless "a" is a reserved word or
+   * a keyword. Simple symbols in pipes denote the same symbol, but reserved
+   * words and keywords are not simple symbols (SMT-LIB 2.6, Section 3.1).
+   * @param symbol          The symbol.
+   * @param hash            Set to the hash value of the key of the symbol.
+   * @param quoted_reserved Set to true if the symbol is a quoted reserved
+   *                        word or keyword.
    * @return The index of the entry for the symbol if it exists, else the
    *         index of the empty entry where the symbol would be inserted.
    */
-  size_t find_entry(std::string_view symbol, size_t hash) const;
+  size_t find_symbol(std::string_view symbol,
+                     size_t& hash,
+                     bool& quoted_reserved) const;
+  /** Helper for find_symbol() for quoted symbols. */
+  size_t find_quoted_symbol(std::string_view symbol,
+                            size_t& hash,
+                            bool& quoted_reserved) const;
+  /**
+   * Find the entry for the given key.
+   * @param key             The pipe-stripped symbol, or the symbol itself if
+   *                        it is a quoted reserved word or keyword.
+   * @param hash            The hash value of the key.
+   * @param quoted_reserved True if the key is a quoted reserved word or
+   *                        keyword.
+   * @return The index of the entry for the key if it exists, else the
+   *         index of the empty entry where the key would be inserted.
+   */
+  size_t find_entry(std::string_view key,
+                    size_t hash,
+                    bool quoted_reserved) const;
 
   /** Remove the entry at the given index. */
   void erase_entry(size_t idx);

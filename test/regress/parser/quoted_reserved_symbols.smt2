@@ -1,0 +1,33 @@
+(set-logic QF_ABV)
+(set-option :produce-models true)
+; quoted reserved words and keywords are symbols distinct from the reserved
+; word or keyword
+(declare-const |as| (_ BitVec 4))
+(declare-const |STRING| Bool)
+(declare-const |par| (_ BitVec 4))
+(declare-const |:named| Bool)
+(declare-const |declare-fun| Bool)
+(declare-const x (_ BitVec 4))
+(assert (= |as| #x3))
+(assert (! (= |par| (bvadd |as| #x1)) :named |assert|))
+(assert (= (select ((as const (Array (_ BitVec 4) (_ BitVec 4))) |par|) x) #x4))
+(assert (and |STRING| (not |:named|) |declare-fun|))
+(push 1)
+(declare-const |let| Bool)
+(assert (let ((|let| (not |let|))) |let|))
+(check-sat)
+(get-value (|let| |as| |assert|))
+(pop 1)
+; quoted simple symbols are the same symbol as their unquoted version
+(assert (= |x| #x5))
+(check-sat)
+(get-model)
+; quoted keywords are distinct from keywords that are not known in advance,
+; regardless of which occurs first
+(declare-const b Bool)
+(assert (! b :foo 1))
+(declare-const |:foo| Bool)
+(declare-const |:bar| Bool)
+(assert (! (and |:foo| (not |:bar|)) :bar 1))
+(check-sat)
+(get-value (|:foo| |:bar|))

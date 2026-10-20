@@ -72,9 +72,9 @@ SymbolTable::insert(Node* node)
   {
     resize(2 * d_entries.size());
   }
-  std::string_view symbol = strip_pipes(node->d_symbol);
-  size_t h                = hash(symbol);
-  Entry& entry            = d_entries[find_entry(symbol, h)];
+  size_t h;
+  Entry& entry =
+      d_entries[find_symbol(node->d_symbol, h, node->d_quoted_reserved)];
   if (entry.d_node)
   {
     node->d_next = std::move(entry.d_node);
@@ -111,9 +111,10 @@ SymbolTable::remove(Node* node)
 void
 SymbolTable::remove(const std::string& symbol)
 {
-  std::string_view s = strip_pipes(symbol);
-  size_t idx         = find_entry(s, hash(s));
-  Entry& entry       = d_entries[idx];
+  size_t h;
+  bool quoted_reserved;
+  size_t idx   = find_symbol(symbol, h, quoted_reserved);
+  Entry& entry = d_entries[idx];
   assert(entry.d_node);
   assert(entry.d_node->d_symbol == symbol);
   if (entry.d_node->d_assertion_level > 0)
@@ -142,9 +143,10 @@ SymbolTable::pop_level(uint64_t assertion_level)
   {
     Node* node = d_trail.back();
     d_trail.pop_back();
-    std::string_view s = strip_pipes(node->d_symbol);
-    size_t idx         = find_entry(s, hash(s));
-    Entry& entry       = d_entries[idx];
+    size_t h;
+    bool quoted_reserved;
+    size_t idx   = find_symbol(node->d_symbol, h, quoted_reserved);
+    Entry& entry = d_entries[idx];
     assert(entry.d_node.get() == node);
     entry.d_node = std::move(node->d_next);
     if (!entry.d_node)
@@ -157,8 +159,9 @@ SymbolTable::pop_level(uint64_t assertion_level)
 SymbolTable::Node*
 SymbolTable::find(std::string_view symbol) const
 {
-  symbol = strip_pipes(symbol);
-  return d_entries[find_entry(symbol, hash(symbol))].d_node.get();
+  size_t h;
+  bool quoted_reserved;
+  return d_entries[find_symbol(symbol, h, quoted_reserved)].d_node.get();
 }
 
 /* SymbolTable private ------------------------------------------------------ */
@@ -248,17 +251,67 @@ SymbolTable::equal(std::string_view a, std::string_view b)
   return std::memcmp(pa, pb, n) == 0;
 }
 
+inline size_t
+SymbolTable::find_symbol(std::string_view symbol,
+                         size_t& hash,
+                         bool& quoted_reserved) const
+{
+  if (symbol.size() > 1 && symbol.front() == '|' && symbol.back() == '|')
+  {
+    return find_quoted_symbol(symbol, hash, quoted_reserved);
+  }
+  hash            = SymbolTable::hash(symbol);
+  quoted_reserved = false;
+  return find_entry(symbol, hash, false);
+}
+
+inline size_t
+SymbolTable::find_quoted_symbol(std::string_view symbol,
+                                size_t& hash,
+                                bool& quoted_reserved) const
+{
+  std::string_view key = strip_pipes(symbol);
+  // Keywords start with ':', which simple symbols can't. Supported reserved
+  // words and commands are all in the table, see init(). Unsupported ones such
+  // as match are simple symbols.
+  quoted_reserved = !key.empty() && key[0] == ':';
+  if (!quoted_reserved)
+  {
+    hash             = SymbolTable::hash(key);
+    size_t idx       = find_entry(key, hash, false);
+    const Node* node = d_entries[idx].d_node.get();
+    quoted_reserved  = node
+                       && (static_cast<uint32_t>(node->d_token)
+                           & (static_cast<uint32_t>(TokenClass::RESERVED)
+                              | static_cast<uint32_t>(TokenClass::COMMAND)));
+    if (!quoted_reserved)
+    {
+      return idx;
+    }
+  }
+  hash = SymbolTable::hash(symbol);
+  return find_entry(symbol, hash, true);
+}
+
 size_t
-SymbolTable::find_entry(std::string_view symbol, size_t hash) const
+SymbolTable::find_entry(std::string_view key,
+                        size_t hash,
+                        bool quoted_reserved) const
 {
   assert(d_num_entries < d_entries.size());
   size_t mask = d_entries.size() - 1;
   for (size_t i = hash & mask;; i = (i + 1) & mask)
   {
     const Entry& entry = d_entries[i];
-    if (!entry.d_node
-        || (entry.d_hash == hash
-            && equal(strip_pipes(entry.d_node->d_symbol), symbol)))
+    if (!entry.d_node)
+    {
+      return i;
+    }
+    const Node* node = entry.d_node.get();
+    if (entry.d_hash == hash
+        && equal(quoted_reserved ? node->d_symbol : strip_pipes(node->d_symbol),
+                 key)
+        && node->d_quoted_reserved == quoted_reserved)
     {
       return i;
     }
