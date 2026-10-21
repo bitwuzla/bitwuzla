@@ -10,10 +10,12 @@
 ##
 
 import argparse
+import configparser
 import os
 import subprocess
 import shutil
 import sys
+import tempfile
 
 def info(msg):
     print(f'-- {msg}')
@@ -35,6 +37,39 @@ def configure_build(builddir, opts):
     info(' '.join(cmd))
     subprocess.run(cmd)
     info(f'compile Bitwuzla with: cd {builddir} && meson compile')
+
+def _cxx(cross_file):
+    if cross_file:
+        cp = configparser.ConfigParser()
+        cp.read(cross_file)
+        return cp.get('binaries', 'cpp', fallback='c++').strip('\'"')
+    return os.environ.get('CXX', 'c++')
+
+def _lto_supported(cxx):
+    # Link-time optimization is only enabled by default if the compiler
+    # generates fat objects, which also contain machine code and keep
+    # installed static libraries linkable by other compilers, and if the linker
+    # supports link-time optimization, e.g., Clang requires the LLVM gold
+    # plugin unless linking with LLD.
+    cmd = cxx.split() + ['-flto', '-ffat-lto-objects']
+    with tempfile.TemporaryDirectory() as tmp:
+        src = os.path.join(tmp, 'lto.cpp')
+        obj = os.path.join(tmp, 'lto.o')
+        with open(src, 'w') as f:
+            f.write('int main() { return 0; }\n')
+        try:
+            if subprocess.run(cmd + ['-c', src, '-o', obj],
+                              capture_output=True).returncode != 0:
+                return False
+            # Clang generates plain bitcode for object formats without fat
+            # object support, e.g., Mach-O.
+            with open(obj, 'rb') as f:
+                if f.read(4) in (b'BC\xc0\xde', b'\xde\xc0\x17\x0b'):
+                    return False
+            return subprocess.run(cmd + [obj, '-o', os.path.join(tmp, 'lto')],
+                                  capture_output=True).returncode == 0
+        except OSError:
+            return False
 
 def _feat(val):
     if val is None:
@@ -107,6 +142,9 @@ def main():
              'at your own risk')
     bool_opt(ap, 'aiger', 'AIGER support to print AIGs')
     bool_opt(ap, 'mimalloc', 'Use mimalloc memory allocator')
+    bool_opt(ap, 'lto',
+             'link-time optimization, enabled by default for release builds ' +
+             'if supported')
     args = ap.parse_args()
 
     build_opts = []
@@ -134,10 +172,13 @@ def main():
         build_opts.append(f'-Dunit_testing={_feat(args.unit_testing)}')
     if args.coverage is not None:
         build_opts.append(f'-Db_coverage={_bool(args.coverage)}')
+    cross_file = None
     if args.win64:
-        build_opts.append('--cross-file=x86_64-w64-mingw32.txt')
+        cross_file = 'x86_64-w64-mingw32.txt'
     if args.arm64:
-        build_opts.append('--cross-file=x86_64-linux-aarch64.txt')
+        cross_file = 'x86_64-linux-aarch64.txt'
+    if cross_file:
+        build_opts.append(f'--cross-file={cross_file}')
     if args.python is not None:
         build_opts.append(f'-Dpython={_bool(args.python)}')
     if args.docs is not None:
@@ -165,6 +206,15 @@ def main():
         build_opts.append(f'-Daiger={_bool(args.aiger)}')
     if args.mimalloc is not None:
         build_opts.append(f'-Dmimalloc={_bool(args.mimalloc)}')
+    lto = args.lto
+    # Without a build type, a new build directory defaults to a release build
+    # and an existing one keeps its build type and LTO setting.
+    if lto is None and (args.buildtype or not os.path.exists(
+            os.path.join(args.build_dir, 'meson-private', 'build.dat'))):
+        lto = (args.buildtype in (None, 'release')
+               and _lto_supported(_cxx(cross_file)))
+    if lto is not None:
+        build_opts.append(f'-Db_lto={_bool(lto)}')
     if args.extra_libdir:
         dirs = ','.join(os.path.abspath(d) for d in args.extra_libdir)
         build_opts.append(f'-Dextra_libdirs={dirs}')

@@ -61,7 +61,44 @@ if host_machine.system() == 'darwin'
     language: ['c', 'cpp'])
 endif
 
+# Objects compiled for link-time optimization only contain the compiler's
+# intermediate representation, which only the same compiler can link. Static
+# libraries, which also bundle the objects of subprojects, additionally need
+# machine code to be linkable by other compilers. Clang supports such fat
+# objects for ELF only.
+lto_fat_static = false
+if get_option('b_lto') and get_option('default_library') != 'shared'
+  lto_fat_static = true
+  foreach lang : ['c', 'cpp']
+    compiler = meson.get_compiler(lang)
+    if compiler.has_multi_arguments('-flto', '-ffat-lto-objects')
+      add_global_arguments('-ffat-lto-objects', language: lang)
+    else
+      lto_fat_static = false
+    endif
+  endforeach
+endif
+
 subdir('src')
+
+# The intermediate representation is only needed for linking within the build.
+# Remove it from installed static libraries, which keep their machine code
+# only, as Linux distributions do for packaged static libraries.
+if lto_fat_static
+  static_libs = []
+  foreach lib : [bitwuzla_lib] + support_libs
+    if get_option('default_library') == 'both'
+      lib = lib.get_static_lib()
+    endif
+    static_libs += lib
+  endforeach
+  meson.add_install_script(find_program('python3', 'python'),
+                           files('src/strip_lto.py'),
+                           find_program('objcopy').full_path(),
+                           get_option('libdir'),
+                           static_libs,
+                           install_tag: 'devel')
+endif
 
 if enable_python
   subdir('src/api/python')

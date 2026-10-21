@@ -2,6 +2,13 @@
 
 This file collects a summary of important and/or user-visible changes.
 
+- Release builds configured via `configure.py` now use **link-time
+  optimization** by default if the compiler generates fat objects and the
+  linker supports link-time optimization, e.g., with GCC, or with Clang on
+  Linux and the LLVM gold plugin or LLD, but not on macOS. It can be disabled
+  via `--no-lto` and enabled via `--lto`. Installed static libraries only
+  contain machine code and remain linkable without link-time optimization.
+
 - Improved MBQI engine by incorporating **invertibility condition-based
   instantiations** for quantified bit-vector variables. This instantiation
   strategy is based on a CEGQI-based technique presented in  

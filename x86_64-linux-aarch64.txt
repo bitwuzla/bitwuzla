@@ -3,6 +3,7 @@ c = 'aarch64-linux-gnu-gcc'
 cpp = 'aarch64-linux-gnu-g++'
 ar = 'aarch64-linux-gnu-ar'
 strip = 'aarch64-linux-gnu-strip'
+objcopy = 'aarch64-linux-gnu-objcopy'
 exe_wrapper = 'qemu-aarch64'
 pkg-config = 'pkg-config'
 

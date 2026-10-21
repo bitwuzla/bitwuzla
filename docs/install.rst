@@ -21,6 +21,11 @@ Building Bitwuzla on Linux and macOS
    If Bitwuzla is not installed, you can find the binary in ``build/src/main/``
    and the library in ``build/src/``.
 
+.. note::
+   Release builds use link-time optimization by default if supported by the
+   compiler and linker, which increases link times. Use
+   ``./configure.py --no-lto`` to disable it.
+
 
 * **Required Dependencies**
 
