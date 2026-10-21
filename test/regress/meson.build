@@ -1642,6 +1642,7 @@ tests_smt2 = [
   ['solver/quant/murxla-f7a80aad674c2953.min.smt2', ['--bv-solver=preprop']],
   ['solver/quant/quant_ic_bounds_regr0.smt2'],
   ['solver/quant/quant_ic_coupled_inverses.smt2'],
+  ['solver/quant/quant_ic_extract_no_underdet.smt2'],
   ['solver/quant/quant_ic_cyclic_conds.smt2'],
   ['solver/quant/quant_ic_inverse_later_vars.smt2'],
   ['solver/quant/quant_ic_ite.smt2'],

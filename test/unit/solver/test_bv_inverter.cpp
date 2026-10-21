@@ -41,6 +41,9 @@ class TestBvInverter : public TestCommon
 
   void test_ic_sext(Kind predicate, uint64_t bw_x, uint64_t bw_t, size_t idx);
 
+  void test_ic_extract(
+      Kind predicate, uint64_t bw_x, uint64_t hi, uint64_t lo, size_t idx);
+
   void test_ic_bool(Kind predicate, Kind kind, size_t idx, size_t idx_x);
 
   void test_ic_ite(Kind predicate, Type type, size_t idx, size_t idx_x);
@@ -188,6 +191,35 @@ TestBvInverter::test_ic_sext(Kind predicate,
   {
     std::cout << "predicate: " << predicate << std::endl;
     std::cout << "kind: " << Kind::BV_SIGN_EXTEND << std::endl;
+    std::cout << "ic: " << ic << std::endl;
+    std::cout << "vc: " << ass << std::endl;
+  }
+  ASSERT_EQ(res, Result::UNSAT);
+}
+
+void
+TestBvInverter::test_ic_extract(
+    Kind predicate, uint64_t bw_x, uint64_t hi, uint64_t lo, size_t idx)
+{
+  Node x    = d_nm.mk_var(d_nm.mk_bv_type(bw_x), "x");
+  Node t    = d_nm.mk_const(d_nm.mk_bv_type(hi - lo + 1), "t");
+  Node node = d_nm.mk_node(Kind::BV_EXTRACT, {x}, {hi, lo});
+
+  Node ic = d_inverter.ic(predicate, node, t, idx, 0);
+  ASSERT_FALSE(ic.is_null());
+
+  SolvingContext ctx(d_nm, d_options, d_sat_factory);
+  Node pred =
+      d_nm.mk_node(predicate, {idx == 0 ? node : t, idx == 0 ? t : node});
+  Node exists = d_nm.mk_node(Kind::EXISTS, {x, pred});
+  Node ass    = d_nm.mk_node(Kind::DISTINCT, {ic, exists});
+
+  ctx.assert_formula(ass);
+  Result res = ctx.solve();
+  if (res != Result::UNSAT)
+  {
+    std::cout << "predicate: " << predicate << std::endl;
+    std::cout << "kind: " << node << std::endl;
     std::cout << "ic: " << ic << std::endl;
     std::cout << "vc: " << ass << std::endl;
   }
@@ -721,6 +753,23 @@ TEST_F(TestBvInverter, bv_sext)
   }
 }
 
+TEST_F(TestBvInverter, bv_extract)
+{
+  for (size_t idx : std::vector<size_t>{0, 1})
+  {
+    for (Kind predicate : d_predicates)
+    {
+      test_ic_extract(predicate, 1, 0, 0, idx);
+      test_ic_extract(predicate, 4, 3, 0, idx);
+      test_ic_extract(predicate, 4, 0, 0, idx);
+      test_ic_extract(predicate, 4, 3, 3, idx);
+      test_ic_extract(predicate, 4, 2, 1, idx);
+      test_ic_extract(predicate, 4, 3, 1, idx);
+      test_ic_extract(predicate, 4, 2, 0, idx);
+    }
+  }
+}
+
 TEST_F(TestBvInverter, ite)
 {
   for (size_t idx : std::vector<size_t>{0, 1})
@@ -1191,14 +1240,39 @@ TEST_F(TestBvInverter, invert_none)
               x,
               false,
               false);
-  // extract on path is only invertible in under-determined mode
+}
+
+TEST_F(TestBvInverter, invert_extract)
+{
+  // Default (not under-determined) inverter: extract requires a conditional
+  // inverse via a fresh choice constant (with a trivially true IC for
+  // equality since extract is surjective).
+  Type b  = d_nm.mk_bv_type(4);
+  Type b2 = d_nm.mk_bv_type(2);
+  Node x  = d_nm.mk_const(b, "x");
+  Node s  = d_nm.mk_const(b2, "s");
+  Node t  = d_nm.mk_const(b2, "t");
+
+  Node xt = d_nm.mk_node(Kind::BV_EXTRACT, {x}, {2, 1});
+  test_invert(d_nm.mk_node(Kind::EQUAL, {xt, t}), x, true);
   test_invert(
-      d_nm.mk_node(Kind::EQUAL,
-                   {d_nm.mk_node(Kind::BV_EXTRACT, {x}, {2, 1}),
-                    d_nm.mk_const(d_nm.mk_bv_type(2), "t2")}),
-      x,
-      false,
-      false);
+      d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::EQUAL, {xt, t})}), x, true);
+  test_invert(d_nm.mk_node(Kind::BV_ULT, {xt, t}), x, true);
+  test_invert(
+      d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::BV_SLT, {t, xt})}), x, true);
+  // extract below an exact inverse
+  Node add = d_nm.mk_node(Kind::BV_ADD, {xt, s});
+  test_invert(d_nm.mk_node(Kind::EQUAL, {add, t}), x, true);
+  // extract below a conditional inverse
+  Node mul = d_nm.mk_node(Kind::BV_MUL, {xt, s});
+  test_invert(d_nm.mk_node(Kind::EQUAL, {mul, t}), x, true);
+  // operator below extract
+  Node s4   = d_nm.mk_const(b, "s4");
+  Node mul4 = d_nm.mk_node(Kind::BV_MUL, {x, s4});
+  test_invert(d_nm.mk_node(Kind::EQUAL,
+                           {d_nm.mk_node(Kind::BV_EXTRACT, {mul4}, {2, 1}), t}),
+              x,
+              true);
 }
 
 TEST_F(TestBvInverter, invert_underdet_extract)
