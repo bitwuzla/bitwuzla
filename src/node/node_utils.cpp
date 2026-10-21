@@ -182,6 +182,11 @@ mk_nary(NodeManager& nm, Kind kind, const std::vector<Node>& terms)
   {
     return terms[0];
   }
+  if (terms.size() == 2)
+  {
+    // Avoid copying the terms into a new vector.
+    return nm.mk_node(kind, terms);
+  }
 
   size_t size     = terms.size();
 
