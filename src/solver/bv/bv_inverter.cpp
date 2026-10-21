@@ -223,15 +223,13 @@ BvInverter::is_invertible(const Node& node) const
     case Kind::BV_SGE:
     case Kind::BV_NOT:
     case Kind::BV_CONCAT:
+    case Kind::BV_EXTRACT:
     case Kind::BV_MUL:
     case Kind::BV_UDIV:
     case Kind::BV_UREM:
     case Kind::BV_SHL:
     case Kind::BV_SHR:
     case Kind::BV_XOR: return true;
-
-    // Extract is only in under-determined mode.
-    case Kind::BV_EXTRACT: return d_underdet;
 
     default:
       assert(kind != Kind::BV_COMP);
@@ -444,6 +442,7 @@ BvInverter::ic(const Node& node,
     case Kind::BV_OR:
     case Kind::BV_ASHR:
     case Kind::BV_CONCAT:
+    case Kind::BV_EXTRACT:
     case Kind::BV_MUL:
     case Kind::BV_SHR:
     case Kind::BV_SHL:
@@ -478,6 +477,11 @@ BvInverter::ic(
     case Kind::BV_XOR:
       // x, and the operators that are unconditionally invertible in x (see
       // inverse()), i.e., that are bijections in x for a fixed s.
+      return ic_predicate(predicate, t);
+
+    case Kind::BV_EXTRACT:
+      // Extract is surjective, i.e., every value of t is the extract of some
+      // x, hence (<p> ((_ extract hi lo) x) t) has the same IC as (<p> x t).
       return ic_predicate(predicate, t);
 
     case Kind::AND: return ic_and(predicate, node, t, idx_x);
