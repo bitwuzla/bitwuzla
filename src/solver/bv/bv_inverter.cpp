@@ -353,6 +353,17 @@ BvInverter::inverse(const Node& node, size_t idx, const Node& t)
     }
     return res;
   }
+  if (d_underdet && kind == Kind::ITE)
+  {
+    // (= (ite c x s) t)    ==>  x = t
+    // (= (ite c s x) t)    ==>  x = t
+    // (= (ite x s0 s1) t)  ==>  x = (= s0 t)
+    if (idx == 0)
+    {
+      return d_nm.mk_node(Kind::EQUAL, {node[1], t});
+    }
+    return t;
+  }
 
   if (node.num_children() != 2)
   {

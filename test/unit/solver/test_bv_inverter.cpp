@@ -1240,4 +1240,94 @@ TEST_F(TestBvInverter, invert_underdet_concat)
   }
 }
 
+TEST_F(TestBvInverter, invert_underdet_ite)
+{
+  // Under-determined inverses for ITE disregard that invertibility is
+  // conditional on the remaining children. The inverse is unconditional and
+  // satisfies the node whenever some value for x does.
+  auto check_witness = [this](const Node& node, const Node& x) {
+    auto [invert, conds] = d_inverter_underdet.invert(node, x);
+    if (invert.is_null() || !conds.empty())
+    {
+      std::cout << "node: " << node << std::endl;
+    }
+    ASSERT_FALSE(invert.is_null());
+    ASSERT_TRUE(conds.empty());
+    Node var    = d_nm.mk_var(x.type());
+    Node exists = d_nm.mk_node(
+        Kind::EXISTS, {var, utils::substitute(d_nm, node, {{x, var}})});
+    Node ass = utils::substitute(d_nm, node, {{x, invert}});
+    SolvingContext ctx(d_nm, d_options, d_sat_factory);
+    ctx.assert_formula(exists);
+    ctx.assert_formula(d_nm.mk_node(Kind::NOT, {ass}));
+    Result res = ctx.solve();
+    if (res != Result::UNSAT)
+    {
+      std::cout << "node: " << node << std::endl;
+      std::cout << "invert: " << invert << std::endl;
+    }
+    ASSERT_EQ(res, Result::UNSAT);
+  };
+
+  Type b  = d_nm.mk_bv_type(4);
+  Node c  = d_nm.mk_const(d_nm.mk_bool_type(), "c");
+  Node s0 = d_nm.mk_const(b, "s0");
+  Node s1 = d_nm.mk_const(b, "s1");
+  Node t  = d_nm.mk_const(b, "t");
+  for (size_t idx_x : std::vector<size_t>{0, 1, 2})
+  {
+    Node x = d_nm.mk_const(idx_x == 0 ? d_nm.mk_bool_type() : b, "x");
+    std::vector<Node> children{c, s0, s1};
+    children[idx_x] = x;
+    Node ite        = d_nm.mk_node(Kind::ITE, children);
+    check_witness(d_nm.mk_node(Kind::EQUAL, {ite, t}), x);
+    // ITE below an exact inverse: (= (bvadd (ite ...) s0) t)
+    Node add = d_nm.mk_node(Kind::BV_ADD, {ite, s0});
+    check_witness(d_nm.mk_node(Kind::EQUAL, {add, t}), x);
+    // ITE below a conditional inverse: (= (bvmul (ite ...) s0) t)
+    Node mul = d_nm.mk_node(Kind::BV_MUL, {ite, s0});
+    test_invert(d_nm.mk_node(Kind::EQUAL, {mul, t}), x, true, true, true, true);
+    // Top-level inequalities and disequalities still require conditional
+    // inverses.
+    test_invert(
+        d_nm.mk_node(Kind::BV_ULT, {ite, t}), x, true, true, true, true);
+    test_invert(d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::EQUAL, {ite, t})}),
+                x,
+                true,
+                true,
+                true,
+                true);
+  }
+  {
+    Node x = d_nm.mk_const(b, "x");
+    // Exact inverse below ITE: (= (ite c (bvadd x s0) s1) t)
+    Node add = d_nm.mk_node(Kind::BV_ADD, {x, s0});
+    check_witness(
+        d_nm.mk_node(Kind::EQUAL, {d_nm.mk_node(Kind::ITE, {c, add, s1}), t}),
+        x);
+    // Conditional inverse below ITE: (= (ite c (bvmul x s0) s1) t)
+    Node mul = d_nm.mk_node(Kind::BV_MUL, {x, s0});
+    test_invert(
+        d_nm.mk_node(Kind::EQUAL, {d_nm.mk_node(Kind::ITE, {c, mul, s1}), t}),
+        x,
+        true,
+        true,
+        true,
+        true);
+  }
+  {
+    // Boolean ITE as top-level predicate.
+    Node x = d_nm.mk_const(d_nm.mk_bool_type(), "x");
+    Node g = d_nm.mk_const(d_nm.mk_bool_type(), "g");
+    for (size_t idx_x : std::vector<size_t>{0, 1, 2})
+    {
+      std::vector<Node> children{c, d_nm.mk_node(Kind::EQUAL, {s0, t}), g};
+      children[idx_x] = x;
+      Node ite        = d_nm.mk_node(Kind::ITE, children);
+      check_witness(ite, x);
+      check_witness(d_nm.mk_node(Kind::NOT, {ite}), x);
+    }
+  }
+}
+
 }  // namespace bzla::test
