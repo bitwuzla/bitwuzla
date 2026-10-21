@@ -229,38 +229,71 @@ PassQuant::uniquify_variable(const Node& node, const Node& fresh_var)
   // below), and that requires rebuilding its *entire* body: occurrences of its
   // variable may sit in subterms that do not reference `var`, which would
   // otherwise be left on the original variable.
+  // Note: This includes binders that rebind `var`, its variable may occur
+  //       below them. We do not descend into them, they are rebuilt in a scope
+  //       of their own (see rebuild_scope()).
   {
     std::unordered_set<Node> cache;
     for (const auto& [n, refs] : references)
     {
-      // As above, we do not descend into binders that rebind `var`.
-      if (refs && KindInfo::is_binder(n.kind()))
+      if (refs && KindInfo::is_binder(n.kind()) && !rebinds(n, var))
       {
-        assert(n[0] != var);
         visit.push_back(n[1]);
       }
       while (!visit.empty())
       {
         Node cur = visit.back();
         visit.pop_back();
-        // As above, we do not descend into binders that rebind `var`.
-        if (rebinds(cur, var))
-        {
-          continue;
-        }
         if (!cache.insert(cur).second)
         {
           continue;
         }
         references.at(cur) = true;
-        visit.insert(visit.end(), cur.begin(), cur.end());
+        if (!rebinds(cur, var))
+        {
+          visit.insert(visit.end(), cur.begin(), cur.end());
+        }
       }
     }
   }
 
   // Rebuild with `fresh_var`.
   std::unordered_map<Node, Node> cache{{var, fresh_var}};
-  visit.push_back(body);
+  // A copied binder may rebind a variable that also occurs free in the body,
+  // bound by an enclosing binder of `node` that is not processed yet. Its fresh
+  // variable must only replace the occurrences in its scope, hence we map the
+  // free variables of the body to themselves, which rebuilds the binders that
+  // rebind them in a scope of their own.
+  // Note: Only variables recorded in d_bound_vars can occur free outside of
+  //       their binder. The fresh variables of uniquified binders do not, which
+  //       avoids computing the free variables for chains of uniquified binders.
+  for (const auto& [n, refs] : references)
+  {
+    if (refs && KindInfo::is_binder(n.kind())
+        && d_bound_vars.find(n[0].id()) != d_bound_vars.end())
+    {
+      std::unordered_set<Node> fvs;
+      utils::free_vars(body, &fvs);
+      for (const Node& fv : fvs)
+      {
+        cache.emplace(fv, fv);
+      }
+      break;
+    }
+  }
+  return rewriter.rewrite(nm.mk_node(
+      node.kind(), {fresh_var, rebuild_scope(body, cache, &references)}));
+}
+
+Node
+PassQuant::rebuild_scope(const Node& node,
+                         std::unordered_map<Node, Node>& cache,
+                         const std::unordered_map<Node, bool>* references)
+{
+  NodeManager& nm    = d_env.nm();
+  Rewriter& rewriter = d_env.rewriter();
+
+  std::vector<Node> visit{node};
   do
   {
     auto cur            = visit.back();
@@ -268,7 +301,7 @@ PassQuant::uniquify_variable(const Node& node, const Node& fresh_var)
 
     if (inserted)
     {
-      if (!references.at(cur))
+      if (references && !references->at(cur))
       {
         it->second = cur;
       }
@@ -276,13 +309,34 @@ PassQuant::uniquify_variable(const Node& node, const Node& fresh_var)
       {
         if (KindInfo::is_binder(cur.kind()))
         {
-          // The DAG below this binder references `var` and is thus rebuilt,
-          // while the original binder stays in use elsewhere. Uniquify its
-          // variable to not introduce a new shared binder.
+          // The DAG below this binder is rebuilt, while the original binder
+          // stays in use elsewhere. Uniquify its variable to not introduce a
+          // new shared binder.
           auto [vit, vinserted] = cache.emplace(cur[0], Node());
           if (vinserted)
           {
             vit->second = mk_fresh_var(nm, cur[0]);
+          }
+          else
+          {
+            // The variable is already renamed in this scope, i.e., this binder
+            // rebinds it (shadowing). Its body is rebuilt in a scope of its
+            // own, where the renaming of its variable is overridden and the
+            // renaming of all other variables is inherited.
+            std::unordered_map<Node, Node> scope;
+            for (const auto& [n, r] : cache)
+            {
+              if (n.kind() == Kind::VARIABLE)
+              {
+                assert(!r.is_null());
+                scope.emplace(n, r);
+              }
+            }
+            scope[cur[0]] = mk_fresh_var(nm, cur[0]);
+            rebuild_scope(cur[1], scope, nullptr);
+            it->second = rewriter.rebuild_node(cur, scope);
+            visit.pop_back();
+            continue;
           }
         }
         visit.insert(visit.end(), cur.begin(), cur.end());
@@ -298,8 +352,7 @@ PassQuant::uniquify_variable(const Node& node, const Node& fresh_var)
     visit.pop_back();
   } while (!visit.empty());
 
-  return rewriter.rewrite(
-      nm.mk_node(node.kind(), {fresh_var, cache.at(body)}));
+  return cache.at(node);
 }
 
 std::pair<bool, std::unordered_set<Node>>

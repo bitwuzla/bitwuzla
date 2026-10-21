@@ -482,6 +482,7 @@ tests_smt2 = [
   ['preprocess/quant/alpha-shared-quant-merge.smt2', ['-p', '--pp-embedded=false']],
   ['preprocess/quant/der-rm.smt2', ['-p']],
   ['preprocess/quant/elim_partial1.smt2', ['-p']],
+  ['preprocess/quant/murxla-18b5d16989b80553.min.smt2'],
   ['preprocess/quant/red-ir-smscir_io.c.smt2'],
   ['preprocess/quant/red-llvm13-smtlib-09.smt2'],
   ['preprocess/regrinc1.smt2'],
