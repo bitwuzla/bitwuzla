@@ -115,6 +115,29 @@ Parser::reset_logic()
 }
 
 void
+Parser::reset_assertions()
+{
+  d_bitwuzla.reset();
+  d_result          = bitwuzla::Result::UNKNOWN;
+  d_assertion_level = 0;
+  d_named_assertions.clear();
+}
+
+void
+Parser::reset_declarations()
+{
+  d_table.reset();
+  d_sort_table.reset();
+  // The declarations of all levels refer to nodes of the symbol tables.
+  while (d_backtrack_mgr.num_levels() > 0)
+  {
+    d_backtrack_mgr.pop();
+  }
+  d_decl_funs.clear();
+  d_decl_sorts.clear();
+}
+
+void
 Parser::reset()
 {
   d_work.clear();
@@ -1218,12 +1241,14 @@ Parser::parse_command_reset()
   {
     return false;
   }
-  d_bitwuzla.reset();
-  d_table.reset();
-  d_sort_table.reset();
+  reset_assertions();
+  reset_declarations();
   reset_logic();
-  d_options = d_options_orig;
+  d_options     = d_options_orig;
+  d_global_decl = false;
+  // success is printed according to the option before the reset
   print_success();
+  d_print_success = false;
   return true;
 }
 
@@ -1234,11 +1259,10 @@ Parser::parse_command_reset_assertions()
   {
     return false;
   }
-  d_bitwuzla.reset();
+  reset_assertions();
   if (!d_global_decl)
   {
-    d_table.reset();
-    d_sort_table.reset();
+    reset_declarations();
     // Repopulate symbol table based on set logic.
     if (d_logic.empty())
     {

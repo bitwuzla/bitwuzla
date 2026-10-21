@@ -1,0 +1,18 @@
+success
+success
+success
+success
+success
+sat
+success
+success
+success
+sat
+(
+  (define-fun x () (_ BitVec 2) #b01)
+  (define-fun y () Bool false)
+)
+sat
+(
+  (define-fun w () Bool true)
+)
