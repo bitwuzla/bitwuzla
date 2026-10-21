@@ -28,17 +28,18 @@ class BvInverter
    * Optionally configures inverter to produce under-determined inverses on
    * inverse() and invert() (`underdet` = true).
    *
-   * If configured, produces under-determined inverses for BV_EXTRACT and
-   * BV_CONCAT. For extract, bits that were sliced away are reconstructed as
-   * fresh constants. For concat, instead of a conditional inverse, we compute
-   * an inverse while disregarding that it is conditional on s.
+   * If configured, produces under-determined inverses for BV_EXTRACT,
+   * BV_CONCAT and ITE. For extract, bits that were sliced away are
+   * reconstructed as fresh constants. For concat and ITE, instead of a
+   * conditional inverse, we compute an inverse while disregarding that it is
+   * conditional on the remaining children.
    *
    * @note These under-determined inverses may only be used where it is not
    *       required that inverses are exact, e.g., for quantifier instantiation.
    *
    * @param env      The associated environment.
    * @param underdet True to enable under-determined (lossy) inverses for
-   *                 extract and concat.
+   *                 extract, concat and ite.
    */
   BvInverter(Env& env, bool underdet = false);
   /** Destructor. */
@@ -409,7 +410,7 @@ class BvInverter
 
   /** The associated node manager. */
   NodeManager& d_nm;
-  /** Enable under-determined (lossy) inverses for extract/concat. */
+  /** Enable under-determined (lossy) inverses for extract/concat/ite. */
   bool d_underdet;
 };
 

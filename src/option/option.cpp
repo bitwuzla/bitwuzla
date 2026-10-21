@@ -496,7 +496,7 @@ Options::Options()
                         Option::QUANT_IC_UNDERDET,
                         true,
                         "allow computation of under-determined inverses for "
-                        "extract and concat",
+                        "extract, concat and ite",
                         "quant-ic-underdet"),
       quant_ic_value_limit(
           this,
