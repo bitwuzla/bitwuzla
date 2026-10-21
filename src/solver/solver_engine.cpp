@@ -528,6 +528,13 @@ SolverEngine::process_term(const Node& term)
 {
   assert(d_env.rewriter().rewrite(term) == term);
 
+  // Terms are mostly already registered, e.g., when querying values. Check
+  // before starting the timer, which reads the clock twice.
+  if (d_register_term_cache.find(term) != d_register_term_cache.end())
+  {
+    return;
+  }
+
   util::Timer timer(d_stats.time_register_term);
   // Make sure that terms are processed by the abstraction module.
   node::node_ref_vector visit{term};
