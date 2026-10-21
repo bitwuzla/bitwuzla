@@ -124,7 +124,7 @@ BvInverter::invert(const Node& node,
   }
 
   Node t, next;
-  if (predicate == Kind::AND)
+  if (predicate == Kind::AND || predicate == Kind::ITE)
   {
     t = d_nm.mk_value(!negate);
   }
@@ -168,11 +168,10 @@ BvInverter::invert(const Node& node,
     {
       Node icond = ic(Kind::EQUAL, cur, t, 0, idx);
       Node _xx   = d_nm.mk_const(next.type());
-      Node pred  = d_nm.mk_node(Kind::EQUAL,
-                                {d_nm.mk_node(cur.kind(),
-                                              {idx == 0 ? _xx : cur[1 - idx],
-                                               idx == 0 ? cur[1 - idx] : _xx}),
-                                 t});
+      std::vector<Node> children(cur.begin(), cur.end());
+      children[idx] = _xx;
+      Node pred = d_nm.mk_node(Kind::EQUAL,
+                               {utils::rebuild_node(d_nm, cur, children), t});
       conds.push_back(d_nm.mk_node(Kind::IMPLIES, {icond, pred}));
       t = _xx;
     }
@@ -208,6 +207,7 @@ BvInverter::is_invertible(const Node& node) const
     case Kind::EQUAL:
     case Kind::DISTINCT:
     case Kind::NOT:
+    case Kind::ITE:
 
     case Kind::BV_ADD:
     case Kind::BV_AND:
@@ -353,6 +353,12 @@ BvInverter::inverse(const Node& node, size_t idx, const Node& t)
     }
     return res;
   }
+
+  if (node.num_children() != 2)
+  {
+    return Node();
+  }
+
   const Node& s = node[1 - idx];
   if (kind == Kind::BV_ADD)
   {
@@ -432,7 +438,8 @@ BvInverter::ic(const Node& node,
     case Kind::BV_SHL:
     case Kind::BV_SIGN_EXTEND:
     case Kind::BV_UREM:
-    case Kind::BV_UDIV: res = ic(kind, x, idx, s, path); break;
+    case Kind::BV_UDIV:
+    case Kind::ITE: res = ic(kind, x, idx, s, path); break;
 
     default:
       res.first  = ic_predicate(idx ? swap_predicate(kind) : kind, s);
@@ -464,6 +471,7 @@ BvInverter::ic(
 
     case Kind::AND: return ic_and(predicate, node, t, idx_x);
     case Kind::OR: return ic_or(predicate, node, t, idx_x);
+    case Kind::ITE: return ic_ite(predicate, node, t, idx_x);
     case Kind::BV_AND: return ic_bv_and(predicate, node, t, idx_x);
     case Kind::BV_OR: return ic_bv_or(predicate, node, t, idx_x);
     case Kind::BV_ASHR: return ic_bv_ashr(predicate, node, t, idx_x);
@@ -712,6 +720,35 @@ BvInverter::ic_or(Kind predicate, const Node& node, const Node& t, size_t idx_x)
       // IC: (= (or t s) t)
       return d_nm.mk_node(Kind::EQUAL, {d_nm.mk_node(Kind::OR, {t, s}), t});
   }
+}
+
+Node
+BvInverter::ic_ite(Kind predicate,
+                   const Node& node,
+                   const Node& t,
+                   size_t idx_x)
+{
+  if (idx_x == 0)
+  {
+    // (ite x s0 s1) <p> t
+    // IC: (or (<p> s0 t) (<p> s1 t))
+    return d_nm.mk_node(Kind::OR,
+                        {d_nm.mk_node(predicate, {node[1], t}),
+                         d_nm.mk_node(predicate, {node[2], t})});
+  }
+  const Node& c = node[0];
+  const Node& s = node[3 - idx_x];
+  Node ic_x     = ic_predicate(predicate, t);
+  Node ic_s     = d_nm.mk_node(predicate, {s, t});
+  if (idx_x == 1)
+  {
+    // (ite c x s) <p> t
+    // IC: (ite c IC(x <p> t) (<p> s t))
+    return d_nm.mk_node(Kind::ITE, {c, ic_x, ic_s});
+  }
+  // (ite c s x) <p> t
+  // IC: (ite c (<p> s t) IC(x <p> t))
+  return d_nm.mk_node(Kind::ITE, {c, ic_s, ic_x});
 }
 
 Node

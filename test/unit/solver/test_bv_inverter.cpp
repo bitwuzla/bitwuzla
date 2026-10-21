@@ -43,6 +43,8 @@ class TestBvInverter : public TestCommon
 
   void test_ic_bool(Kind predicate, Kind kind, size_t idx, size_t idx_x);
 
+  void test_ic_ite(Kind predicate, Type type, size_t idx, size_t idx_x);
+
   void test_ic_cmp(Kind kind, uint64_t bw, size_t idx, size_t idx_x);
 
   void test_ic_ineq(Kind kind, uint64_t bw, size_t idx_x);
@@ -281,6 +283,40 @@ TestBvInverter::test_ic_bool(Kind predicate,
           d_nm.mk_bool_type(),
           idx,
           idx_x);
+}
+
+void
+TestBvInverter::test_ic_ite(Kind predicate, Type type, size_t idx, size_t idx_x)
+{
+  Node x  = d_nm.mk_var(idx_x == 0 ? d_nm.mk_bool_type() : type, "x");
+  Node c  = d_nm.mk_const(d_nm.mk_bool_type(), "c");
+  Node s0 = d_nm.mk_const(type, "s0");
+  Node s1 = d_nm.mk_const(type, "s1");
+  Node t  = d_nm.mk_const(type, "t");
+  std::vector<Node> children{c, s0, s1};
+  children[idx_x] = x;
+  Node node       = d_nm.mk_node(Kind::ITE, children);
+
+  Node ic = d_inverter.ic(predicate, node, t, idx, idx_x);
+  ASSERT_FALSE(ic.is_null());
+
+  SolvingContext ctx(d_nm, d_options, d_sat_factory);
+  Node pred =
+      d_nm.mk_node(predicate, {idx == 0 ? node : t, idx == 0 ? t : node});
+  Node exists = d_nm.mk_node(Kind::EXISTS, {x, pred});
+  Node ass    = d_nm.mk_node(Kind::DISTINCT, {ic, exists});
+  ctx.assert_formula(ass);
+  Result res = ctx.solve();
+  if (res != Result::UNSAT)
+  {
+    std::cout << "predicate: " << predicate << std::endl;
+    std::cout << "kind: " << Kind::ITE << std::endl;
+    std::cout << "idx: " << idx << std::endl;
+    std::cout << "idx_x: " << idx_x << std::endl;
+    std::cout << "ic: " << ic << std::endl;
+    std::cout << "vc: " << ass << std::endl;
+  }
+  ASSERT_EQ(res, Result::UNSAT);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -685,6 +721,23 @@ TEST_F(TestBvInverter, bv_sext)
   }
 }
 
+TEST_F(TestBvInverter, ite)
+{
+  for (size_t idx : std::vector<size_t>{0, 1})
+  {
+    for (size_t idx_x : std::vector<size_t>{0, 1, 2})
+    {
+      for (Kind predicate : d_predicates)
+      {
+        test_ic_ite(predicate, d_nm.mk_bv_type(1), idx, idx_x);
+        test_ic_ite(predicate, d_nm.mk_bv_type(4), idx, idx_x);
+      }
+      test_ic_ite(Kind::EQUAL, d_nm.mk_bool_type(), idx, idx_x);
+      test_ic_ite(Kind::DISTINCT, d_nm.mk_bool_type(), idx, idx_x);
+    }
+  }
+}
+
 TEST_F(TestBvInverter, bv_ult)
 {
   for (size_t idx_x : std::vector<size_t>{0, 1})
@@ -1065,22 +1118,79 @@ TEST_F(TestBvInverter, invert_chain_mixed)
   test_invert(node, x, true);
 }
 
+TEST_F(TestBvInverter, invert_ite)
+{
+  // ITE requires conditional inverses via fresh choice constants, for x in
+  // either the condition or one of the branches.
+  Type b  = d_nm.mk_bv_type(4);
+  Node c  = d_nm.mk_const(d_nm.mk_bool_type(), "c");
+  Node s0 = d_nm.mk_const(b, "s0");
+  Node s1 = d_nm.mk_const(b, "s1");
+  Node t  = d_nm.mk_const(b, "t");
+  for (size_t idx_x : std::vector<size_t>{0, 1, 2})
+  {
+    Node x = d_nm.mk_const(idx_x == 0 ? d_nm.mk_bool_type() : b, "x");
+    std::vector<Node> children{c, s0, s1};
+    children[idx_x] = x;
+    Node ite        = d_nm.mk_node(Kind::ITE, children);
+    test_invert(d_nm.mk_node(Kind::EQUAL, {ite, t}), x, true);
+    test_invert(d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::EQUAL, {ite, t})}),
+                x,
+                true);
+    test_invert(d_nm.mk_node(Kind::BV_ULT, {ite, t}), x, true);
+    test_invert(d_nm.mk_node(Kind::NOT, {d_nm.mk_node(Kind::BV_SLT, {t, ite})}),
+                x,
+                true);
+    // ITE below an exact inverse: (= (bvadd (ite ...) s0) t)
+    Node add = d_nm.mk_node(Kind::BV_ADD, {ite, s0});
+    test_invert(d_nm.mk_node(Kind::EQUAL, {add, t}), x, true);
+    // ITE below a conditional inverse: (= (bvmul (ite ...) s0) t)
+    Node mul = d_nm.mk_node(Kind::BV_MUL, {ite, s0});
+    test_invert(d_nm.mk_node(Kind::EQUAL, {mul, t}), x, true);
+  }
+  {
+    // Operator below ITE: (= (ite c (bvmul x s0) s1) t)
+    Node x   = d_nm.mk_const(b, "x");
+    Node mul = d_nm.mk_node(Kind::BV_MUL, {x, s0});
+    Node ite = d_nm.mk_node(Kind::ITE, {c, mul, s1});
+    test_invert(d_nm.mk_node(Kind::EQUAL, {ite, t}), x, true);
+    test_invert(d_nm.mk_node(Kind::BV_ULT, {ite, t}), x, true);
+    // Comparison as condition: (= (ite (bvult x s0) s0 s1) t)
+    Node ult  = d_nm.mk_node(Kind::BV_ULT, {x, s0});
+    Node itec = d_nm.mk_node(Kind::ITE, {ult, s0, s1});
+    test_invert(d_nm.mk_node(Kind::EQUAL, {itec, t}), x, true);
+    test_invert(d_nm.mk_node(Kind::BV_ULT, {itec, t}), x, true);
+  }
+  {
+    // Boolean ITE as top-level predicate.
+    Node x = d_nm.mk_const(d_nm.mk_bool_type(), "x");
+    Node g = d_nm.mk_const(d_nm.mk_bool_type(), "g");
+    for (size_t idx_x : std::vector<size_t>{0, 1, 2})
+    {
+      std::vector<Node> children{c, d_nm.mk_node(Kind::EQUAL, {s0, t}), g};
+      children[idx_x] = x;
+      Node ite        = d_nm.mk_node(Kind::ITE, children);
+      test_invert(ite, x, true);
+      test_invert(d_nm.mk_node(Kind::NOT, {ite}), x, true);
+    }
+  }
+}
+
 TEST_F(TestBvInverter, invert_none)
 {
   Type b = d_nm.mk_bv_type(4);
   Node x = d_nm.mk_const(b, "x");
   Node s = d_nm.mk_const(b, "s");
   Node t = d_nm.mk_const(b, "t");
-  Node c = d_nm.mk_const(d_nm.mk_bool_type(), "c");
+  Node f = d_nm.mk_const(d_nm.mk_fun_type({b, b}), "f");
 
   // x does not occur in node
   test_invert(d_nm.mk_node(Kind::EQUAL, {s, t}), x, false, false);
-  // non-invertible node (ite) on path
-  test_invert(
-      d_nm.mk_node(Kind::EQUAL, {d_nm.mk_node(Kind::ITE, {c, x, s}), t}),
-      x,
-      false,
-      false);
+  // non-invertible node (function application) on path
+  test_invert(d_nm.mk_node(Kind::EQUAL, {d_nm.mk_node(Kind::APPLY, {f, x}), t}),
+              x,
+              false,
+              false);
   // extract on path is only invertible in under-determined mode
   test_invert(
       d_nm.mk_node(Kind::EQUAL,
