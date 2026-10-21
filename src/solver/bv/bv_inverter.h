@@ -229,6 +229,22 @@ class BvInverter
              const Node& t,
              size_t idx_x);
   /**
+   * Get invertibility condition (IC) for a predicate w.r.t. an ITE node.
+   *
+   * This computes the IC for (<p> (ite x s0 s1) t), (<p> (ite s0 x s1) t), or
+   * (<p> (ite s0 s1 x) t). Here, `x` is the child to solve for.
+   *
+   * @param predicate The predicate <p>.
+   * @param node      The ITE node.
+   * @param t         The right-hand-side of the predicate.
+   * @param idx_x     The index of x.
+   * @return The invertibility condition.
+   */
+  Node ic_ite(node::Kind predicate,
+              const Node& node,
+              const Node& t,
+              size_t idx_x);
+  /**
    * Get invertibility condition (IC) for a predicate w.r.t. a BV_AND node.
    *
    * This computes the IC for for (<p> (bvand x s) t) or (<p> (bvand s x) t).
