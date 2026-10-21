@@ -115,15 +115,6 @@ class Parser : public bzla::parser::Parser
        */
       bool d_from_rational = false;
     };
-    /** @return The additional data of this item, created on demand. */
-    ExtraData& mk_extra()
-    {
-      if (!d_extra)
-      {
-        d_extra = std::make_unique<ExtraData>();
-      }
-      return *d_extra;
-    }
     /** @return The additional data of this item, empty if not created. */
     const ExtraData& extra() const
     {
@@ -685,6 +676,30 @@ class Parser : public bzla::parser::Parser
    */
   const Lexer::Coordinate& arg_coo(size_t idx) const;
 
+  /** @return The additional data of the given item, created on demand. */
+  ParsedItem::ExtraData& mk_extra(ParsedItem& item)
+  {
+    if (!item.d_extra)
+    {
+      new_extra(item);
+    }
+    return *item.d_extra;
+  }
+  /** Return the additional data of the given closed item to the pool. */
+  void release_extra(ParsedItem& item)
+  {
+    if (item.d_extra)
+    {
+      recycle_extra(item);
+    }
+  }
+  /**
+   * Helpers for mk_extra() and release_extra(), out of line to keep these small
+   * enough to be inlined.
+   */
+  void new_extra(ParsedItem& item);
+  void recycle_extra(ParsedItem& item);
+
   /**
    * Push a new item on the work stack.
    * @param token The token of the item.
@@ -930,6 +945,11 @@ class Parser : public bzla::parser::Parser
    * a vector for every closed term.
    */
   std::vector<bitwuzla::Term> d_args;
+  /**
+   * Additional data of closed items, reused for open items to avoid
+   * allocating it for every indexed term, see mk_extra() and release_extra().
+   */
+  std::vector<std::unique_ptr<ParsedItem::ExtraData>> d_extra_pool;
   /**
    * The control stack for the work stack, maintains the start indices of open
    * parsed items.

@@ -1818,9 +1818,9 @@ Parser::parse_open_term(Token token)
       return error("expected rounding mode before real value in '"
                    + std::to_string(Token::FP_TO_FP) + "'");
     }
-    ParsedItem& item = item_open();
-    item.mk_extra().d_strs.emplace_back(d_lexer->token_view());
-    item.mk_extra().d_strs_coo.emplace_back(d_lexer->coo());
+    ParsedItem::ExtraData& extra = mk_extra(item_open());
+    extra.d_strs.emplace_back(d_lexer->token_view());
+    extra.d_strs_coo.emplace_back(d_lexer->coo());
   }
   else
   {
@@ -2004,8 +2004,9 @@ Parser::parse_open_term_indexed()
       {
         return error("invalid bit-vector value '" + std::string(val) + "'");
       }
-      item.mk_extra().d_strs.emplace_back(v);
-      item.mk_extra().d_strs_coo.emplace_back(d_lexer->coo());
+      ParsedItem::ExtraData& extra = mk_extra(item);
+      extra.d_strs.emplace_back(v);
+      extra.d_strs_coo.emplace_back(d_lexer->coo());
     }
     break;
 
@@ -2052,8 +2053,9 @@ Parser::parse_open_term_indexed()
       }
     }
 
-    item.mk_extra().d_uints.push_back(idx);
-    item.mk_extra().d_uints_coo.emplace_back(d_lexer->coo());
+    ParsedItem::ExtraData& extra = mk_extra(item);
+    extra.d_uints.push_back(idx);
+    extra.d_uints_coo.emplace_back(d_lexer->coo());
   }
 
   if (!parse_rpar())
@@ -2115,6 +2117,7 @@ Parser::parse_open_term_indexed()
       }
     }
     assert(d_work.back().d_token == Token::UNDERSCORE);
+    release_extra(d_work.back());
     d_work.pop_back();
     close_term_scope(term);
   }
@@ -2554,6 +2557,7 @@ Parser::close_term()
       assert(lpar.d_token == Token::LPAR);
       lpar.d_token = Token::TERM;
       lpar.d_item  = std::move(d_work.back().d_item);
+      release_extra(d_work.back());
       d_work.pop_back();
       d_work_control.pop_back();
     }
@@ -2853,15 +2857,16 @@ Parser::close_term_fp(ParsedItem& item)
                        + "', got " + std::to_string(nargs()),
                    item.d_coo);
     }
-    ParsedItem& prev = item_prev();
-    prev.mk_extra().d_strs.insert(prev.mk_extra().d_strs.end(),
-                                item.extra().d_strs.begin(),
-                                item.extra().d_strs.end());
-    prev.mk_extra().d_strs_coo.insert(prev.mk_extra().d_strs_coo.end(),
-                                    item.extra().d_strs_coo.begin(),
-                                    item.extra().d_strs_coo.end());
-    prev.mk_extra().d_from_rational = true;
+    ParsedItem::ExtraData& extra = mk_extra(item_prev());
+    extra.d_strs.insert(extra.d_strs.end(),
+                        item.extra().d_strs.begin(),
+                        item.extra().d_strs.end());
+    extra.d_strs_coo.insert(extra.d_strs_coo.end(),
+                          item.extra().d_strs_coo.begin(),
+                          item.extra().d_strs_coo.end());
+    extra.d_from_rational = true;
     assert(d_work.back().d_token == Token::REAL_DIV);
+    release_extra(d_work.back());
     d_work.pop_back();
     return true;
   }
@@ -3231,10 +3236,39 @@ Parser::open_term_scope()
 }
 
 void
+Parser::new_extra(ParsedItem& item)
+{
+  assert(!item.d_extra);
+  if (d_extra_pool.empty())
+  {
+    item.d_extra = std::make_unique<ParsedItem::ExtraData>();
+  }
+  else
+  {
+    item.d_extra = std::move(d_extra_pool.back());
+    d_extra_pool.pop_back();
+  }
+}
+
+void
+Parser::recycle_extra(ParsedItem& item)
+{
+  assert(item.d_extra);
+  ParsedItem::ExtraData& extra = *item.d_extra;
+  extra.d_uints.clear();
+  extra.d_uints_coo.clear();
+  extra.d_strs.clear();
+  extra.d_strs_coo.clear();
+  extra.d_from_rational = false;
+  d_extra_pool.push_back(std::move(item.d_extra));
+}
+
+void
 Parser::close_term_scope(std::optional<bitwuzla::Term> term)
 {
   assert(d_work.size());
   assert(d_work.back().d_token == Token::LPAR);
+  release_extra(d_work.back());
   if (term)
   {
     ParsedItem& cur = d_work.back();
