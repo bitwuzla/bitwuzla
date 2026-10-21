@@ -129,6 +129,14 @@ class TypeManager
   /** Cache used for hash consing type data. */
   std::unordered_set<TypeData*, TypeDataHash, TypeDataKeyEqual> d_unique_types;
 
+  /**
+   * Maps bit-vector sizes up to s_max_cached_bv_size to their type data,
+   * nullptr if not created. Avoids allocating a lookup key for d_unique_types
+   * on every bit-vector type lookup.
+   */
+  std::vector<TypeData*> d_bv_types;
+  static constexpr uint64_t s_max_cached_bv_size = 1024;
+
   /** Reference count: owning reference plus allocated TypeData. */
   uint64_t d_refs = 1;
 };

@@ -125,8 +125,20 @@ TypeManager::find_or_create_type(TypeData::Kind kind,
 TypeData*
 TypeManager::find_or_create_bv_type(uint64_t size)
 {
-  TypeData* data = new TypeData(this, size);
-  return find_or_create(data);
+  if (size < d_bv_types.size() && d_bv_types[size])
+  {
+    return d_bv_types[size];
+  }
+  TypeData* data = find_or_create(new TypeData(this, size));
+  if (size <= s_max_cached_bv_size)
+  {
+    if (size >= d_bv_types.size())
+    {
+      d_bv_types.resize(size + 1, nullptr);
+    }
+    d_bv_types[size] = data;
+  }
+  return data;
 }
 
 TypeData*
@@ -156,7 +168,15 @@ TypeManager::garbage_collect(TypeData* data)
     d_unique_types.erase(cur);
 
     auto kind = cur->get_kind();
-    if (kind == TypeData::Kind::ARRAY || kind == TypeData::Kind::FUN)
+    if (kind == TypeData::Kind::BV)
+    {
+      uint64_t size = cur->get_bv_size();
+      if (size < d_bv_types.size())
+      {
+        d_bv_types[size] = nullptr;
+      }
+    }
+    else if (kind == TypeData::Kind::ARRAY || kind == TypeData::Kind::FUN)
     {
       auto& types = std::get<std::vector<Type>>(cur->d_data);
       for (size_t i = 0, size = types.size(); i < size; ++i)
