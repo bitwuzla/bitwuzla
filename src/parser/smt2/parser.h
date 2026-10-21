@@ -211,6 +211,13 @@ class Parser : public bzla::parser::Parser
    */
   bool parse_command_declare_sort();
   /**
+   * Helper for parse_command_declare_sort() and parse_command_define_sort().
+   * Insert the sort symbol parsed via parse_symbol() into the sort symbol
+   * table.
+   * @return The symbol node of the sort, nullptr on error.
+   */
+  SymbolTable::Node* insert_sort_symbol();
+  /**
    * Parse declare-fun or declare-const command.
    * @param is_const True if command is a declare-const command.
    * @return True if command was parsed without an error.
@@ -941,6 +948,12 @@ class Parser : public bzla::parser::Parser
   std::unique_ptr<Lexer> d_lexer;
   /** The associated symbol table. */
   SymbolTable d_table;
+  /**
+   * The symbol table for sort symbols, which have a namespace separate from
+   * term symbols (SMT-LIB 2.6, Remark 2). Only holds declared sorts, builtin
+   * sorts are resolved via their token in d_table.
+   */
+  SymbolTable d_sort_table{false};
 
   /** True if SMT-LIB option print-success is enabled. */
   bool d_print_success = false;

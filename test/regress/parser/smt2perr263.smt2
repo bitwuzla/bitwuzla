@@ -1,0 +1,5 @@
+(push 1)
+(declare-sort U 0)
+(declare-const U Bool)
+(pop 1)
+(declare-const x U)

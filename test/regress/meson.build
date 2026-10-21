@@ -75,6 +75,7 @@ tests_smt2 = [
   ['parser/reset.smt2'],
   ['parser/reset_assertions.smt2'],
   ['parser/reset_logic.smt2'],
+  ['parser/sort_namespace.smt2'],
   ['parser/unsupported_opt_attr.smt2'],
   ['parser/smt2perr000.smt2'],
   ['parser/smt2perr001.smt2'],
@@ -336,6 +337,8 @@ tests_smt2 = [
   ['parser/smt2perr259.smt2'],
   ['parser/smt2perr260.smt2'],
   ['parser/smt2perr261.smt2'],
+  ['parser/smt2perr262.smt2'],
+  ['parser/smt2perr263.smt2'],
   ['parser/smt2perr266.smt2'],
   ['parser/smt2perr267.smt2'],
   ## preprocess

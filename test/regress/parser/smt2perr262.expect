@@ -1,0 +1,1 @@
+regress/parser/smt2perr262.smt2:2:14: symbol 'U' already defined at line 1 column 15
