@@ -246,4 +246,22 @@ TEST_F(TestSmt2SymbolTable, quoted_reserved)
   ASSERT_EQ(table.find("|bvadd|"), table.find("bvadd"));
   ASSERT_EQ(table.find("|bvadd|")->d_token, Token::BV_ADD);
 }
+
+// A table without builtins, e.g., for sort symbols, starts and resets empty.
+TEST_F(TestSmt2SymbolTable, no_builtins)
+{
+  SymbolTable table(false);
+  for (const char* s : {"par", "assert", ":named", "and", "Bool"})
+  {
+    ASSERT_EQ(table.find(s), nullptr);
+  }
+  SymbolTable::Node* u = table.insert(Token::SYMBOL, "|U|", false, 0);
+  ASSERT_EQ(table.find("U"), u);
+  ASSERT_EQ(table.find("|U|"), u);
+  table.insert(Token::SYMBOL, "|par|", false, 0);
+  ASSERT_NE(table.find("|par|"), nullptr);
+  table.reset();
+  ASSERT_EQ(table.find("U"), nullptr);
+  ASSERT_EQ(table.find("assert"), nullptr);
+}
 }  // namespace bzla::test

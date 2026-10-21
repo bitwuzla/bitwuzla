@@ -26,7 +26,7 @@ SymbolTable::Node::Node(Token token,
 {
 }
 
-SymbolTable::SymbolTable() { init(); }
+SymbolTable::SymbolTable(bool builtins) : d_builtins(builtins) { init(); }
 
 SymbolTable::~SymbolTable() {}
 
@@ -261,7 +261,8 @@ SymbolTable::find_quoted_symbol(std::string_view symbol,
 {
   std::string_view key = strip_pipes(symbol);
   // Keywords start with ':', which simple symbols can't. Reserved words and
-  // commands are all in the table, see init().
+  // commands are all in the table, see init(). A table without builtins is
+  // never queried for unquoted reserved words, which are not symbols.
   quoted_reserved = !key.empty() && key[0] == ':';
   if (!quoted_reserved)
   {
@@ -354,7 +355,12 @@ SymbolTable::init()
 {
   if (d_entries.empty())
   {
-    d_entries.resize(1024);
+    // pop_level() scans all entries, start small without builtins
+    d_entries.resize(d_builtins ? 1024 : 16);
+  }
+  if (!d_builtins)
+  {
+    return;
   }
   init_reserved_words();
   init_commands();

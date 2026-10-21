@@ -585,15 +585,11 @@ Parser::parse_command_declare_sort()
   {
     return false;
   }
-  assert(nargs() == 1);
-  if (peek_node_arg()->d_coo.line)
+  SymbolTable::Node* symbol = insert_sort_symbol();
+  if (!symbol)
   {
-    return error_arg("symbol '" + peek_node_arg()->d_symbol
-                     + "' already defined at line "
-                     + std::to_string(peek_node_arg()->d_coo.line) + " column "
-                     + std::to_string(peek_node_arg()->d_coo.col));
+    return false;
   }
-  SymbolTable::Node* symbol = pop_node_arg(true);
   uint64_t uint;
   if (!parse_uint64(uint))
   {
@@ -611,6 +607,30 @@ Parser::parse_command_declare_sort()
   d_decl_sorts.push_back(symbol);
   print_success();
   return true;
+}
+
+SymbolTable::Node*
+Parser::insert_sort_symbol()
+{
+  assert(nargs() == 1);
+  // The parsed symbol node is the term symbol of the same name, sort symbols
+  // are kept in a separate table.
+  Lexer::Coordinate coo = d_work.back().d_coo;
+  pop_node_arg();
+  assert(d_lexer->has_token());
+  std::string_view name     = d_lexer->token_view();
+  SymbolTable::Node* symbol = d_sort_table.find(name);
+  if (symbol)
+  {
+    error("symbol '" + symbol->d_symbol + "' already defined at line "
+              + std::to_string(symbol->d_coo.line) + " column "
+              + std::to_string(symbol->d_coo.col),
+          coo);
+    return nullptr;
+  }
+  symbol = d_sort_table.insert(Token::SYMBOL, name, false, d_assertion_level);
+  symbol->d_coo = coo;
+  return symbol;
 }
 
 bool
@@ -762,15 +782,11 @@ Parser::parse_command_define_sort()
   {
     return false;
   }
-  assert(nargs() == 1);
-  if (peek_node_arg()->d_coo.line)
+  SymbolTable::Node* symbol = insert_sort_symbol();
+  if (!symbol)
   {
-    return error_arg("symbol '" + peek_node_arg()->d_symbol
-                     + "' already defined at line "
-                     + std::to_string(peek_node_arg()->d_coo.line) + " column "
-                     + std::to_string(peek_node_arg()->d_coo.col));
+    return false;
   }
-  SymbolTable::Node* symbol = pop_node_arg(true);
 
   if (!parse_lpar())
   {
@@ -1157,6 +1173,7 @@ Parser::parse_command_pop()
     for (size_t i = 0; i < nlevels; ++i)
     {
       d_table.pop_level(d_assertion_level);
+      d_sort_table.pop_level(d_assertion_level);
       d_assertion_level -= 1;
       d_backtrack_mgr.pop();
     }
@@ -1203,6 +1220,7 @@ Parser::parse_command_reset()
   }
   d_bitwuzla.reset();
   d_table.reset();
+  d_sort_table.reset();
   reset_logic();
   d_options = d_options_orig;
   print_success();
@@ -1220,6 +1238,7 @@ Parser::parse_command_reset_assertions()
   if (!d_global_decl)
   {
     d_table.reset();
+    d_sort_table.reset();
     // Repopulate symbol table based on set logic.
     if (d_logic.empty())
     {
@@ -3158,11 +3177,11 @@ Parser::parse_sort(bitwuzla::Sort& sort, bool look_ahead, Token la)
     else if (token == Token::SYMBOL)
     {
       assert(d_lexer->has_token());
-      std::string symbol      = d_lexer->token();
-      SymbolTable::Node* node = d_table.find(symbol);
+      std::string_view symbol = d_lexer->token_view();
+      SymbolTable::Node* node = d_sort_table.find(symbol);
       if (!node || node->d_sort.is_null())
       {
-        return error("invalid sort '" + symbol + "'");
+        return error("invalid sort '" + std::string(symbol) + "'");
       }
       sort = node->d_sort;
     }

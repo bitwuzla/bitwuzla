@@ -1,0 +1,8 @@
+sat
+(
+  (W #b0011)
+  (X #b0100)
+  (g true)
+  ((f U) true)
+  ((f V) false)
+)

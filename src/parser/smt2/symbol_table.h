@@ -70,8 +70,13 @@ class SymbolTable
     std::unique_ptr<Node> d_next = nullptr;
   };
 
-  /** Constructor. */
-  SymbolTable();
+  /**
+   * Constructor.
+   * @param builtins True to insert reserved words, commands, keywords and
+   *                 core theory symbols, false for an empty table, e.g., for
+   *                 sort symbols, which have their own namespace.
+   */
+  explicit SymbolTable(bool builtins = true);
   /** Destructor. */
   ~SymbolTable();
 
@@ -264,6 +269,8 @@ class SymbolTable
    * The number of entries is always a power of two.
    */
   std::vector<Entry> d_entries;
+  /** True if the table holds the builtin symbols, see init(). */
+  bool d_builtins;
   /** The number of non-empty entries in d_entries. */
   size_t d_num_entries = 0;
   /**

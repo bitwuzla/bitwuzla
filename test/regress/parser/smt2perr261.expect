@@ -1,0 +1,1 @@
+regress/parser/smt2perr261.smt2:5:18: invalid sort 'U'
