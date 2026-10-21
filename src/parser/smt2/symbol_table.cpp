@@ -10,6 +10,7 @@
 
 #include "parser/smt2/symbol_table.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cstring>
 
@@ -34,6 +35,7 @@ void
 SymbolTable::reset()
 {
   d_entries.clear();
+  d_trail.clear();
   d_num_entries = 0;
   init();
 }
@@ -83,6 +85,10 @@ SymbolTable::insert(Node* node)
     d_num_entries += 1;
   }
   entry.d_node.reset(node);
+  if (node->d_assertion_level > 0)
+  {
+    d_trail.push_back(node);
+  }
 }
 
 void
@@ -111,6 +117,13 @@ SymbolTable::remove(const std::string& symbol)
   Entry& entry = d_entries[idx];
   assert(entry.d_node);
   assert(entry.d_node->d_symbol == symbol);
+  if (entry.d_node->d_assertion_level > 0)
+  {
+    // Removed nodes are bound variables, which were inserted recently.
+    auto it = std::find(d_trail.rbegin(), d_trail.rend(), entry.d_node.get());
+    assert(it != d_trail.rend());
+    d_trail.erase(std::next(it).base());
+  }
   // Note: symbol may be a reference to the symbol of the removed node.
   entry.d_node = std::move(entry.d_node->d_next);
   if (!entry.d_node)
@@ -122,25 +135,23 @@ SymbolTable::remove(const std::string& symbol)
 void
 SymbolTable::pop_level(uint64_t assertion_level)
 {
-  for (size_t i = 0, n = d_entries.size(); i < n; ++i)
+  assert(assertion_level > 0);
+  // Nodes are removed in reverse insertion order, so each node is the
+  // current declaration of its symbol when it is removed.
+  while (!d_trail.empty()
+         && d_trail.back()->d_assertion_level >= assertion_level)
   {
-    Entry& entry = d_entries[i];
+    Node* node = d_trail.back();
+    d_trail.pop_back();
+    size_t h;
+    bool quoted_reserved;
+    size_t idx   = find_symbol(node->d_symbol, h, quoted_reserved);
+    Entry& entry = d_entries[idx];
+    assert(entry.d_node.get() == node);
+    entry.d_node = std::move(node->d_next);
     if (!entry.d_node)
     {
-      continue;
-    }
-    while (entry.d_node && entry.d_node->d_assertion_level >= assertion_level)
-    {
-      entry.d_node = std::move(entry.d_node->d_next);
-    }
-    if (!entry.d_node)
-    {
-      // Erasing may move a subsequent entry into this slot, which then
-      // still needs to be processed. Entries are only moved into slots that
-      // either are revisited or have not been visited yet, or entries that
-      // were already processed.
-      erase_entry(i);
-      i -= 1;
+      erase_entry(idx);
     }
   }
 }

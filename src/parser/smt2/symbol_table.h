@@ -281,6 +281,11 @@ class SymbolTable
    * insert_pending_symbols().
    */
   std::vector<Node*> d_pending_symbols;
+  /**
+   * The symbol nodes inserted at assertion level > 0, in insertion order.
+   * Allows pop_level() to only visit the nodes of the popped levels.
+   */
+  std::vector<Node*> d_trail;
 };
 
 }  // namespace parser::smt2
