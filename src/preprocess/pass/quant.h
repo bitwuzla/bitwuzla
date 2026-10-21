@@ -34,7 +34,9 @@ class PassQuant : public PreprocessingPass
    * @note Expects the body of `node` to be cached in d_cache.
    * @note Binders in the body of `node` that rebind its variable (shadowing)
    *       are left untouched, every occurrence of the variable below such a
-   *       binder is bound by that binder.
+   *       binder is bound by that binder. In the scope of a copied binder,
+   *       they are rebuilt in a scope of their own, since the variable of the
+   *       copied binder may occur below them.
    *
    * @param node      The binder whose variable is already bound elsewhere.
    * @param fresh_var The variable to bind instead, of the same type as the
@@ -42,6 +44,25 @@ class PassQuant : public PreprocessingPass
    * @return `node` with its variable replaced by `fresh_var`.
    */
   Node uniquify_variable(const Node& node, const Node& fresh_var);
+  /**
+   * Helper for uniquify_variable(). Rebuild `node` with the variables renamed
+   * as given by `cache`.
+   *
+   * Every rebuilt binder is copied with a fresh variable. A binder whose
+   * variable already has an entry in `cache` (shadowing) is rebuilt in a scope
+   * of its own.
+   *
+   * @param node       The node to rebuild.
+   * @param cache      The rebuild cache of the scope, initially maps variables
+   *                   to their renaming (or to themselves).
+   * @param references Maps nodes to true if they need to be rebuilt. Nodes
+   *                   that are mapped to false are kept. Null if all nodes
+   *                   need to be rebuilt.
+   * @return The rebuilt node.
+   */
+  Node rebuild_scope(const Node& node,
+                     std::unordered_map<Node, Node>& cache,
+                     const std::unordered_map<Node, bool>* references);
   /**
    * Alpha-normalize given node.
    *

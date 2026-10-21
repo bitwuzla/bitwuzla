@@ -564,6 +564,86 @@ TEST_F(TestPassQuant, uniquify_binders_shadowing_binder_below_inner_rename)
   ASSERT_FALSE(pass.has_free_vars(assertions[0]).first);
 }
 
+TEST_F(TestPassQuant, uniquify_binders_shadowing_binder_references_inner_rename)
+{
+  d_options.pp_quant_alpha.set(false);
+  sat::SatSolverFactory sat_factory(d_options);
+  Env env(d_nm, sat_factory, d_options);
+  preprocess::pass::PassQuant pass(env, &d_bm);
+
+  Node c = d_nm.mk_const(d_bv2, "c");
+  Node d = d_nm.mk_const(d_bv2, "d");
+  Node x = d_nm.mk_var(d_bv2, "x");
+  Node y = d_nm.mk_var(d_bv2, "y");
+
+  // Shadowing binder of `x` that references `y`, the variable of a binder that
+  // is copied when uniquifying the outer `x`, i.e., `y` must be renamed below
+  // the shadowing binder, too.
+  Node shadow = d_nm.mk_node(
+      Kind::FORALL,
+      {x, d_nm.mk_node(Kind::BV_ULE, {d_nm.mk_node(Kind::BV_ADD, {x, y}), d})});
+  Node q = d_nm.mk_node(
+      Kind::FORALL,
+      {x,
+       d_nm.mk_node(
+           Kind::FORALL,
+           {y,
+            d_nm.mk_node(Kind::AND,
+                         {d_nm.mk_node(Kind::BV_ULE, {x, c}), shadow})})});
+  d_as.push_back(q);
+  preprocess::AssertionVector assertions(d_as.view());
+  pass.apply(assertions);
+  auto binders = collect_binders({assertions[0]});
+  ASSERT_EQ(binders.size(), 3u);
+  for (const auto& [var, bs] : binders)
+  {
+    ASSERT_EQ(bs.size(), 1u);
+  }
+  ASSERT_FALSE(utils::free_vars(assertions[0]));
+}
+
+TEST_F(TestPassQuant, uniquify_binders_shadowing_binder_of_enclosing_var)
+{
+  d_options.pp_quant_alpha.set(false);
+  sat::SatSolverFactory sat_factory(d_options);
+  Env env(d_nm, sat_factory, d_options);
+  preprocess::pass::PassQuant pass(env, &d_bm);
+
+  Node c = d_nm.mk_const(d_bv2, "c");
+  Node d = d_nm.mk_const(d_bv2, "d");
+  Node y = d_nm.mk_var(d_bv2, "y");
+  Node m = d_nm.mk_var(d_bv2, "m");
+
+  // q1 binds `m` first, i.e., the binder of `m` in q2 is uniquified while the
+  // enclosing binder of `y` is not processed yet: `y` occurs free in its body,
+  // and is rebound by `shadow`, which references `m` and is thus copied with a
+  // fresh variable. That fresh variable must only replace the occurrences of
+  // `y` in the scope of `shadow`.
+  Node q1 = d_nm.mk_node(Kind::FORALL, {m, d_nm.mk_node(Kind::BV_ULE, {m, c})});
+  Node shadow = d_nm.mk_node(
+      Kind::FORALL,
+      {y, d_nm.mk_node(Kind::BV_ULE, {d_nm.mk_node(Kind::BV_ADD, {y, m}), d})});
+  Node q2 = d_nm.mk_node(
+      Kind::FORALL,
+      {y,
+       d_nm.mk_node(Kind::FORALL,
+                    {m,
+                     d_nm.mk_node(Kind::BV_ULE,
+                                  {d_nm.mk_node(Kind::ITE, {shadow, c, d}),
+                                   d_nm.mk_node(Kind::BV_ADD, {y, m})})})});
+  d_as.push_back(q1);
+  d_as.push_back(q2);
+  preprocess::AssertionVector assertions(d_as.view());
+  pass.apply(assertions);
+  auto binders = collect_binders({assertions[0], assertions[1]});
+  ASSERT_EQ(binders.size(), 4u);
+  for (const auto& [var, bs] : binders)
+  {
+    ASSERT_EQ(bs.size(), 1u);
+  }
+  ASSERT_FALSE(utils::free_vars(assertions[1]));
+}
+
 TEST_F(TestPassQuant, uniquify_binders_shadowing_lambda)
 {
   Node c = d_nm.mk_const(d_bv2, "c");
