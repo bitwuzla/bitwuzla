@@ -146,6 +146,16 @@ class Parser : public bzla::parser::Parser
 
   /** Reset the configured logic. */
   void reset_logic();
+  /**
+   * Reset the assertion stack: remove all assertions and assertion levels,
+   * and the result of the last satisfiability check.
+   */
+  void reset_assertions();
+  /**
+   * Remove all declarations and definitions, including the symbols of the
+   * configured logic.
+   */
+  void reset_declarations();
 
   /** Reset parser for new parse call. */
   void reset();

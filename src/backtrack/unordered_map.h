@@ -54,6 +54,16 @@ class unordered_map : public Backtrackable
   /** @return The underlying map. */
   const std::unordered_map<K, V>& map() const { return d_data; }
 
+  void clear()
+  {
+    d_data.clear();
+    d_keys.clear();
+    for (std::size_t i = 0, size = d_control.size(); i < size; ++i)
+    {
+      d_control[i] = 0;
+    }
+  }
+
   /* --- Backtrackable interface -------------------------------------------- */
 
   void push() override { d_control.push_back(d_keys.size()); }
