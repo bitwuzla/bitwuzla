@@ -494,7 +494,7 @@ Options::Options()
           "quant-ic-filter"),
       quant_ic_underdet(this,
                         Option::QUANT_IC_UNDERDET,
-                        true,
+                        false,
                         "allow computation of under-determined inverses for "
                         "extract, concat and ite",
                         "quant-ic-underdet"),

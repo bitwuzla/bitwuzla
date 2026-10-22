@@ -830,8 +830,8 @@ enum ENUM(Option)
    * may contain under-determined inverses for extract/concat/ite.
    *
    * *Values:*
-   *  - **true**: enable [**default**]
-   *  - **false**: disable
+   *  - **true**: enable
+   *  - **false**: disable [**default**]
    */
 #ifndef BITWUZLA_API_USE_C_ENUMS
   /*! @see Option::QUANT_IC
