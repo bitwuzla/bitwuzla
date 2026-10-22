@@ -1,6 +1,7 @@
 (set-logic BV)
 (set-info :status unsat)
 (set-option :quant-ic true)
+(set-option :quant-ic-underdet true)
 (declare-const a (_ BitVec 32))
 (declare-const c Bool)
 (assert (or c (= a #x00000006)))
