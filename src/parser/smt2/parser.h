@@ -151,6 +151,15 @@ class Parser : public bzla::parser::Parser
   void reset();
 
   /**
+   * @return The assertion level of new symbols, global declarations are
+   *         added at level 0 and thus never popped.
+   */
+  uint64_t symbol_level() const
+  {
+    return d_global_decl ? 0 : d_assertion_level;
+  }
+
+  /**
    * Get next token from the lexer and insert new symbols into symbol table.
    * Caches parsed symbols (new and existing) in d_last_node.
    * @param is_pending True if parsed symbol is not to be inserted in the
@@ -171,7 +180,7 @@ class Parser : public bzla::parser::Parser
       SymbolTable::Node* node = d_table.find(symbol);
       if (!node || is_pending)
       {
-        node = d_table.insert(token, symbol, is_pending, d_assertion_level);
+        node = d_table.insert(token, symbol, is_pending, symbol_level());
       }
       d_last_node = node;
       token       = d_last_node->d_token;
@@ -941,8 +950,13 @@ class Parser : public bzla::parser::Parser
   void print_work_control_stack();
 #endif
 
-  /** Manager for backtrackable data structures (on push/pop). */
+  /**
+   * Manager for backtrackable declarations, which follow the assertion levels
+   * unless global declarations are enabled.
+   */
   backtrack::BacktrackManager d_backtrack_mgr;
+  /** Manager for backtrackable data of assertions (on push/pop). */
+  backtrack::BacktrackManager d_assertions_backtrack_mgr;
 
   /** The associated SMT-LIB2 lexer. */
   std::unique_ptr<Lexer> d_lexer;

@@ -1,0 +1,5 @@
+(set-option :global-declarations true)
+(set-logic QF_BV)
+(push 1)
+(pop 1)
+(pop 1)

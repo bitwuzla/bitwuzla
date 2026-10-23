@@ -56,6 +56,8 @@ tests_smt2 = [
   ## parser
   ['parser/annotation_attribute_values.smt2'],
   ['parser/echo.smt2'],
+  ['parser/global_declarations_named.smt2'],
+  ['parser/global_declarations_pop.smt2'],
   ['parser/issue59-1.smt2'],
   ['parser/issue59-2.smt2'],
   ['parser/issue59-3.smt2'],
@@ -341,6 +343,8 @@ tests_smt2 = [
   ['parser/smt2perr263.smt2'],
   ['parser/smt2perr266.smt2'],
   ['parser/smt2perr267.smt2'],
+  ['parser/smt2perr268.smt2'],
+  ['parser/smt2perr269.smt2'],
   ## preprocess
   ['preprocess/array/nondestr_subst10.smt2', ['--print-model']],
   ['preprocess/array/nondestr_subst11.smt2'],

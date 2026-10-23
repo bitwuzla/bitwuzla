@@ -1,0 +1,13 @@
+(set-option :produce-models true)
+(set-option :global-declarations true)
+(set-logic QF_BV)
+(push 2)
+(declare-const x Bool)
+(pop 2)
+; global declarations are kept when the option is disabled afterwards
+(set-option :global-declarations false)
+(push 1)
+(pop 1)
+(assert x)
+(check-sat)
+(get-model)

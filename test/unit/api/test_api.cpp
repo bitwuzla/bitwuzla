@@ -3805,6 +3805,18 @@ TEST_F(TestApi, parser_smt2_string2)
   ASSERT_EQ(decl_funs[0].symbol()->get(), "a");
 }
 
+TEST_F(TestApi, parser_smt2_string_push_pop)
+{
+  // the assertion levels are kept across parse calls
+  bitwuzla::Options options;
+  bitwuzla::parser::Parser parser(d_tm, options);
+  parser.parse("(set-logic QF_BV)(push 1)(declare-const a Bool)", true, false);
+  ASSERT_NO_THROW(parser.parse("(pop 1)", true, false));
+  ASSERT_EXCEPTION(parser.parse("(assert a)", true, false),
+                   bitwuzla::Exception,
+                   "undefined symbol 'a'");
+}
+
 TEST_F(TestApi, parser_smt2_string3)
 {
   bitwuzla::Options options;

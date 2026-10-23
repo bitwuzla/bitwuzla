@@ -1,0 +1,12 @@
+(set-option :produce-unsat-cores true)
+(set-option :global-declarations true)
+(set-logic QF_BV)
+(declare-const a Bool)
+(push 1)
+(assert (! a :named n))
+(pop 1)
+; pop removes named assertions also with global declarations
+(assert (not a))
+(assert (! a :named k))
+(check-sat)
+(get-unsat-core)

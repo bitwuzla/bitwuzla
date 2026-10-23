@@ -77,7 +77,7 @@ Parser::Parser(bitwuzla::TermManager& tm,
     : bzla::parser::Parser(tm, options, out),
       d_decl_funs(&d_backtrack_mgr),
       d_decl_sorts(&d_backtrack_mgr),
-      d_named_assertions(&d_backtrack_mgr)
+      d_named_assertions(&d_assertions_backtrack_mgr)
 {
   d_lexer.reset(new Lexer());
   d_token_class_mask = static_cast<uint32_t>(TokenClass::COMMAND)
@@ -93,7 +93,7 @@ Parser::Parser(bitwuzla::TermManager& tm,
     : bzla::parser::Parser(tm, sat_factory, options, out),
       d_decl_funs(&d_backtrack_mgr),
       d_decl_sorts(&d_backtrack_mgr),
-      d_named_assertions(&d_backtrack_mgr)
+      d_named_assertions(&d_assertions_backtrack_mgr)
 {
   d_lexer.reset(new Lexer());
   d_token_class_mask = static_cast<uint32_t>(TokenClass::COMMAND)
@@ -121,7 +121,6 @@ Parser::reset()
   d_work_control.clear();
   d_work_control.push_back(0);
   d_done                    = false;
-  d_assertion_level         = 0;
   d_expect_rpar             = false;
   d_is_sorted_var           = false;
   d_is_var_binding          = false;
@@ -628,7 +627,7 @@ Parser::insert_sort_symbol()
           coo);
     return nullptr;
   }
-  symbol = d_sort_table.insert(Token::SYMBOL, name, false, d_assertion_level);
+  symbol = d_sort_table.insert(Token::SYMBOL, name, false, symbol_level());
   symbol->d_coo = coo;
   return symbol;
 }
@@ -1167,16 +1166,17 @@ Parser::parse_command_pop()
                      + "' have been pushed previously");
   }
 
-  if (!d_global_decl)
+  for (size_t i = 0; i < nlevels; ++i)
   {
-    // remove symbols from current scope
-    for (size_t i = 0; i < nlevels; ++i)
+    if (!d_global_decl)
     {
+      // remove symbols from current scope
       d_table.pop_level(d_assertion_level);
       d_sort_table.pop_level(d_assertion_level);
-      d_assertion_level -= 1;
       d_backtrack_mgr.pop();
     }
+    d_assertions_backtrack_mgr.pop();
+    d_assertion_level -= 1;
   }
   d_bitwuzla->pop(nlevels);
   print_success();
@@ -1200,12 +1200,13 @@ Parser::parse_command_push()
   }
   d_assertion_level += nlevels;
   d_bitwuzla->push(nlevels);
-  if (!d_global_decl)
+  for (uint64_t i = 0; i < nlevels; ++i)
   {
-    for (uint64_t i = 0; i < nlevels; ++i)
+    if (!d_global_decl)
     {
       d_backtrack_mgr.push();
     }
+    d_assertions_backtrack_mgr.push();
   }
   print_success();
   return true;
@@ -1438,20 +1439,21 @@ Parser::parse_command_set_option()
     {
       return false;
     }
-    if (token == Token::TRUE)
-    {
-      d_global_decl = true;
-    }
-    else if (token == Token::FALSE)
-    {
-      d_global_decl = false;
-    }
-    else
+    if (token != Token::TRUE && token != Token::FALSE)
     {
       assert(d_lexer->has_token());
       return error("expected Boolean argument at '"
                    + std::string(d_lexer->token()) + "'");
     }
+    // the declarations of pushed levels depend on the option
+    bool global_decl = token == Token::TRUE;
+    if (global_decl != d_global_decl && d_assertion_level > 0)
+    {
+      return error(
+          "option ':global-declarations' can only be changed at assertion "
+          "level 0");
+    }
+    d_global_decl = global_decl;
   }
   // Bitwuzla options
   else
@@ -1574,7 +1576,7 @@ Parser::parse_symbol(const std::string& error_msg,
   if (shadow && d_last_node->d_coo.line)
   {
     d_last_node = d_table.insert(
-        token, d_lexer->token_view(), is_pending, d_assertion_level);
+        token, d_lexer->token_view(), is_pending, symbol_level());
     assert(d_last_node->has_symbol());
     d_last_node->d_coo = d_lexer->coo();
   }

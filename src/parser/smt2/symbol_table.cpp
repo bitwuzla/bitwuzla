@@ -87,6 +87,8 @@ SymbolTable::insert(Node* node)
   entry.d_node.reset(node);
   if (node->d_assertion_level > 0)
   {
+    assert(d_trail.empty()
+           || d_trail.back()->d_assertion_level <= node->d_assertion_level);
     d_trail.push_back(node);
   }
 }

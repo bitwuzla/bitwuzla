@@ -1,0 +1,1 @@
+regress/parser/smt2perr269.smt2:5:2: attempting to pop '1' but only '0' have been pushed previously

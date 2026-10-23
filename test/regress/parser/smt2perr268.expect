@@ -1,0 +1,1 @@
+regress/parser/smt2perr268.smt2:3:34: option ':global-declarations' can only be changed at assertion level 0
