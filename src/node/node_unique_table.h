@@ -40,51 +40,108 @@ class NodeUniqueTable
   template <class T>
   std::pair<bool, NodeData*> find_or_insert(const Type& type, const T& value)
   {
-    size_t hd     = hash_value(value);
-    size_t h      = bucket_hash(hd);
-    NodeData* cur = d_buckets[h];
-
-    // Check collision chain.
-    while (cur)
+    uint32_t t = compute_tag(hash_value(value));
+    size_t pos = find(t, [&](const NodeData* d) {
+      return d->d_kind == Kind::VALUE && d->get_type() == type
+             && d->payload_value<T>().d_value == value;
+    });
+    if (d_slots[pos].d_data)
     {
-      if (cur->d_kind == Kind::VALUE && cur->get_type() == type)
-      {
-        const auto& payload = cur->payload_value<T>();
-        if (payload.d_value == value)
-        {
-          return std::make_pair(false, cur);
-        }
-      }
-      cur = cur->d_next;
+      return std::make_pair(false, d_slots[pos].d_data);
     }
-
-    // Create new node and insert
-    NodeData* d = NodeData::alloc(value);
-    if (needs_resize())
-    {
-      resize();
-      h = bucket_hash(hd);
-    }
-    assert(d->d_next == nullptr);
-    d->d_next    = d_buckets[h];
-    d_buckets[h] = d;
-
-    ++d_num_elements;
-    return std::make_pair(true, d);
+    return std::make_pair(true, insert(pos, t, NodeData::alloc(value)));
   }
 
-  /** Delete node data from unique table. */
+  /**
+   * Delete node data from unique table. The hash value of values is
+   * recomputed, nodes with children store their tag.
+   */
   void erase(const NodeData* d);
 
  private:
   static constexpr std::array<size_t, 4> s_primes = {
       333444569u, 76891121u, 456790003u, 111130391u};
 
-  /** Check whether unique table needs to be resized. */
-  bool needs_resize() const { return d_num_elements >= d_buckets.size(); }
+  /** Tables with fewer slots are doubled on resize. */
+  static constexpr size_t s_double_max_size = size_t(1) << 18;
 
-  /** Resizes unique table and rehashes node data. */
+  /**
+   * A slot of the hash table. The tag is stored in the slot to only access
+   * node data on tag matches and to resize without accessing it.
+   */
+  struct Slot
+  {
+    uint32_t d_tag   = 0;
+    NodeData* d_data = nullptr;
+  };
+
+  /**
+   * Find the slot of the node data with the given tag that satisfies `equal`,
+   * probing linearly from its home slot.
+   * @return The position of the slot, or of the empty slot that ends the
+   *         probe sequence if no such node data exists.
+   */
+  template <class Equal>
+  size_t find(uint32_t tag, Equal&& equal) const
+  {
+    for (size_t i = position(tag);; i = next(i))
+    {
+      const Slot& slot = d_slots[i];
+      if (slot.d_data == nullptr || (slot.d_tag == tag && equal(slot.d_data)))
+      {
+        return i;
+      }
+    }
+  }
+
+  /**
+   * @return The position of the empty slot that ends the probe sequence of
+   *         the given tag.
+   */
+  size_t find_empty(uint32_t tag) const
+  {
+    return find(tag, [](const NodeData*) { return false; });
+  }
+
+  /**
+   * Insert node data into the empty slot at the given position, resizes the
+   * table if necessary.
+   * @return The inserted node data.
+   */
+  NodeData* insert(size_t pos, uint32_t tag, NodeData* d);
+
+  /** Resizes unique table and reinserts node data. */
   void resize();
+
+  /**
+   * @return The tag of the given hash value. Fibonacci hashing mixes all bits
+   *         of the hash value into the upper 32 bits, which form the tag.
+   */
+  static uint32_t compute_tag(size_t hash)
+  {
+    return static_cast<uint32_t>(
+        (static_cast<uint64_t>(hash) * UINT64_C(0x9e3779b97f4a7c15)) >> 32);
+  }
+
+  /** @return The home slot position of the given tag. */
+  size_t position(uint32_t tag) const
+  {
+    assert(d_slots.size() <= UINT32_MAX);
+    return static_cast<size_t>((static_cast<uint64_t>(tag) * d_slots.size())
+                               >> 32);
+  }
+
+  /** @return The position after the given position, wrapping around. */
+  size_t next(size_t pos) const
+  {
+    return pos + 1 == d_slots.size() ? 0 : pos + 1;
+  }
+
+  /** @return The distance from position `from` to position `to`. */
+  size_t distance(size_t from, size_t to) const
+  {
+    return to >= from ? to - from : to + d_slots.size() - from;
+  }
 
   /** Hash node data. */
   size_t hash(const NodeData* d) const;
@@ -100,18 +157,6 @@ class NodeUniqueTable
               const Type& type,
               const std::vector<Node>& children,
               std::span<const uint64_t> indices) const;
-
-  /** Compute position in d_buckets based on hash value. */
-  size_t bucket_hash(size_t hash, size_t mask = 0) const
-  {
-    if (mask == 0)
-    {
-      // The number of buckets is always a power of two (see resize()), so
-      // size() - 1 is an all-ones mask.
-      mask = d_buckets.size() - 1;
-    }
-    return hash & mask;
-  }
 
   /** Compute has value of value node lookup data. */
   template <class T>
@@ -133,21 +178,27 @@ class NodeUniqueTable
     return hash;
   }
 
+  /**
+   * Indices continue the prime sequence of the children. Restarting it would
+   * give equal hash values to, e.g., indexed nodes over children with
+   * consecutive ids whose index differs by one.
+   */
   inline size_t hash_indices(size_t hash,
+                             size_t num_children,
                              size_t size,
                              const uint64_t* indices) const
   {
     for (size_t i = 0; i < size; ++i)
     {
-      hash += s_primes[i % s_primes.size()] * indices[i];
+      hash += s_primes[(num_children + i) % s_primes.size()] * indices[i];
     }
     return hash;
   }
 
   /** Number of nodes stored in unique table. */
   size_t d_num_elements = 0;
-  /** Hash table buckets. */
-  std::vector<NodeData*> d_buckets;
+  /** Hash table slots. */
+  std::vector<Slot> d_slots;
 };
 
 }  // namespace bzla::node

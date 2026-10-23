@@ -474,16 +474,10 @@ TEST_F(TestNodeManager, check_type_distinct_nary)
 
 TEST_F(TestNodeManager, unique_table_resize)
 {
-  // Regression: the unique table computed bucket indices by masking the hash
-  // with d_buckets.capacity() - 1 (and the load-factor check and resize() used
-  // capacity() as well), assuming capacity() equals the power-of-two bucket
-  // count requested via resize(). std::vector only guarantees
-  // capacity() >= size(), so on an over-allocating implementation capacity()
-  // need not be a power of two and the mask could yield an out-of-bounds index.
-  // Create enough distinct nodes to force several resizes (initial bucket count
-  // is 16) and check that hash consing still returns the same node for each,
-  // exercising both find_or_insert paths (values and structural nodes) across
-  // the resizes.
+  // Create enough distinct nodes to force several resizes (the initial table
+  // has 16 slots) and check that hash consing still returns the same node for
+  // each, exercising both find_or_insert paths (values and structural nodes)
+  // across the resizes.
   NodeManager nm;
 
   Type bv_type = nm.mk_bv_type(64);
@@ -503,6 +497,57 @@ TEST_F(TestNodeManager, unique_table_resize)
   {
     ASSERT_EQ(values[i], nm.mk_value(BitVector::from_ui(64, i)));
     ASSERT_EQ(nodes[i], nm.mk_node(Kind::BV_ADD, {x, values[i]}));
+  }
+}
+
+TEST_F(TestNodeManager, unique_table_erase)
+{
+  // Erasing node data from the unique table moves other node data of the same
+  // probe sequence. Release a subset of the nodes and check that hash consing
+  // still returns the remaining ones, also after re-creating the released ones.
+  // The second size exceeds 2^18 slots, above which the table grows by a factor
+  // of 1.5 and its size is no longer a power of two.
+  for (uint64_t size : {1000, 130000})
+  {
+    NodeManager nm;
+
+    Type bv_type = nm.mk_bv_type(64);
+    Node x       = nm.mk_const(bv_type);
+
+    auto mk = [&](uint64_t i) {
+      return nm.mk_node(Kind::BV_ADD,
+                        {x, nm.mk_value(BitVector::from_ui(64, i))});
+    };
+
+    std::vector<Node> nodes;
+    for (uint64_t i = 0; i < size; ++i)
+    {
+      nodes.push_back(mk(i));
+    }
+    for (uint64_t i = 0; i < nodes.size(); ++i)
+    {
+      if (i % 3 != 0)
+      {
+        nodes[i] = Node();
+      }
+    }
+    for (uint64_t i = 0; i < nodes.size(); i += 3)
+    {
+      ASSERT_EQ(nodes[i], mk(i));
+    }
+    std::vector<Node> recreated;
+    for (uint64_t i = 0; i < nodes.size(); ++i)
+    {
+      recreated.push_back(mk(i));
+    }
+    for (uint64_t i = 0; i < nodes.size(); ++i)
+    {
+      if (i % 3 == 0)
+      {
+        ASSERT_EQ(nodes[i], recreated[i]);
+      }
+      ASSERT_EQ(recreated[i], mk(i));
+    }
   }
 }
 

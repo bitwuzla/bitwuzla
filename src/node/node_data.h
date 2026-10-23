@@ -11,9 +11,11 @@
 #ifndef BZLA_NODE_NODE_DATA_H_INCLUDED
 #define BZLA_NODE_NODE_DATA_H_INCLUDED
 
+#include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <new>
 #include <optional>
 #include <span>
@@ -27,7 +29,12 @@ namespace bzla::node {
 /** Payload for nodes with arbitrary number of children. */
 struct PayloadChildren
 {
-  size_t d_num_children;
+  uint32_t d_num_children;
+  /**
+   * The unique table tag of the node, stored to erase the node without
+   * accessing its children.
+   */
+  uint32_t d_tag;
   Node d_children[1];
 };
 
@@ -67,24 +74,18 @@ class NodeData
   /** Allocate node data for constants and variables. */
   static NodeData* alloc(Kind kind, const std::optional<std::string>& symbol);
 
-  /** Allocate node data for nodes with children. */
+  /** Allocate node data for nodes with children and their unique table tag. */
   static NodeData* alloc(Kind kind,
                          const std::vector<Node>& children,
-                         std::span<const uint64_t> indices);
+                         std::span<const uint64_t> indices,
+                         uint32_t tag);
 
   /** Allocate node data for values. */
   template <class T>
   static NodeData* alloc(const T& value)
   {
-    size_t size         = sizeof(NodeData);
-    size_t payload_size = sizeof(PayloadValue<T>);
-
-    // Subtract size of payload placeholder in NodeData from payload size.
-    size_t reserved_size = sizeof(NodeData::d_payload);
-    payload_size = std::max(payload_size, reserved_size) - reserved_size;
-
-    NodeData* data =
-        static_cast<NodeData*>(std::calloc(1, size + payload_size));
+    NodeData* data = static_cast<NodeData*>(
+        std::calloc(1, alloc_size(sizeof(PayloadValue<T>))));
     if (data == nullptr)
     {
       throw std::bad_alloc();
@@ -233,6 +234,17 @@ class NodeData
   auto& info() { return d_info; }
 
  private:
+  /**
+   * @return The number of bytes to allocate for node data with a payload of
+   *         the given size. The payload starts at d_payload, the tail padding
+   *         of NodeData is not allocated in addition to the payload.
+   */
+  static size_t alloc_size(size_t payload_size)
+  {
+    return std::max(sizeof(NodeData),
+                    offsetof(NodeData, d_payload) + payload_size);
+  }
+
   /** @return Children payload of this node. */
   PayloadChildren& payload_children()
   {
@@ -258,8 +270,8 @@ class NodeData
     const auto& pc = payload_children();
     // Note: Indices are always stored after children, hence we compute the
     //       byte offset to the indices payload.
-    size_t offset =
-        sizeof(pc.d_num_children) + sizeof(*pc.d_children) * pc.d_num_children;
+    size_t offset = offsetof(PayloadChildren, d_children)
+                    + sizeof(*pc.d_children) * pc.d_num_children;
     return *reinterpret_cast<const PayloadIndexed*>(
         reinterpret_cast<const unsigned char*>(&d_payload) + offset);
   }
@@ -296,8 +308,6 @@ class NodeData
 
   /** Associated node manager. */
   NodeManager* d_nm = nullptr;
-  /** Next node in unique table collision chain. */
-  NodeData* d_next = nullptr;
   /** Node id. */
   uint64_t d_id = 0;
   /** Node type. */
