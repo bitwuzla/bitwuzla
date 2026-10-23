@@ -24,14 +24,8 @@ namespace bzla::node {
 NodeData*
 NodeData::alloc(Kind kind, const std::optional<std::string>& symbol)
 {
-  size_t size         = sizeof(NodeData);
-  size_t payload_size = sizeof(PayloadSymbol);
-
-  // Subtract size of payload placeholder in NodeData from payload size.
-  size_t reserved_size = sizeof(NodeData::d_payload);
-  payload_size         = std::max(payload_size, reserved_size) - reserved_size;
-
-  NodeData* data = static_cast<NodeData*>(std::calloc(1, size + payload_size));
+  NodeData* data =
+      static_cast<NodeData*>(std::calloc(1, alloc_size(sizeof(PayloadSymbol))));
   if (data == nullptr)
   {
     throw std::bad_alloc();
@@ -45,9 +39,9 @@ NodeData::alloc(Kind kind, const std::optional<std::string>& symbol)
 NodeData*
 NodeData::alloc(Kind kind,
                 const std::vector<Node>& children,
-                std::span<const uint64_t> indices)
+                std::span<const uint64_t> indices,
+                uint32_t tag)
 {
-  size_t size         = sizeof(NodeData);
   size_t payload_size = 0;
 
   if (!children.empty())
@@ -63,11 +57,8 @@ NodeData::alloc(Kind kind,
     payload_size += sizeof(PayloadIndexed::d_indices[0]) * (indices.size() - 1);
   }
 
-  // Subtract size of payload placeholder in NodeData from payload size.
-  size_t reserved_size = sizeof(NodeData::d_payload);
-  payload_size         = std::max(payload_size, reserved_size) - reserved_size;
-
-  NodeData* data = static_cast<NodeData*>(std::calloc(1, size + payload_size));
+  NodeData* data =
+      static_cast<NodeData*>(std::calloc(1, alloc_size(payload_size)));
   if (data == nullptr)
   {
     throw std::bad_alloc();
@@ -85,7 +76,9 @@ NodeData::alloc(Kind kind,
       new (&payload.d_children[i]) Node(children[i]);
       data->d_info.set(children[i].node_info());
     }
-    payload.d_num_children = children.size();
+    assert(children.size() <= UINT32_MAX);
+    payload.d_num_children = static_cast<uint32_t>(children.size());
+    payload.d_tag          = tag;
 
     if (kind == Kind::FORALL || kind == Kind::EXISTS)
     {

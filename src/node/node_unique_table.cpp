@@ -16,7 +16,7 @@ namespace bzla::node {
 
 /* --- NodeUniqueTable public ----------------------------------------------- */
 
-NodeUniqueTable::NodeUniqueTable() { d_buckets.resize(16, nullptr); }
+NodeUniqueTable::NodeUniqueTable() : d_slots(16) {}
 
 NodeUniqueTable::~NodeUniqueTable()
 {
@@ -33,93 +33,77 @@ NodeUniqueTable::find_or_insert(Kind kind,
 {
   assert(kind != Kind::VALUE);
 
-  size_t hd     = hash(kind, children, indices);
-  size_t h      = bucket_hash(hd);
-  NodeData* cur = d_buckets[h];
-
-  // Check collision chain.
-  while (cur)
+  uint32_t t = tag(hash(kind, children, indices));
+  size_t pos = find(t, [&](const NodeData* d) {
+    return equals(*d, kind, type, children, indices);
+  });
+  if (d_slots[pos].d_data)
   {
-    // Found existing node
-    if (equals(*cur, kind, type, children, indices))
-    {
-      return std::make_pair(false, cur);
-    }
-    cur = cur->d_next;
+    return std::make_pair(false, d_slots[pos].d_data);
   }
-
-  // Create new node and insert
-  NodeData* d = NodeData::alloc(kind, children, indices);
-  if (needs_resize())
-  {
-    resize();
-    h = bucket_hash(hd);
-  }
-  assert(d->d_next == nullptr);
-  d->d_next    = d_buckets[h];
-  d_buckets[h] = d;
-
-  ++d_num_elements;
-  return std::make_pair(true, d);
+  return std::make_pair(
+      true, insert(pos, t, NodeData::alloc(kind, children, indices, t)));
 }
 
 void
 NodeUniqueTable::erase(const NodeData* d)
 {
-  size_t h       = bucket_hash(hash(d));
-  NodeData* cur  = d_buckets[h];
-  NodeData* prev = nullptr;
-  assert(cur != nullptr);
+  // Nodes with children store their tag, which avoids accessing the children
+  // before the slot.
+  uint32_t t =
+      d->get_kind() == Kind::VALUE ? tag(hash(d)) : d->payload_children().d_tag;
+  assert(t == tag(hash(d)));
+  size_t i = find(t, [d](const NodeData* cur) { return cur == d; });
+  assert(d_slots[i].d_data == d);
 
-  // Find data in collision chain.
-  while (cur)
+  // Backward shift deletion: Move node data further down the probe sequence
+  // into the free slot if the free slot is between its home slot and its slot.
+  for (size_t j = next(i); d_slots[j].d_data; j = next(j))
   {
-    // Note: No need to use equals() here, we can safely compare the pointers.
-    if (cur == d)
+    if (distance(position(d_slots[j].d_tag), j) >= distance(i, j))
     {
-      break;
+      d_slots[i] = d_slots[j];
+      i          = j;
     }
-    prev = cur;
-    cur  = cur->d_next;
   }
-  assert(cur);
-
-  // Update collision chain.
-  if (prev == nullptr)
-  {
-    d_buckets[h] = cur->d_next;
-  }
-  else
-  {
-    prev->d_next = cur->d_next;
-  }
+  d_slots[i] = Slot();
   --d_num_elements;
 }
 
 /* --- NodeUniqueTable private ---------------------------------------------- */
 
+NodeData*
+NodeUniqueTable::insert(size_t pos, uint32_t tag, NodeData* d)
+{
+  assert(d_slots[pos].d_data == nullptr);
+  // Keep the load factor at most 7/8 to keep probe sequences short.
+  if (8 * (d_num_elements + 1) > 7 * d_slots.size())
+  {
+    resize();
+    pos = find(tag, [](const NodeData*) { return false; });
+  }
+  d_slots[pos] = {tag, d};
+  ++d_num_elements;
+  return d;
+}
+
 void
 NodeUniqueTable::resize()
 {
-  // Double the number of buckets, keeping it a power of two.
-  size_t new_size = d_buckets.size() * 2;
-  std::vector<NodeData*> buckets(new_size, nullptr);
+  // Double small tables to keep the number of moved slots low, but grow large
+  // tables by a factor of 1.5 to keep them close to the maximum load factor.
+  size_t size = d_slots.size();
+  std::vector<Slot> slots(size < s_double_max_size ? 2 * size
+                                                   : size + size / 2);
+  std::swap(slots, d_slots);
 
-  // Rehash elements.
-  size_t mask = new_size - 1;
-  for (auto cur : d_buckets)
+  for (const Slot& slot : slots)
   {
-    while (cur)
+    if (slot.d_data)
     {
-      size_t h     = bucket_hash(hash(cur), mask);
-      auto next    = cur->d_next;
-      cur->d_next  = buckets[h];
-      buckets[h]   = cur;
-      cur          = next;
+      d_slots[find(slot.d_tag, [](const NodeData*) { return false; })] = slot;
     }
   }
-
-  d_buckets = std::move(buckets);
 }
 
 size_t
@@ -213,8 +197,8 @@ NodeUniqueTable::equals(const NodeData& data,
     assert(data.has_children());
     const auto& payload = data.payload_children();
 
-    size_t num_children = payload.d_num_children;
-    if (num_children != children.size())
+    size_t num_children = children.size();
+    if (payload.d_num_children != num_children)
     {
       return false;
     }

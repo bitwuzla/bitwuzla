@@ -113,7 +113,7 @@ TEST_F(TestNodeManager, mk_value_bool)
 TEST_F(TestNodeManager, mk_value_bv)
 {
   NodeManager nm;
-  BitVector bv    = BitVector::from_ui(32, 1);
+  BitVector bv = BitVector::from_ui(32, 1);
 
   Node val = nm.mk_value(bv);
   ASSERT_EQ(val.kind(), Kind::VALUE);
@@ -213,7 +213,7 @@ TEST_F(TestNodeManager, mk_apply)
   Node fun        = nm.mk_const(fun_type);
   Node bool_const = nm.mk_const(bool_type);
   Node apply      = nm.mk_node(Kind::APPLY,
-                          {fun,
+                               {fun,
                                 bool_const,
                                 bool_const,
                                 bool_const,
@@ -469,6 +469,52 @@ TEST_F(TestNodeManager, unique_table_resize)
   {
     ASSERT_EQ(values[i], nm.mk_value(BitVector::from_ui(64, i)));
     ASSERT_EQ(nodes[i], nm.mk_node(Kind::BV_ADD, {x, values[i]}));
+  }
+}
+
+TEST_F(TestNodeManager, unique_table_erase)
+{
+  // Erasing node data from the unique table moves other node data of the same
+  // probe sequence. Release a subset of the nodes and check that hash consing
+  // still returns the remaining ones, also after re-creating the released ones.
+  NodeManager nm;
+
+  Type bv_type = nm.mk_bv_type(64);
+  Node x       = nm.mk_const(bv_type);
+
+  auto mk = [&](uint64_t i) {
+    return nm.mk_node(Kind::BV_ADD,
+                      {x, nm.mk_value(BitVector::from_ui(64, i))});
+  };
+
+  std::vector<Node> nodes;
+  for (uint64_t i = 0; i < 1000; ++i)
+  {
+    nodes.push_back(mk(i));
+  }
+  for (uint64_t i = 0; i < nodes.size(); ++i)
+  {
+    if (i % 3 != 0)
+    {
+      nodes[i] = Node();
+    }
+  }
+  for (uint64_t i = 0; i < nodes.size(); i += 3)
+  {
+    ASSERT_EQ(nodes[i], mk(i));
+  }
+  std::vector<Node> recreated;
+  for (uint64_t i = 0; i < nodes.size(); ++i)
+  {
+    recreated.push_back(mk(i));
+  }
+  for (uint64_t i = 0; i < nodes.size(); ++i)
+  {
+    if (i % 3 == 0)
+    {
+      ASSERT_EQ(nodes[i], recreated[i]);
+    }
+    ASSERT_EQ(recreated[i], mk(i));
   }
 }
 
