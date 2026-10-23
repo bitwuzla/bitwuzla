@@ -25,21 +25,16 @@ class BvInverter
   /**
    * Constructor.
    *
-   * Optionally configures inverter to produce under-determined inverses on
-   * inverse() and invert() (`underdet` = true).
+   * Optionally configured to produce under-determined inverses for BV_EXTRACT,
+   * BV_CONCAT and ITE on inverse() and invert() (`underdet` = true).
    *
-   * If configured, produces under-determined inverses for BV_EXTRACT,
-   * BV_CONCAT and ITE. For extract, bits that were sliced away are
-   * reconstructed as fresh constants. For concat and ITE, instead of a
-   * conditional inverse, we compute an inverse while disregarding that it is
-   * conditional on the remaining children.
-   *
-   * @note These under-determined inverses may only be used where it is not
-   *       required that inverses are exact, e.g., for quantifier instantiation.
+   * @note Under-determined inverses may only be used where it is not required
+   *       that inverses are exact, e.g., for quantifier instantiation but not
+   *       for quantifier elimination.
    *
    * @param env      The associated environment.
-   * @param underdet True to enable under-determined (lossy) inverses for
-   *                 extract, concat and ite.
+   * @param underdet True to enable under-determined inverses for extract,
+   *                 concat and ite.
    */
   BvInverter(Env& env, bool underdet = false);
   /** Destructor. */
@@ -98,10 +93,35 @@ class BvInverter
 
   /**
    * Compute the inverse of given `node` wrt. to x = node[idx].
+   *
    * @note May return an inverse that contains x.
-   * @return The inverse, if an inverse be computed, else a null node. Only the
-   *         operator kind of the node determines if an inverse can be computed,
-   *         hence the resulting inverse may contain x.
+   *
+   * @note Returns an under-determined inverse for BV_EXTRACT, BV_CONCAT and
+   *       ITE if inverter is configured with underdet = true.
+   *
+   * An under-determined inverse for (= node t) is a term `e` for which
+   * (=> IC (= node[x/e] t)) is valid. Under-determined inverses are not
+   * exact. For extract, concat and ite, they are constructed as:
+   *
+   *  - (= ((_ extract hi lo) x) t):
+   *    x = (concat k1 t k0), where the bits outside of [hi:lo] are filled with
+   *    fresh constants k1 and k0 (any value of k1 and k0 is a solution)
+   *
+   *  - (= (concat x s) t):
+   *    x = t[bw(t) - 1:bw(s)], independent of s (the IC is that s is equal to
+   *    the remaining bits of t), analogously for (= (concat s x) t)
+   *
+   *  - (= (ite c x s) t), (= (ite c s x) t):
+   *    x = t, independent of c and s
+   *
+   *  - (= (ite x s0 s1) t):
+   *    x = (= s0 t)
+   *
+   * @return The inverse, if an inverse can be computed, else a null node.
+   *         Only the operator kind of the node determines if an inverse can be
+   *         computed, hence the resulting inverse may contain x.
+   *         Returns an under-determined inverse for BV_EXTRACT, BV_CONCAT and
+   *         ITE if configured.
    */
   Node inverse(const Node& node, size_t idx, const Node& t);
 
