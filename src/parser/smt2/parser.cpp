@@ -4089,8 +4089,6 @@ Parser::pop_args(const ParsedItem& item, std::vector<bitwuzla::Term>& args)
           {
             return error("variable of function sort not supported", arg_coo(j));
           }
-          // remove sorted variables from symbol table
-          d_table.remove(args[idx_args].str());
           idx_args += 1;
         }
         else if (i == n_args - 1)  // body
@@ -4114,6 +4112,12 @@ Parser::pop_args(const ParsedItem& item, std::vector<bitwuzla::Term>& args)
       assert(args.back().is_null());
       // previously resized to n_args, which includes BINDER_BODY
       args.pop_back();
+      // remove sorted variables from symbol table in reverse order, variables
+      // with the same symbol, e.g., x and |x|, shadow the previous ones
+      for (size_t i = args.size() - 1; i > 0; --i)
+      {
+        d_table.remove(args[i - 1].str());
+      }
     }
     break;
 
