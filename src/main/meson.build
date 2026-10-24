@@ -2,10 +2,18 @@
 # Build Bitwuzla binary
 # ---
 
-# Build static binary
+# Build static binary if the toolchain provides static system libraries (e.g.,
+# libc.a), otherwise link the binary dynamically against the static libraries.
 link_args = []
 if build_static and host_machine.system() != 'darwin'
-  link_args += ['-static']
+  if cpp_compiler.links('int main() { return 0; }',
+                        args: ['-static'],
+                        name: 'static executable')
+    link_args += ['-static']
+  else
+    warning('Toolchain does not support static executables, ' +
+            'linking Bitwuzla binary dynamically')
+  endif
 endif
 
 sources = ['main.cpp', 'options.cpp', 'time_limit.cpp']
