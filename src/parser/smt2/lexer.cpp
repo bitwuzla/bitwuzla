@@ -420,19 +420,7 @@ Lexer::next_token_aux()
       consume_char();
       if (peek_char() == '.')
       {
-        consume_char();
-        ch = peek_char();
-        if (ch == EOF)
-        {
-          return error("unexpected end of file after '0.'");
-        }
-        if (!CharacterClasses::is_in_class(
-                ch, CharacterClasses::CharacterClass::DECIMAL_DIGIT))
-        {
-          return error("expected decimal digit after '0.'");
-        }
-        consume_chars(CharacterClasses::CharacterClass::DECIMAL_DIGIT);
-        return Token::REAL_VALUE;
+        return consume_decimal_fraction();
       }
       return Token::DECIMAL_VALUE;
 
@@ -445,14 +433,7 @@ Lexer::next_token_aux()
     consume_chars(CharacterClasses::CharacterClass::DECIMAL_DIGIT);
     if (peek_char() == '.')
     {
-      consume_char();
-      if (peek_char() == EOF)
-      {
-        return error("unexpected end of file after '" + cur_token() + "'");
-      }
-      consume_char();
-      consume_chars(CharacterClasses::CharacterClass::DECIMAL_DIGIT);
-      return Token::REAL_VALUE;
+      return consume_decimal_fraction();
     }
     return Token::DECIMAL_VALUE;
   }
@@ -475,6 +456,25 @@ Lexer::next_token_aux()
   }
   return error("illegal (non-printable) character (code " + std::to_string(ch)
                + ")");
+}
+
+Token
+Lexer::consume_decimal_fraction()
+{
+  assert(peek_char() == '.');
+  consume_char();
+  int32_t ch = peek_char();
+  if (ch == EOF)
+  {
+    return error("unexpected end of file after '" + cur_token() + "'");
+  }
+  if (!CharacterClasses::is_in_class(
+          ch, CharacterClasses::CharacterClass::DECIMAL_DIGIT))
+  {
+    return error("expected decimal digit after '" + cur_token() + "'");
+  }
+  consume_chars(CharacterClasses::CharacterClass::DECIMAL_DIGIT);
+  return Token::REAL_VALUE;
 }
 
 std::string

@@ -295,6 +295,14 @@ class Lexer
    */
   void consume_chars(CharacterClasses::CharacterClass cclass);
 
+  /**
+   * Consume the decimal point and the fractional digits of a decimal, the
+   * current character must be the decimal point.
+   * @return Token::REAL_VALUE, or Token::INVALID if the decimal point is not
+   *         followed by at least one digit.
+   */
+  Token consume_decimal_fraction();
+
   /** @return The absolute offset of the current character in the input. */
   uint64_t offset() const { return d_buf_offset + (d_cur - d_buffer.data()); }
 
