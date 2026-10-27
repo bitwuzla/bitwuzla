@@ -131,7 +131,7 @@ jobs:
 
           - name: debug-win64
             os: windows-latest
-            config: debug --python
+            config: debug --python --kissat
             shell: msys2 {0}
 
           - name: release-win64
