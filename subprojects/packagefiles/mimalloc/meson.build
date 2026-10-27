@@ -18,6 +18,11 @@ fs = import('fs')
 sources = fs.copyfile('src/static.c', 'static.cpp')
 # Override default malloc
 cpp_args = ['-DMI_MALLOC_OVERRIDE']
+# Transparent huge pages can still be enabled at runtime via
+# MIMALLOC_ALLOW_THP=1.
+if not get_option('thp')
+  cpp_args += ['-DMI_DEFAULT_ALLOW_THP=0']
+endif
 
 mimalloc_static_lib = static_library('mimalloc-static',
                                      include_directories: ['include', 'src'],

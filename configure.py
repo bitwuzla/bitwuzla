@@ -141,7 +141,12 @@ def main():
              'considered experimental (due to known issues in SymFPU), use ' +
              'at your own risk')
     bool_opt(ap, 'aiger', 'AIGER support to print AIGs')
-    bool_opt(ap, 'mimalloc', 'Use mimalloc memory allocator')
+    bool_opt(ap, 'mimalloc',
+             'mimalloc memory allocator for the binary, enabled by default ' +
+             'for Linux release builds')
+    bool_opt(ap, 'mimalloc-thp',
+             'transparent huge pages in mimalloc, enabled by default, ' +
+             'disable to reduce memory usage at the cost of performance')
     bool_opt(ap, 'lto',
              'link-time optimization, enabled by default for release builds ' +
              'if supported')
@@ -205,7 +210,9 @@ def main():
     if args.aiger is not None:
         build_opts.append(f'-Daiger={_bool(args.aiger)}')
     if args.mimalloc is not None:
-        build_opts.append(f'-Dmimalloc={_bool(args.mimalloc)}')
+        build_opts.append(f'-Dmimalloc={_feat(args.mimalloc)}')
+    if args.mimalloc_thp is not None:
+        build_opts.append(f'-Dmimalloc:thp={_bool(args.mimalloc_thp)}')
     lto = args.lto
     # Without a build type, a new build directory defaults to a release build
     # and an existing one keeps its build type and LTO setting.

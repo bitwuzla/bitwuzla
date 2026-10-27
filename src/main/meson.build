@@ -18,10 +18,18 @@ endif
 
 sources = ['main.cpp', 'options.cpp', 'time_limit.cpp']
 
-mimalloc_dep = []
-if get_option('mimalloc')
-  mimalloc_dep = dependency('mimalloc-static', include_type: 'system')
-endif
+# mimalloc replaces the system allocator by statically overriding malloc in the
+# binary. It is only used by default for Linux release builds since a static
+# override is not reliable on other platforms and hides allocations from
+# sanitizers and memory debugging tools.
+mimalloc_opt = get_option('mimalloc').disable_auto_if(
+  host_machine.system() != 'linux'
+  or get_option('buildtype') != 'release'
+  or get_option('b_sanitize') != 'none')
+mimalloc_dep = dependency('mimalloc-static',
+                          include_type: 'system',
+                          required: mimalloc_opt,
+                          allow_fallback: true)
 
 thread_dep = dependency('threads')
 

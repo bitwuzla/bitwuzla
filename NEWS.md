@@ -9,6 +9,14 @@ This file collects a summary of important and/or user-visible changes.
   via `--no-lto` and enabled via `--lto`. Installed static libraries only
   contain machine code and remain linkable without link-time optimization.
 
+- The Bitwuzla binary of **Linux release builds** now uses the **mimalloc**
+  memory allocator by default. It can be disabled via `--no-mimalloc`
+  (`-Dmimalloc=disabled`) and enabled for other builds via `--mimalloc`
+  (`-Dmimalloc=enabled`). The library is not affected. mimalloc uses
+  transparent huge pages, which improves performance but increases memory
+  usage. They can be disabled via `--no-mimalloc-thp` (`-Dmimalloc:thp=false`)
+  or at runtime via environment variable `MIMALLOC_ALLOW_THP=0`.
+
 - Improved MBQI engine by incorporating **invertibility condition-based
   instantiations** for quantified bit-vector variables. This instantiation
   strategy is based on a CEGQI-based technique presented in  
