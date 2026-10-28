@@ -776,6 +776,58 @@ RewriteRule<RewriteRuleKind::FP_TO_FP_FROM_UBV_EVAL>::_apply(Rewriter& rewriter,
   return res;
 }
 
+/* fp.to_sbv ---------------------------------------------------------------- */
+
+/**
+ * Constant folding, matches when all operands are values and the result is
+ * specified, i.e., if the operand is finite and its value rounded to an
+ * integer is representable as a signed machine integer of the target size.
+ *
+ * We must not constant fold unspecified results: the word blaster encodes them
+ * with an uninterpreted function, which ensures that all applications with the
+ * same rounding mode and operand values agree.
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::FP_TO_SBV_EVAL>::_apply(Rewriter& rewriter,
+                                                     const Node& node)
+{
+  assert(node.num_children() == 2);
+  assert(node[0].type().is_rm());
+  assert(node[1].type().is_fp());
+  assert(node.num_indices() == 1);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  std::optional<BitVector> res = node[1].value<FloatingPoint>().fptobv(
+      node[0].value<RoundingMode>(), node.index(0), true);
+  if (!res) return node;
+  return rewriter.nm().mk_value(*res);
+}
+
+/* fp.to_ubv ---------------------------------------------------------------- */
+
+/**
+ * Constant folding, matches when all operands are values and the result is
+ * specified, i.e., if the operand is finite and its value rounded to an
+ * integer is representable as an unsigned machine integer of the target size.
+ *
+ * We must not constant fold unspecified results, see FP_TO_SBV_EVAL.
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::FP_TO_UBV_EVAL>::_apply(Rewriter& rewriter,
+                                                     const Node& node)
+{
+  assert(node.num_children() == 2);
+  assert(node[0].type().is_rm());
+  assert(node[1].type().is_fp());
+  assert(node.num_indices() == 1);
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  std::optional<BitVector> res = node[1].value<FloatingPoint>().fptobv(
+      node[0].value<RoundingMode>(), node.index(0), false);
+  if (!res) return node;
+  return rewriter.nm().mk_value(*res);
+}
+
 /* --- Elimination Rules ---------------------------------------------------- */
 
 template <>

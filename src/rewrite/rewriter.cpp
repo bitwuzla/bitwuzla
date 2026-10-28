@@ -606,9 +606,8 @@ Rewriter::_rewrite(const Node& node)
       res = rewrite_fp_to_fp_from_ubv(n);
       break;
 
-    // No rewrites for FP_TO_(U|S)BV conversion yet
-    case node::Kind::FP_TO_SBV:
-    case node::Kind::FP_TO_UBV: res = n; break;
+    case node::Kind::FP_TO_SBV: res = rewrite_fp_to_sbv(n); break;
+    case node::Kind::FP_TO_UBV: res = rewrite_fp_to_ubv(n); break;
 
     // No rewrites for FP SymFPU representation of RM consts
     case node::Kind::FP_SYMFPU_RM:
@@ -1027,21 +1026,26 @@ Rewriter::_eval(const Node& node)
                                                                       node);
       break;
 
-    // No rewrites for FP_TO_(U|S)BV conversion yet
-    // case node::Kind::FP_TO_SBV:
-    // case node::Kind::FP_TO_UBV:
+    case node::Kind::FP_TO_SBV:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::FP_TO_SBV_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::FP_TO_UBV:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::FP_TO_UBV_EVAL>::apply(*this, node);
+      break;
 
-    // There are no rewrites for constant arrays.
-    // case node::Kind::CONST_ARRAY: res = n; break;
+      // There are no rewrites for constant arrays.
+      // case node::Kind::CONST_ARRAY: res = n; break;
 
-    // case node::Kind::SELECT:
-    // case node::Kind::STORE:
+      // case node::Kind::SELECT:
+      // case node::Kind::STORE:
 
-    // case node::Kind::APPLY:
-    // case node::Kind::LAMBDA:
+      // case node::Kind::APPLY:
+      // case node::Kind::LAMBDA:
 
-    // case node::Kind::FORALL:
-    // case node::Kind::EXISTS:
+      // case node::Kind::FORALL:
+      // case node::Kind::EXISTS:
 
     default:
       // Unhandled kind: nothing to evaluate, return node unchanged.
@@ -2008,6 +2012,36 @@ DONE:
   return res;
 }
 
+Node
+Rewriter::rewrite_fp_to_sbv(const Node& node)
+{
+  RewriteRuleKind kind;
+  Node res = node;
+
+  if (d_level >= 1)
+  {
+    BZLA_APPLY_RW_RULE(FP_TO_SBV_EVAL);
+  }
+
+DONE:
+  return res;
+}
+
+Node
+Rewriter::rewrite_fp_to_ubv(const Node& node)
+{
+  RewriteRuleKind kind;
+  Node res = node;
+
+  if (d_level >= 1)
+  {
+    BZLA_APPLY_RW_RULE(FP_TO_UBV_EVAL);
+  }
+
+DONE:
+  return res;
+}
+
 BZLA_ELIM_KIND_IMPL(fp_equal, FP_EQUAL_ELIM)
 BZLA_ELIM_KIND_IMPL(fp_fp, FP_FP_ELIM)
 BZLA_ELIM_KIND_IMPL(fp_gt, FP_GT_ELIM)
@@ -2376,6 +2410,8 @@ operator<<(std::ostream& out, RewriteRuleKind kind)
     CASE(FP_TO_FP_FROM_FP_EVAL);
     CASE(FP_TO_FP_FROM_SBV_EVAL);
     CASE(FP_TO_FP_FROM_UBV_EVAL);
+    CASE(FP_TO_SBV_EVAL);
+    CASE(FP_TO_UBV_EVAL);
     CASE(FP_EQUAL_ELIM);
     CASE(FP_FP_ELIM);
     CASE(FP_GEQ_ELIM);

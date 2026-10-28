@@ -9,6 +9,7 @@
  */
 
 #include <functional>
+#include <optional>
 
 #include "bv/bitvector.h"
 #include "node/node_manager.h"
@@ -37,7 +38,9 @@ using namespace option;
  * - a decision tree `table` constructed over all rounding modes and values of
  *   `b` with the expected results computed by FloatingPoint via MPFR.
  *   Unspecified results of partial operators are represented by the term
- *   (<op> rm b) itself and are thus not constrained.
+ *   (<op> rm b) itself and are thus not constrained. Function
+ *   check_unspecified() checks that the encoding does not constrain them
+ *   either.
  *
  * @note Script contrib/check-fp-word-blaster.py performs the same check for
  *       larger formats.
@@ -158,6 +161,61 @@ class TestFpWordBlaster : public TestCommon
     return ctx.solve();
   }
 
+  /**
+   * Check that the word-blasted encoding of a partial operation does not
+   * constrain its unspecified results.
+   *
+   * For each of the given values, we check that the results for all inputs
+   * with an unspecified result can be equal to that value at the same time.
+   * This fails if the result for any of these inputs is constrained, since
+   * it can not be equal to two different values.
+   *
+   * @param bv_size  The size of the bit-vector input.
+   * @param mk_term  The function to create the operation for a given rounding
+   *                 mode and bit-vector input.
+   * @param expected The function to compute the expected result value for a
+   *                 given rounding mode and bit-vector value, a null node if
+   *                 the result is unspecified.
+   * @param values   At least two different values of the result type.
+   * @return True if the unspecified results are not constrained.
+   */
+  bool check_unspecified(
+      uint64_t bv_size,
+      const std::function<Node(const Node&, const Node&)>& mk_term,
+      const std::function<Node(RoundingMode, const BitVector&)>& expected,
+      const std::vector<Node>& values)
+  {
+    assert(values.size() > 1);
+    std::vector<Node> terms;
+    for (RoundingMode rm : d_all_rms)
+    {
+      for (uint64_t i = 0, n = uint64_t{1} << bv_size; i < n; ++i)
+      {
+        BitVector bv = BitVector::from_ui(bv_size, i);
+        if (expected(rm, bv).is_null())
+        {
+          terms.push_back(mk_term(d_nm.mk_value(rm), d_nm.mk_value(bv)));
+        }
+      }
+    }
+    SolvingContext ctx(d_nm, d_options, d_sat_factory);
+    for (const Node& value : values)
+    {
+      ctx.push();
+      for (const Node& term : terms)
+      {
+        ctx.assert_formula(d_nm.mk_node(Kind::EQUAL, {term, value}));
+      }
+      Result res = ctx.solve();
+      ctx.pop();
+      if (res != Result::SAT)
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+
   /** The node manager. */
   NodeManager d_nm;
   /** The solver options. */
@@ -264,6 +322,15 @@ TEST_F(TestFpWordBlaster, min_max)
                 Result::UNSAT)
           << kind << " (_ FloatingPoint " << format.first << " "
           << format.second << ")";
+      ASSERT_TRUE(check_unspecified(2 * (format.first + format.second),
+                                    mk_term,
+                                    expected,
+                                    {d_nm.mk_value(FloatingPoint::fpzero(
+                                         format.first, format.second, false)),
+                                     d_nm.mk_value(FloatingPoint::fpzero(
+                                         format.first, format.second, true))}))
+          << kind << " (_ FloatingPoint " << format.first << " "
+          << format.second << ")";
     }
   }
 }
@@ -312,6 +379,50 @@ TEST_F(TestFpWordBlaster, to_fp_from_bv)
         ASSERT_EQ(check(bv_size, mk_term, expected), Result::UNSAT)
             << "(_ BitVec " << bv_size << ") -> (_ FloatingPoint " << exp_size
             << " " << sig_size << "), signed: " << sign;
+      }
+    }
+  }
+}
+
+TEST_F(TestFpWordBlaster, to_bv)
+{
+  for (const auto& [exp_size, sig_size] : formats(9))
+  {
+    // All finite values are less than 2^(bias + 1), and thus in range for
+    // sizes greater than bias + 2.
+    uint64_t bias = (uint64_t{1} << (exp_size - 1)) - 1;
+    for (uint64_t bv_size = 1; bv_size <= bias + 3; ++bv_size)
+    {
+      for (bool sign : {false, true})
+      {
+        auto mk_term = [&](const Node& rm, const Node& b) {
+          return d_nm.mk_node(
+              sign ? Kind::FP_TO_SBV : Kind::FP_TO_UBV,
+              {rm,
+               d_nm.mk_node(Kind::FP_TO_FP_FROM_BV, {b}, {exp_size, sig_size})},
+              {bv_size});
+        };
+        auto expected = [&](RoundingMode rm, const BitVector& bv) {
+          std::optional<BitVector> res =
+              FloatingPoint(exp_size, sig_size, bv).fptobv(rm, bv_size, sign);
+          return res ? d_nm.mk_value(*res) : Node();
+        };
+        ASSERT_EQ(check(exp_size + sig_size, mk_term, expected), Result::UNSAT)
+            << "(_ FloatingPoint " << exp_size << " " << sig_size
+            << ") -> (_ BitVec " << bv_size << "), signed: " << sign;
+        // This requires a term for each input with an unspecified result,
+        // and is thus restricted to smaller formats.
+        if (exp_size + sig_size <= 8)
+        {
+          ASSERT_TRUE(
+              check_unspecified(exp_size + sig_size,
+                                mk_term,
+                                expected,
+                                {d_nm.mk_value(BitVector::mk_zero(bv_size)),
+                                 d_nm.mk_value(BitVector::mk_ones(bv_size))}))
+              << "(_ FloatingPoint " << exp_size << " " << sig_size
+              << ") -> (_ BitVec " << bv_size << "), signed: " << sign;
+        }
       }
     }
   }

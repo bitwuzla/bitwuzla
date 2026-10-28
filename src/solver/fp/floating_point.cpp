@@ -847,6 +847,50 @@ FloatingPoint::fpfma(const RoundingMode rm,
   return res;
 }
 
+std::optional<BitVector>
+FloatingPoint::fptobv(const RoundingMode rm, uint64_t size, bool sign) const
+{
+  assert(is_valid());
+  assert(size > 0);
+  if (fpisnan() || fpisinf())
+  {
+    return std::nullopt;
+  }
+  // Round in the full exponent range, since the rounded value may exceed the
+  // range of this format. It does not exceed the precision of this format,
+  // hence it is represented exactly.
+  mpfr_exp_t emin = mpfr_get_emin();
+  mpfr_exp_t emax = mpfr_get_emax();
+  mpfr_reset_format();
+  mpfr_t rti;
+  mpfr_init2(rti, d_sig_size);
+  if (rm == RoundingMode::RNA)
+  {
+    mpfr_round(rti, d_mpfr);
+  }
+  else
+  {
+    mpfr_rint(rti, d_mpfr, rm2mpfr(rm));
+  }
+  // Check the range before converting to an integer, which may otherwise be
+  // huge for formats with large exponents.
+  mpfr_exp_t e  = static_cast<mpfr_exp_t>(size);
+  bool in_range = sign ? mpfr_cmp_si_2exp(rti, -1, e - 1) >= 0
+                             && mpfr_cmp_ui_2exp(rti, 1, e - 1) < 0
+                       : mpfr_sgn(rti) >= 0 && mpfr_cmp_ui_2exp(rti, 1, e) < 0;
+  std::optional<BitVector> res;
+  if (in_range)
+  {
+    mpz_class z;
+    mpfr_get_z(z.get_mpz_t(), rti, MPFR_RNDZ);
+    res = BitVector(size, z.get_mpz_t());
+  }
+  mpfr_clear(rti);
+  mpfr_set_emin(emin);
+  mpfr_set_emax(emax);
+  return res;
+}
+
 BitVector
 FloatingPoint::as_bv() const
 {

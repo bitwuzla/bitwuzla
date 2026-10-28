@@ -1188,6 +1188,174 @@ TEST_F(TestRewriterFp, fp_to_fp_from_ubv_eval)
   ASSERT_EQ(tofpfromubv4, d_rewriter.rewrite(tofpfromubv4));
 }
 
+/* fp.to_sbv ---------------------------------------------------------------- */
+
+TEST_F(TestRewriterFp, fp_to_sbv_eval)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_TO_SBV_EVAL;
+  uint64_t exp_size              = d_fp35_type.fp_exp_size();
+  uint64_t sig_size              = d_fp35_type.fp_sig_size();
+  // 0.5
+  Node a = d_nm.mk_value(
+      FloatingPoint(exp_size, sig_size, BitVector(8, "00100000")));
+  // -1.3125
+  Node b = d_nm.mk_value(
+      FloatingPoint(exp_size, sig_size, BitVector(8, "10110101")));
+  // -2.5
+  Node c = d_nm.mk_value(
+      FloatingPoint(exp_size, sig_size, BitVector(8, "11000100")));
+  // 15.5, the largest finite value
+  Node d = d_nm.mk_value(
+      FloatingPoint(exp_size, sig_size, BitVector(8, "01101111")));
+  Node pinf = d_nm.mk_value(FloatingPoint::fpinf(exp_size, sig_size, false));
+  Node ninf = d_nm.mk_value(FloatingPoint::fpinf(exp_size, sig_size, true));
+  Node nan  = d_nm.mk_value(FloatingPoint::fpnan(exp_size, sig_size));
+  // -2^63 and 2^63 in Float64
+  Node e = d_nm.mk_value(FloatingPoint::from_real(
+      11, 53, RoundingMode::RNE, "-9223372036854775808"));
+  Node f = d_nm.mk_value(FloatingPoint::from_real(
+      11, 53, RoundingMode::RNE, "9223372036854775808"));
+  //// applies
+  std::vector<std::tuple<uint64_t, RoundingMode, Node, int64_t>> applies = {
+      {4, RoundingMode::RNE, c, -2},
+      {4, RoundingMode::RNA, c, -3},
+      {4, RoundingMode::RTN, c, -3},
+      {4, RoundingMode::RTP, c, -2},
+      {4, RoundingMode::RTZ, c, -2},
+      // The minimum signed value.
+      {2, RoundingMode::RTP, c, -2},
+      {64, RoundingMode::RTZ, e, INT64_MIN},
+      // Rounds up to 16, which is not representable in this format.
+      {6, RoundingMode::RTP, d, 16},
+      {5, RoundingMode::RTZ, d, 15},
+      {1, RoundingMode::RNE, b, -1},
+      {1, RoundingMode::RTZ, a, 0},
+      {1, RoundingMode::RNE, d_fp35_nzero, 0},
+  };
+  for (const auto& [size, rm, x, expected] : applies)
+  {
+    Node fptosbv =
+        d_nm.mk_node(Kind::FP_TO_SBV, {d_nm.mk_value(rm), x}, {size});
+    test_rewrite(fptosbv, d_nm.mk_value(BitVector::from_si(size, expected)));
+    test_rule<kind>(fptosbv);
+  }
+  //// does not apply
+  // The result for NaN, infinity and values out of range is unspecified.
+  std::vector<std::tuple<uint64_t, RoundingMode, Node>> unspecified = {
+      {5, RoundingMode::RTP, d},
+      {2, RoundingMode::RTN, c},
+      {1, RoundingMode::RTP, a},
+      {1, RoundingMode::RTN, b},
+      {64, RoundingMode::RTZ, f},
+      {4, RoundingMode::RNE, nan},
+      {4, RoundingMode::RNE, pinf},
+      {4, RoundingMode::RNE, ninf},
+  };
+  for (const auto& [size, rm, x] : unspecified)
+  {
+    Node fptosbv =
+        d_nm.mk_node(Kind::FP_TO_SBV, {d_nm.mk_value(rm), x}, {size});
+    ASSERT_EQ(fptosbv, d_rewriter.rewrite(fptosbv));
+    test_rule_does_not_apply<kind>(fptosbv);
+  }
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::FP_TO_SBV, {d_rm, a}, {4}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::FP_TO_SBV, {d_nm.mk_value(RoundingMode::RNE), d_fp35_a}, {4}));
+}
+
+/* fp.to_ubv ---------------------------------------------------------------- */
+
+TEST_F(TestRewriterFp, fp_to_ubv_eval)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_TO_UBV_EVAL;
+  uint64_t exp_size              = d_fp35_type.fp_exp_size();
+  uint64_t sig_size              = d_fp35_type.fp_sig_size();
+  // 0.5
+  Node a = d_nm.mk_value(
+      FloatingPoint(exp_size, sig_size, BitVector(8, "00100000")));
+  // -0.5
+  Node b = d_nm.mk_value(
+      FloatingPoint(exp_size, sig_size, BitVector(8, "10100000")));
+  // -1.3125
+  Node c = d_nm.mk_value(
+      FloatingPoint(exp_size, sig_size, BitVector(8, "10110101")));
+  // 2.5
+  Node d = d_nm.mk_value(
+      FloatingPoint(exp_size, sig_size, BitVector(8, "01000100")));
+  // 15.5, the largest finite value
+  Node e = d_nm.mk_value(
+      FloatingPoint(exp_size, sig_size, BitVector(8, "01101111")));
+  Node pinf = d_nm.mk_value(FloatingPoint::fpinf(exp_size, sig_size, false));
+  Node ninf = d_nm.mk_value(FloatingPoint::fpinf(exp_size, sig_size, true));
+  Node nan  = d_nm.mk_value(FloatingPoint::fpnan(exp_size, sig_size));
+  // 2^63, 2^64 - 2^11 (the largest value below 2^64), and 2^64 in Float64
+  Node f = d_nm.mk_value(FloatingPoint::from_real(
+      11, 53, RoundingMode::RNE, "9223372036854775808"));
+  Node g = d_nm.mk_value(FloatingPoint::from_real(
+      11, 53, RoundingMode::RNE, "18446744073709549568"));
+  Node h = d_nm.mk_value(FloatingPoint::from_real(
+      11, 53, RoundingMode::RNE, "18446744073709551616"));
+  // The largest finite value in a format with a large exponent, which is too
+  // large to be converted to an integer.
+  Node i = d_nm.mk_value(
+      FloatingPoint(40,
+                    8,
+                    BitVector::mk_false()
+                        .ibvconcat(BitVector::mk_ones(40).ibvdec())
+                        .ibvconcat(BitVector::mk_ones(7))));
+  //// applies
+  std::vector<std::tuple<uint64_t, RoundingMode, Node, uint64_t>> applies = {
+      {4, RoundingMode::RNE, d, 2},
+      {4, RoundingMode::RNA, d, 3},
+      {4, RoundingMode::RTN, d, 2},
+      {4, RoundingMode::RTP, d, 3},
+      {4, RoundingMode::RTZ, d, 2},
+      // Rounds up to 16, which is not representable in this format.
+      {5, RoundingMode::RTP, e, 16},
+      {4, RoundingMode::RTZ, e, 15},
+      // Negative values that round to zero.
+      {4, RoundingMode::RNE, b, 0},
+      {4, RoundingMode::RTP, b, 0},
+      {4, RoundingMode::RTZ, b, 0},
+      {1, RoundingMode::RNE, d_fp35_nzero, 0},
+      {1, RoundingMode::RNE, a, 0},
+      {1, RoundingMode::RNA, a, 1},
+      {64, RoundingMode::RTZ, f, uint64_t{1} << 63},
+      {64, RoundingMode::RNE, g, UINT64_MAX << 11},
+  };
+  for (const auto& [size, rm, x, expected] : applies)
+  {
+    Node fptoubv =
+        d_nm.mk_node(Kind::FP_TO_UBV, {d_nm.mk_value(rm), x}, {size});
+    test_rewrite(fptoubv, d_nm.mk_value(BitVector::from_ui(size, expected)));
+    test_rule<kind>(fptoubv);
+  }
+  //// does not apply
+  // The result for NaN, infinity and values out of range is unspecified.
+  std::vector<std::tuple<uint64_t, RoundingMode, Node>> unspecified = {
+      {4, RoundingMode::RTP, e},
+      {4, RoundingMode::RNA, e},
+      {4, RoundingMode::RNA, b},
+      {4, RoundingMode::RTN, b},
+      {4, RoundingMode::RNE, c},
+      {64, RoundingMode::RNE, h},
+      {8, RoundingMode::RNE, i},
+      {4, RoundingMode::RNE, nan},
+      {4, RoundingMode::RNE, pinf},
+      {4, RoundingMode::RNE, ninf},
+  };
+  for (const auto& [size, rm, x] : unspecified)
+  {
+    Node fptoubv =
+        d_nm.mk_node(Kind::FP_TO_UBV, {d_nm.mk_value(rm), x}, {size});
+    ASSERT_EQ(fptoubv, d_rewriter.rewrite(fptoubv));
+    test_rule_does_not_apply<kind>(fptoubv);
+  }
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::FP_TO_UBV, {d_rm, a}, {4}));
+  test_rule_does_not_apply<kind>(d_nm.mk_node(
+      Kind::FP_TO_UBV, {d_nm.mk_value(RoundingMode::RNE), d_fp35_a}, {4}));
+}
+
 /* --- Elimination Rules ---------------------------------------------------- */
 
 TEST_F(TestRewriterFp, fp_equal_elim)

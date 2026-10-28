@@ -15,6 +15,7 @@
 
 #include <array>
 #include <cstdint>
+#include <optional>
 
 #include "bv/bitvector.h"
 #include "solver/fp/rounding_mode.h"
@@ -370,6 +371,29 @@ class FloatingPoint
   FloatingPoint fpfma(const RoundingMode rm,
                       const FloatingPoint &fp0,
                       const FloatingPoint &fp1) const;
+
+  /**
+   * Convert this floating-point to a bit-vector of given size, interpreted as
+   * signed or unsigned machine integer, w.r.t. to the given rounding mode.
+   *
+   * The result is unspecified if this floating-point is NaN or infinite, or
+   * if its value rounded to an integer w.r.t. to the given rounding mode is
+   * not representable with the given size. This includes all negative values
+   * for unsigned conversion, except for those that round to zero.
+   *
+   * @note Unlike for fprti(), the value is rounded to an integer independently
+   *       of the exponent range of this format. For example, 15.5 in format
+   *       (3 5) rounds up to 16, which overflows to infinity in fprti().
+   *
+   * @param rm   The rounding mode.
+   * @param size The size of the bit-vector.
+   * @param sign True to convert to a signed machine integer, else unsigned.
+   * @return The bit-vector representing the rounded value, or std::nullopt if
+   *         the result is unspecified.
+   */
+  std::optional<BitVector> fptobv(const RoundingMode rm,
+                                  uint64_t size,
+                                  bool sign) const;
 
   /** @return The IEEE-754 bit-vector representation of  this floating-point. */
   BitVector as_bv() const;

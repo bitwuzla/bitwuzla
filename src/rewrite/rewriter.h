@@ -320,6 +320,8 @@ class Rewriter
   Node rewrite_fp_to_fp_from_fp(const Node& node);
   Node rewrite_fp_to_fp_from_sbv(const Node& node);
   Node rewrite_fp_to_fp_from_ubv(const Node& node);
+  Node rewrite_fp_to_sbv(const Node& node);
+  Node rewrite_fp_to_ubv(const Node& node);
 
   /* Array --------------------------------------- */
   Node rewrite_select(const Node& node);
@@ -824,6 +826,14 @@ enum class RewriteRuleKind
   //// to_fp_unsigned
   // Level 1+
   FP_TO_FP_FROM_UBV_EVAL,
+
+  //// fp.to_sbv
+  // Level 1+
+  FP_TO_SBV_EVAL,
+
+  //// fp.to_ubv
+  // Level 1+
+  FP_TO_UBV_EVAL,
 
   //// Elimination rules
   // Level 0+

@@ -229,6 +229,18 @@ template <>
 Node RewriteRule<RewriteRuleKind::FP_TO_FP_FROM_UBV_EVAL>::_apply(
     Rewriter& rewriter, const Node& node);
 
+/* fp.to_sbv ---------------------------------------------------------------- */
+
+template <>
+Node RewriteRule<RewriteRuleKind::FP_TO_SBV_EVAL>::_apply(Rewriter& rewriter,
+                                                          const Node& node);
+
+/* fp.to_ubv ---------------------------------------------------------------- */
+
+template <>
+Node RewriteRule<RewriteRuleKind::FP_TO_UBV_EVAL>::_apply(Rewriter& rewriter,
+                                                          const Node& node);
+
 /* --- Elimination Rules ---------------------------------------------------- */
 
 template <>
