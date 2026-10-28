@@ -973,14 +973,14 @@ Rewriter::_eval(const Node& node)
       std::tie(res, kind) =
           RewriteRule<RewriteRuleKind::FP_LT_EVAL>::apply(*this, node);
       break;
-    // case node::Kind::FP_MAX:
-    //   std::tie(res, kind) =
-    //       RewriteRule<RewriteRuleKind::FP_MAX_EVAL>::apply(*this, node);
-    //   break;
-    // case node::Kind::FP_MIN:
-    //   std::tie(res, kind) =
-    //       RewriteRule<RewriteRuleKind::FP_MIN_EVAL>::apply(*this, node);
-    //   break;
+    case node::Kind::FP_MAX:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::FP_MAX_EVAL>::apply(*this, node);
+      break;
+    case node::Kind::FP_MIN:
+      std::tie(res, kind) =
+          RewriteRule<RewriteRuleKind::FP_MIN_EVAL>::apply(*this, node);
+      break;
     case node::Kind::FP_MUL:
       std::tie(res, kind) =
           RewriteRule<RewriteRuleKind::FP_MUL_EVAL>::apply(*this, node);
@@ -1845,6 +1845,7 @@ Rewriter::rewrite_fp_max(const Node& node)
 
   if (d_level >= 1)
   {
+    BZLA_APPLY_RW_RULE(FP_MAX_EVAL);
     BZLA_APPLY_RW_RULE(FP_MAX_EQ);
   }
 
@@ -1860,6 +1861,7 @@ Rewriter::rewrite_fp_min(const Node& node)
 
   if (d_level >= 1)
   {
+    BZLA_APPLY_RW_RULE(FP_MIN_EVAL);
     BZLA_APPLY_RW_RULE(FP_MIN_EQ);
   }
 

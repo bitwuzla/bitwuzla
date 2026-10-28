@@ -9,6 +9,7 @@
  */
 
 #include <functional>
+#include <optional>
 
 #include "bv/bitvector.h"
 #include "node/node_manager.h"
@@ -35,6 +36,8 @@ using namespace option;
  *   reinterpreted as a floating-point value via (_ to_fp e s)
  * - a decision tree `table` constructed over all rounding modes and values of
  *   `b` with the expected results computed by FloatingPoint via MPFR.
+ *   Unspecified results of partial operators are represented by the term
+ *   (<op> rm b) itself and are thus not constrained.
  *
  * @note Script contrib/check-fp-word-blaster.py performs the same check for
  *       larger formats.
@@ -92,24 +95,27 @@ class TestFpWordBlaster : public TestCommon
    * @param mk_term  The function to create the operation for a given rounding
    *                 mode and bit-vector input.
    * @param expected The function to compute the expected result for a given
-   *                 rounding mode and bit-vector value.
+   *                 rounding mode and bit-vector value, std::nullopt if the
+   *                 result is unspecified.
    * @return The result of the satisfiability check, unsat if the encoding is
    *         correct.
    */
   Result check(uint64_t bv_size,
                const std::function<Node(const Node&, const Node&)>& mk_term,
-               const std::function<FloatingPoint(RoundingMode,
-                                                 const BitVector&)>& expected)
+               const std::function<std::optional<FloatingPoint>(
+                   RoundingMode, const BitVector&)>& expected)
   {
-    Node b = d_nm.mk_const(d_nm.mk_bv_type(bv_size), "b");
+    Node b    = d_nm.mk_const(d_nm.mk_bv_type(bv_size), "b");
+    Node term = mk_term(d_rm, b);
     Node table;
     for (RoundingMode rm : d_all_rms)
     {
       std::vector<Node> values;
       for (uint64_t i = 0, n = uint64_t{1} << bv_size; i < n; ++i)
       {
-        values.push_back(
-            d_nm.mk_value(expected(rm, BitVector::from_ui(bv_size, i))));
+        std::optional<FloatingPoint> res =
+            expected(rm, BitVector::from_ui(bv_size, i));
+        values.push_back(res ? d_nm.mk_value(*res) : term);
       }
       Node tree = mk_tree(b, values, 0, bv_size);
       table = table.is_null()
@@ -121,7 +127,7 @@ class TestFpWordBlaster : public TestCommon
                          table});
     }
     SolvingContext ctx(d_nm, d_options, d_sat_factory);
-    ctx.assert_formula(d_nm.mk_node(Kind::DISTINCT, {mk_term(d_rm, b), table}));
+    ctx.assert_formula(d_nm.mk_node(Kind::DISTINCT, {term, table}));
     return ctx.solve();
   }
 
@@ -202,6 +208,44 @@ TEST_F(TestFpWordBlaster, rti)
     };
     ASSERT_EQ(check(exp_size + sig_size, mk_term, expected), Result::UNSAT)
         << "(_ FloatingPoint " << exp_size << " " << sig_size << ")";
+  }
+}
+
+TEST_F(TestFpWordBlaster, min_max)
+{
+  for (const auto& [exp_size, sig_size] : formats(7))
+  {
+    uint64_t size = exp_size + sig_size;
+    for (Kind kind : {Kind::FP_MIN, Kind::FP_MAX})
+    {
+      // The upper half of `b` is the first, the lower half the second operand.
+      auto mk_term = [&](const Node& rm, const Node& b) {
+        (void) rm;
+        return d_nm.mk_node(
+            kind,
+            {d_nm.mk_node(
+                 Kind::FP_TO_FP_FROM_BV,
+                 {d_nm.mk_node(Kind::BV_EXTRACT, {b}, {2 * size - 1, size})},
+                 {exp_size, sig_size}),
+             d_nm.mk_node(Kind::FP_TO_FP_FROM_BV,
+                          {d_nm.mk_node(Kind::BV_EXTRACT, {b}, {size - 1, 0})},
+                          {exp_size, sig_size})});
+      };
+      auto expected = [&](RoundingMode rm, const BitVector& bv) {
+        (void) rm;
+        FloatingPoint a(exp_size, sig_size, bv.bvextract(2 * size - 1, size));
+        FloatingPoint b(exp_size, sig_size, bv.bvextract(size - 1, 0));
+        // The result for zeros of different sign is unspecified.
+        if (a.fpiszero() && b.fpiszero() && a.fpisneg() != b.fpisneg())
+        {
+          return std::optional<FloatingPoint>();
+        }
+        return std::optional<FloatingPoint>(kind == Kind::FP_MIN ? a.fpmin(b)
+                                                                 : a.fpmax(b));
+      };
+      ASSERT_EQ(check(2 * size, mk_term, expected), Result::UNSAT)
+          << kind << " (_ FloatingPoint " << exp_size << " " << sig_size << ")";
+    }
   }
 }
 

@@ -797,15 +797,17 @@ SolverEngine::_value(const Node& term)
           }
           else
           {
-            // Partial floating-point operators have no constant folding
-            // available, ask floating-point solver for a value.
+            // Partial floating-point operators are constant folded if their
+            // result is specified for the argument values. Else, ask the
+            // floating-point solver for a value.
             std::vector<Node> values;
             for (const Node& arg : cur)
             {
               values.push_back(cached_value(arg));
             }
-            value = d_fp_solver.value(
+            value = d_env.rewriter().rewrite(
                 nm.mk_node(cur.kind(), values, cur.indices()));
+            value = value.is_value() ? value : d_fp_solver.value(value);
           }
           break;
 

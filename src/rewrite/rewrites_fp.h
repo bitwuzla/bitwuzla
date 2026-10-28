@@ -132,6 +132,9 @@ Node RewriteRule<RewriteRuleKind::FP_LT_EQ>::_apply(Rewriter& rewriter,
 
 /* fpmin -------------------------------------------------------------------- */
 
+template <>
+Node RewriteRule<RewriteRuleKind::FP_MIN_EVAL>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
 // fp_min_max
 template <>
 Node RewriteRule<RewriteRuleKind::FP_MIN_EQ>::_apply(Rewriter& rewriter,
@@ -139,6 +142,9 @@ Node RewriteRule<RewriteRuleKind::FP_MIN_EQ>::_apply(Rewriter& rewriter,
 
 /* fpmax -------------------------------------------------------------------- */
 
+template <>
+Node RewriteRule<RewriteRuleKind::FP_MAX_EVAL>::_apply(Rewriter& rewriter,
+                                                       const Node& node);
 // fp_min_max
 template <>
 Node RewriteRule<RewriteRuleKind::FP_MAX_EQ>::_apply(Rewriter& rewriter,

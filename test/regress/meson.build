@@ -1608,6 +1608,7 @@ tests_smt2 = [
   ['solver/fp/fp_inf.smt2'],
   ['solver/fp/fp_max.smt2'],
   ['solver/fp/fp_min.smt2'],
+  ['solver/fp/fp_min_max_fold.smt2'],
   ['solver/fp/fp_misc.smt2'],
   ['solver/fp/fp_nan.smt2'],
   ['solver/fp/fp_rational.smt2'],

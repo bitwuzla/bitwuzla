@@ -641,6 +641,51 @@ TEST_F(TestRewriterFp, fp_lt_eq)
 
 /* fpmin -------------------------------------------------------------------- */
 
+TEST_F(TestRewriterFp, fp_min_eval)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_MIN_EVAL;
+  uint64_t exp_size              = d_fp35_type.fp_exp_size();
+  uint64_t sig_size              = d_fp35_type.fp_sig_size();
+  // 0.5
+  Node a = d_nm.mk_value(
+      FloatingPoint(exp_size, sig_size, BitVector(8, "00100000")));
+  // -1.3125
+  Node b = d_nm.mk_value(
+      FloatingPoint(exp_size, sig_size, BitVector(8, "10110101")));
+  Node ninf = d_nm.mk_value(FloatingPoint::fpinf(exp_size, sig_size, true));
+  Node nan  = d_nm.mk_value(FloatingPoint::fpnan(exp_size, sig_size));
+  //// applies
+  std::vector<std::tuple<Node, Node, Node>> applies = {
+      {a, b, b},
+      {b, a, b},
+      {a, ninf, ninf},
+      {nan, a, a},
+      {a, nan, a},
+      {nan, nan, nan},
+      {d_fp35_pzero, a, d_fp35_pzero},
+      {d_fp35_nzero, a, d_fp35_nzero},
+      {b, d_fp35_nzero, b},
+      {d_fp35_pzero, d_fp35_pzero, d_fp35_pzero},
+      {d_fp35_nzero, d_fp35_nzero, d_fp35_nzero},
+  };
+  for (const auto& [x, y, expected] : applies)
+  {
+    Node fpmin = d_nm.mk_node(Kind::FP_MIN, {x, y});
+    test_rewrite(fpmin, expected);
+    test_rule<kind>(fpmin);
+  }
+  //// does not apply
+  // The result for zeros of different sign is unspecified.
+  for (const auto& [x, y] : {std::make_pair(d_fp35_pzero, d_fp35_nzero),
+                             std::make_pair(d_fp35_nzero, d_fp35_pzero)})
+  {
+    Node fpmin = d_nm.mk_node(Kind::FP_MIN, {x, y});
+    ASSERT_EQ(fpmin, d_rewriter.rewrite(fpmin));
+    test_rule_does_not_apply<kind>(fpmin);
+  }
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::FP_MIN, {d_fp35_a, a}));
+}
+
 TEST_F(TestRewriterFp, fp_min_eq)
 {
   constexpr RewriteRuleKind kind = RewriteRuleKind::FP_MIN_EQ;
@@ -655,6 +700,51 @@ TEST_F(TestRewriterFp, fp_min_eq)
 }
 
 /* fpmax -------------------------------------------------------------------- */
+
+TEST_F(TestRewriterFp, fp_max_eval)
+{
+  constexpr RewriteRuleKind kind = RewriteRuleKind::FP_MAX_EVAL;
+  uint64_t exp_size              = d_fp35_type.fp_exp_size();
+  uint64_t sig_size              = d_fp35_type.fp_sig_size();
+  // 0.5
+  Node a = d_nm.mk_value(
+      FloatingPoint(exp_size, sig_size, BitVector(8, "00100000")));
+  // -1.3125
+  Node b = d_nm.mk_value(
+      FloatingPoint(exp_size, sig_size, BitVector(8, "10110101")));
+  Node ninf = d_nm.mk_value(FloatingPoint::fpinf(exp_size, sig_size, true));
+  Node nan  = d_nm.mk_value(FloatingPoint::fpnan(exp_size, sig_size));
+  //// applies
+  std::vector<std::tuple<Node, Node, Node>> applies = {
+      {a, b, a},
+      {b, a, a},
+      {b, ninf, b},
+      {nan, b, b},
+      {b, nan, b},
+      {nan, nan, nan},
+      {d_fp35_pzero, b, d_fp35_pzero},
+      {d_fp35_nzero, b, d_fp35_nzero},
+      {a, d_fp35_pzero, a},
+      {d_fp35_pzero, d_fp35_pzero, d_fp35_pzero},
+      {d_fp35_nzero, d_fp35_nzero, d_fp35_nzero},
+  };
+  for (const auto& [x, y, expected] : applies)
+  {
+    Node fpmax = d_nm.mk_node(Kind::FP_MAX, {x, y});
+    test_rewrite(fpmax, expected);
+    test_rule<kind>(fpmax);
+  }
+  //// does not apply
+  // The result for zeros of different sign is unspecified.
+  for (const auto& [x, y] : {std::make_pair(d_fp35_pzero, d_fp35_nzero),
+                             std::make_pair(d_fp35_nzero, d_fp35_pzero)})
+  {
+    Node fpmax = d_nm.mk_node(Kind::FP_MAX, {x, y});
+    ASSERT_EQ(fpmax, d_rewriter.rewrite(fpmax));
+    test_rule_does_not_apply<kind>(fpmax);
+  }
+  test_rule_does_not_apply<kind>(d_nm.mk_node(Kind::FP_MAX, {d_fp35_a, a}));
+}
 
 TEST_F(TestRewriterFp, fp_max_eq)
 {

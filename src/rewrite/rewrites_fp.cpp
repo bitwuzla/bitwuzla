@@ -423,6 +423,49 @@ RewriteRule<RewriteRuleKind::FP_LT_EQ>::_apply(Rewriter& rewriter,
 
 /* fpmin -------------------------------------------------------------------- */
 
+namespace {
+
+/**
+ * Determine if the result of fp.min or fp.max is unspecified for the given
+ * operands.
+ *
+ * The result is unspecified if both operands are zeros of different sign, in
+ * which case it may be either of the two zeros. We must not constant fold
+ * this case: the word blaster encodes this choice with an uninterpreted
+ * function, which ensures that all applications with the same operand values
+ * agree.
+ *
+ * @param a The first operand.
+ * @param b The second operand.
+ * @return True if the result is unspecified.
+ */
+bool
+is_min_max_unspecified(const FloatingPoint& a, const FloatingPoint& b)
+{
+  return a.fpiszero() && b.fpiszero() && a.fpisneg() != b.fpisneg();
+}
+
+}  // namespace
+
+/**
+ * Constant folding, matches when all operands are values and the result is
+ * specified, i.e., if the operands are not zeros of different sign.
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::FP_MIN_EVAL>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  assert(node.num_children() == 2);
+  assert(node[0].type().is_fp());
+  assert(node[1].type().is_fp());
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  const FloatingPoint& a = node[0].value<FloatingPoint>();
+  const FloatingPoint& b = node[1].value<FloatingPoint>();
+  if (is_min_max_unspecified(a, b)) return node;
+  return rewriter.nm().mk_value(a.fpmin(b));
+}
+
 /**
  * match:  (fp.min a a)
  * result: a
@@ -439,6 +482,25 @@ RewriteRule<RewriteRuleKind::FP_MIN_EQ>::_apply(Rewriter& rewriter,
 }
 
 /* fpmax -------------------------------------------------------------------- */
+
+/**
+ * Constant folding, matches when all operands are values and the result is
+ * specified, i.e., if the operands are not zeros of different sign.
+ */
+template <>
+Node
+RewriteRule<RewriteRuleKind::FP_MAX_EVAL>::_apply(Rewriter& rewriter,
+                                                  const Node& node)
+{
+  assert(node.num_children() == 2);
+  assert(node[0].type().is_fp());
+  assert(node[1].type().is_fp());
+  if (!node[0].is_value() || !node[1].is_value()) return node;
+  const FloatingPoint& a = node[0].value<FloatingPoint>();
+  const FloatingPoint& b = node[1].value<FloatingPoint>();
+  if (is_min_max_unspecified(a, b)) return node;
+  return rewriter.nm().mk_value(a.fpmax(b));
+}
 
 /**
  * match:  (fp.max a a)
