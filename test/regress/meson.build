@@ -1982,8 +1982,12 @@ if get_option('fpexp')
     ['solver/fp/cvc5-issue9425-1.smt2'],
     ['solver/fp/cvc5-issue9425-2.smt2'],
     ['solver/fp/fp_regr11.smt2'],
+    ['solver/fp/fpexp_exp2_pow2_rti.smt2'],
     ['solver/fp/fpexp_rti_matchwidth.smt2'],
     ['solver/fp/fpexp_rti_overflow.smt2'],
+    ['solver/fp/fpexp_sig3_add.smt2'],
+    ['solver/fp/fpexp_sig3_model.smt2'],
+    ['solver/fp/fpexp_sig3_to_fp.smt2'],
     ['solver/fp/issue130.smt2'],
     ['solver/quant/duplicatelemma1.smt2'],
   ]

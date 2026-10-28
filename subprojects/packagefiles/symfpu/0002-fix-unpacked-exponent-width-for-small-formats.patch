@@ -1,0 +1,31 @@
+--- a/core/unpackedFloat.h
++++ b/core/unpackedFloat.h
+@@ -187,9 +187,10 @@
+       bwt formatSignificandWidth = format.significandWidth();
+ 
+       if (formatSignificandWidth <= 3) {
+-	// Subnormals fit into the gap between minimum normal exponent and what is represenatble
+-	// using a signed number
+-	return formatExponentWidth;
++	// Subnormals fit into the range of the packed exponent width, but unpack()
++	// requires a wider exponent to avoid overflow, and the subnormal amount
++	// computed when packing overflows otherwise, e.g., for (2, 3).
++	return formatExponentWidth + 1;
+       }
+ 
+       bwt bitsNeededForSubnormals = bitsToRepresent(format.significandWidth() - 3);
+@@ -200,7 +201,13 @@
+ 
+       } else {
+ 	// Significand is long compared to exponent range
+-	return bitsToRepresent((bwt(1) << (formatExponentWidth - 1)) + formatSignificandWidth - 3) + 1;
++	bwt width = bitsToRepresent((bwt(1) << (formatExponentWidth - 1)) + formatSignificandWidth - 3) + 1;
++	// The significand width must be representable as a signed value of the
++	// unpacked exponent width (see valid() and roundToIntegral()), which
++	// requires an extra bit for exponent width 2 and a significand width that
++	// is a power of two, e.g., for (2, 4).
++	bwt significandWidthBits = bitsToRepresent(formatSignificandWidth) + 1;
++	return (width < significandWidthBits) ? significandWidthBits : width;
+       }
+     }
+ 

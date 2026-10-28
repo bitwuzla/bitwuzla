@@ -1,0 +1,8 @@
+(set-logic QF_FP)
+(set-option :produce-models true)
+(declare-const x (_ FloatingPoint 2 3))
+(assert (fp.isSubnormal x))
+(assert (fp.isPositive x))
+(assert (fp.lt x (fp #b0 #b00 #b10)))
+(check-sat)
+(get-value (x))

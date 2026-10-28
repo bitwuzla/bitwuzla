@@ -180,7 +180,8 @@ if symfpu_dep.type_name() == 'internal'
   endif
   # The patches only affect experimental floating-point formats.
   symfpu_convert = meson.project_source_root() / 'subprojects' / 'symfpu' / 'core' / 'convert.h'
-  if get_option('fpexp') and not import('fs').read(symfpu_convert).contains('exponentRangeIncreased')
+  if get_option('fpexp') and (not import('fs').read(symfpu_convert).contains('exponentRangeIncreased')
+                              or not import('fs').read(symfpu_header).contains('significandWidthBits'))
     error('Bundled SymFPU in subprojects/symfpu is not patched, ' +
           'run \'meson subprojects update --reset symfpu\' to update it.')
   endif
