@@ -425,6 +425,35 @@ def test_mk_bv_value(tm):
     with pytest.raises(BitwuzlaException):
       tm.mk_bv_value(tm.mk_bv_sort(8), "", 2)
 
+def test_mk_bv_value_int(tm):
+    bv8 = tm.mk_bv_sort(8)
+    assert tm.mk_bv_value(bv8, 0).value() == '00000000'
+    assert tm.mk_bv_value(bv8, 255).value() == '11111111'
+    assert tm.mk_bv_value(bv8, -1).value() == '11111111'
+    assert tm.mk_bv_value(bv8, -128).value() == '10000000'
+    with pytest.raises(BitwuzlaException):
+        tm.mk_bv_value(bv8, 256)
+    with pytest.raises(BitwuzlaException):
+        tm.mk_bv_value(bv8, -129)
+    with pytest.raises(BitwuzlaException):
+        tm.mk_bv_value(Sort(), 1)
+    with pytest.raises(BitwuzlaException):
+        tm.mk_bv_value(tm.mk_fp_sort(5, 11), 1)
+    with pytest.raises(TypeError):
+        tm.mk_bv_value(bv8, 1.0)
+
+    bv128 = tm.mk_bv_sort(128)
+    assert tm.mk_bv_value(bv128, 0x0123456789abcdeffedcba9876543210) \
+            == tm.mk_bv_value(bv128, '0123456789abcdeffedcba9876543210', 16)
+    assert tm.mk_bv_value(bv128, -1) == tm.mk_bv_ones(bv128)
+    assert tm.mk_bv_value(bv128, -(1 << 127)) == tm.mk_bv_min_signed(bv128)
+
+    # Exceeds the default limit for converting integers to decimal strings.
+    bv20000 = tm.mk_bv_sort(20000)
+    assert tm.mk_bv_value(bv20000, (1 << 20000) - 1) == tm.mk_bv_ones(bv20000)
+    assert tm.mk_bv_value(bv20000, -(1 << 19999)) \
+            == tm.mk_bv_min_signed(bv20000)
+
 def test_mk_fp_value(tm):
     val = tm.mk_fp_value(tm.mk_bv_value(tm.mk_bv_sort(1), 1),
                       tm.mk_bv_value(tm.mk_bv_sort(5), 0),
@@ -696,6 +725,25 @@ def test_get_bv_value(tm):
     assert tm.mk_bv_value(bv8, '-128', 10).value() == '10000000'
     assert tm.mk_bv_value(bv8, '-128', 10).value(10) == '128'
     assert tm.mk_bv_value(bv8, '-128', 10).value(16) == '80'
+
+def test_get_bv_value_int(tm):
+    with pytest.raises(BitwuzlaException):
+        tm.mk_const(tm.mk_bv_sort(8)).value(bv_as_int=True)
+    assert tm.mk_true().value(bv_as_int=True) is True
+
+    bv8 = tm.mk_bv_sort(8)
+    assert tm.mk_bv_value(bv8, '-1', 10).value(bv_as_int=True) == 255
+    assert tm.mk_bv_value(bv8, '-123', 10).value(bv_as_int=True) == 133
+    assert tm.mk_bv_max_signed(bv8).value(bv_as_int=True) == 127
+
+    for size in (1, 63, 64, 65, 127, 128, 129, 200, 20000):
+        sort = tm.mk_bv_sort(size)
+        assert tm.mk_bv_zero(sort).value(bv_as_int=True) == 0
+        assert tm.mk_bv_ones(sort).value(bv_as_int=True) == (1 << size) - 1
+        assert tm.mk_bv_min_signed(sort).value(bv_as_int=True) \
+                == 1 << (size - 1)
+        value = (0x0123456789abcdef << (size // 2)) % (1 << size)
+        assert tm.mk_bv_value(sort, value).value(bv_as_int=True) == value
 
 
 def test_get_fp_value(tm):

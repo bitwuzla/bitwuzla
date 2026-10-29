@@ -1179,6 +1179,38 @@ Term::value(uint8_t base) const
 }
 
 template <>
+std::span<const uint64_t>
+Term::value(uint8_t base) const
+{
+  (void) base;
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_node);
+  BITWUZLA_CHECK_TERM_IS_BV_VALUE(*this);
+  const bzla::BitVector& bv = d_node->value<bzla::BitVector>();
+#if BZLA_BV_WORDS_VIEW && defined(NDEBUG)
+  return bv.words();
+#else
+  // Without 64-bit GMP limbs, the words must be copied. Builds with
+  // assertions always copy, so that views used after the next call show up
+  // in testing.
+  static thread_local std::vector<uint64_t> words;
+  bv.to_words(words);
+  return words;
+#endif
+}
+
+template <>
+std::vector<uint64_t>
+Term::value(uint8_t base) const
+{
+  (void) base;
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_node);
+  BITWUZLA_CHECK_TERM_IS_BV_VALUE(*this);
+  std::vector<uint64_t> res;
+  d_node->value<bzla::BitVector>().to_words(res);
+  return res;
+}
+
+template <>
 std::tuple<std::string, std::string, std::string>
 Term::value(uint8_t base) const
 {
@@ -2055,6 +2087,20 @@ TermManager::mk_bv_value_int64(const Sort& sort, int64_t value)
   BITWUZLA_CHECK_SORT_TERM_MGR_BV(sort);
   return d_nm->mk_value(
       bzla::BitVector::from_si(sort.d_type->bv_size(), value));
+}
+
+Term
+TermManager::mk_bv_value_words(const Sort& sort,
+                               std::span<const uint64_t> words)
+{
+  BITWUZLA_CHECK_SORT_NOT_NULL(sort);
+  BITWUZLA_CHECK_SORT_IS_BV(sort);
+  BITWUZLA_CHECK(bzla::BitVector::fits_in_size(sort.d_type->bv_size(), words))
+      << "value does not fit into a bit-vector of size '"
+      << sort.d_type->bv_size() << "'";
+  BITWUZLA_CHECK_SORT_TERM_MGR_BV(sort);
+  return d_nm->mk_value(
+      bzla::BitVector::from_words(sort.d_type->bv_size(), words));
 }
 
 Term

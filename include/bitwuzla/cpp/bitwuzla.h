@@ -24,10 +24,15 @@
 #include <memory>
 #include <new>
 #include <optional>
+#include <span>
 #include <unordered_map>
 #include <unordered_set>
 #include <variant>
 #include <vector>
+
+#ifndef __cpp_lib_span
+#error "the Bitwuzla C++ API requires C++20"
+#endif
 
 // TODO mark functions that may change in the future as experimental for release
 
@@ -867,6 +872,8 @@ class Term
    *   (Boolean, RoundingMode, bit-vector and floating-point)
    * - `std::tuple<std::string, std::string, std::string>`
    *   for floating-point values
+   * - `std::span<const uint64_t>` (view) and `std::vector<uint64_t>` (copy)
+   *   for bit-vector values (64-bit words, least significant word first)
    *
    * In case of string representations of values (the `std::string` and
    * `std::tuple<std::string, std::string, std::string>` instantions of
@@ -887,11 +894,15 @@ class Term
    *             values; `RoundingMode` for rounding mode values;
    *             `std::tuple<std::string, std::string, std::string>` for
    *             floating-point values (IEEE-754 representation as strings
-   *             for sign bit, exponent and significand); and, generally,
+   *             for sign bit, exponent and significand);
+   *             `std::span<const uint64_t>` and `std::vector<uint64_t>` for
+   *             bit-vector values (64-bit words); and, generally,
    *             `std::string` for any value type.
    * @param base The numeric base for bit-vector values; `2` for binary, `10`
    *             for decimal, and `16` for hexadecimal. Always ignored for
-   *             Boolean and RoundingMode values.
+   *             Boolean and RoundingMode values, and for the
+   *             `std::span<const uint64_t>` and `std::vector<uint64_t>`
+   *             instantiations.
    */
   template <class T>
   T value(uint8_t base = 2) const;
@@ -938,6 +949,40 @@ RoundingMode Term::value(uint8_t base) const;
  */
 template <>
 std::string Term::value(uint8_t base) const;
+
+/**
+ * Get a view of the 64-bit words of a bit-vector value term.
+ *
+ * Word `i` holds bits `64 * i` to `64 * i + 63` of the value. Most significant
+ * zero words are omitted, i.e., the value zero has no words. On 64-bit
+ * platforms, the words are not copied (except in builds with assertions),
+ * which allows to pass values to arbitrary-precision integer libraries
+ * without conversion, e.g., to GMP with 64-bit limbs via
+ * `mpz_roinit_n(z, (const mp_limb_t*) words.data(), words.size())`.
+ *
+ * @param base Ignored for this template instantiation.
+ *
+ * @return A view of the words of the value, least significant word first.
+ *
+ * @note The returned view is only valid until the next call of this function
+ *       on the same thread, and as long as this term (or a copy of it)
+ *       exists. The `std::vector<uint64_t>` instantiation returns a copy.
+ */
+template <>
+std::span<const uint64_t> Term::value(uint8_t base) const;
+
+/**
+ * Get a copy of the 64-bit words of a bit-vector value term.
+ *
+ * Word `i` holds bits `64 * i` to `64 * i + 63` of the value. Most significant
+ * zero words are omitted, i.e., the value zero has no words.
+ *
+ * @param base Ignored for this template instantiation.
+ *
+ * @return The words of the value, least significant word first.
+ */
+template <>
+std::vector<uint64_t> Term::value(uint8_t base) const;
 
 /**
  * Get string of IEEE 754 standard representation of floating-point value term.
@@ -1406,6 +1451,27 @@ class TermManager
    *   * `TermManager::mk_bv_sort()`
    */
   Term mk_bv_value_int64(const Sort& sort, int64_t value);
+
+  /**
+   * Create a bit-vector value from its 64-bit words.
+   *
+   * Word `i` holds bits `64 * i` to `64 * i + 63` of the value, missing words
+   * are zero. This is the inverse of
+   * `Term::value<std::span<const uint64_t>>()`.
+   *
+   * @note Given value must fit into a bit-vector of given size (sort).
+   *
+   * @param sort The sort of the value.
+   * @param words The words of the bit-vector value, least significant word
+   *              first.
+   *
+   * @return A term of kind Kind::VALUE, representing the bit-vector value
+   *         of given sort.
+   *
+   * @see
+   *   * `TermManager::mk_bv_sort()`
+   */
+  Term mk_bv_value_words(const Sort& sort, std::span<const uint64_t> words);
 
   /**
    * Create a floating-point positive zero value (SMT-LIB: `+zero`).

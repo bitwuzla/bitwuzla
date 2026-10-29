@@ -72,6 +72,28 @@ cdef extern from *:
     """
     cdef vector[string] get_fp_value_ieee(const Term& term, uint8_t base)
 
+# View of the 64-bit words of a BV value (declared here since libcpp.span
+# requires Cython >= 3.1)
+cdef extern from "<span>" nogil:
+    cdef cppclass BvWords "std::span<const uint64_t>":
+        BvWords(const uint64_t* data, size_t size)
+        const uint64_t* data()
+        size_t size()
+        const uint64_t& operator[](size_t)
+
+# Extract BV value as 64-bit words
+cdef extern from *:
+    """
+    #include <bitwuzla/cpp/bitwuzla.h>
+
+    std::span<const uint64_t>
+    get_bv_value_words(const bitwuzla::Term& term)
+    {
+      return term.value<std::span<const uint64_t>>();
+    }
+    """
+    cdef BvWords get_bv_value_words(const Term& term) except +raise_error
+
 # Terminator wrapper
 cdef extern from "terminator.h":
     cdef cppclass PyTerminator:
@@ -244,6 +266,8 @@ cdef extern from "bitwuzla/cpp/bitwuzla.h" namespace "bitwuzla":
         Term mk_bv_max_signed(const Sort &sort) except +raise_error
         Term mk_bv_value(const Sort &sort,
                          const string &value, uint8_t base) except +raise_error
+        Term mk_bv_value_words(const Sort &sort,
+                               BvWords words) except +raise_error
         Term mk_fp_pos_zero(const Sort &sort) except +raise_error
         Term mk_fp_neg_zero(const Sort &sort) except +raise_error
         Term mk_fp_pos_inf(const Sort &sort) except +raise_error

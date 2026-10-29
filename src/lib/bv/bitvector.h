@@ -15,7 +15,19 @@
 
 #include <cstdint>
 #include <functional>
+#include <span>
 #include <string>
+#include <vector>
+
+/**
+ * True if GMP limbs are 64-bit words, i.e., if the 64-bit words of bit-vector
+ * values can be viewed without copying them (see BitVector::words()).
+ */
+#if GMP_LIMB_BITS == 64 && GMP_NAIL_BITS == 0
+#define BZLA_BV_WORDS_VIEW 1
+#else
+#define BZLA_BV_WORDS_VIEW 0
+#endif
 
 namespace bzla {
 
@@ -72,6 +84,15 @@ class BitVector
   static bool fits_in_size(uint64_t size, const mpz_t value);
 
   /**
+   * Determine if given value, given as 64-bit words, fits into a bit-vector of
+   * given size.
+   * @param size  The size of the bit-vector.
+   * @param words The value as 64-bit words, least significant word first.
+   * @return True if given value fits into a bit-vector of given size.
+   */
+  static bool fits_in_size(uint64_t size, std::span<const uint64_t> words);
+
+  /**
    * Construct a bit-vector of given size from given uint64 value.
    *
    * Truncates value if `truncate` is true and the value cannot be
@@ -107,6 +128,15 @@ class BitVector
    *                 representable with `size` bits.
    */
   static BitVector from_si(uint64_t size, int64_t value, bool truncate = false);
+
+  /**
+   * Construct a bit-vector of given size from given 64-bit words.
+   * @param size  The size of the bit-vector.
+   * @param words The value as 64-bit words, least significant word first.
+   *              Missing words are zero. The value must be representable
+   *              with `size` bits.
+   */
+  static BitVector from_words(uint64_t size, std::span<const uint64_t> words);
 
   /**
    * Create a true bit-vector (value 1 of size 1).
@@ -311,6 +341,22 @@ class BitVector
    * @return The uint64_t representation.
    */
   uint64_t to_uint64(bool truncate = false) const;
+  /**
+   * Copy the value of this bit-vector as 64-bit words.
+   * @param words Output parameter, the words of the value, least significant
+   *              word first, without most significant zero words (empty for
+   *              zero).
+   */
+  void to_words(std::vector<uint64_t>& words) const;
+#if BZLA_BV_WORDS_VIEW
+  /**
+   * Get the value of this bit-vector as 64-bit words without copying them.
+   * @return A view of the words of the value, least significant word first,
+   *         without most significant zero words (empty for zero). It is
+   *         valid as long as this bit-vector is alive and not modified.
+   */
+  std::span<const uint64_t> words() const;
+#endif
 
   /** @return the size of this bit-vector. */
   uint64_t size() const { return d_size; }

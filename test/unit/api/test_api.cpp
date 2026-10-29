@@ -631,6 +631,46 @@ TEST_F(TestApi, mk_bv_value_uint64)
   ASSERT_THROW(d_tm.mk_bv_value_uint64(d_fp_sort16, 23), bitwuzla::Exception);
 }
 
+TEST_F(TestApi, mk_bv_value_words)
+{
+  using Words = std::vector<uint64_t>;
+  ASSERT_THROW(d_tm.mk_bv_value_words(bitwuzla::Sort(), Words{23}),
+               bitwuzla::Exception);
+  ASSERT_THROW(d_tm.mk_bv_value_words(d_fp_sort16, Words{23}),
+               bitwuzla::Exception);
+  ASSERT_THROW(d_tm.mk_bv_value_words(d_bv_sort8, Words{0x100}),
+               bitwuzla::Exception);
+  ASSERT_THROW(d_tm.mk_bv_value_words(d_tm.mk_bv_sort(64), Words{0, 1}),
+               bitwuzla::Exception);
+  ASSERT_THROW(d_tm.mk_bv_value_words(d_tm.mk_bv_sort(65), Words{0, 2}),
+               bitwuzla::Exception);
+
+  ASSERT_EQ(d_tm.mk_bv_value_words(d_bv_sort8, {}), d_bv_zero8);
+  ASSERT_EQ(d_tm.mk_bv_value_words(d_bv_sort8, Words{0x7f, 0}), d_bv_maxs8);
+  ASSERT_EQ(d_tm.mk_bv_value_words(d_bv_sort1, Words{1}), d_bv_one1);
+  bitwuzla::Sort bv_sort128 = d_tm.mk_bv_sort(128);
+  ASSERT_EQ(d_tm.mk_bv_value_words(bv_sort128, Words{5}),
+            d_tm.mk_bv_value_uint64(bv_sort128, 5));
+  ASSERT_EQ(
+      d_tm.mk_bv_value_words(bv_sort128,
+                             Words{0xfedcba9876543210, 0x0123456789abcdef}),
+      d_tm.mk_bv_value(bv_sort128, "0123456789abcdeffedcba9876543210", 16));
+
+  for (uint64_t size : {1, 63, 64, 65, 127, 128, 129, 200})
+  {
+    bitwuzla::Sort sort = d_tm.mk_bv_sort(size);
+    for (const bitwuzla::Term& value : {d_tm.mk_bv_zero(sort),
+                                        d_tm.mk_bv_ones(sort),
+                                        d_tm.mk_bv_min_signed(sort),
+                                        d_tm.mk_bv_max_signed(sort)})
+    {
+      ASSERT_EQ(d_tm.mk_bv_value_words(
+                    sort, value.value<std::span<const uint64_t>>()),
+                value);
+    }
+  }
+}
+
 TEST_F(TestApi, mk_fp_value)
 {
   ASSERT_THROW(d_tm.mk_fp_value(bitwuzla::Term(), d_bv_zero8, d_bv_zero8),
@@ -1864,6 +1904,53 @@ TEST_F(TestApi, get_bv_value)
             "128");
   ASSERT_EQ(d_tm.mk_bv_value(d_bv_sort8, "-128", 10).value<std::string>(16),
             "80");
+}
+
+TEST_F(TestApi, get_bv_value_words)
+{
+  using Span  = std::span<const uint64_t>;
+  using Words = std::vector<uint64_t>;
+  // The view and the copy contain the same words.
+  auto words = [](const bitwuzla::Term& term) {
+    Span view = term.value<Span>();
+    Words res(view.begin(), view.end());
+    EXPECT_EQ(res, term.value<Words>());
+    return res;
+  };
+  ASSERT_THROW(d_fun.value<Span>(), bitwuzla::Exception);
+  ASSERT_THROW(d_bv_const8.value<Span>(), bitwuzla::Exception);
+  ASSERT_THROW(d_fp_nan32.value<Span>(), bitwuzla::Exception);
+  ASSERT_THROW(d_true.value<Span>(), bitwuzla::Exception);
+  ASSERT_THROW(d_fun.value<Words>(), bitwuzla::Exception);
+  ASSERT_THROW(d_bv_const8.value<Words>(), bitwuzla::Exception);
+  ASSERT_THROW(d_fp_nan32.value<Words>(), bitwuzla::Exception);
+  ASSERT_THROW(d_true.value<Words>(), bitwuzla::Exception);
+
+  // Most significant zero words are omitted.
+  ASSERT_EQ(words(d_bv_zero8), Words());
+  ASSERT_EQ(words(d_bv_one1), Words({1}));
+  ASSERT_EQ(words(d_bv_maxs8), Words({0x7f}));
+  ASSERT_EQ(words(d_tm.mk_bv_value(d_bv_sort8, "-123", 10)), Words({0x85}));
+
+  bitwuzla::Sort bv_sort64  = d_tm.mk_bv_sort(64);
+  bitwuzla::Sort bv_sort65  = d_tm.mk_bv_sort(65);
+  bitwuzla::Sort bv_sort128 = d_tm.mk_bv_sort(128);
+  bitwuzla::Sort bv_sort130 = d_tm.mk_bv_sort(130);
+  ASSERT_EQ(words(d_tm.mk_bv_ones(bv_sort64)), Words({UINT64_MAX}));
+  ASSERT_EQ(words(d_tm.mk_bv_zero(bv_sort65)), Words());
+  ASSERT_EQ(words(d_tm.mk_bv_one(bv_sort65)), Words({1}));
+  ASSERT_EQ(words(d_tm.mk_bv_ones(bv_sort65)), Words({UINT64_MAX, 1}));
+  ASSERT_EQ(words(d_tm.mk_bv_value(
+                bv_sort128, "0123456789abcdeffedcba9876543210", 16)),
+            Words({0xfedcba9876543210, 0x0123456789abcdef}));
+  ASSERT_EQ(words(d_tm.mk_bv_min_signed(bv_sort130)), Words({0, 0, 2}));
+
+  // Getting a copy does not invalidate a view.
+  bitwuzla::Term ones = d_tm.mk_bv_ones(bv_sort130);
+  Span view           = ones.value<Span>();
+  ASSERT_EQ(d_bv_one1.value<Words>(), Words({1}));
+  ASSERT_EQ(Words(view.begin(), view.end()),
+            Words({UINT64_MAX, UINT64_MAX, 3}));
 }
 
 TEST_F(TestApi, get_fp_value)
