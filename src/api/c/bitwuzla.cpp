@@ -1088,6 +1088,24 @@ bitwuzla_mk_bv_value_int64(BitwuzlaTermManager* tm,
 }
 
 BitwuzlaTerm
+bitwuzla_mk_bv_value_words(BitwuzlaTermManager* tm,
+                           BitwuzlaSort sort,
+                           size_t size,
+                           const uint64_t words[])
+{
+  BitwuzlaTerm res = 0;
+  BITWUZLA_C_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(tm);
+  BITWUZLA_CHECK_SORT(sort);
+  BITWUZLA_CHECK(size == 0 || words != nullptr) << "expected non-null object";
+  res = tm->export_term(
+      tm->d_tm.mk_bv_value_words(BitwuzlaTermManager::import_sort(sort),
+                                 std::vector<uint64_t>(words, words + size)));
+  BITWUZLA_C_TRY_CATCH_END;
+  return res;
+}
+
+BitwuzlaTerm
 bitwuzla_mk_fp_value(BitwuzlaTermManager* tm,
                      BitwuzlaTerm bv_sign,
                      BitwuzlaTerm bv_exponent,
@@ -2296,6 +2314,19 @@ bitwuzla_term_value_get_str_fmt(BitwuzlaTerm term, uint8_t base)
   str = BitwuzlaTermManager::import_term(term).value<std::string>(base);
   BITWUZLA_C_TRY_CATCH_END;
   return str.c_str();
+}
+
+const uint64_t*
+bitwuzla_term_value_get_bv_words(BitwuzlaTerm term, size_t* size)
+{
+  static thread_local std::vector<uint64_t> res;
+  BITWUZLA_C_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_TERM(term);
+  BITWUZLA_CHECK_NOT_NULL(size);
+  res   = BitwuzlaTermManager::import_term(term).value<std::vector<uint64_t>>();
+  *size = res.size();
+  BITWUZLA_C_TRY_CATCH_END;
+  return res.data();
 }
 
 void

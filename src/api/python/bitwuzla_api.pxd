@@ -72,6 +72,19 @@ cdef extern from *:
     """
     cdef vector[string] get_fp_value_ieee(const Term& term, uint8_t base)
 
+# Extract BV value as 64-bit words
+cdef extern from *:
+    """
+    #include <bitwuzla/cpp/bitwuzla.h>
+
+    std::vector<uint64_t>
+    get_bv_value_words(const bitwuzla::Term& term)
+    {
+      return term.value<std::vector<uint64_t>>();
+    }
+    """
+    cdef vector[uint64_t] get_bv_value_words(const Term& term) except +raise_error
+
 # Terminator wrapper
 cdef extern from "terminator.h":
     cdef cppclass PyTerminator:
@@ -244,6 +257,8 @@ cdef extern from "bitwuzla/cpp/bitwuzla.h" namespace "bitwuzla":
         Term mk_bv_max_signed(const Sort &sort) except +raise_error
         Term mk_bv_value(const Sort &sort,
                          const string &value, uint8_t base) except +raise_error
+        Term mk_bv_value_words(const Sort &sort,
+                               const vector[uint64_t] &words) except +raise_error
         Term mk_fp_pos_zero(const Sort &sort) except +raise_error
         Term mk_fp_neg_zero(const Sort &sort) except +raise_error
         Term mk_fp_pos_inf(const Sort &sort) except +raise_error

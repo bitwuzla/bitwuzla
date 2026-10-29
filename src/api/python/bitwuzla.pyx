@@ -23,6 +23,8 @@ from libcpp.memory cimport unique_ptr, shared_ptr
 from cpython.ref cimport PyObject
 from cython.operator import dereference
 import cython
+import operator
+import struct
 
 include "enums.pxd"
 include "options.pxd"
@@ -56,6 +58,16 @@ cdef Term _term(tm: TermManager, term: bitwuzla_api.Term):
 
 cdef bitwuzla_api.Term _cterm(term: Term):
     return term.c_term
+
+cdef vector[uint64_t] _int_to_words(value):
+    """Convert a non-negative integer to 64-bit words, least significant
+       word first."""
+    n = (value.bit_length() + 63) // 64
+    return struct.unpack(f'<{n}Q', value.to_bytes(8 * n, 'little'))
+
+cdef object _words_to_int(vector[uint64_t] words):
+    """Convert 64-bit words, least significant word first, to an integer."""
+    return int.from_bytes(struct.pack(f'<{words.size()}Q', *words), 'little')
 
 cdef list[Term] _terms(tm: TermManager, vector[bitwuzla_api.Term]& c_terms):
     return [_term(tm, t) for t in c_terms]
@@ -522,12 +534,13 @@ cdef class Term:
         """
         return self.c_term.is_rm_value_rtz()
 
-    def value(self, uint8_t base = 2, fp_as_tuple = True):
+    def value(self, uint8_t base = 2, fp_as_tuple = True, bv_as_int = False):
         """Get value from value term.
 
            This function is instantiated for types
            - ``bool`` for Boolean values
            - ``RoundingMode`` for rounding mode values
+           - ``int`` for bit-vector values if ``bv_as_int`` is True
            - ``string`` for bit-vector and floating-point values
 
            In case of string representations of values this returns the raw
@@ -551,10 +564,15 @@ cdef class Term:
                                 significand bit-vectors. False to represent as
                                 the binary IEEE-754 string representation of a
                                 single bit-vector.
+           :param bv_as_int: True if a bit-vector value is to be represented
+                             as an unsigned integer (parameter `base` is
+                             ignored).
         """
         sort = self.sort()
         if sort.is_bool():
             return self.c_term.value[c_bool]()
+        if sort.is_bv() and bv_as_int:
+            return _words_to_int(bitwuzla_api.get_bv_value_words(self.c_term))
         if sort.is_rm():
             return RoundingMode(self.c_term.value[bitwuzla_api.RoundingMode]())
         if sort.is_fp() and fp_as_tuple:
@@ -992,10 +1010,18 @@ cdef class TermManager:
                         sort.c_sort, value.encode(), <uint8_t> int(args[0])))
         if args:
             raise ValueError('unexpected base')
+        value = operator.index(value)
+        if value < 0:
+            # Negative values must fit into the sort as a signed integer and
+            # are represented in two's complement.
+            size = sort.bv_size()
+            if value < -(1 << (size - 1)):
+                raise BitwuzlaException(
+                    f"value does not fit into a bit-vector of size '{size}'")
+            value += 1 << size
         return _term(self,
-                self.c_tm_ptr.mk_bv_value(sort.c_sort,
-                                            str(value).encode(),
-                                            10))
+                self.c_tm_ptr.mk_bv_value_words(sort.c_sort,
+                                                _int_to_words(value)))
 
     def mk_bv_zero(self, sort: Sort) -> Term:
         """mk_bv_zero(sort)

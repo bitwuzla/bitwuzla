@@ -15,7 +15,9 @@
 
 #include <cstdint>
 #include <functional>
+#include <span>
 #include <string>
+#include <vector>
 
 namespace bzla {
 
@@ -72,6 +74,15 @@ class BitVector
   static bool fits_in_size(uint64_t size, const mpz_t value);
 
   /**
+   * Determine if given value, given as 64-bit words, fits into a bit-vector of
+   * given size.
+   * @param size  The size of the bit-vector.
+   * @param words The value as 64-bit words, least significant word first.
+   * @return True if given value fits into a bit-vector of given size.
+   */
+  static bool fits_in_size(uint64_t size, std::span<const uint64_t> words);
+
+  /**
    * Construct a bit-vector of given size from given uint64 value.
    *
    * Truncates value if `truncate` is true and the value cannot be
@@ -107,6 +118,15 @@ class BitVector
    *                 representable with `size` bits.
    */
   static BitVector from_si(uint64_t size, int64_t value, bool truncate = false);
+
+  /**
+   * Construct a bit-vector of given size from given 64-bit words.
+   * @param size  The size of the bit-vector.
+   * @param words The value as 64-bit words, least significant word first.
+   *              Missing words are zero. The value must be representable
+   *              with `size` bits.
+   */
+  static BitVector from_words(uint64_t size, std::span<const uint64_t> words);
 
   /**
    * Create a true bit-vector (value 1 of size 1).
@@ -311,6 +331,12 @@ class BitVector
    * @return The uint64_t representation.
    */
   uint64_t to_uint64(bool truncate = false) const;
+  /**
+   * Get the value of this bit-vector as 64-bit words.
+   * @return The `ceil(size / 64)` words of the value, least significant word
+   *         first.
+   */
+  std::vector<uint64_t> to_words() const;
 
   /** @return the size of this bit-vector. */
   uint64_t size() const { return d_size; }

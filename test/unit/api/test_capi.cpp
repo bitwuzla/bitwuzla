@@ -826,6 +826,33 @@ TEST_F(TestCApi, mk_bv_value_uint64)
                d_error_exp_bv_sort);
 }
 
+TEST_F(TestCApi, mk_bv_value_words)
+{
+  uint64_t words[] = {0xfedcba9876543210, 0x0123456789abcdef, 0};
+  ASSERT_DEATH(bitwuzla_mk_bv_value_words(nullptr, d_bv_sort8, 1, words),
+               d_error_not_null);
+  ASSERT_DEATH(bitwuzla_mk_bv_value_words(d_tm, 0, 1, words), d_error_inv_sort);
+  ASSERT_DEATH(bitwuzla_mk_bv_value_words(d_tm, d_fp_sort16, 1, words),
+               d_error_exp_bv_sort);
+  ASSERT_DEATH(bitwuzla_mk_bv_value_words(d_tm, d_bv_sort8, 1, nullptr),
+               d_error_not_null);
+  ASSERT_DEATH(bitwuzla_mk_bv_value_words(d_tm, d_bv_sort8, 1, words),
+               d_error_bv_fit);
+
+  BitwuzlaSort bv_sort128 = bitwuzla_mk_bv_sort(d_tm, 128);
+  ASSERT_EQ(bitwuzla_mk_bv_value_words(d_tm, d_bv_sort8, 0, nullptr),
+            d_bv_zero8);
+  ASSERT_EQ(bitwuzla_mk_bv_value_words(d_tm, bv_sort128, 3, words),
+            bitwuzla_mk_bv_value(
+                d_tm, bv_sort128, "0123456789abcdeffedcba9876543210", 16));
+
+  size_t size;
+  const uint64_t* res = bitwuzla_term_value_get_bv_words(
+      bitwuzla_mk_bv_value_words(d_tm, bv_sort128, 2, words), &size);
+  ASSERT_EQ(std::vector<uint64_t>(res, res + size),
+            std::vector<uint64_t>(words, words + 2));
+}
+
 TEST_F(TestCApi, mk_fp_value)
 {
   ASSERT_DEATH(bitwuzla_mk_fp_value(d_tm, 0, d_bv_zero8, d_bv_zero8),
@@ -2841,6 +2868,38 @@ TEST_F(TestCApi, value_get_bv)
   ASSERT_EQ(std::string(bitwuzla_term_value_get_str_fmt(
                 bitwuzla_mk_bv_value(d_tm, d_bv_sort8, "-128", 10), 16)),
             std::string("80"));
+}
+
+TEST_F(TestCApi, value_get_bv_words)
+{
+  using Words = std::vector<uint64_t>;
+  auto words  = [](BitwuzlaTerm term) {
+    size_t size;
+    const uint64_t* res = bitwuzla_term_value_get_bv_words(term, &size);
+    return Words(res, res + size);
+  };
+  size_t size;
+  ASSERT_DEATH(bitwuzla_term_value_get_bv_words(0, &size), d_error_inv_term);
+  ASSERT_DEATH(bitwuzla_term_value_get_bv_words(d_bv_one1, nullptr),
+               d_error_not_null);
+  ASSERT_DEATH(bitwuzla_term_value_get_bv_words(d_bv_const8, &size),
+               d_error_exp_bv_value);
+  ASSERT_DEATH(bitwuzla_term_value_get_bv_words(d_fp_nan32, &size),
+               d_error_exp_bv_value);
+
+  ASSERT_EQ(words(d_bv_one1), Words({1}));
+  ASSERT_EQ(words(d_bv_maxs8), Words({0x7f}));
+  ASSERT_EQ(words(bitwuzla_mk_bv_value(d_tm, d_bv_sort8, "-123", 10)),
+            Words({0x85}));
+
+  BitwuzlaSort bv_sort65  = bitwuzla_mk_bv_sort(d_tm, 65);
+  BitwuzlaSort bv_sort128 = bitwuzla_mk_bv_sort(d_tm, 128);
+  ASSERT_EQ(words(bitwuzla_mk_bv_zero(d_tm, bv_sort65)), Words({0, 0}));
+  ASSERT_EQ(words(bitwuzla_mk_bv_ones(d_tm, bv_sort65)),
+            Words({UINT64_MAX, 1}));
+  ASSERT_EQ(words(bitwuzla_mk_bv_value(
+                d_tm, bv_sort128, "0123456789abcdeffedcba9876543210", 16)),
+            Words({0xfedcba9876543210, 0x0123456789abcdef}));
 }
 
 TEST_F(TestCApi, value_get_fp)

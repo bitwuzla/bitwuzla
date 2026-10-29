@@ -1179,6 +1179,16 @@ Term::value(uint8_t base) const
 }
 
 template <>
+std::vector<uint64_t>
+Term::value(uint8_t base) const
+{
+  (void) base;
+  BITWUZLA_CHECK_HANDLE_NOT_NULL(d_node);
+  BITWUZLA_CHECK_TERM_IS_BV_VALUE(*this);
+  return d_node->value<bzla::BitVector>().to_words();
+}
+
+template <>
 std::tuple<std::string, std::string, std::string>
 Term::value(uint8_t base) const
 {
@@ -2055,6 +2065,20 @@ TermManager::mk_bv_value_int64(const Sort& sort, int64_t value)
   BITWUZLA_CHECK_SORT_TERM_MGR_BV(sort);
   return d_nm->mk_value(
       bzla::BitVector::from_si(sort.d_type->bv_size(), value));
+}
+
+Term
+TermManager::mk_bv_value_words(const Sort& sort,
+                               const std::vector<uint64_t>& words)
+{
+  BITWUZLA_CHECK_SORT_NOT_NULL(sort);
+  BITWUZLA_CHECK_SORT_IS_BV(sort);
+  BITWUZLA_CHECK(bzla::BitVector::fits_in_size(sort.d_type->bv_size(), words))
+      << "value does not fit into a bit-vector of size '"
+      << sort.d_type->bv_size() << "'";
+  BITWUZLA_CHECK_SORT_TERM_MGR_BV(sort);
+  return d_nm->mk_value(
+      bzla::BitVector::from_words(sort.d_type->bv_size(), words));
 }
 
 Term

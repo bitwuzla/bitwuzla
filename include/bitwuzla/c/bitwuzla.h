@@ -1122,6 +1122,25 @@ const char* bitwuzla_term_value_get_str(BitwuzlaTerm term);
 const char* bitwuzla_term_value_get_str_fmt(BitwuzlaTerm term, uint8_t base);
 
 /**
+ * Get the 64-bit words of a bit-vector value term.
+ *
+ * Word `i` holds bits `64 * i` to `64 * i + 63` of the value, bits beyond the
+ * size of the value are zero. This allows to pass values to arbitrary-precision
+ * integer libraries without string conversion, e.g., to GMP via
+ * `mpz_import(z, size, -1, sizeof(uint64_t), 0, 0, words)`.
+ *
+ * @param term The bit-vector value term.
+ * @param size Output parameter, stores the number of words, which is the size
+ *             of the value divided by 64, rounded up.
+ * @return The words of the value, least significant word first.
+ *
+ * @note Return value is valid until next `bitwuzla_term_value_get_bv_words`
+ *       call.
+ */
+const uint64_t* bitwuzla_term_value_get_bv_words(BitwuzlaTerm term,
+                                                 size_t* size);
+
+/**
  * Get (the raw) string representation of a given floating-point value
  * term in IEEE 754 standard representation.
  *
@@ -2041,6 +2060,31 @@ BitwuzlaTerm bitwuzla_mk_bv_value_uint64(BitwuzlaTermManager* tm,
 BitwuzlaTerm bitwuzla_mk_bv_value_int64(BitwuzlaTermManager* tm,
                                         BitwuzlaSort sort,
                                         int64_t value);
+
+/**
+ * Create a bit-vector value from its 64-bit words.
+ *
+ * Word `i` holds bits `64 * i` to `64 * i + 63` of the value, missing words
+ * are zero. This is the inverse of `bitwuzla_term_value_get_bv_words()`.
+ *
+ * @note Given value must fit into a bit-vector of given size (sort).
+ *
+ * @param tm The term manager instance.
+ * @param sort The sort of the value.
+ * @param size The number of words.
+ * @param words The words of the bit-vector value, least significant word
+ *              first.
+ *
+ * @return A term of kind BITWUZLA_KIND_VAL, representing the bit-vector value
+ *         of given sort.
+ *
+ * @see
+ *   * `bitwuzla_mk_bv_sort`
+ */
+BitwuzlaTerm bitwuzla_mk_bv_value_words(BitwuzlaTermManager* tm,
+                                        BitwuzlaSort sort,
+                                        size_t size,
+                                        const uint64_t words[]);
 
 /**
  * Create a floating-point value from its IEEE 754 standard representation

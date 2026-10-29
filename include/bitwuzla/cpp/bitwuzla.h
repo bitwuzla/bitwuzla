@@ -867,6 +867,8 @@ class Term
    *   (Boolean, RoundingMode, bit-vector and floating-point)
    * - `std::tuple<std::string, std::string, std::string>`
    *   for floating-point values
+   * - `std::vector<uint64_t>` for bit-vector values (64-bit words, least
+   *   significant word first)
    *
    * In case of string representations of values (the `std::string` and
    * `std::tuple<std::string, std::string, std::string>` instantions of
@@ -887,11 +889,13 @@ class Term
    *             values; `RoundingMode` for rounding mode values;
    *             `std::tuple<std::string, std::string, std::string>` for
    *             floating-point values (IEEE-754 representation as strings
-   *             for sign bit, exponent and significand); and, generally,
-   *             `std::string` for any value type.
+   *             for sign bit, exponent and significand);
+   *             `std::vector<uint64_t>` for bit-vector values (64-bit
+   *             words); and, generally, `std::string` for any value type.
    * @param base The numeric base for bit-vector values; `2` for binary, `10`
    *             for decimal, and `16` for hexadecimal. Always ignored for
-   *             Boolean and RoundingMode values.
+   *             Boolean and RoundingMode values, and for the
+   *             `std::vector<uint64_t>` instantiation.
    */
   template <class T>
   T value(uint8_t base = 2) const;
@@ -938,6 +942,22 @@ RoundingMode Term::value(uint8_t base) const;
  */
 template <>
 std::string Term::value(uint8_t base) const;
+
+/**
+ * Get the 64-bit words of a bit-vector value term.
+ *
+ * Word `i` holds bits `64 * i` to `64 * i + 63` of the value, bits beyond the
+ * size of the value are zero. This allows to pass values to arbitrary-precision
+ * integer libraries without string conversion, e.g., to GMP via
+ * `mpz_import(z, words.size(), -1, sizeof(uint64_t), 0, 0, words.data())`.
+ *
+ * @param base Ignored for this template instantiation.
+ *
+ * @return The `ceil(size / 64)` words of the value, least significant word
+ *         first.
+ */
+template <>
+std::vector<uint64_t> Term::value(uint8_t base) const;
 
 /**
  * Get string of IEEE 754 standard representation of floating-point value term.
@@ -1406,6 +1426,26 @@ class TermManager
    *   * `TermManager::mk_bv_sort()`
    */
   Term mk_bv_value_int64(const Sort& sort, int64_t value);
+
+  /**
+   * Create a bit-vector value from its 64-bit words.
+   *
+   * Word `i` holds bits `64 * i` to `64 * i + 63` of the value, missing words
+   * are zero. This is the inverse of `Term::value<std::vector<uint64_t>>()`.
+   *
+   * @note Given value must fit into a bit-vector of given size (sort).
+   *
+   * @param sort The sort of the value.
+   * @param words The words of the bit-vector value, least significant word
+   *              first.
+   *
+   * @return A term of kind Kind::VALUE, representing the bit-vector value
+   *         of given sort.
+   *
+   * @see
+   *   * `TermManager::mk_bv_sort()`
+   */
+  Term mk_bv_value_words(const Sort& sort, const std::vector<uint64_t>& words);
 
   /**
    * Create a floating-point positive zero value (SMT-LIB: `+zero`).

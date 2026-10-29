@@ -5003,6 +5003,56 @@ TEST_F(TestBitVector, to_uint64)
   ASSERT_DEATH_DEBUG(BitVector(128).ibvnot().to_uint64(), "fits_in_size");
 }
 
+TEST_F(TestBitVector, to_words)
+{
+  for (uint64_t size = 1; size <= 200; ++size)
+  {
+    uint64_t n_words = (size + 63) / 64;
+    for (const BitVector& bv : {BitVector::mk_zero(size),
+                                BitVector::mk_ones(size),
+                                BitVector(size, *d_rng)})
+    {
+      std::vector<uint64_t> words = bv.to_words();
+      ASSERT_EQ(words.size(), n_words);
+      for (uint64_t i = 0; i < n_words; ++i)
+      {
+        uint64_t lo = 64 * i;
+        uint64_t hi = std::min(lo + 63, size - 1);
+        ASSERT_EQ(words[i], bv.bvextract(hi, lo).to_uint64());
+      }
+      mpz_class z;
+      mpz_import(
+          z.get_mpz_t(), n_words, -1, sizeof(uint64_t), 0, 0, words.data());
+      ASSERT_EQ(BitVector(size, z.get_mpz_t()), bv);
+      ASSERT_TRUE(BitVector::fits_in_size(size, words));
+      ASSERT_EQ(BitVector::from_words(size, words), bv);
+    }
+  }
+}
+
+TEST_F(TestBitVector, from_words)
+{
+  using Words = std::vector<uint64_t>;
+  // Missing words are zero, extra zero words are ignored.
+  ASSERT_EQ(BitVector::from_words(8, Words()), BitVector::mk_zero(8));
+  ASSERT_EQ(BitVector::from_words(128, Words()), BitVector::mk_zero(128));
+  ASSERT_EQ(BitVector::from_words(128, Words({5})), BitVector::from_ui(128, 5));
+  ASSERT_EQ(BitVector::from_words(8, Words({5, 0, 0})),
+            BitVector::from_ui(8, 5));
+  ASSERT_EQ(BitVector::from_words(65, Words({UINT64_MAX, 1, 0})),
+            BitVector::mk_ones(65));
+
+  ASSERT_TRUE(BitVector::fits_in_size(1, Words()));
+  ASSERT_TRUE(BitVector::fits_in_size(1, Words({1, 0})));
+  ASSERT_FALSE(BitVector::fits_in_size(1, Words({2})));
+  ASSERT_TRUE(BitVector::fits_in_size(64, Words({UINT64_MAX})));
+  ASSERT_FALSE(BitVector::fits_in_size(64, Words({0, 1})));
+  ASSERT_TRUE(BitVector::fits_in_size(65, Words({0, 1})));
+  ASSERT_FALSE(BitVector::fits_in_size(65, Words({0, 2})));
+  ASSERT_FALSE(BitVector::fits_in_size(128, Words({0, 0, 1})));
+  ASSERT_DEATH_DEBUG(BitVector::from_words(8, Words({0x100})), "fits_in_size");
+}
+
 TEST_F(TestBitVector, compare)
 {
   for (uint64_t i = 0; i < 15; ++i)

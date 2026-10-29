@@ -157,6 +157,17 @@ BitVector::fits_in_size(uint64_t size, const mpz_t value)
   return size >= mpz_sizeinbase(value, 2);
 }
 
+bool
+BitVector::fits_in_size(uint64_t size, std::span<const uint64_t> words)
+{
+  size_t n = words.size();
+  while (n > 0 && words[n - 1] == 0)
+  {
+    n -= 1;
+  }
+  return n == 0 || size >= 64 * n - std::countl_zero(words[n - 1]);
+}
+
 BitVector
 BitVector::mk_true()
 {
@@ -385,6 +396,29 @@ BitVector::from_si(uint64_t size, int64_t value, bool truncate)
   else
   {
     res.d_val_uint64 = uint64_fdiv_r_2exp(size, static_cast<uint64_t>(value));
+  }
+  return res;
+}
+
+BitVector
+BitVector::from_words(uint64_t size, std::span<const uint64_t> words)
+{
+  assert(size > 0);
+  assert(fits_in_size(size, words));
+
+  BitVector res(size);
+  if (words.empty())
+  {
+    return res;
+  }
+  if (res.is_gmp())
+  {
+    mpz_import(
+        res.d_val_gmp, words.size(), -1, sizeof(uint64_t), 0, 0, words.data());
+  }
+  else
+  {
+    res.d_val_uint64 = words[0];
   }
   return res;
 }
@@ -698,6 +732,24 @@ BitVector::to_uint64(bool truncate) const
   }
   assert(truncate || fits_in_size(64, d_val_uint64));
   return d_val_uint64;
+}
+
+std::vector<uint64_t>
+BitVector::to_words() const
+{
+  assert(!is_null());
+  std::vector<uint64_t> res((d_size + 63) / 64, 0);
+  if (is_gmp())
+  {
+    // The value has at most d_size bits, so this writes at most res.size()
+    // words (none for zero).
+    mpz_export(res.data(), nullptr, -1, sizeof(uint64_t), 0, 0, d_val_gmp);
+  }
+  else
+  {
+    res[0] = d_val_uint64;
+  }
+  return res;
 }
 
 int32_t

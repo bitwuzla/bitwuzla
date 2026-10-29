@@ -2,6 +2,20 @@
 
 This file collects a summary of important and/or user-visible changes.
 
+- New API functions to get and create **bit-vector values as 64-bit words**
+  (least significant word first), e.g., to exchange values with
+  arbitrary-precision integer libraries without string conversion:
+  * C++ API: `bitwuzla::Term::value<std::vector<uint64_t>>()` and
+    `bitwuzla::TermManager::mk_bv_value_words(const Sort&,
+    const std::vector<uint64_t>&)`
+  * C API: `bitwuzla_term_value_get_bv_words(BitwuzlaTerm, size_t*)` and
+    `bitwuzla_mk_bv_value_words(BitwuzlaTermManager*, BitwuzlaSort, size_t,
+    const uint64_t[])`
+  * Python API: `Term.value(bv_as_int=True)` returns a bit-vector value as
+    `int`. `TermManager.mk_bv_value(Sort, int)` no longer converts the value
+    to a decimal string, which failed for values exceeding the integer string
+    conversion length limit of Python.
+
 - Release builds configured via `configure.py` now use **link-time
   optimization** by default if the compiler generates fat objects and the
   linker supports link-time optimization, e.g., with GCC, or with Clang on
