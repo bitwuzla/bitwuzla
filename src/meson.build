@@ -120,6 +120,10 @@ gimsatul_dep = dependency('gimsatul',
                           include_type: 'system',
                           required: get_option('gimsatul'))
 
+aiger_dep = dependency('aiger',
+                       include_type: 'system',
+                       required: get_option('aiger'))
+
 # Using system include type suppresses compile warnings originating from the
 # symfpu headers
 symfpu_dep = dependency('symfpu', include_type: 'system', required: true)
@@ -191,7 +195,8 @@ endif
 dependencies = [
   gmp_dep, gmp_link_dep, mpfr_dep,
   symfpu_dep,
-  cadical_dep, cms_dep, kissat_dep, gimsatul_dep
+  cadical_dep, cms_dep, kissat_dep, gimsatul_dep,
+  aiger_dep
 ]
 
 cpp_args = []
@@ -206,6 +211,9 @@ if kissat_dep.found()
 endif
 if gimsatul_dep.found()
   cpp_args += ['-DBZLA_USE_GIMSATUL']
+endif
+if aiger_dep.found()
+  cpp_args += ['-DBZLA_USE_AIGER']
 endif
 if mpfr_dep.found()
   cpp_args += ['-DMPFR_USE_C99_FEATURE=1']
@@ -296,31 +304,6 @@ if git_exe.found()
 endif
 
 # ---
-# Util library used by support and bitwuzla library
-# ---
-
-sources_util = files([
-  'util/hash.cpp',
-  'util/logger.cpp',
-  'util/resources.cpp',
-  'util/printer.cpp',
-  'util/statistics.cpp',
-  'util/util.cpp',
-  'util/integer.cpp',
-  'util/gmp_utils.cpp'
-])
-
-util_lib = static_library('bzlautil', sources_util, cpp_args: cpp_args,
-                          dependencies: gmp_dep)
-
-# ---
-# Add Bitwuzla support libraries
-# ---
-
-subdir('lib')
-support_libs = [bitblast_lib, bitvector_lib, local_search_lib]
-
-# ---
 # Build Bitwuzla library
 # ---
 
@@ -340,6 +323,19 @@ sources = files([
   'check/check_unsat_core.cpp',
   'env.cpp',
   'interpolator.cpp',
+  'lib/bitblast/aig/aig_cnf.cpp',
+  'lib/bitblast/aig/aig_manager.cpp',
+  'lib/bitblast/aig/aig_node.cpp',
+  'lib/bitblast/aig/aig_printer.cpp',
+  'lib/bv/bitvector.cpp',
+  'lib/bv/bounds/bitvector_bounds.cpp',
+  'lib/bv/domain/bitvector_domain.cpp',
+  'lib/bv/domain/wheel_factorizer.cpp',
+  'lib/ls/bv/bitvector_node.cpp',
+  'lib/ls/ls.cpp',
+  'lib/ls/ls_bv.cpp',
+  'lib/ls/node/node.cpp',
+  'lib/rng/rng.cpp',
   'node/kind_info.cpp',
   'node/node.cpp',
   'node/node_data.cpp',
@@ -418,7 +414,22 @@ sources = files([
   'type/type.cpp',
   'type/type_data.cpp',
   'type/type_manager.cpp',
+  'util/gmp_utils.cpp',
+  'util/hash.cpp',
+  'util/integer.cpp',
+  'util/logger.cpp',
+  'util/printer.cpp',
+  'util/resources.cpp',
+  'util/statistics.cpp',
+  'util/util.cpp',
 ])
+
+# The local search unit tests require exhaustive enumeration of inverse values
+# for small bit-widths, which is enabled when compiling for unit testing.
+cpp_args_lib = cpp_args
+if enable_unit_testing
+  cpp_args_lib += ['-DBZLA_ENABLE_UNIT_TESTING']
+endif
 
 # Public header include directory
 bitwuzla_inc = include_directories('../include', 'lib')
@@ -426,17 +437,16 @@ bitwuzla_inc = include_directories('../include', 'lib')
 bitwuzla_lib = library('bitwuzla',
                       sources + config_h,
                       include_directories: bitwuzla_inc,
-                      link_with: [util_lib, support_libs],
                       dependencies: dependencies,
                       soversion: bitwuzla_lib_soversion,
                       install_rpath: install_rpath,
                       install: true,
-                      cpp_args: cpp_args)
+                      cpp_args: cpp_args_lib)
 
 # Create library dependency
 bitwuzla_dep = declare_dependency(include_directories: bitwuzla_inc,
                                   dependencies: dependencies,
-                                  link_with: [bitwuzla_lib, support_libs])
+                                  link_with: bitwuzla_lib)
 
 # Generate pkgconfig file.
 pkg = import('pkgconfig')

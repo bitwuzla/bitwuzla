@@ -2,6 +2,10 @@
 
 This file collects a summary of important and/or user-visible changes.
 
+- The bit-vector, bit-blasting and local search support libraries
+  (`libbitwuzlabv`, `libbitwuzlabb`, `libbitwuzlals`) are now part of
+  `libbitwuzla` and are no longer built and installed separately.
+
 - New option `--bv-cnf-scope` selects the assertion level at which the
   definitional clauses of AIG nodes are added in incremental mode. Clauses of
   a popped level are disabled in the SAT solver, and their AIG nodes are

@@ -87,18 +87,15 @@ subdir('src')
 # Remove it from installed static libraries, which keep their machine code
 # only, as Linux distributions do for packaged static libraries.
 if lto_fat_static
-  static_libs = []
-  foreach lib : [bitwuzla_lib] + support_libs
-    if get_option('default_library') == 'both'
-      lib = lib.get_static_lib()
-    endif
-    static_libs += lib
-  endforeach
+  static_lib = bitwuzla_lib
+  if get_option('default_library') == 'both'
+    static_lib = bitwuzla_lib.get_static_lib()
+  endif
   meson.add_install_script(find_program('python3', 'python'),
                            files('src/strip_lto.py'),
                            find_program('objcopy').full_path(),
                            get_option('libdir'),
-                           static_libs,
+                           static_lib,
                            install_tag: 'devel')
 endif
 
