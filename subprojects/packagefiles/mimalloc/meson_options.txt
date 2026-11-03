@@ -1,0 +1,3 @@
+option('thp', type: 'boolean', value: true,
+       description: 'use transparent huge pages by default, which improves ' +
+                    'performance but increases memory usage')
