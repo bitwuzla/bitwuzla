@@ -111,27 +111,33 @@ jobs:
             config: --testing --unit-testing --python
             package-name: Bitwuzla-Linux-arm64
 
+          # Debug builds are compiled with -O1 to speed up testing. The build
+          # type stays debug, which keeps assertions and the debug-only model,
+          # unsat core and interpolant checks enabled.
           - name: debug
             config: debug --python --cryptominisat --kissat
+            env: CFLAGS=-O1 CXXFLAGS=-O1
 
           - name: release-no-sat-solver
             os: ubuntu-latest
             config: --no-cadical --python
             build-only: true
 
+          # Meson only detects ccache automatically if CC/CXX are not set.
           - name: release-clang
             os: ubuntu-latest
             config: --testing --unit-testing --python --cryptominisat --kissat
-            env: CC=clang CXX=clang++
+            env: CC="ccache clang" CXX="ccache clang++"
 
           - name: debug-clang
             os: ubuntu-latest
             config: debug --shared --python
-            env: CC=clang CXX=clang++
+            env: CC="ccache clang" CXX="ccache clang++" CFLAGS=-O1 CXXFLAGS=-O1
 
           - name: debug-win64
             os: windows-latest
             config: debug --python
+            env: CFLAGS=-O1 CXXFLAGS=-O1
             shell: msys2 {0}
 
           - name: release-win64
@@ -144,18 +150,21 @@ jobs:
     defaults:
       run:
         shell: ${{ matrix.shell || 'bash' }}
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      CCACHE_MAXSIZE: 500M
 
     steps:
       - name: Install Packages (Linux)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgmp-dev libmpfr-dev ninja-build meson cython3 python3-pytest libgtest-dev
+          sudo apt-get install -y libgmp-dev libmpfr-dev ninja-build meson cython3 python3-pytest libgtest-dev ccache
 
       - name: Install Packages (macOS)
         if: runner.os == 'macOS'
         run: |
-          brew install meson ninja pytest cython googletest
+          brew install meson ninja pytest cython googletest ccache
           echo "/opt/homebrew/opt/cython/bin" >> $GITHUB_PATH
 
 
@@ -169,6 +178,7 @@ jobs:
             git
             zip
             mingw-w64-x86_64-ca-certificates
+            mingw-w64-x86_64-ccache
             mingw-w64-x86_64-cython
             mingw-w64-x86_64-gcc
             mingw-w64-x86_64-gmp
@@ -181,6 +191,20 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v5
+
+      # The cache is only saved on main, all other refs restore the latest
+      # cache of main.
+      - name: Restore ccache
+        uses: actions/cache/restore@v6
+        with:
+          path: .ccache
+          key: ccache-${{ matrix.os }}-${{ matrix.name }}-run-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: ccache-${{ matrix.os }}-${{ matrix.name }}-run-
+
+      - name: Setup ccache
+        run: |
+          ccache --zero-stats
+          echo "CCACHE_START=$(date +%s)" >> $GITHUB_ENV
 
       - name: Configure
         run: ${{ matrix.env }} ./configure.py --prefix="$(pwd)/build/install" ${{ matrix.config }}
@@ -214,3 +238,20 @@ jobs:
           shell: ${{ matrix.shell || 'bash' }}
           build-dir: ${{ steps.build.outputs.build-dir }}
           package-name: ${{ matrix.package-name }}-static
+
+      # Evict cache entries that were not used by this job to keep the saved
+      # cache at the size of one build.
+      - name: Show and prune ccache
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: |
+          ccache --show-stats
+          if [ "$GITHUB_REF" = refs/heads/main ]; then
+            ccache --evict-older-than $(( $(date +%s) - CCACHE_START ))s
+          fi
+
+      - name: Save ccache
+        if: ${{ !cancelled() && steps.build.outcome == 'success' && github.ref == 'refs/heads/main' }}
+        uses: actions/cache/save@v6
+        with:
+          path: .ccache
+          key: ccache-${{ matrix.os }}-${{ matrix.name }}-run-${{ github.run_id }}-${{ github.run_attempt }}
