@@ -149,61 +149,55 @@ class TestRewriter : public ::testing::Test
 
     Node node = d_nm.mk_node(kind, children, indices);
     Env env(d_nm, d_sat_factory);
-    Node res = env.rewriter().rewrite(node);
-    if (s_solver_binary)
-    {
-      std::stringstream ss;
-      for (const Node& child : children)
-      {
-        ss << "(declare-const " << child << " " << child.type() << ")\n";
-      }
-      ss << "(assert (distinct " << node << " " << res << "))\n";
-      ASSERT_EQ(check_sat(ss), "unsat");
-    }
-    else
-    {
-      d_options.preprocess.set(false);
-      d_options.rewrite_level.set(0);
-      sat::SatSolverFactory sat_factory(d_options);
-      SolvingContext ctx(d_nm, d_options, sat_factory);
-      ctx.assert_formula(d_nm.mk_node(node::Kind::DISTINCT, {node, res}));
-      ASSERT_EQ(ctx.solve(), Result::UNSAT);
-    }
+    check_equivalent(node, env.rewriter().rewrite(node));
   }
 
+  /**
+   * Only the rule application depends on the rule kind. The checks are not
+   * part of the template, since they would otherwise be compiled for each
+   * tested rule kind.
+   */
   template <RewriteRuleKind K>
   void test_rule(const Node& node)
   {
     Env env(d_nm, d_sat_factory);
-    Rewriter& rewriter = env.rewriter();
-    std::stringstream ss;
-    std::vector<std::reference_wrapper<const Node>> visit{node};
-    std::unordered_set<Node> visited;
-    do
-    {
-      const Node& cur = visit.back();
-      visit.pop_back();
-      auto [it, inserted] = visited.emplace(cur);
-      if (inserted)
-      {
-        if (s_solver_binary && cur.is_const())
-        {
-          ss << "(declare-const " << cur << " " << cur.type() << ")\n";
-        }
-        visit.insert(visit.end(), cur.begin(), cur.end());
-      }
-    } while (!visit.empty());
-    Node res;
-    RewriteRuleKind kind;
-    std::tie(res, kind) = RewriteRule<K>::apply(rewriter, node);
+    check_rule_applied(node, RewriteRule<K>::apply(env.rewriter(), node).first);
+  }
+
+  /** Check that a rule rewrote `node` to an equivalent node `res`. */
+  void check_rule_applied(const Node& node, const Node& res)
+  {
     if (res == node)
     {
       std::cout << "node: " << node << std::endl;
     }
     assert(node != res);
     ASSERT_NE(node, res);
+    check_equivalent(node, res);
+  }
+
+  /** Check that `node` and `res` are equivalent. */
+  void check_equivalent(const Node& node, const Node& res)
+  {
     if (s_solver_binary)
     {
+      std::stringstream ss;
+      std::vector<std::reference_wrapper<const Node>> visit{node};
+      std::unordered_set<Node> visited;
+      do
+      {
+        const Node& cur = visit.back();
+        visit.pop_back();
+        auto [it, inserted] = visited.emplace(cur);
+        if (inserted)
+        {
+          if (cur.is_const())
+          {
+            ss << "(declare-const " << cur << " " << cur.type() << ")\n";
+          }
+          visit.insert(visit.end(), cur.begin(), cur.end());
+        }
+      } while (!visit.empty());
       ss << "(assert (distinct " << node << " " << res << "))\n";
       ASSERT_EQ(check_sat(ss), "unsat");
     }

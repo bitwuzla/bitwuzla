@@ -36,14 +36,7 @@ class TestRewriterBvNorm : public TestRewriter
   {
     Env env(d_nm, d_sat_factory);
     Rewriter rewriter(env, Rewriter::LEVEL_ARITHMETIC);
-    Node res = RewriteRule<K>::apply(rewriter, node).first;
-    ASSERT_NE(node, res);
-    d_options.preprocess.set(false);
-    d_options.rewrite_level.set(0);
-    sat::SatSolverFactory sat_factory(d_options);
-    SolvingContext ctx(d_nm, d_options, sat_factory);
-    ctx.assert_formula(d_nm.mk_node(Kind::DISTINCT, {node, res}));
-    ASSERT_EQ(ctx.solve(), Result::UNSAT);
+    check_rule_applied(node, RewriteRule<K>::apply(rewriter, node).first);
   }
 };
 
