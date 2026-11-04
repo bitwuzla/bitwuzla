@@ -8,8 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#ifndef BZLA__BV_BITVECTOR_BOUNDS_H
-#define BZLA__BV_BITVECTOR_BOUNDS_H
+#ifndef BZLA_BV_BOUNDS_BITVECTOR_BOUNDS_H_INCLUDED
+#define BZLA_BV_BOUNDS_BITVECTOR_BOUNDS_H_INCLUDED
 
 #include "bv/bitvector.h"
 #include "bv/domain/bitvector_domain.h"

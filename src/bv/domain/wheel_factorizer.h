@@ -8,8 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#ifndef BZLA__UTIL_WHEEL_FACTORIZER_H
-#define BZLA__UTIL_WHEEL_FACTORIZER_H
+#ifndef BZLA_BV_DOMAIN_WHEEL_FACTORIZER_H_INCLUDED
+#define BZLA_BV_DOMAIN_WHEEL_FACTORIZER_H_INCLUDED
 
 #include <cstdint>
 

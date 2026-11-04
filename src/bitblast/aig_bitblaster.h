@@ -8,8 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#ifndef BZLA__BITBLAST_AIG_BITBLASTER_H
-#define BZLA__BITBLAST_AIG_BITBLASTER_H
+#ifndef BZLA_BITBLAST_AIG_BITBLASTER_H_INCLUDED
+#define BZLA_BITBLAST_AIG_BITBLASTER_H_INCLUDED
 
 #include "bitblast/aig/aig_manager.h"
 #include "bitblast/aig/aig_node.h"

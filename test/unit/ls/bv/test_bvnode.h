@@ -8,8 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#ifndef BZLALS__TEST__TEST_BVNODE_H
-#define BZLALS__TEST__TEST_BVNODE_H
+#ifndef BZLA_TEST_LS_BV_TEST_BVNODE_H_INCLUDED
+#define BZLA_TEST_LS_BV_TEST_BVNODE_H_INCLUDED
 
 #include "bv/bitvector.h"
 #include "bv/bounds/bitvector_bounds.h"

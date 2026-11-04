@@ -8,8 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#ifndef BZLA_TIMEOUT_TERMINATOR_H_INCLUDED
-#define BZLA_TIMEOUT_TERMINATOR_H_INCLUDED
+#ifndef BZLA_RESOURCE_TERMINATOR_H_INCLUDED
+#define BZLA_RESOURCE_TERMINATOR_H_INCLUDED
 
 #include <chrono>
 #include <cstdint>

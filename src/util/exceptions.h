@@ -8,8 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#ifndef BZLA_UTIL_EXCEPTIONS_INCLUDED
-#define BZLA_UTIL_EXCEPTIONS_INCLUDED
+#ifndef BZLA_UTIL_EXCEPTIONS_H_INCLUDED
+#define BZLA_UTIL_EXCEPTIONS_H_INCLUDED
 
 #include <exception>
 #include <string>

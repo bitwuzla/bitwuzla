@@ -8,8 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#ifndef BZLA__LS_LS_H
-#define BZLA__LS_LS_H
+#ifndef BZLA_LS_LS_H_INCLUDED
+#define BZLA_LS_LS_H_INCLUDED
 
 #include <cstdint>
 #include <memory>

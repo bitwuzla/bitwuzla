@@ -8,6 +8,9 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+#ifndef BZLA_TEST_REWRITE_TEST_REWRITER_H_INCLUDED
+#define BZLA_TEST_REWRITE_TEST_REWRITER_H_INCLUDED
+
 #include <gtest/gtest.h>
 
 #include "env.h"
@@ -272,3 +275,5 @@ class TestRewriter : public ::testing::Test
 };
 
 }  // namespace bzla::test
+
+#endif

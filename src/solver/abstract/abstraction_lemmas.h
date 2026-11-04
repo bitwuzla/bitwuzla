@@ -8,8 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#ifndef BZLA_SOLVER_BV_ABSTRACTION_LEMMAS_H_INCLUDED
-#define BZLA_SOLVER_BV_ABSTRACTION_LEMMAS_H_INCLUDED
+#ifndef BZLA_SOLVER_ABSTRACT_ABSTRACTION_LEMMAS_H_INCLUDED
+#define BZLA_SOLVER_ABSTRACT_ABSTRACTION_LEMMAS_H_INCLUDED
 
 #include <cstdint>
 #include <memory>

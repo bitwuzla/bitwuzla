@@ -8,6 +8,9 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+#ifndef BZLA_TEST_FP_TEST_FP_H_INCLUDED
+#define BZLA_TEST_FP_TEST_FP_H_INCLUDED
+
 #include <sys/types.h>
 
 #include <cstdint>
@@ -184,3 +187,5 @@ TestFp::test_for_formats(
 /* -------------------------------------------------------------------------- */
 
 }  // namespace bzla::test
+
+#endif

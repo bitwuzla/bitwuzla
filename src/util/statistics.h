@@ -8,8 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#ifndef BZLA_UTIL_STATISTICS_INCLUDED
-#define BZLA_UTIL_STATISTICS_INCLUDED
+#ifndef BZLA_UTIL_STATISTICS_H_INCLUDED
+#define BZLA_UTIL_STATISTICS_H_INCLUDED
 
 #include <cassert>
 #include <chrono>

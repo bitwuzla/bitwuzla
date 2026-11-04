@@ -8,8 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#ifndef BZLA_PRINTER_PRINTER_H_INCLUDED
-#define BZLA_PRINTER_PRINTER_H_INCLUDED
+#ifndef BZLA_PRINTER_SMT2_PRINTER_H_INCLUDED
+#define BZLA_PRINTER_SMT2_PRINTER_H_INCLUDED
 
 #include <ostream>
 #include <unordered_set>

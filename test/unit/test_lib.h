@@ -8,8 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#ifndef BZLALS__TEST__TEST_H
-#define BZLALS__TEST__TEST_H
+#ifndef BZLA_TEST_TEST_LIB_H_INCLUDED
+#define BZLA_TEST_TEST_LIB_H_INCLUDED
 
 #include <gtest/gtest.h>
 

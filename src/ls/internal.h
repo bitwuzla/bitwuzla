@@ -8,6 +8,9 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+#ifndef BZLA_LS_INTERNAL_H_INCLUDED
+#define BZLA_LS_INTERNAL_H_INCLUDED
+
 /* -------------------------------------------------------------------------- */
 
 #include "ls.h"
@@ -103,3 +106,5 @@ struct LocalSearch<VALUE>::Internal
 /* -------------------------------------------------------------------------- */
 
 }  // namespace bzla::ls
+
+#endif

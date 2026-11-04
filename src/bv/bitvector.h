@@ -8,8 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#ifndef BZLA__BV_BITVECTOR_H
-#define BZLA__BV_BITVECTOR_H
+#ifndef BZLA_BV_BITVECTOR_H_INCLUDED
+#define BZLA_BV_BITVECTOR_H_INCLUDED
 
 #include <gmpxx.h>
 

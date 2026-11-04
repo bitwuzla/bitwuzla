@@ -8,8 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#ifndef BZLA_SOLVER_FP_FLOATING_POINT_H_INCLUDED
-#define BZLA_SOLVER_FP_FLOATING_POINT_H_INCLUDED
+#ifndef BZLA_SOLVER_FP_FLOATING_POINT_SYMFPU_H_INCLUDED
+#define BZLA_SOLVER_FP_FLOATING_POINT_SYMFPU_H_INCLUDED
 
 #include <array>
 #include <memory>

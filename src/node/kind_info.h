@@ -8,8 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#ifndef BZLA_NODE_KIND_INFO_INCLUDED
-#define BZLA_NODE_KIND_INFO_INCLUDED
+#ifndef BZLA_NODE_KIND_INFO_H_INCLUDED
+#define BZLA_NODE_KIND_INFO_H_INCLUDED
 
 #include <array>
 

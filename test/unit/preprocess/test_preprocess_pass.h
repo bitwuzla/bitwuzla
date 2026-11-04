@@ -8,6 +8,9 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
+#ifndef BZLA_TEST_PREPROCESS_TEST_PREPROCESS_PASS_H_INCLUDED
+#define BZLA_TEST_PREPROCESS_TEST_PREPROCESS_PASS_H_INCLUDED
+
 #include <gtest/gtest.h>
 
 #include "backtrack/assertion_stack.h"
@@ -33,3 +36,5 @@ class TestPreprocessingPass : public ::testing::Test
 };
 
 }
+
+#endif

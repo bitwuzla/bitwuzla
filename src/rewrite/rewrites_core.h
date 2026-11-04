@@ -8,8 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#ifndef BZLA_REWRITE_REWRITES_BOOL_H_INCLUDED
-#define BZLA_REWRITE_REWRITES_BOOL_H_INCLUDED
+#ifndef BZLA_REWRITE_REWRITES_CORE_H_INCLUDED
+#define BZLA_REWRITE_REWRITES_CORE_H_INCLUDED
 
 #include "rewrite/rewriter.h"
 

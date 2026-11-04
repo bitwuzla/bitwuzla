@@ -8,8 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#ifndef BZLA_PREPROCESS_PASS_UDIV_ELIM_H_INCLUDED
-#define BZLA_PREPROCESS_PASS_UDIV_ELIM_H_INCLUDED
+#ifndef BZLA_PREPROCESS_PASS_ELIM_UDIV_H_INCLUDED
+#define BZLA_PREPROCESS_PASS_ELIM_UDIV_H_INCLUDED
 
 #include "preprocess/preprocessing_pass.h"
 #include "util/statistics.h"

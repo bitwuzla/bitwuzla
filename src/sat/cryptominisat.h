@@ -8,8 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#ifndef BZLA_SAT_CMS_H_INCLUDED
-#define BZLA_SAT_CMS_H_INCLUDED
+#ifndef BZLA_SAT_CRYPTOMINISAT_H_INCLUDED
+#define BZLA_SAT_CRYPTOMINISAT_H_INCLUDED
 
 /*----------------------------------------------------------------------------*/
 #ifdef BZLA_USE_CMS

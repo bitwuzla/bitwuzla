@@ -8,8 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#ifndef BZLA_PARSER_H_INCLUDED
-#define BZLA_PARSER_H_INCLUDED
+#ifndef BZLA_PARSER_PARSER_H_INCLUDED
+#define BZLA_PARSER_PARSER_H_INCLUDED
 
 #include <bitwuzla/cpp/bitwuzla.h>
 
