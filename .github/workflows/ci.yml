@@ -113,10 +113,11 @@ jobs:
 
           # Debug builds are compiled with -O1 to speed up testing. The build
           # type stays debug, which keeps assertions and the debug-only model,
-          # unsat core and interpolant checks enabled.
+          # unsat core and interpolant checks enabled. Nothing in CI uses full
+          # debug info, -g1 only keeps line tables and compiles faster.
           - name: debug
             config: debug --python --cryptominisat --kissat
-            env: CFLAGS=-O1 CXXFLAGS=-O1
+            env: CFLAGS="-O1 -g1" CXXFLAGS="-O1 -g1"
 
           - name: release-no-sat-solver
             os: ubuntu-latest
@@ -132,12 +133,12 @@ jobs:
           - name: debug-clang
             os: ubuntu-latest
             config: debug --shared --python
-            env: CC="ccache clang" CXX="ccache clang++" CFLAGS=-O1 CXXFLAGS=-O1
+            env: CC="ccache clang" CXX="ccache clang++" CFLAGS="-O1 -g1" CXXFLAGS="-O1 -g1"
 
           - name: debug-win64
             os: windows-latest
             config: debug --python
-            env: CFLAGS=-O1 CXXFLAGS=-O1
+            env: CFLAGS="-O1 -g1" CXXFLAGS="-O1 -g1"
             shell: msys2 {0}
 
           - name: release-win64
