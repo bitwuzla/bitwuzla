@@ -172,7 +172,8 @@ endif
 # of the subproject when its wrap file changes, it only warns. The bundled
 # headers are only copied to the build directory at build time and can
 # therefore not be probed via compiles(), check the checkout's sources instead.
-if symfpu_dep.type_name() == 'internal'
+# As a subproject, the checkout's location is determined by the parent project.
+if symfpu_dep.type_name() == 'internal' and not meson.is_subproject()
   symfpu_header = meson.project_source_root() / 'subprojects' / 'symfpu' / 'core' / 'unpackedFloat.h'
   if not import('fs').read(symfpu_header).contains('makeOne(')
     error('Bundled SymFPU in subprojects/symfpu is older than 1.2.0, ' +

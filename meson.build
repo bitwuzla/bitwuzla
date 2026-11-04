@@ -65,9 +65,11 @@ endif
 # intermediate representation, which only the same compiler can link. Static
 # libraries, which also bundle the objects of subprojects, additionally need
 # machine code to be linkable by other compilers. Clang supports such fat
-# objects for ELF only.
+# objects for ELF only. Subprojects cannot add global arguments, which is not
+# needed since a subproject is linked within the build of its parent project.
 lto_fat_static = false
-if get_option('b_lto') and get_option('default_library') != 'shared'
+if get_option('b_lto') and get_option('default_library') != 'shared' \
+   and not meson.is_subproject()
   lto_fat_static = true
   foreach lang : ['c', 'cpp']
     compiler = meson.get_compiler(lang)
