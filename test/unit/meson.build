@@ -18,6 +18,22 @@ unit_tests = [
     ]
   ],
 
+  ['bitblast',
+    [
+      'aig_bitblaster',
+      'aig_manager',
+      'aig_cnf'
+    ]
+  ],
+
+  ['bv',
+    [
+      'bv',
+      'bvdomain',
+      'bvdomaingen',
+    ]
+  ],
+
   ['fp',
     [
       'fp',
@@ -28,6 +44,19 @@ unit_tests = [
       'fp_binary',
       'fp_binary_rm',
       'fp_ternary',
+    ]
+  ],
+
+  ['ls/bv',
+    [
+      'bvnode',
+      'bvnodecons',
+      'bvnodeinv',
+      'bvnodeiscons',
+      'bvnodeisess',
+      'bvnodeisinv',
+      'bvnodeselpath',
+      'local_search_bv',
     ]
   ],
 
@@ -109,44 +138,10 @@ unit_tests = [
     ]
   ],
 
-  ['lib/bitblast',
-    [
-      'aig_bitblaster',
-      'aig_manager',
-      'aig_cnf'
-    ]
-  ],
-
-  ['lib/bitvector',
-    [
-      'bv',
-      'bvdomain',
-      'bvdomaingen',
-    ]
-  ],
-
-  ['lib/rng',
-    [
-      'rng',
-    ]
-  ],
-
-  ['lib/ls/bv',
-    [
-      'bvnode',
-      'bvnodecons',
-      'bvnodeinv',
-      'bvnodeiscons',
-      'bvnodeisess',
-      'bvnodeisinv',
-      'bvnodeselpath',
-      'local_search_bv',
-      ]
-  ],
-
   ['util',
     [
       'integer',
+      'rng',
       'util',
     ]
   ],
@@ -154,7 +149,7 @@ unit_tests = [
 ]
 
 gtest_dep = dependency('gtest_main', include_type: 'system', required: true)
-test_inc = [include_directories('../../src', '../..', 'lib')]
+test_inc = [include_directories('../../src', '../..')]
 test_deps = [gtest_dep, bitwuzla_dep, gmp_dep, mpfr_dep]
 
 # Disable wine debug output if we run the cross-compiled binary

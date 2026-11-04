@@ -8,8 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#ifndef BZLA__RNG_RNG_H
-#define BZLA__RNG_RNG_H
+#ifndef BZLA_UTIL_RNG_H_INCLUDED
+#define BZLA_UTIL_RNG_H_INCLUDED
 
 #include <gmpxx.h>
 

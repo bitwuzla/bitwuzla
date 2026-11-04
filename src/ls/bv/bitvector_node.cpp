@@ -16,7 +16,7 @@
 #include <sstream>
 
 #include "bv/bitvector.h"
-#include "rng/rng.h"
+#include "util/rng.h"
 
 namespace bzla {
 namespace ls {

@@ -10,8 +10,8 @@
 
 #include <gmp.h>
 
-#include "rng/rng.h"
 #include "test_lib.h"
+#include "util/rng.h"
 
 namespace bzla::test {
 

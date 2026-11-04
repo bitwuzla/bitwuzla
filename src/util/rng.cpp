@@ -8,7 +8,7 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#include "rng.h"
+#include "util/rng.h"
 
 #include <cassert>
 

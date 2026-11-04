@@ -17,9 +17,9 @@
 #include <sstream>
 #include <utility>
 
-#include "rng/rng.h"
 #include "util/gmp_utils.h"
 #include "util/hash.h"
+#include "util/rng.h"
 
 namespace bzla {
 

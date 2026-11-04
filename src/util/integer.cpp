@@ -16,7 +16,7 @@
 #include <limits>
 #include <sstream>
 
-#include "lib/bv/bitvector.h"
+#include "bv/bitvector.h"
 #include "util/gmp_utils.h"
 
 namespace bzla::util {

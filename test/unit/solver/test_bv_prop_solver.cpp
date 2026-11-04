@@ -14,10 +14,10 @@
 #include "node/node_manager.h"
 #include "option/option.h"
 #include "printer/smt2_printer.h"
-#include "rng/rng.h"
 #include "sat/sat_solver_factory.h"
 #include "solving_context.h"
 #include "test/unit/test.h"
+#include "util/rng.h"
 
 namespace bzla::test {
 

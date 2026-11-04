@@ -14,11 +14,11 @@
 
 #include "bv/bitvector.h"
 #include "node/node_manager.h"
-#include "rng/rng.h"
 #include "solver/fp/floating_point.h"
 #include "solver/fp/floating_point_symfpu.h"
 #include "solver/fp/symfpu_nm.h"
 #include "test/unit/test.h"
+#include "util/rng.h"
 
 namespace bzla::test {
 

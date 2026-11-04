@@ -17,7 +17,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "lib/bv/bitvector.h"
+#include "bv/bitvector.h"
 #include "sat/sat_propagator.h"
 #include "util/integer.h"
 

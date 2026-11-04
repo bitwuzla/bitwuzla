@@ -17,7 +17,7 @@
 #include <cassert>
 #include <utility>
 
-#include "lib/bv/bitvector.h"
+#include "bv/bitvector.h"
 #include "sat/propagator.h"
 
 namespace bzla::sat {

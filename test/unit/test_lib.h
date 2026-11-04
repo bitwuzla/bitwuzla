@@ -17,8 +17,8 @@
 #include <string>
 
 #include "bv/bitvector.h"
-#include "rng/rng.h"
 #include "test.h"
+#include "util/rng.h"
 
 namespace bzla::test {
 

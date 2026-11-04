@@ -17,7 +17,7 @@
 #include "bv/bitvector.h"
 #include "ls/bv/bitvector_node.h"
 #include "ls/internal.h"
-#include "rng/rng.h"
+#include "util/rng.h"
 
 namespace bzla {
 namespace ls {

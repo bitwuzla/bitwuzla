@@ -318,24 +318,23 @@ sources = files([
   'api/cpp/terminator.cpp',
   'backtrack/assertion_stack.cpp',
   'backtrack/backtrackable.cpp',
+  'bitblast/aig/aig_cnf.cpp',
+  'bitblast/aig/aig_manager.cpp',
+  'bitblast/aig/aig_node.cpp',
+  'bitblast/aig/aig_printer.cpp',
+  'bv/bitvector.cpp',
+  'bv/bounds/bitvector_bounds.cpp',
+  'bv/domain/bitvector_domain.cpp',
+  'bv/domain/wheel_factorizer.cpp',
   'check/check_interpolant.cpp',
   'check/check_model.cpp',
   'check/check_unsat_core.cpp',
   'env.cpp',
   'interpolator.cpp',
-  'lib/bitblast/aig/aig_cnf.cpp',
-  'lib/bitblast/aig/aig_manager.cpp',
-  'lib/bitblast/aig/aig_node.cpp',
-  'lib/bitblast/aig/aig_printer.cpp',
-  'lib/bv/bitvector.cpp',
-  'lib/bv/bounds/bitvector_bounds.cpp',
-  'lib/bv/domain/bitvector_domain.cpp',
-  'lib/bv/domain/wheel_factorizer.cpp',
-  'lib/ls/bv/bitvector_node.cpp',
-  'lib/ls/ls.cpp',
-  'lib/ls/ls_bv.cpp',
-  'lib/ls/node/node.cpp',
-  'lib/rng/rng.cpp',
+  'ls/bv/bitvector_node.cpp',
+  'ls/ls.cpp',
+  'ls/ls_bv.cpp',
+  'ls/node/node.cpp',
   'node/kind_info.cpp',
   'node/node.cpp',
   'node/node_data.cpp',
@@ -420,6 +419,7 @@ sources = files([
   'util/logger.cpp',
   'util/printer.cpp',
   'util/resources.cpp',
+  'util/rng.cpp',
   'util/statistics.cpp',
   'util/util.cpp',
 ])
@@ -432,7 +432,7 @@ if enable_unit_testing
 endif
 
 # Public header include directory
-bitwuzla_inc = include_directories('../include', 'lib')
+bitwuzla_inc = include_directories('../include')
 
 bitwuzla_lib = library('bitwuzla',
                       sources + config_h,
