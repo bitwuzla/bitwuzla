@@ -210,6 +210,11 @@ if get_option('fpexp')
   cpp_args += ['-DBZLA_USE_FPEXP']
 endif
 
+# The unit test sources are compiled without optimization, which is much
+# faster. Most of the run time of the tests is spent in library code, which
+# stays optimized.
+test_cpp_args = cpp_args + ['-O0']
+
 # The SymFPU reference implementation is only used by unit tests. Compile it
 # once instead of for each unit test.
 symfpu_test_lib = static_library('symfpu_test',
@@ -233,7 +238,7 @@ foreach p : unit_tests
                link_with: symfpu_test_lib,
                dependencies: test_deps,
                include_directories: test_inc,
-               cpp_args: cpp_args,
+               cpp_args: test_cpp_args,
                link_args: link_args,
                override_options: override_options)
     test(name, exe, suite: ['unit', suite], timeout: 0, env: env)
