@@ -150,7 +150,39 @@ unit_tests = [
 
 gtest_dep = dependency('gtest_main', include_type: 'system', required: true)
 test_inc = [include_directories('../../src', '../..')]
-test_deps = [gtest_dep, bitwuzla_dep, gmp_dep, mpfr_dep]
+
+# Link-time optimization of each unit test would re-optimize the whole library.
+# Unit tests link the machine code of the fat LTO objects instead, from a copy
+# of the static library without LTO sections, as installed. Linking the
+# original library with -fno-lto fails with some binutils versions, since the
+# linker loads the LTO plugin on its own and then links the objects that are
+# bundled into multiple libraries more than once. -fno-lto is still required
+# for the libraries of subprojects.
+override_options = []
+link_args = []
+bitwuzla_test_dep = bitwuzla_dep
+if lto_fat_static
+  override_options += ['b_lto=false']
+  link_args += meson.get_compiler('cpp').get_supported_link_arguments('-fno-lto')
+  static_lib = bitwuzla_lib
+  if get_option('default_library') == 'both'
+    static_lib = bitwuzla_lib.get_static_lib()
+  endif
+  libname = import('fs').name(static_lib.full_path())
+  test_lib = custom_target('nolto-' + libname,
+    input: static_lib,
+    output: libname,
+    command: [find_program('objcopy'),
+              '--remove-section=.gnu.lto_*',
+              '--remove-section=.gnu.debuglto_*',
+              '--remove-section=.llvm.lto',
+              '@INPUT@', '@OUTPUT@'])
+  # 'dependencies' are the dependencies of bitwuzla_lib (src/meson.build).
+  bitwuzla_test_dep = declare_dependency(include_directories: bitwuzla_inc,
+                                         dependencies: dependencies,
+                                         link_with: test_lib)
+endif
+test_deps = [gtest_dep, bitwuzla_test_dep, gmp_dep, mpfr_dep]
 
 # Disable wine debug output if we run the cross-compiled binary
 env = []
@@ -178,9 +210,14 @@ if get_option('fpexp')
   cpp_args += ['-DBZLA_USE_FPEXP']
 endif
 
-sources = files([
+# The SymFPU reference implementation is only used by unit tests. Compile it
+# once instead of for each unit test.
+symfpu_test_lib = static_library('symfpu_test',
   '../../src/solver/fp/floating_point_symfpu.cpp',
-  ])
+  dependencies: test_deps,
+  include_directories: test_inc,
+  cpp_args: cpp_args,
+  override_options: override_options)
 
 # Add unit tests
 foreach p : unit_tests
@@ -192,10 +229,13 @@ foreach p : unit_tests
     name = '_'.join(suite, name)
     exename = ''.join('test_', name)
 
-    exe = executable(exename, sources + src,
+    exe = executable(exename, src,
+               link_with: symfpu_test_lib,
                dependencies: test_deps,
                include_directories: test_inc,
-               cpp_args: cpp_args)
+               cpp_args: cpp_args,
+               link_args: link_args,
+               override_options: override_options)
     test(name, exe, suite: ['unit', suite], timeout: 0, env: env)
   endforeach
 endforeach
