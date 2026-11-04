@@ -103,7 +103,27 @@ sources = [
   'witness.c',
 ]
 
-kissat_lib = static_library('kissat', sources: sources, pic: true)
+c_args = []
+if host_machine.system() == 'windows'
+  # The standalone solver's time limit uses alarm() and SIGALRM, which
+  # Windows lacks; the library uses neither file.
+  library_sources = []
+  foreach source : sources
+    if source not in ['application.c', 'handle.c']
+      library_sources += source
+    endif
+  endforeach
+  sources = library_sources
+  # MinGW lays out bitfields as MSVC does: a field whose declared type differs
+  # from the previous field's starts a new storage unit. A watch (a 31-bit
+  # literal and a bool) then takes 8 bytes rather than 4, which assertions
+  # catch and a release build turns into corrupted watch lists. kissat.h
+  # declares no bitfields, so code using the library need not agree.
+  c_args += compiler.get_supported_arguments('-mno-ms-bitfields')
+endif
+
+kissat_lib = static_library('kissat', sources: sources, c_args: c_args,
+                            pic: true)
 kissat_dep = declare_dependency(
                   include_directories: include_directories('.'),
                   link_with: kissat_lib)
