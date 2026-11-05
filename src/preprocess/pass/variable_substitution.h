@@ -90,6 +90,13 @@ class PassVariableSubstitution : public PreprocessingPass
    */
   Node substitute(const Node& term);
 
+  /**
+   * Substitute the current substitutions in `term`, except for `var`. Used
+   * for substitution constraints that must be kept. Requires rewritten
+   * `term`, as substitute().
+   */
+  Node substitute_except(const Node& term, const Node& var);
+
   /** Clear the substitution cache if substitutions were popped. */
   void sync_cache();
 

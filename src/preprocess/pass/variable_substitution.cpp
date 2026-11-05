@@ -828,13 +828,16 @@ PassVariableSubstitution::apply(AssertionVector& assertions)
     auto it = d_keep.find(start_index + i);
     if (it != d_keep.end())
     {
-      // Only rebuild on new substitutions, other passes may have simplified
-      // the constraint and rebuilding it every round would revert this.
+      // Substitute the constraint in its current form instead of rebuilding
+      // `var = t`. Other passes may rely on that form, e.g., embedded
+      // constraints substitutes it with true in other assertions, which turns
+      // a rebuilt constraint containing it into true. Only new substitutions
+      // can occur in it.
       if (d_substitutions.size() > num_substs)
       {
-        const Node& var = it->second;
         assertions.replace(
-            i, d_env.rewriter().mk_node(Kind::EQUAL, {var, substitute(var)}));
+            i,
+            substitute_except(d_env.rewriter().rewrite(assertion), it->second));
       }
       continue;
     }
@@ -1137,6 +1140,50 @@ PassVariableSubstitution::substitute(const Node& term)
 
   assert(results.size() == 1);
   return results.back();
+}
+
+Node
+PassVariableSubstitution::substitute_except(const Node& term, const Node& var)
+{
+  // Results containing `var` must not be stored in d_cache, use a local cache
+  // for all nodes that may contain it.
+  Rewriter& rw = d_env.rewriter();
+  std::unordered_map<Node, Node> cache;
+  node_ref_vector visit{term};
+  std::vector<Node> children;
+  do
+  {
+    const Node& cur     = visit.back();
+    auto [it, inserted] = cache.emplace(cur, Node());
+    if (inserted)
+    {
+      if (cur == var)
+      {
+        it->second = var;
+      }
+      // Nodes created before `var` cannot contain it.
+      else if (cur.id() < var.id() || cur.num_children() == 0)
+      {
+        it->second = substitute(cur);
+      }
+      else
+      {
+        visit.insert(visit.end(), cur.begin(), cur.end());
+        continue;
+      }
+    }
+    else if (it->second.is_null())
+    {
+      children.clear();
+      for (const Node& child : cur)
+      {
+        children.push_back(cache.at(child));
+      }
+      it->second = rw.rebuild_node(cur, children);
+    }
+    visit.pop_back();
+  } while (!visit.empty());
+  return cache.at(term);
 }
 
 void

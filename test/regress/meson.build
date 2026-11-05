@@ -565,6 +565,7 @@ tests_smt2 = [
   ['preprocess/varsubst41.smt2'],
   ['preprocess/varsubst41.smt2', ['--bv-cnf-scope=assertion']],
   ['preprocess/varsubst41.smt2', ['--bv-cnf-scope=permanent']],
+  ['preprocess/varsubst42.smt2', ['--check-model']],
   ['preprocess/varsubstextract1.smt2'],
   ['preprocess/issue51.smt2'],
   ['preprocess/issue162.smt2'],
