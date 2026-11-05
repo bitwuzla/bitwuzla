@@ -217,8 +217,9 @@ jobs:
           echo "build-dir=$(pwd)" >> $GITHUB_OUTPUT
         working-directory: build
 
+      # Runs meson test without forking the meson process for each test.
       - name: Test
-        run: meson test --print-errorlogs
+        run: python3 ../.github/scripts/meson_test.py --print-errorlogs
         working-directory: build
 
       - name: Examples
