@@ -1,5 +1,7 @@
-python = import('python').find_installation()
-run_regress_script = find_program('run-test-case.py')
+# Compiled test driver, a script interpreter would take longer to start than
+# most test cases take to run.
+run_test_case = executable('run_test_case', 'run_test_case.cpp',
+                           dependencies: dependency('threads'))
 
 tests_smt2 = [
   ## backtrack
@@ -1322,13 +1324,13 @@ tests_smt2 = [
   ['solver/bv/problem_130.smt2'],
   ['solver/bv/prop/isbvsext.smt2'],
   ['solver/bv/prop/prels-funs.smt2', ['--bv-solver=preprop']],
-  ['solver/bv/prop/prop_essential_checks_cycle.smt2', ['--bv-solver=prop --prop-sext --prop-ineq-bounds']], # --prop-use-inv-lt-concat" # TODO option currently disabled
+  ['solver/bv/prop/prop_essential_checks_cycle.smt2', ['--bv-solver=prop', '--prop-sext', '--prop-ineq-bounds']], # --prop-use-inv-lt-concat" # TODO option currently disabled
   ['solver/bv/prop/prop_fp.smt2', ['--bv-solver=prop']],
   ['solver/bv/prop/prop_fp_inc.smt2', ['--bv-solver=prop']],
-  ['solver/bv/prop/prop_ineq_bounds_cycle.smt2', ['--bv-solver=prop --prop-sext --prop-ineq-bounds']], # --prop-use-inv-lt-concat" # TODO option currently disabled
+  ['solver/bv/prop/prop_ineq_bounds_cycle.smt2', ['--bv-solver=prop', '--prop-sext', '--prop-ineq-bounds']], # --prop-use-inv-lt-concat" # TODO option currently disabled
   ['solver/bv/prop/prop_norm1.smt2'],
   ['solver/bv/prop/prop_norm2.smt2'],
-  ['solver/bv/prop/prop_not_sat.smt2', ['--bv-solver=prop --prop-nprops=10000 --prop-nupdates=2000000']],
+  ['solver/bv/prop/prop_not_sat.smt2', ['--bv-solver=prop', '--prop-nprops=10000', '--prop-nupdates=2000000']],
   ['solver/bv/prop/prop_top_level_const_bits.smt2', ['--bv-solver=preprop']],
   ['solver/bv/prop/prop_wheel_factorizer.smt2', ['--bv-solver=prop']],
   ['solver/bv/proxybug.btor.smt2'],
@@ -2642,10 +2644,10 @@ endif
 
 foreach t : regress_tests
   tests = t[0]
-  run_regress_script_options = []
+  run_test_case_options = []
   global_args = []
   if t.length() >= 2
-    run_regress_script_options += t[1]
+    run_test_case_options += t[1]
   endif
   if t.length() == 3
     global_args += t[2]
@@ -2659,12 +2661,10 @@ foreach t : regress_tests
     if test_args.length() == 2
       test_case += test_args[1]
     endif
-    args = [run_regress_script.full_path()]
+    args = run_test_case_options
     args += bitwuzla_bin.full_path()
-    args += ' '.join(test_case)
-    args += meson.current_build_dir()
-    args += run_regress_script_options
-    test(name, python, args: args, suite: 'regress', depends: bitwuzla_bin,
-         timeout: 120, env: env)
+    args += test_case
+    test(name, run_test_case, args: args, suite: 'regress',
+         depends: bitwuzla_bin, timeout: 120, env: env)
   endforeach
 endforeach
