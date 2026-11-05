@@ -986,6 +986,7 @@ tests_smt2 = [
   ['solver/abstract/murxla-346218efd24c9aba.min.smt2'],
   ['solver/abstract/murxla-cc7db96bcf2e620d.min.smt2'],
   ['solver/abstract/murxla-6614bd790e5425d5.min.smt2'],
+  ['solver/abstract/murxla-dfa4505daab6f6b4.min.smt2'],
   ['solver/abstract/regrconstarray19-abstr.smt2'],
   ['solver/abstract/red-bench-8002.smt2'],
   ['solver/abstract/eagerrefine1.smt2'],

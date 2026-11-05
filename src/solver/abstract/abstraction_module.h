@@ -45,9 +45,9 @@ class AbstractionModule
   /**
    * Map a term into the current abstraction for a value query.
    *
-   * Like process(), but reuses existing abstractions only. Creating an
-   * abstraction here would introduce a term that is unconstrained in the
-   * current candidate model.
+   * Like process(), but reuses active abstractions only. Creating an
+   * abstraction here, or reusing one whose registration was popped, would
+   * introduce a term that is unconstrained in the current candidate model.
    */
   Node process_value(const Node& term);
 
@@ -127,14 +127,21 @@ class AbstractionModule
   backtrack::vector<Node> d_active_term_abstractions;
   /** Currently registered (active) assertion abstractions. */
   backtrack::vector<Node> d_active_assertion_abstractions;
+  /** Currently registered (active) term and assertion abstractions. */
+  backtrack::unordered_set<Node> d_active_abstractions;
   /** Cache for process(). */
   std::unordered_map<Node, Node> d_abstraction_cache;
-  /** Cache for process_value(), invalidated when new abstractions appear. */
+  /**
+   * Cache for process_value(), invalidated when the set of active abstractions
+   * changes.
+   */
   std::unordered_map<Node, Node> d_value_cache;
-  /** Number of abstractions the value cache was populated with. */
-  uint64_t d_value_cache_num_abstractions = 0;
-  /** Number of created term abstractions. */
-  uint64_t d_num_abstractions = 0;
+  /** Number of registrations the value cache was populated with. */
+  uint64_t d_value_cache_num_registered = 0;
+  /** Number of active abstractions the value cache was populated with. */
+  size_t d_value_cache_num_active = 0;
+  /** Number of calls to register_abstraction(). */
+  uint64_t d_num_registered = 0;
   /** Assertion cache, used for tracking unsat cores. */
   std::unordered_map<Node, Node> d_abstraction_cache_assertions;
   /** Stores enabled refinement lemmas based on kind. */

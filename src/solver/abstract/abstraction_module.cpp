@@ -32,6 +32,7 @@ AbstractionModule::AbstractionModule(Env& env, SolverState& state)
       d_rewriter(env.rewriter()),
       d_active_term_abstractions(state.backtrack_mgr()),
       d_active_assertion_abstractions(state.backtrack_mgr()),
+      d_active_abstractions(state.backtrack_mgr()),
       d_assertion_abstractions_cache(state.backtrack_mgr()),
       d_lemma_cache(state.backtrack_mgr()),
       // Some lemmas are not valid for bit-vectors of size 1 or 2. Hence, we
@@ -86,6 +87,8 @@ void
 AbstractionModule::register_abstraction(const Node& node)
 {
   assert(is_abstraction(node));
+  d_active_abstractions.insert(node);
+  ++d_num_registered;
   if (d_opt_abstract_assertions
       && d_abstraction_cache_assertions.find(node)
              != d_abstraction_cache_assertions.end())
@@ -194,7 +197,6 @@ AbstractionModule::process(const Node& term)
       if (abstract(rebuilt))
       {
         it->second = nm.mk_node(Kind::AM_ABSTRACT, {rebuilt});
-        ++d_num_abstractions;
         ++d_stats.num_terms;
         d_stats.terms << rebuilt.kind();
       }
@@ -212,12 +214,16 @@ AbstractionModule::process(const Node& term)
 Node
 AbstractionModule::process_value(const Node& term)
 {
-  // Abstractions created since the last value query invalidate the cache: a
-  // term previously rebuilt as-is may now have to map to its abstraction.
-  if (d_value_cache_num_abstractions != d_num_abstractions)
+  // Registered or popped abstractions invalidate the cache: a term may now
+  // have to map to its abstraction, or back to itself. Registrations only
+  // grow and pops only shrink the active set, so both counts together detect
+  // any change.
+  if (d_value_cache_num_registered != d_num_registered
+      || d_value_cache_num_active != d_active_abstractions.size())
   {
     d_value_cache.clear();
-    d_value_cache_num_abstractions = d_num_abstractions;
+    d_value_cache_num_registered = d_num_registered;
+    d_value_cache_num_active     = d_active_abstractions.size();
   }
 
   node_ref_vector visit{term};
@@ -227,11 +233,16 @@ AbstractionModule::process_value(const Node& term)
     auto [it, inserted] = d_value_cache.try_emplace(cur);
     if (inserted)
     {
-      // Use the abstraction if we already have one, but never create a new
-      // one: a fresh abstraction is unconstrained in the current candidate
-      // model and would yield an arbitrary value.
+      // Use the abstraction if it is active, but never create or reactivate
+      // one: a fresh abstraction, or one whose registration was popped, is
+      // unconstrained in the current candidate model and would yield an
+      // arbitrary value. A processed term with abstractions below may contain
+      // inactive ones, hence only unchanged terms are reused as a whole.
       auto ita = d_abstraction_cache.find(cur);
-      if (ita != d_abstraction_cache.end() && !ita->second.is_null())
+      if (ita != d_abstraction_cache.end() && !ita->second.is_null()
+          && (ita->second == cur
+              || d_active_abstractions.find(ita->second)
+                     != d_active_abstractions.end()))
       {
         it->second = ita->second;
       }
@@ -254,7 +265,8 @@ AbstractionModule::process_value(const Node& term)
     visit.pop_back();
   } while (!visit.empty());
 
-  // Returned by value: the cache is cleared when new abstractions appear.
+  // Returned by value: the cache is cleared when the active abstractions
+  // change.
   return d_value_cache.at(term);
 }
 
