@@ -39,6 +39,16 @@ class PassEmbeddedConstraints : public PreprocessingPass
    */
   Node substitute(const Node& node);
 
+#ifndef NDEBUG
+  /**
+   * Check that the assertions the substitutions of the current preprocessing
+   * call were derived from were not replaced by assertions containing the
+   * substituted node, unless it is still asserted elsewhere. Substituting it
+   * in such an assertion removes the justification of the substitution.
+   */
+  bool sources_intact(const AssertionVector& assertions) const;
+#endif
+
   /** Backtrackable substitution map. */
   backtrack::unordered_map<Node, Node> d_substitutions;
   /**
@@ -127,6 +137,14 @@ class PassEmbeddedConstraints : public PreprocessingPass
     /** Nodes inserted at each scope level with the entries they overwrote. */
     std::vector<std::vector<std::pair<Node, std::optional<Entry>>>> d_undo;
   } d_cache;
+
+#ifndef NDEBUG
+  /**
+   * Substituted nodes with the assertion stack index of the assertion they
+   * were derived from, in the order they were added.
+   */
+  backtrack::vector<std::pair<Node, size_t>> d_sources;
+#endif
 
   struct Statistics
   {

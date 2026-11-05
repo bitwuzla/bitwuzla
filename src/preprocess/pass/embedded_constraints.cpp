@@ -10,8 +10,11 @@
 
 #include "preprocess/pass/embedded_constraints.h"
 
+#include <unordered_set>
+
 #include "env.h"
 #include "node/node_manager.h"
+#include "node/node_ref_vector.h"
 #include "node/node_utils.h"
 #include "rewrite/rewriter.h"
 
@@ -28,6 +31,9 @@ PassEmbeddedConstraints::PassEmbeddedConstraints(
       d_substitutions(backtrack_mgr),
       d_batch_min_id(backtrack_mgr),
       d_cache(backtrack_mgr),
+#ifndef NDEBUG
+      d_sources(backtrack_mgr),
+#endif
       d_stats(env.statistics(), "preprocess::" + name() + "::")
 {
 }
@@ -50,6 +56,8 @@ PassEmbeddedConstraints::apply(AssertionVector& assertions)
 
   Log(1) << "Apply embedded constraints preprocessing pass";
 
+  assert(sources_intact(assertions));
+
   NodeManager& nm   = d_env.nm();
   uint64_t n_substs = 0;
   uint64_t min_id   = UINT64_MAX;
@@ -64,6 +72,9 @@ PassEmbeddedConstraints::apply(AssertionVector& assertions)
     {
       n_substs += 1;
       min_id = std::min(min_id, subst.id());
+#ifndef NDEBUG
+      d_sources.emplace_back(subst, assertions.start_index() + i);
+#endif
     }
   }
   Log(1) << "Found " << n_substs << " new substitutions";
@@ -111,6 +122,63 @@ PassEmbeddedConstraints::process(const Node& node)
 }
 
 /* --- PassEmbeddedConstraints private -------------------------------------- */
+
+#ifndef NDEBUG
+bool
+PassEmbeddedConstraints::sources_intact(const AssertionVector& assertions) const
+{
+  // Substitutions of the current call are a suffix of d_sources. Assertions
+  // of previous calls are not reprocessed, their substitutions stay valid.
+  size_t start_index = assertions.start_index();
+  for (size_t i = d_sources.size();
+       i > 0 && d_sources[i - 1].second >= start_index;
+       --i)
+  {
+    const auto& [subst, index] = d_sources[i - 1];
+    const Node& assertion      = assertions[index - start_index];
+    const Node& ass = assertion.is_inverted() ? assertion[0] : assertion;
+    // Nodes created before `subst` cannot contain it.
+    if (ass == subst || ass.id() < subst.id())
+    {
+      continue;
+    }
+    bool contains = false;
+    std::unordered_set<Node> cache;
+    node_ref_vector visit{ass};
+    do
+    {
+      const Node& cur = visit.back();
+      visit.pop_back();
+      if (cur == subst)
+      {
+        contains = true;
+        break;
+      }
+      if (cur.id() > subst.id() && cache.insert(cur).second)
+      {
+        visit.insert(visit.end(), cur.begin(), cur.end());
+      }
+    } while (!visit.empty());
+    if (!contains)
+    {
+      continue;
+    }
+    bool asserted = false;
+    for (size_t j = 0, size = assertions.size(); j < size && !asserted; ++j)
+    {
+      const Node& a = assertions[j];
+      asserted      = (a.is_inverted() ? a[0] : a) == subst;
+    }
+    if (!asserted)
+    {
+      Log(1) << "Substitution " << subst << " derived from assertion " << index
+             << " occurs in its replacement " << assertion;
+      return false;
+    }
+  }
+  return true;
+}
+#endif
 
 Node
 PassEmbeddedConstraints::substitute(const Node& node)
