@@ -169,26 +169,36 @@ jobs:
           echo "/opt/homebrew/opt/cython/bin" >> $GITHUB_PATH
 
 
-      - name: Install Packages (Windows)
+      - name: Set up MSYS2 (Windows)
         if: runner.os == 'Windows'
         uses: msys2/setup-msys2@v2
         with:
           msystem: UCRT64
           update: true
           path-type: inherit
-          install: >-
-            git
-            zip
-            mingw-w64-ucrt-x86_64-ca-certificates
-            mingw-w64-ucrt-x86_64-ccache
-            mingw-w64-ucrt-x86_64-cython
-            mingw-w64-ucrt-x86_64-gcc
-            mingw-w64-ucrt-x86_64-gmp
-            mingw-w64-ucrt-x86_64-mpfr
-            mingw-w64-ucrt-x86_64-gtest
-            mingw-w64-ucrt-x86_64-meson
-            mingw-w64-ucrt-x86_64-ninja
-            mingw-w64-ucrt-x86_64-python3
+
+      # Packages are installed separately, since setup-msys2 cannot configure
+      # pacman before installing them. Skip documentation, terminfo and the
+      # Python test suite: creating files is slow on Windows, and these are most
+      # of the installed files. Git is not installed, meson uses Git for Windows
+      # of the runner, which is on the inherited PATH.
+      - name: Install Packages (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          sed -i 's|^\[options\]|&\nNoExtract = ucrt64/share/doc/* ucrt64/share/man/* ucrt64/share/terminfo/* ucrt64/lib/terminfo/* ucrt64/lib/python3.[0-9][0-9]/test/* usr/share/doc/* usr/share/man/*|' /etc/pacman.conf
+          grep '^NoExtract' /etc/pacman.conf
+          pacman -S --needed --noconfirm \
+            zip \
+            mingw-w64-ucrt-x86_64-ca-certificates \
+            mingw-w64-ucrt-x86_64-ccache \
+            mingw-w64-ucrt-x86_64-cython \
+            mingw-w64-ucrt-x86_64-gcc \
+            mingw-w64-ucrt-x86_64-gmp \
+            mingw-w64-ucrt-x86_64-mpfr \
+            mingw-w64-ucrt-x86_64-gtest \
+            mingw-w64-ucrt-x86_64-meson \
+            mingw-w64-ucrt-x86_64-ninja \
+            mingw-w64-ucrt-x86_64-python3 \
             mingw-w64-ucrt-x86_64-python-pytest
 
       - name: Checkout
