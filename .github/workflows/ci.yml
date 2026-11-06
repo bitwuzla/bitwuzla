@@ -173,22 +173,23 @@ jobs:
         if: runner.os == 'Windows'
         uses: msys2/setup-msys2@v2
         with:
+          msystem: UCRT64
           update: true
           path-type: inherit
           install: >-
             git
             zip
-            mingw-w64-x86_64-ca-certificates
-            mingw-w64-x86_64-ccache
-            mingw-w64-x86_64-cython
-            mingw-w64-x86_64-gcc
-            mingw-w64-x86_64-gmp
-            mingw-w64-x86_64-mpfr
-            mingw-w64-x86_64-gtest
-            mingw-w64-x86_64-meson
-            mingw-w64-x86_64-ninja
-            mingw-w64-x86_64-python3
-            mingw-w64-x86_64-python-pytest
+            mingw-w64-ucrt-x86_64-ca-certificates
+            mingw-w64-ucrt-x86_64-ccache
+            mingw-w64-ucrt-x86_64-cython
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-gmp
+            mingw-w64-ucrt-x86_64-mpfr
+            mingw-w64-ucrt-x86_64-gtest
+            mingw-w64-ucrt-x86_64-meson
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-python3
+            mingw-w64-ucrt-x86_64-python-pytest
 
       - name: Checkout
         uses: actions/checkout@v5

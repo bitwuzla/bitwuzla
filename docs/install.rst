@@ -133,19 +133,21 @@ Bitwulzla can be either cross-compiled via Mingw-w64 or MSYS2.
 
 * **Required Dependencies**
 
-The following `mingw` packages are required to compile Bitwuzla for Windows:
+The following packages of the MSYS2 UCRT64 environment are required to compile
+Bitwuzla for Windows:
 
-  * `mingw-w64-x86_64-gcc`
-  * `mingw-w64-x86_64-gmp`
-  * `mingw-w64-x86_64-meson`
-  * `mingw-w64-x86_64-mpfr`
-  * `mingw-w64-x86_64-ninja`
-  * `mingw-w64-x86_64-python3`
-  * `mingw-w64-x86_64-cython` (optional for Python bindings)
-  * `mingw-w64-x86_64-gtest` (optional for debug builds)
-  * `mingw-w64-x86_64-python-pytest` (optional for debug builds)
+  * `mingw-w64-ucrt-x86_64-gcc`
+  * `mingw-w64-ucrt-x86_64-gmp`
+  * `mingw-w64-ucrt-x86_64-meson`
+  * `mingw-w64-ucrt-x86_64-mpfr`
+  * `mingw-w64-ucrt-x86_64-ninja`
+  * `mingw-w64-ucrt-x86_64-python3`
+  * `mingw-w64-ucrt-x86_64-cython` (optional for Python bindings)
+  * `mingw-w64-ucrt-x86_64-gtest` (optional for debug builds)
+  * `mingw-w64-ucrt-x86_64-python-pytest` (optional for debug builds)
 
-On **arm64** machines, replace `x86_64` with `aarch64` for the packages above.
+On **arm64** machines, use the CLANGARM64 environment and replace `ucrt-x86_64`
+with `clang-aarch64` for the packages above.
 After setting up the MSYS2 environment, follow the Linux/macOS building
 instructions.
 For cross-compilation add flag `--win64` to the configure line.

@@ -58,7 +58,7 @@ jobs:
       - name: Add MSYS2 to PATH
         if: runner.os == 'Windows'
         shell: pwsh
-        run: echo "C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+        run: echo "C:\msys64\ucrt64\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.4.0
