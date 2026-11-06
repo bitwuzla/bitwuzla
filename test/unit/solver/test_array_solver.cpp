@@ -15,10 +15,10 @@
 #include <vector>
 
 #include "fp/floating_point.h"
+#include "fp/rounding_mode.h"
 #include "node/node_manager.h"
 #include "sat/sat_solver_factory.h"
 #include "solver/array/array_solver.h"
-#include "solver/fp/rounding_mode.h"
 #include "solver/solver_engine.h"
 #include "solving_context.h"
 #include "test/unit/test.h"

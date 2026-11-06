@@ -8,8 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#ifndef BZLA_SOLVER_FP_ROUNDING_MODE_H_INCLUDED
-#define BZLA_SOLVER_FP_ROUNDING_MODE_H_INCLUDED
+#ifndef BZLA_FP_ROUNDING_MODE_H_INCLUDED
+#define BZLA_FP_ROUNDING_MODE_H_INCLUDED
 
 #include <iostream>
 

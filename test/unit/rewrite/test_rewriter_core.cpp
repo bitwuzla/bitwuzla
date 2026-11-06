@@ -12,10 +12,10 @@
 
 #include "bv/bitvector.h"
 #include "fp/floating_point.h"
+#include "fp/rounding_mode.h"
 #include "node/node_manager.h"
 #include "node/node_utils.h"
 #include "rewrite/rewrites_core.h"
-#include "solver/fp/rounding_mode.h"
 #include "test_rewriter.h"
 
 namespace bzla::test {

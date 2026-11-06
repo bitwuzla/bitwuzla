@@ -8,7 +8,7 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#include "solver/fp/rounding_mode.h"
+#include "fp/rounding_mode.h"
 
 #include <cassert>
 

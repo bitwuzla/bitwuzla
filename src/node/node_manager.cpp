@@ -16,8 +16,8 @@
 
 #include "bv/bitvector.h"
 #include "fp/floating_point.h"
+#include "fp/rounding_mode.h"
 #include "node/kind_info.h"
-#include "solver/fp/rounding_mode.h"
 #include "solver/fp/word_blaster.h"
 
 namespace bzla {
