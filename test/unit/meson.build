@@ -213,6 +213,17 @@ endif
 if gimsatul_dep.found()
   cpp_args += ['-DBZLA_USE_GIMSATUL']
 endif
+# Unit tests must not include the generated config.h. It is a source of the
+# library only, and Meson does not generate the headers of a linked library
+# before compiling the tests. It also embeds the git id, which would recompile
+# the tests that include it after every commit. The configuration the tests
+# depend on is passed as compile definitions instead, see test.h.
+if cadical_patched
+  cpp_args += ['-DBZLA_CADICAL_PATCHED']
+endif
+if kissat_patched
+  cpp_args += ['-DBZLA_KISSAT_PATCHED']
+endif
 if is_sat_solver_configured
   cpp_args += ['-DBZLA_IS_SAT_SOLVER_CONFIGURED']
 endif

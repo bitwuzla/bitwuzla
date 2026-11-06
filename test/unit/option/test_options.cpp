@@ -10,7 +10,6 @@
 
 #include <gtest/gtest.h>
 
-#include "config.h"
 #include "option/option.h"
 #include "test.h"
 
@@ -167,7 +166,7 @@ TEST_F(TestOptions, opt_adc_sat_propagator)
     opts.set<std::string>(Option::SAT_SOLVER, "cadical");
     opts.set<bool>(Option::ADC_SAT_PROPAGATOR, true);
     opts.finalize();
-    ASSERT_EQ(opts.adc_sat_propagator(), config::cadical_patched);
+    ASSERT_EQ(opts.adc_sat_propagator(), cadical_patched);
   }
 #endif
 }

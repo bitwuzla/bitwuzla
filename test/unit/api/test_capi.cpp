@@ -19,7 +19,6 @@ extern "C" {
 #include <fstream>
 
 #include "api/c/bitwuzla_structs.h"
-#include "config.h"
 #include "test/unit/test.h"
 
 namespace bzla::test {
@@ -5925,7 +5924,7 @@ TEST_F(TestCApi, terminate)
 #ifdef BZLA_USE_KISSAT
   // A system-wide Kissat lacks our patch that polls the terminate callback,
   // configuring a terminator is unsupported in that case.
-  if (!config::kissat_patched)
+  if (!kissat_patched)
   {
     BitwuzlaOptions* opts = bitwuzla_options_new();
     bitwuzla_set_option(opts, BITWUZLA_OPT_REWRITE_LEVEL, 0);
@@ -5938,7 +5937,7 @@ TEST_F(TestCApi, terminate)
     bitwuzla_options_delete(opts);
     bitwuzla_delete(bitwuzla);
   }
-  if (config::kissat_patched)
+  if (kissat_patched)
   {
     BitwuzlaOptions* opts = bitwuzla_options_new();
     bitwuzla_set_option(opts, BITWUZLA_OPT_REWRITE_LEVEL, 0);
@@ -5951,7 +5950,7 @@ TEST_F(TestCApi, terminate)
     bitwuzla_options_delete(opts);
     bitwuzla_delete(bitwuzla);
   }
-  if (config::kissat_patched)
+  if (kissat_patched)
   {
     BitwuzlaOptions* opts = bitwuzla_options_new();
     bitwuzla_set_option(opts, BITWUZLA_OPT_REWRITE_LEVEL, 0);

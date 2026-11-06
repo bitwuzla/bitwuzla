@@ -18,6 +18,26 @@
 #include <sstream>
 #include <string>
 
+namespace bzla::test {
+
+/**
+ * True if linked against our patched, bundled CaDiCaL and Kissat. Same as
+ * config::cadical_patched and config::kissat_patched, which unit tests can not
+ * include (see test/unit/meson.build).
+ */
+#ifdef BZLA_CADICAL_PATCHED
+inline constexpr bool cadical_patched = true;
+#else
+inline constexpr bool cadical_patched = false;
+#endif
+#ifdef BZLA_KISSAT_PATCHED
+inline constexpr bool kissat_patched = true;
+#else
+inline constexpr bool kissat_patched = false;
+#endif
+
+}  // namespace bzla::test
+
 class TestCommon : public ::testing::Test
 {
 };

@@ -17,7 +17,6 @@
 #include <fstream>
 #include <ostream>
 
-#include "config.h"
 #include "sat/cadical.h"
 #include "sat/cryptominisat.h"
 #include "sat/gimsatul.h"
@@ -4602,7 +4601,7 @@ TEST_F(TestApi, terminate)
   // A system-wide Kissat lacks our patch that polls the terminate callback,
   // configuring a terminator is unsupported in that case (see
   // configure_terminator_unsupported).
-  if (config::kissat_patched)
+  if (kissat_patched)
   {
     TestTerminator tt;
     bitwuzla::Options opts;
@@ -4614,7 +4613,7 @@ TEST_F(TestApi, terminate)
     bitwuzla.assert_formula(b);
     ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNKNOWN);
   }
-  if (config::kissat_patched)
+  if (kissat_patched)
   {
     TestTerminator tt;
     bitwuzla::Options opts;
@@ -4626,7 +4625,7 @@ TEST_F(TestApi, terminate)
     bitwuzla.assert_formula(b);
     ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNKNOWN);
   }
-  if (config::kissat_patched)
+  if (kissat_patched)
   {
     // Configure terminator via parser.
     bitwuzla::Options opts;
@@ -4730,7 +4729,7 @@ TEST_F(TestApi, terminate_sat)
 #endif
 #ifdef BZLA_USE_KISSAT
   // Requires our patched Kissat, see terminate.
-  if (config::kissat_patched)
+  if (kissat_patched)
   {
     TestTerminator tt(1000);
     bitwuzla::Options opts;
@@ -4742,7 +4741,7 @@ TEST_F(TestApi, terminate_sat)
     bitwuzla.assert_formula(b);
     ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNKNOWN);
   }
-  if (config::kissat_patched)
+  if (kissat_patched)
   {
     // Configure terminator via parser.
     bitwuzla::Options opts;
@@ -4967,7 +4966,7 @@ TEST_F(TestApi, configure_terminator_unsupported)
 #endif
 #if defined(BZLA_USE_KISSAT)
   // A system-wide Kissat lacks our patch that polls the terminate callback.
-  if (!config::kissat_patched)
+  if (!kissat_patched)
   {
     bitwuzla::Options opts;
     opts.set(bitwuzla::Option::BV_SOLVER, "bitblast");
