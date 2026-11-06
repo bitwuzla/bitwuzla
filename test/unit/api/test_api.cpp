@@ -3568,6 +3568,11 @@ TEST_F(TestApi, substitute2)
   ASSERT_THROW(d_tm.substitute_term(addxy, {{x, y}, {y, btrue}}),
                bitwuzla::Exception);
   ASSERT_EQ(d_tm.substitute_term(addxy, {{x, y}, {y, one}}), addyo);
+  // a term substituted with itself is kept as is
+  ASSERT_EQ(
+      d_tm.substitute_term(d_tm.mk_term(bitwuzla::Kind::BV_MUL, {addxy, x}),
+                           {{addxy, addxy}, {x, one}}),
+      d_tm.mk_term(bitwuzla::Kind::BV_MUL, {addxy, one}));
 
   std::vector<bitwuzla::Term> terms    = {addxx, addxy};
   std::vector<bitwuzla::Term> expected = {

@@ -285,6 +285,25 @@ TEST_F(TestNodeUtils, substitute_follow_substs)
   ASSERT_EQ(utils::substitute(d_nm, d_a4, substs, false), d_b4);
 }
 
+TEST_F(TestNodeUtils, substitute_identity)
+{
+  Node t = d_nm.mk_node(Kind::BV_ADD, {d_a4, d_b4});
+  Node m = d_nm.mk_node(Kind::BV_MUL, {t, d_a4});
+
+  std::unordered_map<Node, Node> substs{{t, t}, {d_a4, d_c4}};
+
+  // Without following substitutions, a node substituted with itself is kept
+  // as is.
+  utils::Substituter substituter(d_nm, substs, false);
+  ASSERT_EQ(substituter.substitute(m), d_nm.mk_node(Kind::BV_MUL, {t, d_c4}));
+  ASSERT_EQ(substituter.num_substs(), 1);
+
+  // Otherwise, substitutions are applied below it.
+  ASSERT_EQ(utils::substitute(d_nm, m, substs),
+            d_nm.mk_node(Kind::BV_MUL,
+                         {d_nm.mk_node(Kind::BV_ADD, {d_c4, d_b4}), d_c4}));
+}
+
 TEST_F(TestNodeUtils, substitute_num_substs)
 {
   Node t = d_nm.mk_node(Kind::BV_ADD, {d_a4, d_b4});

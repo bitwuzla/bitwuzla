@@ -170,7 +170,8 @@ class Substituter
    * @param nm The associated node manager.
    * @param substitutions The substitution map to apply.
    * @param follow_substs Apply substitutions to substituted terms. Requires
-   *                      the substitution map to be acyclic.
+   *                      the substitution map to be acyclic. If false, a node
+   *                      substituted with itself is kept as is.
    */
   Substituter(NodeManager& nm,
               const std::unordered_map<Node, Node>& substitutions,

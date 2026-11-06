@@ -707,8 +707,12 @@ Substituter::substitute_aux(const Node& node,
       continue;
     }
 
+    // A node substituted with itself is kept as is if substitutions are not
+    // applied to substituted terms, i.e., substitutions are not applied below
+    // it. Otherwise, it is processed like a node that is not substituted.
     auto its         = substitutions.find(cur);
-    bool substituted = its != substitutions.end() && its->second != cur;
+    bool substituted =
+        its != substitutions.end() && (!d_follow_substs || its->second != cur);
 
     if (inserted)
     {
@@ -757,7 +761,10 @@ Substituter::substitute_aux(const Node& node,
         // the top-level cache, which does not invalidate `it`.
         it->second = substitute_aux(its->second, d_substitutions, d_cache);
       }
-      d_num_substs += 1;
+      if (it->second != cur)
+      {
+        d_num_substs += 1;
+      }
     }
     else
     {
