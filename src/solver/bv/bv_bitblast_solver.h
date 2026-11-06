@@ -66,7 +66,7 @@ class BvBitblastSolver : public Solver,
   void push() override;
   void pop() override;
 
-  /** Get the associated SAT solver instance. */
+  /** Get the associated SAT solver instance, nullptr before its first use. */
   sat::SatSolver* sat_solver() { return d_sat_solver.get(); }
 
   /**
@@ -130,9 +130,14 @@ class BvBitblastSolver : public Solver,
   /** AIG bit-blaster. */
   AigBitblaster d_bitblaster;
 
-  /** CNF encoder for AIGs. */
+  /** The level mode of the CNF encoder. */
+  bitblast::AigCnfEncoder::LevelMode d_cnf_level_mode;
+  /**
+   * CNF encoder for AIGs and SAT solver used for solving the bit-blasted
+   * formula. Created on first use, the propagation-based local search solver
+   * uses the bit-blaster but neither of them.
+   */
   std::unique_ptr<bitblast::AigCnfEncoder> d_cnf_encoder;
-  /** SAT solver used for solving bit-blasted formula. */
   std::unique_ptr<sat::SatSolver> d_sat_solver;
   /** SAT solver interface for CNF encoder, which wraps `d_sat_solver`. */
   std::unique_ptr<bitblast::SatInterface> d_bitblast_sat_solver;

@@ -151,7 +151,22 @@ BvBitblastSolver::BvBitblastSolver(Env& env, SolverState& state)
       d_produce_interpolants(env.options().produce_interpolants()),
       d_stats(env.statistics(), "solver::bv::bitblast::")
 {
-  init_sat_solver();
+  // Interpolants are produced without SAT-level push/pop, see solve().
+  using LevelMode  = bitblast::AigCnfEncoder::LevelMode;
+  d_cnf_level_mode = LevelMode::ASSERTION;
+  if (!d_produce_interpolants)
+  {
+    switch (env.options().bv_cnf_scope())
+    {
+      case option::BvCnfScope::ASSERTION: break;
+      case option::BvCnfScope::PERMANENT:
+        d_cnf_level_mode = LevelMode::PERMANENT;
+        break;
+      case option::BvCnfScope::ADAPTIVE:
+        d_cnf_level_mode = LevelMode::ADAPTIVE;
+        break;
+    }
+  }
 }
 
 BvBitblastSolver::~BvBitblastSolver() {}
@@ -159,7 +174,7 @@ BvBitblastSolver::~BvBitblastSolver() {}
 Result
 BvBitblastSolver::solve()
 {
-  if (d_reset_sat)
+  if (!d_sat_solver || d_reset_sat)
   {
     init_sat_solver();
     d_reset_sat = false;
@@ -275,10 +290,10 @@ BvBitblastSolver::register_assertion(const Node& assertion,
   uint32_t level_encode = level;
   if (is_lemma)
   {
-    level_encode = d_cnf_encoder->level_mode()
-                           == bitblast::AigCnfEncoder::LevelMode::ASSERTION
-                       ? d_solver_state.term_level(assertion)
-                       : 0;
+    level_encode =
+        d_cnf_level_mode == bitblast::AigCnfEncoder::LevelMode::ASSERTION
+            ? d_solver_state.term_level(assertion)
+            : 0;
   }
   assert(level_encode <= level);
 
@@ -310,8 +325,8 @@ BvBitblastSolver::value(const Node& term)
   const Type& type = term.type();
   NodeManager& nm  = d_env.nm();
 
-  // Return default value if not bit-blasted
-  if (bits.empty())
+  // Return default value if not bit-blasted or never solved
+  if (bits.empty() || !d_cnf_encoder)
   {
     // std::cout << "bv::value::default: " << term << std::endl;
     return utils::mk_default_value(nm, type);
@@ -357,8 +372,7 @@ BvBitblastSolver::push()
 {
   // Input levels are only needed once a level is pushed. Inputs created before
   // are created for assertions of level 0 and take level 0.
-  if (d_cnf_encoder->level_mode()
-      == bitblast::AigCnfEncoder::LevelMode::ADAPTIVE)
+  if (d_cnf_level_mode == bitblast::AigCnfEncoder::LevelMode::ADAPTIVE)
   {
     d_bitblaster.track_input_terms();
   }
@@ -424,21 +438,9 @@ BvBitblastSolver::init_sat_solver()
   {
     d_bitblast_sat_solver.reset(new BitblastSatSolver(*d_sat_solver));
   }
-  // Interpolants are produced without SAT-level push/pop, see solve().
-  using LevelMode = bitblast::AigCnfEncoder::LevelMode;
-  LevelMode mode  = LevelMode::ASSERTION;
-  if (!d_produce_interpolants)
-  {
-    switch (d_env.options().bv_cnf_scope())
-    {
-      case option::BvCnfScope::ASSERTION: break;
-      case option::BvCnfScope::PERMANENT: mode = LevelMode::PERMANENT; break;
-      case option::BvCnfScope::ADAPTIVE: mode = LevelMode::ADAPTIVE; break;
-    }
-  }
   d_cnf_encoder.reset(
-      new bitblast::AigCnfEncoder(*d_bitblast_sat_solver, mode));
-  if (mode == LevelMode::ADAPTIVE)
+      new bitblast::AigCnfEncoder(*d_bitblast_sat_solver, d_cnf_level_mode));
+  if (d_cnf_level_mode == bitblast::AigCnfEncoder::LevelMode::ADAPTIVE)
   {
     // An AIG input takes the level its term was created at, untracked inputs
     // take level 0 (see push()).
@@ -473,6 +475,10 @@ void
 BvBitblastSolver::register_distinct_n(const Node& node)
 {
 #ifdef BZLA_USE_CADICAL
+  if (!d_sat_solver)
+  {
+    init_sat_solver();
+  }
   std::vector<std::vector<int32_t>> bits;
   for (uint64_t i = 1, size = node.num_children(); i < size; ++i)
   {
@@ -582,9 +588,13 @@ BvBitblastSolver::process_pending_distinct_heuristics()
 void
 BvBitblastSolver::update_statistics()
 {
-  d_stats.num_aig_ands     = d_bitblaster.num_aig_ands();
-  d_stats.num_aig_consts   = d_bitblaster.num_aig_consts();
-  d_stats.num_aig_shared   = d_bitblaster.num_aig_shared();
+  d_stats.num_aig_ands   = d_bitblaster.num_aig_ands();
+  d_stats.num_aig_consts = d_bitblaster.num_aig_consts();
+  d_stats.num_aig_shared = d_bitblaster.num_aig_shared();
+  if (!d_cnf_encoder)
+  {
+    return;
+  }
   auto& cnf_stats                = d_cnf_encoder->statistics();
   d_stats.num_cnf_allocated_vars = cnf_stats.allocated_vars;
   d_stats.num_cnf_vars           = cnf_stats.num_vars;
