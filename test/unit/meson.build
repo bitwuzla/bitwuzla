@@ -190,6 +190,16 @@ if meson.is_cross_build() and host_machine.system() == 'windows'
   env += ['WINEDEBUG=fixme-all']
 endif
 
+# These tests create many short-lived solvers. With MALLOC_PERTURB_, which meson
+# sets to a random value, glibc fills each block of a new AIG manager including
+# its alignment padding, which takes most of the run time of these tests if
+# transparent huge pages are disabled.
+no_malloc_perturb_tests = [
+  'bitblast_aig_cnf',
+  'solver_bv_inverter',
+  'solver_bv_prop_solver',
+]
+
 cpp_args = ['-fno-access-control', '-DBZLA_ENABLE_UNIT_TESTING']
 if cadical_dep.found()
   cpp_args += ['-DBZLA_USE_CADICAL']
@@ -241,6 +251,10 @@ foreach p : unit_tests
                cpp_args: test_cpp_args,
                link_args: link_args,
                override_options: override_options)
-    test(name, exe, suite: ['unit', suite], timeout: 0, env: env)
+    test_env = env
+    if name in no_malloc_perturb_tests
+      test_env += ['MALLOC_PERTURB_=0']
+    endif
+    test(name, exe, suite: ['unit', suite], timeout: 0, env: test_env)
   endforeach
 endforeach
