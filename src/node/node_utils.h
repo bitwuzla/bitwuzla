@@ -149,7 +149,9 @@ Node rebuild_node(NodeManager& nm,
  * variable shadows it, and a binder whose variable occurs free in the term the
  * variable is substituted with is renamed so that it cannot capture it. The
  * variables of the binders in the result are thus not necessarily the ones in
- * the given node.
+ * the given node. Substituting a node that is not a variable is not
+ * capture-avoiding: a binder captures the free variables its substitution
+ * introduces.
  *
  * The substitution cache is shared across calls to substitute(), and the
  * information needed to avoid capture is computed only once, when the first

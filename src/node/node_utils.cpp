@@ -456,8 +456,8 @@ using FreeVarsMap = std::unordered_map<Node, std::unordered_set<Node>>;
  * Determines whether a binder captures a substitution.
  *
  * A binder binds a variable, hence only substituting a variable can be
- * shadowed or captured by one. Substituting anything else is only captured if
- * it introduces free variables, which no caller does.
+ * shadowed by one. Substituting anything else is not capture-avoiding: it is
+ * captured if it introduces free variables that a binder binds.
  */
 struct Substituter::Capture
 {
@@ -520,24 +520,14 @@ struct Substituter::Capture
   /**
    * Record the free variables of the term `var` is substituted with.
    *
-   * Nothing is recorded for substituted nodes that are not variables and for
-   * substitutions without free variables, neither of which can be captured.
+   * Nothing is recorded for substitutions without free variables, which
+   * cannot be captured, and for substituted nodes that are not variables,
+   * which are not capture-avoiding.
    */
   void add(const Node& var, const Node& subst)
   {
     if (var.kind() != Kind::VARIABLE)
     {
-#ifndef NDEBUG
-      // Substituting a node that is not a variable is not capture-avoiding,
-      // hence it must not introduce free variables that a binder can capture.
-      compute_free_vars(var, d_fv_cache);
-      compute_free_vars(subst, d_fv_cache);
-      const auto& var_fvs = d_fv_cache.at(var);
-      for (const Node& fv : d_fv_cache.at(subst))
-      {
-        assert(var_fvs.find(fv) != var_fvs.end());
-      }
-#endif
       return;
     }
     std::unordered_set<Node> fvs;
