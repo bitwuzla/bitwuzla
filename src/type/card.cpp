@@ -12,7 +12,7 @@
 
 #include <cassert>
 
-#include "solver/fp/rounding_mode.h"
+#include "fp/rounding_mode.h"
 #include "util/integer.h"
 
 namespace bzla::type {

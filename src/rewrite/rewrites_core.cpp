@@ -14,13 +14,13 @@
 
 #include "bv/bitvector.h"
 #include "fp/floating_point.h"
+#include "fp/rounding_mode.h"
 #include "node/kind_info.h"
 #include "node/node.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
 #include "node/unordered_node_ref_set.h"
 #include "rewrite/rewrite_utils.h"
-#include "solver/fp/rounding_mode.h"
 #include "type/card.h"
 #include "util/integer.h"
 

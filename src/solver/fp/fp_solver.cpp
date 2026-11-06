@@ -12,12 +12,12 @@
 
 #include "env.h"
 #include "fp/floating_point.h"
+#include "fp/rounding_mode.h"
 #include "node/node_kind.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
 #include "node/node_utils.h"
 #include "rewrite/rewriter.h"
-#include "solver/fp/rounding_mode.h"
 #include "util/integer.h"
 
 namespace bzla::fp {

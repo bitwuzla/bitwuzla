@@ -18,7 +18,7 @@
 #include <optional>
 
 #include "bv/bitvector.h"
-#include "solver/fp/rounding_mode.h"
+#include "fp/rounding_mode.h"
 
 namespace bzla {
 

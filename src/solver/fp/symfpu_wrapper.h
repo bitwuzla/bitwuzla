@@ -18,9 +18,9 @@
 
 #include "bv/bitvector.h"
 #include "fp/floating_point_symfpu.h"
+#include "fp/rounding_mode.h"
 #include "node/node.h"
 #include "node/node_manager.h"
-#include "solver/fp/rounding_mode.h"
 #include "solver/fp/symfpu_nm.h"
 
 namespace bzla {
