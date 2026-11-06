@@ -17,11 +17,11 @@
 #include <fstream>
 #include <ostream>
 
+#include "fp/floating_point.h"
 #include "sat/cadical.h"
 #include "sat/cryptominisat.h"
 #include "sat/gimsatul.h"
 #include "sat/kissat.h"
-#include "solver/fp/floating_point.h"
 #include "test/unit/test.h"
 
 #define ASSERT_EXCEPTION(try_block, exception_type, msg)                    \

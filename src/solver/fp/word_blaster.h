@@ -16,8 +16,8 @@
 
 #include "backtrack/unordered_set.h"
 #include "env.h"
+#include "fp/floating_point.h"
 #include "node/node.h"
-#include "solver/fp/floating_point.h"
 
 /* -------------------------------------------------------------------------- */
 

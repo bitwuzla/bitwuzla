@@ -10,7 +10,7 @@
 
 #include "node/node_unique_table.h"
 
-#include "solver/fp/floating_point.h"
+#include "fp/floating_point.h"
 
 namespace bzla::node {
 

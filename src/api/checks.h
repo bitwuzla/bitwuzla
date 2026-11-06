@@ -15,7 +15,7 @@
 #include <ostream>
 #include <sstream>
 
-#include "solver/fp/floating_point.h"
+#include "fp/floating_point.h"
 #include "util/exceptions.h"
 #include "util/ostream_voider.h"
 

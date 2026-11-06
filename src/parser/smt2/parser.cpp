@@ -17,7 +17,7 @@
 #include <cstdio>
 #include <iostream>
 
-#include "solver/fp/floating_point.h"
+#include "fp/floating_point.h"
 #include "util/util.h"
 
 namespace bzla {

@@ -15,6 +15,7 @@
 #include "api/checks.h"
 #include "bv/bitvector.h"
 #include "config.h"
+#include "fp/floating_point.h"
 #include "node/kind_info.h"
 #include "node/node.h"
 #include "node/node_kind.h"
@@ -26,7 +27,6 @@
 #include "printer/exception.h"
 #include "printer/smt2_printer.h"
 #include "sat/sat_solver_factory.h"
-#include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
 #include "solver/fp/symfpu_nm.h"  // Temporary for setting SymFpuNM
 #include "solving_context.h"

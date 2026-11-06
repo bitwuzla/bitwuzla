@@ -13,10 +13,10 @@
 #include <sstream>
 
 #include "bv/bitvector.h"
+#include "fp/floating_point.h"
 #include "node/kind_info.h"
 #include "node/node_manager.h"
 #include "node/node_ref_vector.h"
-#include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
 
 namespace bzla::node::utils {

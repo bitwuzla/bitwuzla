@@ -14,10 +14,10 @@
 #include <sstream>
 #include <utility>
 
+#include "fp/floating_point.h"
 #include "node/node_data.h"
 #include "node/node_manager.h"
 #include "printer/smt2_printer.h"
-#include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
 #include "util/printer.h"
 

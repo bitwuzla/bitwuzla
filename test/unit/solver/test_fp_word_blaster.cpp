@@ -12,10 +12,10 @@
 #include <optional>
 
 #include "bv/bitvector.h"
+#include "fp/floating_point.h"
 #include "node/node_manager.h"
 #include "option/option.h"
 #include "sat/sat_solver_factory.h"
-#include "solver/fp/floating_point.h"
 #include "solving_context.h"
 #include "test/unit/test.h"
 
