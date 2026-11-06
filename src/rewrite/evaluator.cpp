@@ -10,8 +10,8 @@
 
 #include "rewrite/evaluator.h"
 
+#include "fp/floating_point.h"
 #include "node/node_manager.h"
-#include "solver/fp/floating_point.h"
 
 namespace bzla {
 

@@ -8,7 +8,7 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#include "solver/fp/floating_point.h"
+#include "fp/floating_point.h"
 
 #include <gmp.h>
 #include <gmpxx.h>
@@ -122,10 +122,10 @@ FloatingPoint::ieee_bv_as_bvs(uint64_t exp_size,
                               BitVector& sig)
 {
   assert(!bv.is_null());
-  uint32_t bw     = bv.size();
-  sign            = bv.bvextract(bw - 1, bw - 1);
-  exp             = bv.bvextract(bw - 2, bw - 1 - exp_size);
-  sig             = bv.bvextract(sig_size - 2, 0);
+  uint32_t bw = bv.size();
+  sign        = bv.bvextract(bw - 1, bw - 1);
+  exp         = bv.bvextract(bw - 2, bw - 1 - exp_size);
+  sig         = bv.bvextract(sig_size - 2, 0);
 }
 
 FloatingPoint
@@ -539,7 +539,7 @@ FloatingPoint::to_real_str() const
 }
 
 bool
-FloatingPoint::operator==(const FloatingPoint &other) const
+FloatingPoint::operator==(const FloatingPoint& other) const
 {
   assert(is_valid());
   assert(other.is_valid());
@@ -563,7 +563,7 @@ FloatingPoint::operator==(const FloatingPoint &other) const
 }
 
 bool
-FloatingPoint::operator!=(const FloatingPoint &other) const
+FloatingPoint::operator!=(const FloatingPoint& other) const
 {
   return !(*this == other);
 }
@@ -620,7 +620,7 @@ FloatingPoint::fpispos() const
 }
 
 bool
-FloatingPoint::fpeq(const FloatingPoint &fp) const
+FloatingPoint::fpeq(const FloatingPoint& fp) const
 {
   assert(is_valid());
   assert(fp.is_valid());
@@ -629,7 +629,7 @@ FloatingPoint::fpeq(const FloatingPoint &fp) const
 }
 
 bool
-FloatingPoint::fplt(const FloatingPoint &fp) const
+FloatingPoint::fplt(const FloatingPoint& fp) const
 {
   assert(is_valid());
   assert(fp.is_valid());
@@ -638,7 +638,7 @@ FloatingPoint::fplt(const FloatingPoint &fp) const
 }
 
 bool
-FloatingPoint::fple(const FloatingPoint &fp) const
+FloatingPoint::fple(const FloatingPoint& fp) const
 {
   assert(is_valid());
   assert(fp.is_valid());
@@ -647,7 +647,7 @@ FloatingPoint::fple(const FloatingPoint &fp) const
 }
 
 bool
-FloatingPoint::fpgt(const FloatingPoint &fp) const
+FloatingPoint::fpgt(const FloatingPoint& fp) const
 {
   assert(is_valid());
   assert(fp.is_valid());
@@ -656,7 +656,7 @@ FloatingPoint::fpgt(const FloatingPoint &fp) const
 }
 
 bool
-FloatingPoint::fpge(const FloatingPoint &fp) const
+FloatingPoint::fpge(const FloatingPoint& fp) const
 {
   assert(is_valid());
   assert(fp.is_valid());
@@ -665,7 +665,7 @@ FloatingPoint::fpge(const FloatingPoint &fp) const
 }
 
 FloatingPoint
-FloatingPoint::fpmin(const FloatingPoint &fp) const
+FloatingPoint::fpmin(const FloatingPoint& fp) const
 {
   // Note: The +/- zero case is unspecified as per SMT-LIB but MPFR always
   //       returns -zero.
@@ -678,7 +678,7 @@ FloatingPoint::fpmin(const FloatingPoint &fp) const
 }
 
 FloatingPoint
-FloatingPoint::fpmax(const FloatingPoint &fp) const
+FloatingPoint::fpmax(const FloatingPoint& fp) const
 {
   // Note: The +/- zero case is unspecified as per SMT-LIB but MPFR always
   //       returns +zero.
@@ -747,7 +747,7 @@ FloatingPoint::fprti(const RoundingMode rm) const
 }
 
 FloatingPoint
-FloatingPoint::fprem(const FloatingPoint &fp) const
+FloatingPoint::fprem(const FloatingPoint& fp) const
 {
   assert(is_valid());
   assert(fp.is_valid());
@@ -759,7 +759,7 @@ FloatingPoint::fprem(const FloatingPoint &fp) const
 }
 
 FloatingPoint
-FloatingPoint::fpadd(const RoundingMode rm, const FloatingPoint &fp) const
+FloatingPoint::fpadd(const RoundingMode rm, const FloatingPoint& fp) const
 {
   assert(is_valid());
   assert(fp.is_valid());
@@ -780,7 +780,7 @@ FloatingPoint::fpadd(const RoundingMode rm, const FloatingPoint &fp) const
 }
 
 FloatingPoint
-FloatingPoint::fpmul(const RoundingMode rm, const FloatingPoint &fp) const
+FloatingPoint::fpmul(const RoundingMode rm, const FloatingPoint& fp) const
 {
   assert(is_valid());
   assert(fp.is_valid());
@@ -924,9 +924,9 @@ FloatingPoint::as_bv() const
   if (!fpissubnormal())
   {
     std::string sig_str = str[0] == '-' ? str + 2 : str + 1;
-    bvexp               = BitVector::from_si(d_exp_size,
+    bvexp = BitVector::from_si(d_exp_size,
                                static_cast<int64_t>(mpfr2exp(d_exp_size, exp)));
-    bvsig               = BitVector(d_sig_size - 1, sig_str);
+    bvsig = BitVector(d_sig_size - 1, sig_str);
   }
   else
   {
@@ -944,8 +944,8 @@ FloatingPoint::as_bv() const
 
 /* -------------------------------------------------------------------------- */
 
-std::ostream &
-operator<<(std::ostream &out, const FloatingPoint &fp)
+std::ostream&
+operator<<(std::ostream& out, const FloatingPoint& fp)
 {
   out << fp.str();
   return out;
@@ -958,7 +958,7 @@ operator<<(std::ostream &out, const FloatingPoint &fp)
 namespace std {
 
 size_t
-hash<bzla::FloatingPoint>::operator()(const bzla::FloatingPoint &fp) const
+hash<bzla::FloatingPoint>::operator()(const bzla::FloatingPoint& fp) const
 {
   return fp.hash();
 }

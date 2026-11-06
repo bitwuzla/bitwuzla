@@ -16,9 +16,9 @@
 #include <cstdint>
 
 #include "bv/bitvector.h"
+#include "fp/floating_point.h"
+#include "fp/floating_point_symfpu.h"
 #include "node/node_manager.h"
-#include "solver/fp/floating_point.h"
-#include "solver/fp/floating_point_symfpu.h"
 #include "solver/fp/symfpu_nm.h"
 #include "test/unit/test.h"
 #include "util/rng.h"

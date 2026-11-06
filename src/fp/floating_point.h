@@ -8,8 +8,8 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#ifndef BZLA_SOLVER_FP_FLOATING_POINT_H_INCLUDED
-#define BZLA_SOLVER_FP_FLOATING_POINT_H_INCLUDED
+#ifndef BZLA_FP_FLOATING_POINT_H_INCLUDED
+#define BZLA_FP_FLOATING_POINT_H_INCLUDED
 
 #include <mpfr.h>
 
@@ -189,11 +189,11 @@ class FloatingPoint
                 bool sign);
 
   /** Copy constructor. */
-  FloatingPoint(const FloatingPoint &other);
+  FloatingPoint(const FloatingPoint& other);
   /** Move constructor. */
   FloatingPoint(FloatingPoint&& other) noexcept;
   /** Copy assignment. */
-  FloatingPoint &operator=(const FloatingPoint &other);
+  FloatingPoint& operator=(const FloatingPoint& other);
   /** Move assignment. */
   FloatingPoint& operator=(FloatingPoint&& other) noexcept;
   /** Destructor. */
@@ -228,13 +228,13 @@ class FloatingPoint
    *       NaN with any other value than NaN.
    * @param other The floating-point to compare this floating-point to.
    */
-  bool operator==(const FloatingPoint &other) const;
+  bool operator==(const FloatingPoint& other) const;
   /**
    * Disequality comparison operator.
    * @note This is dual to `operator==` and compares for "syntactic" equality.
    * @param other The floating-point to compare this floating-point to.
    */
-  bool operator!=(const FloatingPoint &other) const;
+  bool operator!=(const FloatingPoint& other) const;
 
   /** @return True if this floating-point represents a zero value. */
   bool fpiszero() const;
@@ -258,19 +258,19 @@ class FloatingPoint
   bool fpispos() const;
 
   /** @return True if this floating-point is equal to `fp`. */
-  bool fpeq(const FloatingPoint &fp) const;
+  bool fpeq(const FloatingPoint& fp) const;
 
   /** @return True if this floating-point is less than `fp`. */
-  bool fplt(const FloatingPoint &fp) const;
+  bool fplt(const FloatingPoint& fp) const;
 
   /** @return True if this floating-point is less than or equal `fp`. */
-  bool fple(const FloatingPoint &fp) const;
+  bool fple(const FloatingPoint& fp) const;
 
   /** @return True if this floating-point is greater than `fp`. */
-  bool fpgt(const FloatingPoint &fp) const;
+  bool fpgt(const FloatingPoint& fp) const;
 
   /** @return True if this floating-point is greater than or equal `fp`. */
-  bool fpge(const FloatingPoint &fp) const;
+  bool fpge(const FloatingPoint& fp) const;
 
   /**
    * Determine the minimum of two floating-point values.
@@ -281,7 +281,7 @@ class FloatingPoint
    *       properly on top of this function.
    * @return The floating-point representing the minimum value of both.
    */
-  FloatingPoint fpmin(const FloatingPoint &fp) const;
+  FloatingPoint fpmin(const FloatingPoint& fp) const;
   /**
    * Determine the maximum of two floating-point values.
    * @note The +/- zero case is undefined as the IEEE 754 standard states that
@@ -291,7 +291,7 @@ class FloatingPoint
    *       properly on top of this function.
    * @return The floating-point representing the maximum value of both.
    */
-  FloatingPoint fpmax(const FloatingPoint &fp) const;
+  FloatingPoint fpmax(const FloatingPoint& fp) const;
 
   /**
    * Create a floating-point representing the absolute value of this
@@ -330,7 +330,7 @@ class FloatingPoint
    * @param fp The other operand.
    * @return The result of the remainder operation.
    */
-  FloatingPoint fprem(const FloatingPoint &fp) const;
+  FloatingPoint fprem(const FloatingPoint& fp) const;
 
   /**
    * Create a floating-point representing the addition of this and the  given
@@ -339,7 +339,7 @@ class FloatingPoint
    * @param fp The other operand.
    * @return The addition of the operands.
    */
-  FloatingPoint fpadd(const RoundingMode rm, const FloatingPoint &fp) const;
+  FloatingPoint fpadd(const RoundingMode rm, const FloatingPoint& fp) const;
 
   /**
    * Create a floating-point representing the multiplication of this and the
@@ -348,7 +348,7 @@ class FloatingPoint
    * @param fp The other operand.
    * @return The multiplication of the operands.
    */
-  FloatingPoint fpmul(const RoundingMode rm, const FloatingPoint &fp) const;
+  FloatingPoint fpmul(const RoundingMode rm, const FloatingPoint& fp) const;
 
   /**
    * Create a floating-point representing the division of this and the given
@@ -357,7 +357,7 @@ class FloatingPoint
    * @param fp The other operand.
    * @return The result of the division.
    */
-  FloatingPoint fpdiv(const RoundingMode rm, const FloatingPoint &fp) const;
+  FloatingPoint fpdiv(const RoundingMode rm, const FloatingPoint& fp) const;
 
   /**
    * Create a floating-point representing the fused multiplication and addition
@@ -369,8 +369,8 @@ class FloatingPoint
    * @return The result of the fused multiply-add.
    */
   FloatingPoint fpfma(const RoundingMode rm,
-                      const FloatingPoint &fp0,
-                      const FloatingPoint &fp1) const;
+                      const FloatingPoint& fp0,
+                      const FloatingPoint& fp1) const;
 
   /**
    * Convert this floating-point to a bit-vector of given size, interpreted as
@@ -424,7 +424,7 @@ namespace std {
 template <>
 struct hash<bzla::FloatingPoint>
 {
-  size_t operator()(const bzla::FloatingPoint &fp) const;
+  size_t operator()(const bzla::FloatingPoint& fp) const;
 };
 
 }  // namespace std

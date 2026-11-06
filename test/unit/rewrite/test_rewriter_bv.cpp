@@ -13,10 +13,10 @@
 #include <cmath>
 
 #include "bv/bitvector.h"
+#include "fp/floating_point.h"
 #include "node/node_manager.h"
 #include "node/node_utils.h"
 #include "rewrite/rewriter.h"
-#include "solver/fp/floating_point.h"
 #include "test/unit/rewrite/test_rewriter.h"
 
 namespace bzla::test {

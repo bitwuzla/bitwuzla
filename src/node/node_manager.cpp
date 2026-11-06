@@ -15,8 +15,8 @@
 #include <sstream>
 
 #include "bv/bitvector.h"
+#include "fp/floating_point.h"
 #include "node/kind_info.h"
-#include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
 #include "solver/fp/word_blaster.h"
 

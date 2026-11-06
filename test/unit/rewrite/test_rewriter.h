@@ -14,11 +14,11 @@
 #include <gtest/gtest.h>
 
 #include "env.h"
+#include "fp/floating_point.h"
 #include "node/kind_info.h"
 #include "node/node_manager.h"
 #include "rewrite/rewriter.h"
 #include "sat/sat_solver_factory.h"
-#include "solver/fp/floating_point.h"
 #include "solving_context.h"
 
 namespace bzla::test {

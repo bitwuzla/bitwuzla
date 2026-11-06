@@ -8,7 +8,7 @@
  * information at https://github.com/bitwuzla/bitwuzla/blob/main/COPYING
  */
 
-#include "solver/fp/floating_point_symfpu.h"
+#include "fp/floating_point_symfpu.h"
 
 #include <gmp.h>
 #include <gmpxx.h>

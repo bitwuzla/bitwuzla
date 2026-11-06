@@ -239,7 +239,7 @@ test_cpp_args = cpp_args + ['-O0']
 # The SymFPU reference implementation is only used by unit tests. Compile it
 # once instead of for each unit test.
 symfpu_test_lib = static_library('symfpu_test',
-  '../../src/solver/fp/floating_point_symfpu.cpp',
+  '../../src/fp/floating_point_symfpu.cpp',
   dependencies: test_deps,
   include_directories: test_inc,
   cpp_args: cpp_args,

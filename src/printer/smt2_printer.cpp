@@ -18,13 +18,13 @@
 
 #include "backtrack/assertion_stack.h"
 #include "bv/bitvector.h"
+#include "fp/floating_point.h"
 #include "node/kind_info.h"
 #include "node/node_ref_vector.h"
 #include "node/unordered_node_ref_map.h"
 #include "node/unordered_node_ref_set.h"
 #include "parser/smt2/lexer.h"
 #include "printer/exception.h"
-#include "solver/fp/floating_point.h"
 #include "solver/fp/rounding_mode.h"
 #include "util/printer.h"
 
