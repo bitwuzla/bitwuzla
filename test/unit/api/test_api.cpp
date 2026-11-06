@@ -3584,6 +3584,146 @@ TEST_F(TestApi, substitute2)
                bitwuzla::Exception);
   ASSERT_THROW(d_tm.substitute_terms(terms, {{x, y}, {bitwuzla::Term(), x}}),
                bitwuzla::Exception);
+
+  // terms of another term manager
+  bitwuzla::TermManager tm;
+  bitwuzla::Term z     = tm.mk_const(tm.mk_bv_sort(8));
+  bitwuzla::Term addzz = tm.mk_term(bitwuzla::Kind::BV_ADD, {z, z});
+  ASSERT_THROW(d_tm.substitute_term(addzz, {{x, one}}), bitwuzla::Exception);
+  ASSERT_THROW(d_tm.substitute_term(addxx, {{z, z}}), bitwuzla::Exception);
+}
+
+TEST_F(TestApi, substitute_quant)
+{
+  bitwuzla::Sort bv8   = d_tm.mk_bv_sort(8);
+  bitwuzla::Term one   = d_tm.mk_bv_one(bv8);
+  bitwuzla::Term a     = d_tm.mk_const(bv8, "a");
+  bitwuzla::Term b     = d_tm.mk_const(bv8, "b");
+  bitwuzla::Term x     = d_tm.mk_var(bv8, "x");
+  bitwuzla::Term y     = d_tm.mk_var(bv8, "y");
+  bitwuzla::Term z     = d_tm.mk_var(bv8, "z");
+  bitwuzla::Term ultxy = d_tm.mk_term(bitwuzla::Kind::BV_ULT, {x, y});
+
+  // instantiate a binder in the middle of the quantifier prefix
+  {
+    bitwuzla::Term body =
+        d_tm.mk_term(bitwuzla::Kind::AND,
+                     {ultxy, d_tm.mk_term(bitwuzla::Kind::BV_ULT, {y, z})});
+    bitwuzla::Term q =
+        d_tm.mk_term(bitwuzla::Kind::FORALL,
+                     {x, d_tm.mk_term(bitwuzla::Kind::EXISTS, {y, z, body})});
+    bitwuzla::Term expected =
+        d_tm.mk_term(bitwuzla::Kind::FORALL,
+                     {x,
+                      d_tm.mk_term(bitwuzla::Kind::EXISTS,
+                                   {z, d_tm.substitute_term(body, {{y, a}})})});
+    ASSERT_EQ(d_tm.substitute_term(q, {{y, a}}), expected);
+  }
+
+  // a binder whose variable is substituted with itself is not instantiated
+  {
+    bitwuzla::Term q = d_tm.mk_term(bitwuzla::Kind::FORALL, {x, y, ultxy});
+    ASSERT_EQ(d_tm.substitute_term(q, {{x, x}}), q);
+  }
+
+  // a binder below the top-level quantifier prefix shadows its variable
+  {
+    bitwuzla::Term eqxb = d_tm.mk_term(bitwuzla::Kind::EQUAL, {x, b});
+    bitwuzla::Term q    = d_tm.mk_term(bitwuzla::Kind::FORALL, {x, eqxb});
+    bitwuzla::Term t    = d_tm.mk_term(
+        bitwuzla::Kind::AND, {d_tm.mk_term(bitwuzla::Kind::EQUAL, {x, a}), q});
+    bitwuzla::Term expected = d_tm.mk_term(
+        bitwuzla::Kind::AND, {d_tm.mk_term(bitwuzla::Kind::EQUAL, {b, a}), q});
+    ASSERT_EQ(d_tm.substitute_term(t, {{x, b}}), expected);
+    // the term with a top-level binder is instantiated, the other one is not
+    std::vector<bitwuzla::Term> terms = {q, t};
+    d_tm.substitute_terms(terms, {{x, b}});
+    ASSERT_EQ(terms[0], d_tm.mk_term(bitwuzla::Kind::EQUAL, {b, b}));
+    ASSERT_EQ(terms[1], expected);
+  }
+
+  // a binder that would capture a substituted variable is renamed
+  {
+    bitwuzla::Term addy1  = d_tm.mk_term(bitwuzla::Kind::BV_ADD, {y, one});
+    bitwuzla::Term q      = d_tm.mk_term(bitwuzla::Kind::FORALL, {y, ultxy});
+    bitwuzla::Term result = d_tm.substitute_term(q, {{x, addy1}});
+    ASSERT_EQ(result.kind(), bitwuzla::Kind::FORALL);
+    ASSERT_NE(result[0], y);
+    ASSERT_EQ(result[1],
+              d_tm.mk_term(bitwuzla::Kind::BV_ULT, {addy1, result[0]}));
+    // also if the binder is kept in the quantifier prefix
+    q      = d_tm.mk_term(bitwuzla::Kind::FORALL, {y, x, ultxy});
+    result = d_tm.substitute_term(q, {{x, addy1}});
+    ASSERT_EQ(result.kind(), bitwuzla::Kind::FORALL);
+    ASSERT_NE(result[0], y);
+    ASSERT_EQ(result[1],
+              d_tm.mk_term(bitwuzla::Kind::BV_ULT, {addy1, result[0]}));
+  }
+
+  // substituting a constant with a variable is not capture-avoiding
+  {
+    bitwuzla::Term q =
+        d_tm.mk_term(bitwuzla::Kind::FORALL,
+                     {x, d_tm.mk_term(bitwuzla::Kind::BV_ULT, {x, a})});
+    bitwuzla::Term t = d_tm.mk_term(
+        bitwuzla::Kind::AND, {d_tm.mk_term(bitwuzla::Kind::EQUAL, {a, b}), q});
+    bitwuzla::Term expected = d_tm.mk_term(
+        bitwuzla::Kind::AND,
+        {d_tm.mk_term(bitwuzla::Kind::EQUAL, {x, b}),
+         d_tm.mk_term(bitwuzla::Kind::FORALL,
+                      {x, d_tm.mk_term(bitwuzla::Kind::BV_ULT, {x, x})})});
+    ASSERT_EQ(d_tm.substitute_term(t, {{a, x}}), expected);
+  }
+}
+
+TEST_F(TestApi, substitute_lambda)
+{
+  bitwuzla::Sort bv8   = d_tm.mk_bv_sort(8);
+  bitwuzla::Term a     = d_tm.mk_const(bv8, "a");
+  bitwuzla::Term b     = d_tm.mk_const(bv8, "b");
+  bitwuzla::Term x     = d_tm.mk_var(bv8, "x");
+  bitwuzla::Term y     = d_tm.mk_var(bv8, "y");
+  bitwuzla::Term addxa = d_tm.mk_term(bitwuzla::Kind::BV_ADD, {x, a});
+  bitwuzla::Term lam   = d_tm.mk_term(bitwuzla::Kind::LAMBDA, {x, addxa});
+
+  // a lambda is not instantiated, it shadows its variable
+  ASSERT_EQ(d_tm.substitute_term(lam, {{x, b}}), lam);
+  ASSERT_EQ(d_tm.substitute_term(lam, {{x, y}}), lam);
+  {
+    bitwuzla::Term app = d_tm.mk_term(bitwuzla::Kind::APPLY, {lam, b});
+    bitwuzla::Term t   = d_tm.mk_term(bitwuzla::Kind::EQUAL, {app, x});
+    ASSERT_EQ(d_tm.substitute_term(t, {{x, b}}),
+              d_tm.mk_term(bitwuzla::Kind::EQUAL, {app, b}));
+  }
+
+  // substitution below a lambda
+  ASSERT_EQ(d_tm.substitute_term(lam, {{a, b}}),
+            d_tm.mk_term(bitwuzla::Kind::LAMBDA,
+                         {x, d_tm.mk_term(bitwuzla::Kind::BV_ADD, {x, b})}));
+
+  // beta-reduction by substituting in the body
+  ASSERT_EQ(d_tm.substitute_term(lam[1], {{x, b}}),
+            d_tm.mk_term(bitwuzla::Kind::BV_ADD, {b, a}));
+  {
+    bitwuzla::Term lam2 =
+        d_tm.mk_term(bitwuzla::Kind::LAMBDA,
+                     {x, y, d_tm.mk_term(bitwuzla::Kind::BV_ADD, {x, y})});
+    ASSERT_EQ(d_tm.substitute_term(lam2[1][1], {{x, a}, {y, b}}),
+              d_tm.mk_term(bitwuzla::Kind::BV_ADD, {a, b}));
+  }
+
+  // a lambda that would capture a substituted variable is renamed
+  {
+    bitwuzla::Term muly = d_tm.mk_term(bitwuzla::Kind::BV_MUL, {y, y});
+    bitwuzla::Term lamy =
+        d_tm.mk_term(bitwuzla::Kind::LAMBDA,
+                     {y, d_tm.mk_term(bitwuzla::Kind::BV_ADD, {x, y})});
+    bitwuzla::Term result = d_tm.substitute_term(lamy, {{x, muly}});
+    ASSERT_EQ(result.kind(), bitwuzla::Kind::LAMBDA);
+    ASSERT_NE(result[0], y);
+    ASSERT_EQ(result[1],
+              d_tm.mk_term(bitwuzla::Kind::BV_ADD, {muly, result[0]}));
+  }
 }
 
 TEST_F(TestApi, term_print1)

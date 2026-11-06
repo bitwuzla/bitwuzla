@@ -1610,6 +1610,19 @@ class TermManager
    * represented as map from keys to be substituted with their corresponding
    * values in the given term.
    *
+   * Substitutions are simultaneous, i.e., they are not applied to the
+   * substituted values, and they apply to the free occurrences of the keys:
+   * a binder that binds a substituted variable shadows it. The binders of the
+   * top-level quantifier prefix of a term whose variable is substituted are
+   * instantiated instead, e.g., substituting `x` with `a` in
+   * `(forall ((x (_ BitVec 8)) (y (_ BitVec 8))) (bvult x y))` yields
+   * `(forall ((y (_ BitVec 8))) (bvult a y))`. Lambdas are not instantiated,
+   * substitute in the body of a lambda to beta-reduce it.
+   *
+   * Substituting a variable is capture-avoiding: binders are renamed so that
+   * they do not bind the free variables of the substituted values.
+   * Substituting a term that is not a variable is not capture-avoiding.
+   *
    * @param term The term in which the terms are to be substituted.
    * @param map  The substitution map.
    * @return The resulting term from this substitution.
@@ -1623,7 +1636,7 @@ class TermManager
    * corresponding values in the given terms.
    *
    * The terms in `terms` are replaced with the terms resulting from these
-   * substitutions.
+   * substitutions, which are applied as in `substitute_term()`.
    *
    * @param terms The terms in which the terms are to be substituted.
    * @param map  The substitution map.

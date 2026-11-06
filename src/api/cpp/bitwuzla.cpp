@@ -15,6 +15,7 @@
 #include "api/checks.h"
 #include "bv/bitvector.h"
 #include "config.h"
+#include "node/kind_info.h"
 #include "node/node.h"
 #include "node/node_kind.h"
 #include "node/node_manager.h"
@@ -2714,33 +2715,41 @@ TermManager::substitute_term(const Term& term,
 }
 
 namespace {
-Term
-rebuild_term(TermManager& tm,
-             const Term& term,
-             const std::vector<Term>& children)
+/**
+ * Instantiate the binders of the top-level quantifier prefix of `node` whose
+ * variable is substituted, i.e., remove them so that their variable occurs
+ * free in the result. The remaining binders of the prefix are kept.
+ */
+bzla::Node
+instantiate_prefix(bzla::NodeManager& nm,
+                   const bzla::Node& node,
+                   const std::unordered_map<bzla::Node, bzla::Node>& substs)
 {
-  if (children.size()) assert(term.num_children() == children.size());
-  if (term.num_children() == 0)
+  std::vector<bzla::Node> kept;
+  bool instantiated = false;
+  bzla::Node cur    = node;
+  while (bzla::node::KindInfo::is_quant(cur.kind()))
   {
-    assert(children.empty());
-    return term;
+    auto it = substs.find(cur[0]);
+    if (it != substs.end() && it->second != cur[0])
+    {
+      instantiated = true;
+    }
+    else
+    {
+      kept.push_back(cur);
+    }
+    cur = cur[1];
   }
-  else if ((term.kind() == Kind::FORALL || term.kind() == Kind::EXISTS)
-           && !children[0].is_variable())
+  if (!instantiated)
   {
-    // if the variable of a quantifier is substituted by a non-variable,
-    // we substitute it with its body
-    return children[1];
+    return node;
   }
-  else if (term.kind() == Kind::CONST_ARRAY)
+  for (auto it = kept.rbegin(); it != kept.rend(); ++it)
   {
-    assert(children.size() == 1);
-    return tm.mk_const_array(term.sort(), children[0]);
+    cur = nm.mk_node(it->kind(), {(*it)[0], cur});
   }
-  else
-  {
-    return tm.mk_term(term.kind(), children, term.indices());
-  }
+  return cur;
 }
 }  // namespace
 
@@ -2753,64 +2762,30 @@ TermManager::substitute_terms(std::vector<Term>& terms,
     return;
   }
 
+  std::unordered_map<bzla::Node, bzla::Node> substs;
   for (const auto& [k, v] : map)
   {
     BITWUZLA_CHECK_TERM_NOT_NULL(k);
     BITWUZLA_CHECK_TERM_NOT_NULL(v);
+    BITWUZLA_CHECK_TERM_TERM_MGR(k, "substituted term");
+    BITWUZLA_CHECK_TERM_TERM_MGR(v, "substitution");
     BITWUZLA_CHECK(k.sort() == v.sort())
         << "invalid term substitution, mismatching sorts: " << k << " -> " << v;
+    substs.emplace(*k.d_node, *v.d_node);
   }
-
-  std::vector<Term> visit;
-  std::unordered_map<Term, Term> cache;
 
   for (size_t i = 0, n = terms.size(); i < n; ++i)
   {
     BITWUZLA_CHECK_TERM_NOT_NULL_AT_IDX(terms, i);
-    visit.push_back(terms[i]);
+    BITWUZLA_CHECK_TERM_TERM_MGR(terms[i], "term");
   }
 
-  while (!visit.empty())
+  // Substitutions are simultaneous, i.e., not applied to substituted terms.
+  bzla::node::utils::Substituter substituter(*d_nm, substs, false);
+  for (Term& term : terms)
   {
-    Term cur            = visit.back();
-    auto [it, inserted] = cache.emplace(cur, Term());
-    if (inserted)
-    {
-      for (size_t i = 0, n = cur.num_children(); i < n; ++i)
-      {
-        visit.push_back(cur[i]);
-      }
-      continue;
-    }
-    if (it->second.is_null())
-    {
-      Term result;
-      auto iit = map.find(cur);
-      if (iit != map.end())
-      {
-        result = iit->second;
-      }
-      else
-      {
-        std::vector<Term> children;
-        for (size_t i = 0, n = cur.num_children(); i < n; ++i)
-        {
-          auto cit = cache.find(cur[i]);
-          assert(cit != cache.end());
-          children.push_back(cit->second);
-        }
-        result = rebuild_term(*this, cur, children);
-      }
-      it->second = result;
-    }
-    visit.pop_back();
-  }
-
-  for (size_t i = 0, n = terms.size(); i < n; ++i)
-  {
-    auto it = cache.find(terms[i]);
-    assert(it != cache.end());
-    terms[i] = it->second;
+    term =
+        substituter.substitute(instantiate_prefix(*d_nm, *term.d_node, substs));
   }
 }
 

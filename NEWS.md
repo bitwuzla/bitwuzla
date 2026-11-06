@@ -157,6 +157,12 @@ This file collects a summary of important and/or user-visible changes.
   via a `std::shared_ptr`. This changes the size of `Term` and `Sort`
   (**ABI change**), applications using the C++ API must be recompiled.
 
+- **Term substitution** via `substitute_term()` and `substitute_terms()` now
+  only replaces free occurrences and is capture-avoiding when substituting
+  variables. Substituting the variable of a quantifier at the top of a term
+  instantiates the quantifier. Lambdas are not instantiated, substituting in
+  the body of a lambda beta-reduces it.
+
 - Various fixes in the rewriter, the array, function and floating-point solvers,
   the local search engine and interpolation.
 
