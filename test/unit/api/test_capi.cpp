@@ -600,6 +600,9 @@ TEST_F(TestCApi, option_info)
   {
     BitwuzlaOption opt = static_cast<BitwuzlaOption>(i);
     bitwuzla_get_option_info(options, opt, &info);
+    ASSERT_EQ(info.is_numeric, bitwuzla_option_is_numeric(options, opt));
+    ASSERT_EQ(info.is_mode, bitwuzla_option_is_mode(options, opt));
+    ASSERT_EQ(info.is_string, bitwuzla_option_is_string(options, opt));
     if (info.is_numeric)
     {
       ASSERT_EQ(info.numeric.cur, bitwuzla_get_option(options, opt));

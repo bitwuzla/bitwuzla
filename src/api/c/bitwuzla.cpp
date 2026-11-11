@@ -204,7 +204,10 @@ bitwuzla_option_is_numeric(BitwuzlaOptions* options, BitwuzlaOption option)
   bool res = false;
   BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(options);
-  res = options->d_options.is_numeric(static_cast<bitwuzla::Option>(option));
+  // The C API does not distinguish Boolean from numeric options (see
+  // bitwuzla_get_option_info()).
+  bitwuzla::Option opt = static_cast<bitwuzla::Option>(option);
+  res = options->d_options.is_numeric(opt) || options->d_options.is_bool(opt);
   BITWUZLA_C_TRY_CATCH_END;
   return res;
 }
