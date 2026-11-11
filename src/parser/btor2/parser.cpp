@@ -118,7 +118,7 @@ Parser::parse(const std::string& infile_name,
       {
         // If no safety properties checked, do one check-sat call.
         bitwuzla::Result res = d_bitwuzla->check_sat();
-        std::cout << res << std::endl;
+        (*d_out) << res << std::endl;
         if (d_auto_print_model && res == bitwuzla::Result::SAT)
         {
           if (!print_model())

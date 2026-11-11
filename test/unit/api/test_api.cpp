@@ -4422,9 +4422,20 @@ TEST_F(TestApi, parser_btor2_print_model_sat)
     parser.parse(input, true);
   }
   {
-    bitwuzla::parser::Parser parser(d_tm, options, "btor2", &std::cout);
+    std::stringstream ss;
+    bitwuzla::parser::Parser parser(d_tm, options, "btor2", &ss);
     parser.configure_auto_print_model(true);
     parser.parse(input);
+    std::string line;
+    ASSERT_TRUE(std::getline(ss, line));
+    ASSERT_EQ(line, "sat");
+    ASSERT_TRUE(std::getline(ss, line));
+    ASSERT_TRUE(line.rfind("2 ", 0) == 0 && line.size() > 2
+                && line.compare(line.size() - 2, 2, " x") == 0);
+    ASSERT_TRUE(std::getline(ss, line));
+    ASSERT_TRUE(line.rfind("3 ", 0) == 0 && line.size() > 2
+                && line.compare(line.size() - 2, 2, " y") == 0);
+    ASSERT_FALSE(std::getline(ss, line));
   }
   std::remove(input);
 }
