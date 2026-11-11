@@ -54,7 +54,14 @@ class BitwuzlaAbortStream
   {
     stream() << msg_prefix << " ";
   }
-  ~BitwuzlaAbortStream()
+  /**
+   * Destructor.
+   * @note Explicitly 'noexcept(false)' so that the abort callback may throw
+   *       (or unwind a foreign exception) to return control to the caller;
+   *       destructors are implicitly noexcept, which turns a throwing
+   *       callback into a call to `std::terminate`.
+   */
+  ~BitwuzlaAbortStream() noexcept(false)
   {
     flush();
     bitwuzla_abort(d_stream.str().c_str());

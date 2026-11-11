@@ -6075,6 +6075,7 @@ TEST_F(TestCApi, terminate_sat)
 namespace {
 class TestException : public std::exception
 {
+ public:
   TestException(const std::string& msg) : d_msg(msg) {}
   std::string d_msg;
 };
@@ -6082,22 +6083,48 @@ class TestException : public std::exception
 void
 test_abort(const char* msg)
 {
-  std::rethrow_if_nested(TestException(std::string(msg)));
+  throw TestException(std::string(msg));
 }
 }  // namespace
 
 TEST_F(TestCApi, abort_callback)
 {
+  struct Resetter
+  {
+    ~Resetter() { bitwuzla_set_abort_callback(nullptr); }
+  } resetter;
   bitwuzla_set_abort_callback(nullptr);
   bitwuzla_set_abort_callback(test_abort);
-  try
+  // Abort raised by a check in the C API layer.
   {
-    bitwuzla_kind_to_string(BITWUZLA_KIND_NUM_KINDS);
+    bool caught = false;
+    try
+    {
+      bitwuzla_kind_to_string(BITWUZLA_KIND_NUM_KINDS);
+    }
+    catch (TestException& e)
+    {
+      caught = true;
+      ASSERT_NE(e.d_msg.find("invalid term kind"), std::string::npos);
+    }
+    ASSERT_TRUE(caught);
   }
-  catch (TestException& e)
+  // Abort raised for an exception thrown by the C++ API.
   {
-    ASSERT_NE(e.d_msg.find("invalid term kind"), std::string::npos);
+    bool caught = false;
+    try
+    {
+      bitwuzla_mk_bv_sort(d_tm, 0);
+    }
+    catch (TestException& e)
+    {
+      caught = true;
+      ASSERT_NE(e.d_msg.find("must be > 0"), std::string::npos);
+    }
+    ASSERT_TRUE(caught);
   }
+  // The term manager is still usable after an abort.
+  ASSERT_TRUE(bitwuzla_sort_is_bv(bitwuzla_mk_bv_sort(d_tm, 8)));
 }
 
 namespace {

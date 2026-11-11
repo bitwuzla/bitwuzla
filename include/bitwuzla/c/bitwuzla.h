@@ -1293,8 +1293,11 @@ void* bitwuzla_get_termination_callback_state(Bitwuzla* bitwuzla);
  * Configure an abort callback function, which is called instead of exit
  * on abort conditions.
  *
- * @note If the abort callback function throws a C++ exception, this must be
- *       thrown via std::rethrow_if_nested.
+ * @note The callback function must not return. It either terminates the
+ *       program or throws a C++ exception (or, from other languages, unwinds
+ *       a foreign exception such as a Rust panic via the "C-unwind" ABI),
+ *       which propagates out of the aborting API call to its caller.
+ * @note The abort callback is configured per thread.
  *
  * @param fun The callback function. Argument `msg` explains the reason for the
  *            abort.
