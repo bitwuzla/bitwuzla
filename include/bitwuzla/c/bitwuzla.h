@@ -159,6 +159,9 @@ void bitwuzla_options_delete(BitwuzlaOptions* options);
  * @param filename The filename to redirect the diagnostic output to.
  *                 "<stderr>" and "<stdout>" are special filenames and redirect
  *                 to stderr and stdout respectively.
+ * @note The file stream is owned by `options`. Bitwuzla and parser instances
+ *       created with these options write to it, hence `options` must not be
+ *       deleted before these instances.
  */
 void bitwuzla_options_set_diagnostic_output_stream(BitwuzlaOptions* options,
                                                    const char* filename);
