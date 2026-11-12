@@ -196,9 +196,14 @@ AbstractionModule::process(const Node& term)
 
       if (abstract(rebuilt))
       {
-        it->second = nm.mk_node(Kind::AM_ABSTRACT, {rebuilt});
+        Node abstr = nm.mk_node(Kind::AM_ABSTRACT, {rebuilt});
+        it->second = abstr;
         ++d_stats.num_terms;
         d_stats.terms << rebuilt.kind();
+        // Value queries rebuild terms from processed children and look up
+        // the abstraction by the rebuilt node. May rehash, `it` is not used
+        // below.
+        d_abstraction_cache.try_emplace(rebuilt, abstr);
       }
       else
       {
@@ -260,7 +265,19 @@ AbstractionModule::process_value(const Node& term)
     {
       // Terms queried in solving mode are rewritten, hence only rebuilt nodes
       // need to be rewritten.
-      it->second = d_env.rewriter().rebuild_node(cur, d_value_cache);
+      Node rebuilt = d_env.rewriter().rebuild_node(cur, d_value_cache);
+      // The rebuilt node may have an active abstraction even if cur has none.
+      // Use it, as process() would, or the query registers a non-abstracted
+      // copy of an abstracted term, and theory lemmas relating the two
+      // rewrite to true after processing.
+      auto ita = d_abstraction_cache.find(rebuilt);
+      if (ita != d_abstraction_cache.end() && !ita->second.is_null()
+          && d_active_abstractions.find(ita->second)
+                 != d_active_abstractions.end())
+      {
+        rebuilt = ita->second;
+      }
+      it->second = rebuilt;
     }
     visit.pop_back();
   } while (!visit.empty());
