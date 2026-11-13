@@ -58,7 +58,8 @@ This file collects a summary of important and/or user-visible changes.
    http://dx.doi.org/10.1007/978-3-032-32526-6_2).
   This also greatly improves performance on quantified array logics.
   Note that previously, equalities over constant arrays (except for some
-  special cases) were rejected as unsupported.
+  special cases) were rejected as unsupported. Uninterpreted index sorts are
+  not supported yet and yield `unknown` (#229).
   - New option `--adc-sat-propagator` (disabled by default) enables an
     all-different-with-collisions SAT propagator for the cardinality
     constraints generated for constant array equalities (CaDiCaL only).
@@ -121,7 +122,10 @@ This file collects a summary of important and/or user-visible changes.
   terminator while using Kissat as SAT solver no longer raises an error.
   This requires the bundled Kissat subproject, which is patched to call the
   terminate callback. A system-wide Kissat is unpatched, terminator support
-  remains disabled in that case.
+  remains disabled in that case. Existing checkouts of the bundled Kissat are
+  not patched automatically and must be updated via
+  `meson subprojects update --reset kissat`, otherwise the terminator is
+  silently ignored.
 
 - Reduced **CNF size** by encoding chains of AND gates as n-ary ANDs, and
   reduced the **memory footprint** of AIGs.
@@ -133,12 +137,28 @@ This file collects a summary of important and/or user-visible changes.
   - GMP and MPFR may now be installed in different prefixes.
   - SymFPU >= 1.2.0 is now required (#228).
   - Compiler warnings from external dependencies are now suppressed (#230).
+  - Bitwuzla can now be built as a Meson subproject.
+  - With `--static`, the binary is now only linked statically if the
+    toolchain supports static executables, otherwise it is linked dynamically
+    against the static libraries (#232).
 
 - Fixed use-after-free in the function solver (#216) and non-terminating
   normalization preprocessing (#219).
 
-- **SMT2 parser**: Fixed parsing of indexed bit-vector values, reject
-  `(_ repeat 0)`, and fixed stack overflow on deeply nested array sorts.
+- **SMT2 parser**:
+  - Fixed scoping of nested `let` binders (wrong answers, rejected valid
+    inputs).
+  - Numerals and decimals as terms, e.g., `(and true 5)`, are now rejected
+    instead of being silently dropped or crashing (#231).
+  - `reset` and `reset-assertions` now reset all parser state.
+  - With `:global-declarations`, declarations are now independent of
+    assertion levels; the option can only be changed at assertion level 0.
+  - Sort symbols now have a separate namespace.
+  - Annotation attributes other than `:named` are now ignored.
+  - Quoted reserved words, e.g., `|assert|`, are now accepted as symbols.
+  - Parsing terms and sorts via the API now fails after a parse error.
+  - Fixed parsing of indexed bit-vector values and stack overflow on deeply
+    nested array sorts, `(_ repeat 0)` is now rejected.
 
 - **BTOR2 parser**: Fixed handling of NUL bytes and of invalid constant values.
 
@@ -156,6 +176,10 @@ This file collects a summary of important and/or user-visible changes.
   `Term` and `Sort` now hold the internal node and type directly instead of
   via a `std::shared_ptr`. This changes the size of `Term` and `Sort`
   (**ABI change**), applications using the C++ API must be recompiled.
+
+- The values of the option enums `bitwuzla::Option` and `BitwuzlaOption`
+  changed due to added and removed options (**ABI change**), applications
+  using the C or C++ API must be recompiled.
 
 - **Term substitution** via `substitute_term()` and `substitute_terms()` now
   only replaces free occurrences and is capture-avoiding when substituting
