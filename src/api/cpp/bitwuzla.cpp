@@ -1446,6 +1446,49 @@ operator<<(std::ostream& out, const Sort& sort)
   return out;
 }
 
+/* ExternalSatSolver -------------------------------------------------------- */
+
+/**
+ * Adapter for SAT solvers created by a bitwuzla::SatSolverFactory, which only
+ * implement the public SAT solver interface. Variables are allocated by the
+ * adapter, the remaining internal features keep their defaults: assertion
+ * levels are ignored and propagators are not supported.
+ */
+class ExternalSatSolver : public bzla::sat::SatSolver
+{
+ public:
+  /**
+   * Constructor.
+   * @param solver The wrapped SAT solver.
+   */
+  ExternalSatSolver(std::unique_ptr<bitwuzla::SatSolver> solver)
+      : d_solver(std::move(solver))
+  {
+  }
+  int32_t new_var() override { return ++d_max_var; }
+  void add(int32_t lit, int64_t cgroup_id = 0) override
+  {
+    d_solver->add(lit, cgroup_id);
+  }
+  void assume(int32_t lit) override { d_solver->assume(lit); }
+  int32_t value(int32_t lit) override { return d_solver->value(lit); }
+  bool failed(int32_t lit) override { return d_solver->failed(lit); }
+  int32_t fixed(int32_t lit) override { return d_solver->fixed(lit); }
+  Result solve() override { return d_solver->solve(); }
+  void configure_terminator(Terminator* terminator) override
+  {
+    d_solver->configure_terminator(terminator);
+  }
+  const char* get_name() const override { return d_solver->get_name(); }
+  const char* get_version() const override { return d_solver->get_version(); }
+
+ private:
+  /** The wrapped SAT solver. */
+  std::unique_ptr<bitwuzla::SatSolver> d_solver;
+  /** The maximum allocated variable. */
+  int32_t d_max_var = 0;
+};
+
 /* SatSolverFactoryInternal ------------------------------------------------- */
 
 class SatSolverFactoryInternal : public bzla::sat::SatSolverFactory
@@ -1458,18 +1501,23 @@ class SatSolverFactoryInternal : public bzla::sat::SatSolverFactory
   {
   }
   virtual ~SatSolverFactoryInternal() {}
-  std::unique_ptr<SatSolver> new_sat_solver(
+  std::unique_ptr<bzla::sat::SatSolver> new_sat_solver(
       bool produce_interpolants = false) override
   {
     BITWUZLA_CHECK(!produce_interpolants)
         << "interpolant generation not supported with external SAT solver "
            "factory";
-    return d_sat_factory.new_sat_solver();
+    std::unique_ptr<bitwuzla::SatSolver> solver =
+        d_sat_factory.new_sat_solver();
+    BITWUZLA_CHECK(solver != nullptr)
+        << "SAT solver factory returned no SAT solver";
+    return std::make_unique<ExternalSatSolver>(std::move(solver));
   }
   bool has_terminator_support() override
   {
     return d_sat_factory.has_terminator_support();
   }
+  bool has_propagator_support() override { return false; }
 
  private:
   bitwuzla::SatSolverFactory& d_sat_factory;

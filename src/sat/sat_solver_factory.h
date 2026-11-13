@@ -32,6 +32,12 @@ class SatSolverFactory
       bool produce_interpolants = false);
   /** Determine if configured SAT solver has terminator support. */
   virtual bool has_terminator_support();
+  /**
+   * Determine if configured SAT solver has propagator support, i.e., if it
+   * enforces the constraints of propagators registered via
+   * SatSolver::register_propagator().
+   */
+  virtual bool has_propagator_support();
 
  private:
   option::SatSolver d_sat_solver;

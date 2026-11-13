@@ -474,6 +474,8 @@ BvBitblastSolver::sync_sat_level(uint32_t level)
 void
 BvBitblastSolver::register_distinct_n(const Node& node)
 {
+  // Only SAT solvers with propagator support enforce the constraint.
+  assert(d_env.sat_factory().has_propagator_support());
 #ifdef BZLA_USE_CADICAL
   if (!d_sat_solver)
   {

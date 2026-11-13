@@ -105,4 +105,18 @@ SatSolverFactory::has_terminator_support()
   return true;
 }
 
+bool
+SatSolverFactory::has_propagator_support()
+{
+  // Propagators rely on CaDiCaL's external propagator interface. A system-wide
+  // CaDiCaL lacks our restore-before-observing patch, where observing a
+  // variable weakened by variable elimination violates CaDiCaL's API contract
+  // while solving.
+#ifdef BZLA_USE_CADICAL
+  return d_sat_solver == option::SatSolver::CADICAL && config::cadical_patched;
+#else
+  return false;
+#endif
+}
+
 }  // namespace bzla::sat

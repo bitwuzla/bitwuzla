@@ -31,6 +31,13 @@ Env::Env(NodeManager& nm,
                name.empty() ? "" : "(" + name + ")")
 {
   d_options.finalize();
+  // The ADC SAT propagator enforces DISTINCT_N constraints, SAT solvers without
+  // propagator support would drop them. Fall back to theory-level handling of
+  // DISTINCT_N in the solver engine.
+  if (!d_sat_factory.has_propagator_support())
+  {
+    d_options.adc_sat_propagator.set(false);
+  }
 }
 
 const option::Options&

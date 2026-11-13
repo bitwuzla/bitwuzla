@@ -5030,20 +5030,37 @@ TEST_F(TestApi, sat_factory)
     bool terminate() override { return false; }
   };
 
+  // Wraps a bundled SAT solver, which requires variables to be allocated via
+  // its internal interface. SAT solvers provided via the API are not told
+  // about variables and declare them on first use, as, e.g., CaDiCaL does.
+  // Variables that were never used have no value.
   class TestSatSolver : public bitwuzla::SatSolver
   {
    public:
-    TestSatSolver(SatSolver* sat_solver) : d_sat_solver(sat_solver) {}
-    int32_t new_var() override { return d_sat_solver->new_var(); }
+    TestSatSolver(sat::SatSolver* sat_solver) : d_sat_solver(sat_solver) {}
     void add(int32_t lit, int64_t cgroup_id = 0) override
     {
       (void) cgroup_id;
+      allocate(lit);
       d_sat_solver->add(lit);
     }
-    void assume(int32_t lit) override { d_sat_solver->assume(lit); }
-    int32_t value(int32_t lit) override { return d_sat_solver->value(lit); }
-    bool failed(int32_t lit) override { return d_sat_solver->failed(lit); }
-    int32_t fixed(int32_t lit) override { return d_sat_solver->fixed(lit); }
+    void assume(int32_t lit) override
+    {
+      allocate(lit);
+      d_sat_solver->assume(lit);
+    }
+    int32_t value(int32_t lit) override
+    {
+      return is_allocated(lit) ? d_sat_solver->value(lit) : 0;
+    }
+    bool failed(int32_t lit) override
+    {
+      return is_allocated(lit) && d_sat_solver->failed(lit);
+    }
+    int32_t fixed(int32_t lit) override
+    {
+      return is_allocated(lit) ? d_sat_solver->fixed(lit) : 0;
+    }
     bitwuzla::Result solve() override { return d_sat_solver->solve(); }
     const char* get_version() const override
     {
@@ -5055,7 +5072,16 @@ TEST_F(TestApi, sat_factory)
     }
 
    private:
-    std::unique_ptr<SatSolver> d_sat_solver = nullptr;
+    bool is_allocated(int32_t lit) const { return std::abs(lit) <= d_max_var; }
+    void allocate(int32_t lit)
+    {
+      while (!is_allocated(lit))
+      {
+        d_max_var = d_sat_solver->new_var();
+      }
+    }
+    std::unique_ptr<sat::SatSolver> d_sat_solver = nullptr;
+    int32_t d_max_var                            = 0;
   };
 
 #ifdef BZLA_USE_CADICAL
@@ -5163,6 +5189,37 @@ TEST_F(TestApi, sat_factory)
     ASSERT_NE(testing::internal::GetCapturedStderr().find(
                   "initialized SAT solver: external-cadical"),
               std::string::npos);
+  }
+  {
+    // SAT solvers provided via the API do not support propagators. The ADC
+    // SAT propagator, which enforces the cardinality constraints of constant
+    // array equalities, must not be silently dropped. Four stores cover the
+    // index domain of size four only if their indices are distinct, but three
+    // of them are restricted to two values.
+    bitwuzla::Sort bv2  = d_tm.mk_bv_sort(2);
+    bitwuzla::Sort asrt = d_tm.mk_array_sort(bv2, bv_sort4);
+    bitwuzla::Term zero = d_tm.mk_bv_zero(bv_sort4);
+    bitwuzla::Term one  = d_tm.mk_bv_one(bv_sort4);
+    bitwuzla::Term two  = d_tm.mk_bv_value_uint64(bv2, 2);
+    bitwuzla::Term a    = d_tm.mk_const_array(asrt, zero);
+    std::vector<bitwuzla::Term> idxs;
+    for (size_t i = 0; i < 4; ++i)
+    {
+      idxs.push_back(d_tm.mk_const(bv2));
+      a = d_tm.mk_term(bitwuzla::Kind::ARRAY_STORE, {a, idxs.back(), one});
+    }
+    bitwuzla::Options opts;
+    opts.set(bitwuzla::Option::ADC_SAT_PROPAGATOR, true);
+    TestCadicalFactory sat_factory;
+    bitwuzla::Bitwuzla bitwuzla(d_tm, sat_factory, opts);
+    bitwuzla.assert_formula(d_tm.mk_term(bitwuzla::Kind::EQUAL,
+                                         {a, d_tm.mk_const_array(asrt, one)}));
+    for (size_t i = 0; i < 3; ++i)
+    {
+      bitwuzla.assert_formula(
+          d_tm.mk_term(bitwuzla::Kind::BV_ULT, {idxs[i], two}));
+    }
+    ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNSAT);
   }
 #endif
 #ifdef BZLA_USE_CMS

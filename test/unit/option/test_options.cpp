@@ -10,7 +10,10 @@
 
 #include <gtest/gtest.h>
 
+#include "env.h"
+#include "node/node_manager.h"
 #include "option/option.h"
+#include "sat/sat_solver_factory.h"
 #include "test.h"
 
 namespace bzla::test {
@@ -142,6 +145,9 @@ TEST_F(TestOptions, opt_defaults)
 
 TEST_F(TestOptions, opt_adc_sat_propagator)
 {
+  // The SAT solver factory determines whether the SAT solver supports the ADC
+  // SAT propagator, the environment disables the option otherwise.
+  NodeManager nm;
   std::vector<std::string> sat_solvers;
 #ifdef BZLA_USE_CMS
   sat_solvers.push_back("cms");
@@ -157,16 +163,20 @@ TEST_F(TestOptions, opt_adc_sat_propagator)
     Options opts;
     opts.set<std::string>(Option::SAT_SOLVER, sat_solver);
     opts.set<bool>(Option::ADC_SAT_PROPAGATOR, true);
-    opts.finalize();
-    ASSERT_FALSE(opts.adc_sat_propagator());
+    sat::SatSolverFactory sat_factory(opts);
+    ASSERT_FALSE(sat_factory.has_propagator_support());
+    Env env(nm, sat_factory, opts);
+    ASSERT_FALSE(env.options().adc_sat_propagator());
   }
 #ifdef BZLA_USE_CADICAL
   {
     Options opts;
     opts.set<std::string>(Option::SAT_SOLVER, "cadical");
     opts.set<bool>(Option::ADC_SAT_PROPAGATOR, true);
-    opts.finalize();
-    ASSERT_EQ(opts.adc_sat_propagator(), cadical_patched);
+    sat::SatSolverFactory sat_factory(opts);
+    ASSERT_EQ(sat_factory.has_propagator_support(), cadical_patched);
+    Env env(nm, sat_factory, opts);
+    ASSERT_EQ(env.options().adc_sat_propagator(), cadical_patched);
   }
 #endif
 }

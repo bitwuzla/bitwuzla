@@ -15,11 +15,6 @@
 #include <bitwuzla/result.h>
 
 #include <cstdint>
-#include <memory>
-
-namespace bzla::sat {
-class SatPropagator;
-}
 
 namespace bitwuzla {
 
@@ -44,11 +39,6 @@ class SatSolver
   /** Disallow move assignment. */
   SatSolver& operator=(SatSolver&& solver) = delete;
 
-  /**
-   * Allocate new variable in SAT solver.
-   * @return Fresh variable.
-   */
-  virtual int32_t new_var() = 0;
   /**
    * Add valid literal to current clause.
    * @param lit       The literal to add, 0 to terminate clause..
@@ -81,22 +71,11 @@ class SatSolver
    * @return 1 if it is implied, -1 if it is not implied and 0 if unknown.
    */
   virtual int32_t fixed(int32_t lit) = 0;
-
-  virtual void phase(int32_t lit) { (void) lit; }
-
-  virtual void unphase(int32_t lit) { (void) lit; }
-
-  virtual void register_propagator(std::unique_ptr<bzla::sat::SatPropagator> sp)
-  {
-    (void) sp;
-  }
-
   /**
    * Check satisfiability of current formula.
    * @return The result of the satisfiability check.
    */
   virtual Result solve() = 0;
-
   /**
    * Configure a termination callback function via a terminator.
    * @param terminator The terminator.
@@ -114,29 +93,6 @@ class SatSolver
    * @return The version of the underly ing SAT solver.
    */
   virtual const char* get_version() const = 0;
-
-  /**
-   * Push assertion level.
-   *
-   * Implementing push()/pop()/set_level() is optional: all clauses sent to
-   * the SAT solver are globally valid (Tseitin definitions and theory-valid
-   * lemmas; assertions of non-zero levels are assumption-guarded).
-   * SAT backends may ignore assertion levels at the cost of accumulating
-   * clauses from popped levels.
-   */
-  virtual void push() {}
-
-  /**
-   * Pop assertion level.
-   * @note Resets the current clause level to 0.
-   */
-  virtual void pop() {}
-
-  /**
-   * Set assertion level for incoming clauses.
-   * @param level A valid assertion level.
-   */
-  virtual void set_level(uint32_t level) { (void) level; }
 };
 
 }  // namespace bitwuzla
