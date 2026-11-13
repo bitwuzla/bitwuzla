@@ -399,6 +399,15 @@ Preprocessor::apply(AssertionVector& assertions)
 
   } while (modified && !is_inconsistent() && !d_env.terminate());
 
+  // Terminating before the fixed point leaves the output of the passes after
+  // the rewrite pass unrewritten, but the solver engine requires rewritten
+  // assertions, also in later calls since these assertions are not
+  // preprocessed again.
+  if (modified && !is_inconsistent())
+  {
+    d_pass_rewrite.apply(assertions);
+  }
+
 #ifndef NDEBUG
   if (d_env.options().dbg_pp_node_thresh())
   {

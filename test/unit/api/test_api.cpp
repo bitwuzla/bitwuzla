@@ -4854,6 +4854,36 @@ TEST_F(TestApi, terminate_timeout_wrap)
 #endif
 }
 
+TEST_F(TestApi, terminate_preprocessing)
+{
+#ifdef BZLA_USE_CADICAL
+  // Terminating preprocessing before the fixed point must still hand
+  // rewritten assertions to the solver engine, in this and in later calls.
+  class TestTerminator : public bitwuzla::Terminator
+  {
+   public:
+    bool terminate() override { return true; }
+  };
+
+  bitwuzla::Sort bool_sort = d_tm.mk_bool_sort();
+  bitwuzla::Term x         = d_tm.mk_var(bool_sort);
+  bitwuzla::Term c         = d_tm.mk_const(bool_sort);
+  bitwuzla::Term f = d_tm.mk_term(bitwuzla::Kind::LAMBDA,
+                                  {x, d_tm.mk_term(bitwuzla::Kind::NOT, {x})});
+  // Beta reduction yields (not true), which is not rewritten.
+  bitwuzla::Term app = d_tm.mk_term(bitwuzla::Kind::APPLY, {f, d_tm.mk_true()});
+
+  TestTerminator tt;
+  bitwuzla::Bitwuzla bitwuzla(d_tm);
+  bitwuzla.configure_terminator(&tt);
+  bitwuzla.assert_formula(d_tm.mk_term(bitwuzla::Kind::OR, {app, c}));
+  ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::UNKNOWN);
+
+  bitwuzla.configure_terminator(nullptr);
+  ASSERT_EQ(bitwuzla.check_sat(), bitwuzla::Result::SAT);
+#endif
+}
+
 TEST_F(TestApi, terminate_mbqi_subsolver)
 {
 #ifdef BZLA_USE_CADICAL
