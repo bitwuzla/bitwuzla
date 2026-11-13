@@ -2,6 +2,8 @@
 
 This file collects a summary of important and/or user-visible changes.
 
+## News for version 0.10.0
+
 - The bit-vector, bit-blasting and local search support libraries
   (`libbitwuzlabv`, `libbitwuzlabb`, `libbitwuzlals`) are now part of
   `libbitwuzla` and are no longer built and installed separately.
