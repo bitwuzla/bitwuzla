@@ -34,7 +34,7 @@ test-command = "python -c \"import bitwuzla; tm = bitwuzla.TermManager(); opts =
 
 [tool.cibuildwheel.linux]
 before-all = "bash {project}/contrib/cibw/build-deps-linux.sh"
-environment = { PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig" }
+environment = { PKG_CONFIG_PATH="/usr/local/lib/pkgconfig" }
 manylinux-x86_64-image = "manylinux_2_28"
 manylinux-aarch64-image = "manylinux_2_28"
 
