@@ -48,8 +48,8 @@ main()
       std::cout << "numeric" << std::endl;
       std::cout << "  values:" << std::endl;
       const auto& values = std::get<OptionInfo::Numeric>(info.values);
-      std::cout << "  + current:   " << values.dflt << std::endl;
-      std::cout << "  + default:   " << values.cur << std::endl;
+      std::cout << "  + current:   " << values.cur << std::endl;
+      std::cout << "  + default:   " << values.dflt << std::endl;
       std::cout << "  + min:       " << values.min << std::endl;
       std::cout << "  + max:       " << values.max << std::endl;
     }
@@ -58,8 +58,8 @@ main()
       std::cout << "modes" << std::endl;
       std::cout << "  values:" << std::endl;
       const auto& values = std::get<OptionInfo::Mode>(info.values);
-      std::cout << "  + current:   " << values.dflt << std::endl;
-      std::cout << "  + default:   " << values.cur << std::endl;
+      std::cout << "  + current:   " << values.cur << std::endl;
+      std::cout << "  + default:   " << values.dflt << std::endl;
       std::cout << "  + modes:     {";
       for (size_t i = 0, n = values.modes.size(); i < n; ++i)
       {
