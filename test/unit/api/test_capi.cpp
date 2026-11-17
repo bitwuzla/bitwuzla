@@ -596,6 +596,13 @@ TEST_F(TestCApi, option_info)
   BitwuzlaOptions* options = bitwuzla_options_new();
   BitwuzlaOptionInfo info;
 
+  ASSERT_DEATH(bitwuzla_option_is_numeric(options, BITWUZLA_OPT_NUM_OPTS),
+               "invalid option");
+  ASSERT_DEATH(bitwuzla_option_is_mode(options, BITWUZLA_OPT_NUM_OPTS),
+               "invalid option");
+  ASSERT_DEATH(bitwuzla_option_is_string(options, BITWUZLA_OPT_NUM_OPTS),
+               "invalid option");
+
   for (int32_t i = 0; i < BITWUZLA_OPT_NUM_OPTS; ++i)
   {
     BitwuzlaOption opt = static_cast<BitwuzlaOption>(i);

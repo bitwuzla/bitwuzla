@@ -204,9 +204,10 @@ bitwuzla_option_is_numeric(BitwuzlaOptions* options, BitwuzlaOption option)
   bool res = false;
   BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(options);
+  BITWUZLA_CHECK_OPTION(option);
   // The C API does not distinguish Boolean from numeric options (see
   // bitwuzla_get_option_info()).
-  bitwuzla::Option opt = static_cast<bitwuzla::Option>(option);
+  bitwuzla::Option opt = import_option(option);
   res = options->d_options.is_numeric(opt) || options->d_options.is_bool(opt);
   BITWUZLA_C_TRY_CATCH_END;
   return res;
@@ -218,7 +219,8 @@ bitwuzla_option_is_mode(BitwuzlaOptions* options, BitwuzlaOption option)
   bool res = false;
   BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(options);
-  res = options->d_options.is_mode(static_cast<bitwuzla::Option>(option));
+  BITWUZLA_CHECK_OPTION(option);
+  res = options->d_options.is_mode(import_option(option));
   BITWUZLA_C_TRY_CATCH_END;
   return res;
 }
@@ -229,7 +231,8 @@ bitwuzla_option_is_string(BitwuzlaOptions* options, BitwuzlaOption option)
   bool res = false;
   BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(options);
-  res = options->d_options.is_str(static_cast<bitwuzla::Option>(option));
+  BITWUZLA_CHECK_OPTION(option);
+  res = options->d_options.is_str(import_option(option));
   BITWUZLA_C_TRY_CATCH_END;
   return res;
 }
