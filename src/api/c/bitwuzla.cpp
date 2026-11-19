@@ -619,6 +619,7 @@ bitwuzla_check_sat_assuming(Bitwuzla* bitwuzla,
   std::vector<bitwuzla::Term> assumptions;
   for (uint32_t i = 0; i < argc; ++i)
   {
+    BITWUZLA_CHECK_TERM_AT_IDX(args, i);
     assumptions.push_back(BitwuzlaTermManager::import_term(args[i]));
   }
   res = static_cast<BitwuzlaResult>(bitwuzla->get().check_sat(assumptions));
@@ -666,6 +667,7 @@ bitwuzla_get_interpolants(Bitwuzla* bitwuzla,
 {
   static thread_local std::vector<BitwuzlaTerm> res;
   BITWUZLA_C_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(bitwuzla);
   BITWUZLA_CHECK_NOT_NULL(Ac);
   BITWUZLA_CHECK_NOT_NULL(As);
   std::vector<std::vector<bitwuzla::Term>> A;
@@ -758,7 +760,12 @@ bitwuzla_get_statistics(Bitwuzla* bitwuzla,
 BitwuzlaTermManager*
 bitwuzla_get_term_mgr(Bitwuzla* bitwuzla)
 {
-  return bitwuzla->d_tm;
+  BitwuzlaTermManager* res = nullptr;
+  BITWUZLA_C_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(bitwuzla);
+  res = bitwuzla->d_tm;
+  BITWUZLA_C_TRY_CATCH_END;
+  return res;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1239,6 +1246,10 @@ bitwuzla_mk_term(BitwuzlaTermManager* tm,
   BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(tm);
   BITWUZLA_CHECK_KIND(kind);
+  if (argc > 0)
+  {
+    BITWUZLA_CHECK_NOT_NULL(args);
+  }
   std::vector<bitwuzla::Term> terms;
   for (uint32_t i = 0; i < argc; ++i)
   {
@@ -1344,11 +1355,19 @@ bitwuzla_mk_term_indexed(BitwuzlaTermManager* tm,
   BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(tm);
   BITWUZLA_CHECK_KIND(kind);
+  if (argc > 0)
+  {
+    BITWUZLA_CHECK_NOT_NULL(args);
+  }
   std::vector<bitwuzla::Term> terms;
   for (uint32_t i = 0; i < argc; ++i)
   {
     BITWUZLA_CHECK_TERM_AT_IDX(args, i);
     terms.push_back(BitwuzlaTermManager::import_term(args[i]));
+  }
+  if (idxc > 0)
+  {
+    BITWUZLA_CHECK_NOT_NULL(idxs);
   }
   std::vector<uint64_t> indices;
   for (uint32_t i = 0; i < idxc; ++i)

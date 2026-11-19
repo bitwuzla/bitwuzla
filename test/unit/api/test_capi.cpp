@@ -891,6 +891,27 @@ TEST_F(TestCApi, mk_term_check_null)
                                 null_death_args3.size(),
                                 null_death_args3.data()),
                d_error_inv_term);
+  ASSERT_DEATH(bitwuzla_mk_term(d_tm, BITWUZLA_KIND_BV_AND, 2, nullptr),
+               d_error_not_null);
+  // mk_term_indexed
+  std::vector<uint64_t> idxs = {3, 0};
+  ASSERT_DEATH(
+      bitwuzla_mk_term_indexed(
+          d_tm, BITWUZLA_KIND_BV_EXTRACT, 1, nullptr, idxs.size(), idxs.data()),
+      d_error_not_null);
+  ASSERT_DEATH(bitwuzla_mk_term_indexed(
+                   d_tm, BITWUZLA_KIND_BV_EXTRACT, 1, &d_bv_const8, 2, nullptr),
+               d_error_not_null);
+  ASSERT_DEATH(bitwuzla_mk_term_indexed(d_tm,
+                                        BITWUZLA_KIND_BV_EXTRACT,
+                                        null_death_args1.size(),
+                                        null_death_args1.data(),
+                                        idxs.size(),
+                                        idxs.data()),
+               d_error_inv_term);
+  // An empty argument array may be NULL, the arity check applies.
+  ASSERT_DEATH(bitwuzla_mk_term(d_tm, BITWUZLA_KIND_BV_AND, 0, nullptr),
+               "invalid number of arguments");
   // mk_term1
   ASSERT_DEATH(bitwuzla_mk_term1(d_tm, BITWUZLA_KIND_BV_NOT, 0),
                d_error_inv_term);
@@ -2503,6 +2524,7 @@ TEST_F(TestCApi, get_term_mgr)
 {
   {
     Bitwuzla* bitwuzla = bitwuzla_new(d_tm, nullptr);
+    ASSERT_DEATH(bitwuzla_get_term_mgr(nullptr), d_error_not_null);
     ASSERT_EQ(d_tm, bitwuzla_get_term_mgr(bitwuzla));
     bitwuzla_delete(bitwuzla);
   }
@@ -2751,6 +2773,12 @@ TEST_F(TestCApi, check_sat)
     Bitwuzla* bitwuzla = bitwuzla_new(d_tm, nullptr);
     bitwuzla_check_sat(bitwuzla);
     bitwuzla_check_sat(bitwuzla);
+    std::vector<BitwuzlaTerm> assumptions = {d_bool_const, nullptr};
+    ASSERT_DEATH(bitwuzla_check_sat_assuming(
+                     bitwuzla, assumptions.size(), assumptions.data()),
+                 "invalid term at index 1");
+    ASSERT_DEATH(bitwuzla_check_sat_assuming(nullptr, 0, assumptions.data()),
+                 d_error_not_null);
     bitwuzla_delete(bitwuzla);
   }
 }
@@ -2991,6 +3019,9 @@ TEST_F(TestCApi, get_interpolant)
     ASSERT_DEATH(
         bitwuzla_get_interpolants(bitwuzla, As.size(), Asc, As.data(), &size),
         "expected non-null object at index 6");
+    ASSERT_DEATH(
+        bitwuzla_get_interpolants(nullptr, As.size(), Asc, As.data(), &size),
+        d_error_not_null);
     bitwuzla_delete(bitwuzla);
     bitwuzla_options_delete(options);
   }
