@@ -830,6 +830,18 @@ Options::set(const std::string& name,
       throw Exception("expected a numeric value for option '" + name
                       + "', got '" + value + "'");
     }
+    if (v < min<uint64_t>(it->second))
+    {
+      throw Exception("invalid value '" + value + "' for option '" + name
+                      + "', expected value >= "
+                      + std::to_string(min<uint64_t>(it->second)));
+    }
+    if (v > max<uint64_t>(it->second))
+    {
+      throw Exception("invalid value '" + value + "' for option '" + name
+                      + "', expected value <= "
+                      + std::to_string(max<uint64_t>(it->second)));
+    }
     set<uint64_t>(it->second, v, is_user_set);
   }
   else

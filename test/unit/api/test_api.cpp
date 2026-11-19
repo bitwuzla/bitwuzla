@@ -392,6 +392,12 @@ TEST_F(TestApi, options_set)
     // empty option name and empty value
     ASSERT_THROW(opts.set("", "1"), bitwuzla::option::Exception);
     ASSERT_THROW(opts.set("verbosity", ""), bitwuzla::option::Exception);
+    // numeric value above the option maximum (verbosity maximum is 4)
+    ASSERT_THROW(opts.set("verbosity", "5"), bitwuzla::option::Exception);
+    // numeric value below the option minimum (nthreads minimum is 1)
+    ASSERT_THROW(opts.set("nthreads", "0"), bitwuzla::option::Exception);
+    ASSERT_EQ(opts.get(bitwuzla::Option::VERBOSITY), 0);
+    ASSERT_EQ(opts.get(bitwuzla::Option::NTHREADS), 1);
   }
 }
 
