@@ -7,6 +7,29 @@ This file collects a summary of important and/or user-visible changes.
   Previously, numbers of levels that do not fit into 32 bits were silently
   truncated.
 
+- **C API**: New functions for functionality that was previously only
+  available via the C++ API:
+  * `bitwuzla_option_is_bool(BitwuzlaOptions*, BitwuzlaOption)`
+    (`bitwuzla::Options::is_bool()`). Note that
+    `bitwuzla_option_is_numeric()` also returns true for Boolean options,
+    unlike `bitwuzla::Options::is_numeric()`.
+  * `bitwuzla_option_from_name(BitwuzlaOptions*, const char*)`
+    (`bitwuzla::Options::option()`)
+  * `bitwuzla_set_option_by_name(BitwuzlaOptions*, const char*, const char*)`
+    (`bitwuzla::Options::set(const std::string&, const std::string&)`)
+  * `bitwuzla_options_set_args(BitwuzlaOptions*, uint32_t, const char*[])`
+    (`bitwuzla::Options::set(const std::vector<std::string>&)`)
+  * `bitwuzla_term_get_id(BitwuzlaTerm)` (`bitwuzla::Term::id()`) and
+    `bitwuzla_sort_get_id(BitwuzlaSort)` (`bitwuzla::Sort::id()`)
+
+- **Options**: Setting a numeric option by name with a value out of the
+  option's range, e.g., via `bitwuzla::Options::set(const std::string&,
+  const std::string&)` or `(set-option :verbosity 5)`, is now rejected
+  instead of silently accepted. `bitwuzla::Options::set(const
+  std::vector<std::string>&)` now rejects numeric values with trailing
+  characters, and throws a `bitwuzla::option::Exception` instead of a
+  `std::out_of_range` exception for values that do not fit into 64 bits.
+
 ## News for version 0.10.0
 
 - The bit-vector, bit-blasting and local search support libraries
