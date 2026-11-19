@@ -596,12 +596,23 @@ TEST_F(TestCApi, option_info)
   BitwuzlaOptions* options = bitwuzla_options_new();
   BitwuzlaOptionInfo info;
 
+  ASSERT_DEATH(bitwuzla_option_is_bool(nullptr, BITWUZLA_OPT_PRODUCE_MODELS),
+               d_error_not_null);
+  ASSERT_DEATH(bitwuzla_option_is_bool(options, BITWUZLA_OPT_NUM_OPTS),
+               "invalid option");
   ASSERT_DEATH(bitwuzla_option_is_numeric(options, BITWUZLA_OPT_NUM_OPTS),
                "invalid option");
   ASSERT_DEATH(bitwuzla_option_is_mode(options, BITWUZLA_OPT_NUM_OPTS),
                "invalid option");
   ASSERT_DEATH(bitwuzla_option_is_string(options, BITWUZLA_OPT_NUM_OPTS),
                "invalid option");
+
+  ASSERT_TRUE(bitwuzla_option_is_bool(options, BITWUZLA_OPT_PRODUCE_MODELS));
+  ASSERT_TRUE(bitwuzla_option_is_numeric(options, BITWUZLA_OPT_PRODUCE_MODELS));
+  ASSERT_FALSE(bitwuzla_option_is_bool(options, BITWUZLA_OPT_VERBOSITY));
+  ASSERT_TRUE(bitwuzla_option_is_numeric(options, BITWUZLA_OPT_VERBOSITY));
+  ASSERT_FALSE(bitwuzla_option_is_bool(options, BITWUZLA_OPT_BV_SOLVER));
+  ASSERT_FALSE(bitwuzla_option_is_bool(options, BITWUZLA_OPT_WRITE_AIGER));
 
   for (int32_t i = 0; i < BITWUZLA_OPT_NUM_OPTS; ++i)
   {
@@ -610,6 +621,14 @@ TEST_F(TestCApi, option_info)
     ASSERT_EQ(info.is_numeric, bitwuzla_option_is_numeric(options, opt));
     ASSERT_EQ(info.is_mode, bitwuzla_option_is_mode(options, opt));
     ASSERT_EQ(info.is_string, bitwuzla_option_is_string(options, opt));
+    ASSERT_EQ(bitwuzla_option_is_bool(options, opt),
+              options->d_options.is_bool(static_cast<bitwuzla::Option>(opt)));
+    if (bitwuzla_option_is_bool(options, opt))
+    {
+      ASSERT_TRUE(info.is_numeric);
+      ASSERT_EQ(info.numeric.min, 0);
+      ASSERT_EQ(info.numeric.max, 1);
+    }
     if (info.is_numeric)
     {
       ASSERT_EQ(info.numeric.cur, bitwuzla_get_option(options, opt));

@@ -32,6 +32,7 @@ options is :doc:`here </c/options>`.
 - typedef struct :cpp:type:`BitwuzlaOptions`
 - :cpp:func:`bitwuzla_options_new()`
 - :cpp:func:`bitwuzla_options_delete()`
+- :cpp:func:`bitwuzla_option_is_bool()`
 - :cpp:func:`bitwuzla_option_is_numeric()`
 - :cpp:func:`bitwuzla_option_is_mode()`
 - :cpp:func:`bitwuzla_set_option()`

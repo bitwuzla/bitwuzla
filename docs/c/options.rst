@@ -8,11 +8,15 @@ options :cpp:type:`BitwuzlaOptions` instance. This options instance must
 be configured before creating the Bitwuzla instance: **after** the Bitwuzla
 instance is created, configuration options are fixed and **cannot** be changed.
 
-Via the C API, **Bitwuzla** distinguishes two kinds of options: Numeric options
-(including Boolean options) and options with option modes.
+Via the C API, **Bitwuzla** distinguishes three kinds of options: Numeric
+options (including Boolean options), options with option modes and options
+with string values.
 The kind of an option can be queried via
-:cpp:func:`bitwuzla_option_is_numeric()`, and
-:cpp:func:`bitwuzla_option_is_mode()`.
+:cpp:func:`bitwuzla_option_is_numeric()`,
+:cpp:func:`bitwuzla_option_is_mode()`, and
+:cpp:func:`bitwuzla_option_is_string()`.
+Boolean options can be distinguished from other numeric options via
+:cpp:func:`bitwuzla_option_is_bool()`.
 
 Boolean and numeric options are configured via
 :cpp:func:`bitwuzla_set_option()`, and

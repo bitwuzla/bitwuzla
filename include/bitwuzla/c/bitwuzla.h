@@ -177,10 +177,32 @@ void bitwuzla_options_set_diagnostic_output_stream(BitwuzlaOptions* options,
 bool bitwuzla_option_is_valid(BitwuzlaOptions* options, const char* name);
 
 /**
+ * Determine if a given option is a Boolean option.
+ * @param options The Bitwuzla options instance.
+ * @param option The option.
+ * @return True if the given option is a Boolean option.
+ * @note Boolean options are also numeric options, i.e.,
+ *       `bitwuzla_option_is_numeric()` returns true for Boolean options.
+ *
+ * @see
+ *   * `bitwuzla_option_is_numeric`
+ */
+bool bitwuzla_option_is_bool(BitwuzlaOptions* options, BitwuzlaOption option);
+
+/**
  * Determine if a given option is a numeric (or Boolean) option.
  * @param options The Bitwuzla options instance.
  * @param option The option.
  * @return True if the given option is a numeric or Boolean option.
+ * @note Unlike the C++ API, the C API treats Boolean options as numeric
+ *       options: they are configured via `bitwuzla_set_option()` and queried
+ *       via `bitwuzla_get_option()` with values 0 and 1, and
+ *       `bitwuzla_get_option_info()` reports them as numeric options.
+ *       Use `bitwuzla_option_is_bool()` to distinguish Boolean from numeric
+ *       options.
+ *
+ * @see
+ *   * `bitwuzla_option_is_bool`
  */
 bool bitwuzla_option_is_numeric(BitwuzlaOptions* options,
                                 BitwuzlaOption option);

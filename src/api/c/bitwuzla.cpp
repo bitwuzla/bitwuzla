@@ -199,6 +199,18 @@ bitwuzla_option_is_valid(BitwuzlaOptions* options, const char* name)
 }
 
 bool
+bitwuzla_option_is_bool(BitwuzlaOptions* options, BitwuzlaOption option)
+{
+  bool res = false;
+  BITWUZLA_C_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(options);
+  BITWUZLA_CHECK_OPTION(option);
+  res = options->d_options.is_bool(import_option(option));
+  BITWUZLA_C_TRY_CATCH_END;
+  return res;
+}
+
+bool
 bitwuzla_option_is_numeric(BitwuzlaOptions* options, BitwuzlaOption option)
 {
   bool res = false;
