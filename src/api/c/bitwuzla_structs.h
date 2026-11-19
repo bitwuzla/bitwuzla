@@ -82,8 +82,11 @@ struct bitwuzla_term_t
   }
   /** The wrapped C++ term. */
   bitwuzla::Term d_term;
-  /** External refs count. */
-  uint32_t d_refs = 1;
+  /**
+   * External refs count. Every API call that returns the wrapped object
+   * increments it, 64 bits ensure that it does not overflow.
+   */
+  uint64_t d_refs = 1;
   /** The associated term manager. */
   BitwuzlaTermManager* d_tm = nullptr;
 };
@@ -101,8 +104,11 @@ struct bitwuzla_sort_t
   }
   /** The wrapped C++ sort. */
   bitwuzla::Sort d_sort;
-  /** External refs count. */
-  uint32_t d_refs = 1;
+  /**
+   * External refs count. Every API call that returns the wrapped object
+   * increments it, 64 bits ensure that it does not overflow.
+   */
+  uint64_t d_refs = 1;
   /** The associated term manager. */
   BitwuzlaTermManager* d_tm = nullptr;
 };

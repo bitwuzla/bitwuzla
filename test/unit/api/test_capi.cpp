@@ -5705,6 +5705,38 @@ TEST_F(TestCApi, term_copy_release)
   bitwuzla_term_manager_delete(tm);
 }
 
+TEST_F(TestCApi, copy_release_refs_no_overflow)
+{
+  BitwuzlaTermManager* tm = bitwuzla_term_manager_new();
+  BitwuzlaTerm t          = bitwuzla_mk_true(tm);
+  BitwuzlaSort s          = bitwuzla_mk_bool_sort(tm);
+  // Simulate as many references as fit into 32 bits.
+  t->d_refs                 = UINT32_MAX;
+  s->d_refs                 = UINT32_MAX;
+  const uint64_t refs_32max = UINT32_MAX;
+
+  ASSERT_EQ(bitwuzla_term_copy(t), t);
+  ASSERT_EQ(bitwuzla_sort_copy(s), s);
+  ASSERT_EQ(t->d_refs, refs_32max + 1);
+  ASSERT_EQ(s->d_refs, refs_32max + 1);
+  // Exporting an already exported term or sort also adds a reference.
+  ASSERT_EQ(bitwuzla_mk_true(tm), t);
+  ASSERT_EQ(bitwuzla_mk_bool_sort(tm), s);
+  ASSERT_EQ(t->d_refs, refs_32max + 2);
+  ASSERT_EQ(s->d_refs, refs_32max + 2);
+
+  bitwuzla_term_release(t);
+  bitwuzla_sort_release(s);
+  ASSERT_EQ(t->d_refs, refs_32max + 1);
+  ASSERT_EQ(s->d_refs, refs_32max + 1);
+  ASSERT_EQ(tm->d_alloc_terms.size(), 1);
+  ASSERT_EQ(tm->d_alloc_sorts.size(), 1);
+  ASSERT_TRUE(bitwuzla_term_is_true(t));
+  ASSERT_TRUE(bitwuzla_sort_is_bool(s));
+
+  bitwuzla_term_manager_delete(tm);
+}
+
 TEST_F(TestCApi, sort_copy_release)
 {
   BitwuzlaTermManager* tm = bitwuzla_term_manager_new();
