@@ -675,6 +675,35 @@ TEST_F(TestCApi, option_is_valid)
   bitwuzla_options_delete(options);
 }
 
+TEST_F(TestCApi, option_from_name)
+{
+  BitwuzlaOptions* options = bitwuzla_options_new();
+  ASSERT_DEATH(bitwuzla_option_from_name(nullptr, "produce-models"),
+               d_error_not_null);
+  ASSERT_DEATH(bitwuzla_option_from_name(options, nullptr), d_error_not_null);
+  ASSERT_DEATH(bitwuzla_option_from_name(options, "nonsense"),
+               "invalid option 'nonsense'");
+  ASSERT_DEATH(bitwuzla_option_from_name(options, ""), "invalid option ''");
+  ASSERT_DEATH(bitwuzla_option_from_name(options, "--produce-models"),
+               "invalid option '--produce-models'");
+  ASSERT_EQ(bitwuzla_option_from_name(options, "produce-models"),
+            BITWUZLA_OPT_PRODUCE_MODELS);
+  ASSERT_EQ(bitwuzla_option_from_name(options, "v"), BITWUZLA_OPT_VERBOSITY);
+
+  BitwuzlaOptionInfo info;
+  for (int32_t i = 0; i < BITWUZLA_OPT_NUM_OPTS; ++i)
+  {
+    BitwuzlaOption opt = static_cast<BitwuzlaOption>(i);
+    bitwuzla_get_option_info(options, opt, &info);
+    ASSERT_EQ(bitwuzla_option_from_name(options, info.lng), opt);
+    if (info.shrt)
+    {
+      ASSERT_EQ(bitwuzla_option_from_name(options, info.shrt), opt);
+    }
+  }
+  bitwuzla_options_delete(options);
+}
+
 /* -------------------------------------------------------------------------- */
 /* Create Sorts                                                               */
 /* -------------------------------------------------------------------------- */

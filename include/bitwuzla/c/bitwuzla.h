@@ -222,6 +222,23 @@ bool bitwuzla_option_is_mode(BitwuzlaOptions* options, BitwuzlaOption option);
 bool bitwuzla_option_is_string(BitwuzlaOptions* options, BitwuzlaOption option);
 
 /**
+ * Get the option associated with a given short or long option name.
+ *
+ * Requires that `name` is a valid option name.
+ *
+ * @param options The Bitwuzla options instance.
+ * @param name The short or long option name (without leading dashes), e.g.,
+ *             "produce-models" or "v".
+ * @return The option associated with the given name.
+ *
+ * @see
+ *   * `bitwuzla_option_is_valid`
+ *   * `BitwuzlaOptionInfo`
+ */
+BitwuzlaOption bitwuzla_option_from_name(BitwuzlaOptions* options,
+                                         const char* name);
+
+/**
  * Set option.
  *
  * @param options The Bitwuzla options instance.

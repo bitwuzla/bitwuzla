@@ -35,6 +35,7 @@ options is :doc:`here </c/options>`.
 - :cpp:func:`bitwuzla_option_is_bool()`
 - :cpp:func:`bitwuzla_option_is_numeric()`
 - :cpp:func:`bitwuzla_option_is_mode()`
+- :cpp:func:`bitwuzla_option_from_name()`
 - :cpp:func:`bitwuzla_set_option()`
 - :cpp:func:`bitwuzla_set_option_mode()`
 - :cpp:func:`bitwuzla_get_option()`

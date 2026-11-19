@@ -250,6 +250,18 @@ bitwuzla_option_is_string(BitwuzlaOptions* options, BitwuzlaOption option)
   return res;
 }
 
+BitwuzlaOption
+bitwuzla_option_from_name(BitwuzlaOptions* options, const char* name)
+{
+  BitwuzlaOption res = BITWUZLA_OPT_NUM_OPTS;
+  BITWUZLA_C_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(options);
+  BITWUZLA_CHECK_NOT_NULL(name);
+  res = static_cast<BitwuzlaOption>(options->d_options.option(name));
+  BITWUZLA_C_TRY_CATCH_END;
+  return res;
+}
+
 void
 bitwuzla_set_option(BitwuzlaOptions* options,
                     BitwuzlaOption option,
