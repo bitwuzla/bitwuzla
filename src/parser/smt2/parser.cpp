@@ -16,6 +16,7 @@
 #include <charconv>
 #include <cstdio>
 #include <iostream>
+#include <limits>
 
 #include "fp/floating_point.h"
 #include "util/util.h"
@@ -1177,8 +1178,8 @@ Parser::parse_command_pop()
   init_logic();
   init_bitwuzla();
 
-  uint64_t nlevels;
-  if (!parse_uint64(nlevels))
+  uint32_t nlevels;
+  if (!parse_uint32(nlevels))
   {
     return false;
   }
@@ -1193,7 +1194,7 @@ Parser::parse_command_pop()
                      + "' have been pushed previously");
   }
 
-  for (size_t i = 0; i < nlevels; ++i)
+  for (uint32_t i = 0; i < nlevels; ++i)
   {
     if (!d_global_decl)
     {
@@ -1216,8 +1217,8 @@ Parser::parse_command_push()
   init_logic();
   init_bitwuzla();
 
-  uint64_t nlevels;
-  if (!parse_uint64(nlevels))
+  uint32_t nlevels;
+  if (!parse_uint32(nlevels))
   {
     return false;
   }
@@ -1227,7 +1228,7 @@ Parser::parse_command_push()
   }
   d_assertion_level += nlevels;
   d_bitwuzla->push(nlevels);
-  for (uint64_t i = 0; i < nlevels; ++i)
+  for (uint32_t i = 0; i < nlevels; ++i)
   {
     if (!d_global_decl)
     {
@@ -1543,9 +1544,24 @@ Parser::parse_command_set_option()
 /* -------------------------------------------------------------------------- */
 
 bool
+Parser::parse_uint32(uint32_t& uint)
+{
+  return parse_uint(uint);
+}
+
+bool
 Parser::parse_uint64(uint64_t& uint)
 {
-  Token token = next_token();
+  return parse_uint(uint);
+}
+
+template <typename T>
+bool
+Parser::parse_uint(T& uint)
+{
+  static_assert(std::is_unsigned_v<T>);
+  std::string bits = std::to_string(std::numeric_limits<T>::digits);
+  Token token      = next_token();
   if (!check_token(token))
   {
     return false;
@@ -1560,9 +1576,9 @@ Parser::parse_uint64(uint64_t& uint)
     {
       return true;
     }
-    return error("invalid 64 bit integer '" + std::string(val) + "'");
+    return error("invalid " + bits + " bit integer '" + std::string(val) + "'");
   }
-  return error("expected 64 bit integer");
+  return error("expected " + bits + " bit integer");
 }
 
 bool

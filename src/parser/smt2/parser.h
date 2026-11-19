@@ -359,11 +359,24 @@ class Parser : public bzla::parser::Parser
   }
 
   /**
+   * Parse unsigned 32 bit integer.
+   * @param uint Stores the resulting integer.
+   * @return False on error.
+   */
+  bool parse_uint32(uint32_t& uint);
+  /**
    * Parse unsigned 64 bit integer.
    * @param uint Stores the resulting integer.
    * @return False on error.
    */
   bool parse_uint64(uint64_t& uint);
+  /**
+   * Parse unsigned integer of type T.
+   * @param uint Stores the resulting integer.
+   * @return False on error.
+   */
+  template <typename T>
+  bool parse_uint(T& uint);
 
   /**
    * Parse a quoted string.

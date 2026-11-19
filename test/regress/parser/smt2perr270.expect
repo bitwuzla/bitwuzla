@@ -1,0 +1,1 @@
+regress/parser/smt2perr270.smt2:2:7: invalid 32 bit integer '4294967296'
