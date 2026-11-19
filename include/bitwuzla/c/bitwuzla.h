@@ -459,6 +459,17 @@ typedef struct bitwuzla_sort_t* BitwuzlaSort;
 size_t bitwuzla_sort_hash(BitwuzlaSort sort);
 
 /**
+ * Get the id of a sort.
+ *
+ * @param sort The sort.
+ *
+ * @return The id of the sort.
+ *
+ * @note Sort ids are unique among the sorts of a term manager.
+ */
+uint64_t bitwuzla_sort_get_id(BitwuzlaSort sort);
+
+/**
  * Make copy of sort.
  *
  * Increments reference counter of `sort`.
@@ -691,6 +702,17 @@ typedef struct bitwuzla_term_t* BitwuzlaTerm;
  * @return The hash value of the term.
  */
 size_t bitwuzla_term_hash(BitwuzlaTerm term);
+
+/**
+ * Get the id of a term.
+ *
+ * @param term The term.
+ *
+ * @return The id of the term.
+ *
+ * @note Term ids are unique among the terms of a term manager.
+ */
+uint64_t bitwuzla_term_get_id(BitwuzlaTerm term);
 
 /**
  * Make copy of term.

@@ -17,6 +17,7 @@ Bitwuzla provides additional functions, see below.
 
 - typedef struct :cpp:type:`BitwuzlaTerm`
 - :cpp:func:`bitwuzla_term_hash()`
+- :cpp:func:`bitwuzla_term_get_id()`
 - :cpp:func:`bitwuzla_term_copy()`
 - :cpp:func:`bitwuzla_term_release()`
 - :cpp:func:`bitwuzla_term_get_kind()`

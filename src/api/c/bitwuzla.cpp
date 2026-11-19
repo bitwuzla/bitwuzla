@@ -1603,6 +1603,17 @@ bitwuzla_sort_hash(BitwuzlaSort sort)
 }
 
 uint64_t
+bitwuzla_sort_get_id(BitwuzlaSort sort)
+{
+  uint64_t res = 0;
+  BITWUZLA_C_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_SORT(sort);
+  res = BitwuzlaTermManager::import_sort(sort).id();
+  BITWUZLA_C_TRY_CATCH_END;
+  return res;
+}
+
+uint64_t
 bitwuzla_sort_bv_get_size(BitwuzlaSort sort)
 {
   uint64_t res = 0;
@@ -1821,6 +1832,17 @@ bitwuzla_term_hash(BitwuzlaTerm term)
   BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_TERM(term);
   res = std::hash<bitwuzla::Term>{}(BitwuzlaTermManager::import_term(term));
+  BITWUZLA_C_TRY_CATCH_END;
+  return res;
+}
+
+uint64_t
+bitwuzla_term_get_id(BitwuzlaTerm term)
+{
+  uint64_t res = 0;
+  BITWUZLA_C_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_TERM(term);
+  res = BitwuzlaTermManager::import_term(term).id();
   BITWUZLA_C_TRY_CATCH_END;
   return res;
 }

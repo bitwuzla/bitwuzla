@@ -4561,6 +4561,19 @@ TEST_F(TestCApi, sort_hash)
   ASSERT_DEATH(bitwuzla_sort_hash(0), d_error_inv_sort);
 }
 
+TEST_F(TestCApi, sort_get_id)
+{
+  ASSERT_DEATH(bitwuzla_sort_get_id(0), d_error_inv_sort);
+  ASSERT_EQ(bitwuzla_sort_get_id(d_bv_sort8),
+            BitwuzlaTermManager::import_sort(d_bv_sort8).id());
+  ASSERT_EQ(bitwuzla_sort_get_id(d_bv_sort8),
+            bitwuzla_sort_get_id(bitwuzla_mk_bv_sort(d_tm, 8)));
+  ASSERT_NE(bitwuzla_sort_get_id(d_bv_sort8),
+            bitwuzla_sort_get_id(d_bv_sort16));
+  ASSERT_NE(bitwuzla_sort_get_id(d_bv_sort8),
+            bitwuzla_sort_get_id(d_fp_sort16));
+}
+
 TEST_F(TestCApi, sort_bv_get_size)
 {
   ASSERT_DEATH(bitwuzla_sort_bv_get_size(0), d_error_inv_sort);
@@ -4777,6 +4790,22 @@ TEST_F(TestCApi, regr2)
 TEST_F(TestCApi, term_hash)
 {
   ASSERT_DEATH(bitwuzla_term_hash(0), d_error_inv_term);
+}
+
+TEST_F(TestCApi, term_get_id)
+{
+  ASSERT_DEATH(bitwuzla_term_get_id(0), d_error_inv_term);
+  ASSERT_EQ(bitwuzla_term_get_id(d_bv_const8),
+            BitwuzlaTermManager::import_term(d_bv_const8).id());
+  ASSERT_EQ(bitwuzla_term_get_id(d_bv_zero8),
+            bitwuzla_term_get_id(bitwuzla_mk_bv_zero(d_tm, d_bv_sort8)));
+  ASSERT_NE(bitwuzla_term_get_id(d_bv_const8),
+            bitwuzla_term_get_id(d_bv_const1));
+  ASSERT_NE(bitwuzla_term_get_id(d_bv_const8),
+            bitwuzla_term_get_id(d_bv_zero8));
+  // Constants with the same symbol and sort are distinct terms.
+  ASSERT_NE(bitwuzla_term_get_id(d_bv_const8),
+            bitwuzla_term_get_id(bitwuzla_mk_const(d_tm, d_bv_sort8, "bv8")));
 }
 
 TEST_F(TestCApi, term_get_sort)
