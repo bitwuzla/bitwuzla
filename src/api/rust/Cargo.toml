@@ -5,9 +5,14 @@ members = ["libbitwuzla-sys"]
 default-members = [".", "libbitwuzla-sys"]
 resolver = "3"
 
+# Must match meson.build, together with the libbitwuzla-sys requirement below.
+# contrib/make-release.py updates both.
+[workspace.package]
+version = "0.10.0-dev"
+
 [package]
 name = "bitwuzla"
-version = "0.10.0-dev"
+version.workspace = true
 edition = "2024"
 readme = "README.md"
 license = "MIT"

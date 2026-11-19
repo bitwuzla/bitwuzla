@@ -1,6 +1,6 @@
 [package]
 name = "libbitwuzla-sys"
-version = "0.10.0-dev"
+version.workspace = true
 edition = "2024"
 build = "build.rs"
 links = "bitwuzla"

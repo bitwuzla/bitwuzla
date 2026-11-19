@@ -90,6 +90,27 @@ unsafe extern "C-unwind" {
 
 #[cfg(test)]
 mod tests {
+    /// The crate version must match the version of the enclosing Bitwuzla
+    /// source tree (`contrib/make-release.py` updates both).
+    #[test]
+    fn version_matches_meson() {
+        let Some(root) = option_env!("LIBBITWUZLA_SYS_SOURCE_ROOT") else {
+            return;
+        };
+        let meson =
+            std::fs::read_to_string(std::path::Path::new(root).join("meson.build")).unwrap();
+        let version = meson
+            .lines()
+            .find_map(|l| l.trim().strip_prefix("version: '")?.strip_suffix("',"))
+            .expect("no project version in meson.build");
+        assert_eq!(
+            env!("CARGO_PKG_VERSION"),
+            version,
+            "crate version does not match meson.build, update \
+             [workspace.package] in src/api/rust/Cargo.toml"
+        );
+    }
+
     /// The licence files of the crates are copies of the source tree's.
     #[test]
     fn licenses_match_copying() {

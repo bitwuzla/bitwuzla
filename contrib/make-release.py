@@ -38,6 +38,23 @@ def get_version():
 
     return int(major),int(minor),int(patch),prerelease
 
+CARGO_TOML = 'src/api/rust/Cargo.toml'
+
+def update_cargo_version(version):
+    with open(CARGO_TOML, 'r') as infile:
+        content = infile.read()
+    # The workspace version of the Rust crates and the exact version
+    # requirement of bitwuzla on libbitwuzla-sys.
+    for pattern, repl in (
+            (r'^(\[workspace\.package\]\nversion = )"[^"]*"', rf'\g<1>"{version}"'),
+            (r'^(libbitwuzla-sys = \{[^}\n]*version = )"=[^"]*"',
+             rf'\g<1>"={version}"')):
+        content, n = re.subn(pattern, repl, content, flags = re.MULTILINE)
+        if n != 1:
+            raise ValueError(f'pattern `{pattern}` not found in `{CARGO_TOML}`')
+    with open(CARGO_TOML, 'w') as outfile:
+        outfile.write(content)
+
 def update_version(major, minor, patch, prerelease):
     version = f'{major}.{minor}.{patch}'
     if prerelease:
@@ -47,6 +64,7 @@ def update_version(major, minor, patch, prerelease):
         content = re.sub(r'  version:\s\'(.*)\'', f'  version: \'{version}\'', content)
     with open('meson.build', 'w') as outfile:
         outfile.write(content)
+    update_cargo_version(version)
     if not prerelease:
         with open('NEWS.md', 'r') as infile:
             content = infile.read()
@@ -68,7 +86,8 @@ def update_version(major, minor, patch, prerelease):
 
 
 def create_commit(msg):
-    subprocess.check_call(['git', 'commit', 'meson.build', 'NEWS.md', '-m', msg])
+    subprocess.check_call(
+        ['git', 'commit', 'meson.build', 'NEWS.md', CARGO_TOML, '-m', msg])
 
 def create_git_tag(tag):
     subprocess.check_call(['git', 'tag', tag])

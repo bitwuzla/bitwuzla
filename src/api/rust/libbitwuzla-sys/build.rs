@@ -94,9 +94,9 @@ fn main() {
     if let Some(dir) = lib.include_dirs.first() {
         println!("cargo:include={}", dir.display());
     }
-    // In a Bitwuzla source tree, tests in lib.rs compare the licence files
-    // with the tree and, for bindings generated from the tree's headers, check
-    // that the prebuilt ones are up to date.
+    // In a Bitwuzla source tree, tests in lib.rs compare the crate version
+    // and the licence files with the tree and, for bindings generated from the
+    // tree's headers, check that the prebuilt ones are up to date.
     if let Some(root) = source_root() {
         println!(
             "cargo:rustc-env=LIBBITWUZLA_SYS_SOURCE_ROOT={}",
