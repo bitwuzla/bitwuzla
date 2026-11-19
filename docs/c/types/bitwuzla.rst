@@ -31,6 +31,8 @@ Bitwuzla prematurely, during solving. This termination callback returns a
 :code:`int32_t` to indicate if Bitwuzla should be terminated. Bitwuzla
 periodically checks this callback and terminates at the earliest possible
 opportunity if the callback function returns a value :code:`!= 0`.
+Passing :code:`NULL` as callback function disconnects the configured
+termination callback.
 
 ----
 

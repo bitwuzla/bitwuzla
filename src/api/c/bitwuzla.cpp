@@ -506,11 +506,25 @@ bitwuzla_set_termination_callback(Bitwuzla* bitwuzla,
 {
   BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);
-  BITWUZLA_CHECK_NOT_NULL(fun);
   // Switch to the current instance first, which may drop the terminator.
   bitwuzla::Bitwuzla& solver = bitwuzla->get();
-  bitwuzla->d_terminator.reset(new CTerminator(fun, state));
-  solver.configure_terminator(bitwuzla->d_terminator.get());
+  if (fun == nullptr)
+  {
+    // Only disconnect a terminator configured via this wrapper, the solver of
+    // a parser may refer to the terminator of the parser instead.
+    if (bitwuzla->d_terminator)
+    {
+      // Disconnect before freeing the terminator the solver refers to.
+      solver.configure_terminator(nullptr);
+      bitwuzla->d_terminator.reset();
+    }
+  }
+  else
+  {
+    auto terminator = std::make_unique<CTerminator>(fun, state);
+    solver.configure_terminator(terminator.get());
+    bitwuzla->d_terminator = std::move(terminator);
+  }
   BITWUZLA_C_TRY_CATCH_END;
 }
 

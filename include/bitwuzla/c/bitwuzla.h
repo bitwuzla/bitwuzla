@@ -1376,12 +1376,15 @@ void bitwuzla_delete(Bitwuzla* bitwuzla);
  * Configure a termination callback function.
  *
  * The `state` of the callback can be retrieved via
- * `bitwuzla_get_termination_callback_state()`.
+ * `bitwuzla_get_termination_callback_state()`. Replaces a previously
+ * configured termination callback.
  *
  * @param bitwuzla The Bitwuzla instance.
  * @param fun The callback function, returns a value != 0 if `bitwuzla` should
- *            be terminated.
- * @param state The argument to the callback function.
+ *            be terminated. NULL disconnects the currently configured
+ *            callback function.
+ * @param state The argument to the callback function, ignored if `fun` is
+ *              NULL.
  *
  * @see
  *   * `bitwuzla_terminate`
@@ -1400,7 +1403,8 @@ void bitwuzla_set_termination_callback(Bitwuzla* bitwuzla,
  *
  * @param bitwuzla The Bitwuzla instance.
  *
- * @return The object passed as argument `state` to the callback function.
+ * @return The object passed as argument `state` to the callback function,
+ *         NULL if no callback function is configured.
  *
  * @see
  *   * `bitwuzla_terminate`

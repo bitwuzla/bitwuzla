@@ -124,9 +124,18 @@ bitwuzla_parser_set_termination_callback(BitwuzlaParser* parser,
 {
   BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(parser);
-  BITWUZLA_CHECK_NOT_NULL(fun);
-  parser->d_terminator.reset(new CTerminator(fun, state));
-  parser->d_parser->configure_terminator(parser->d_terminator.get());
+  if (fun == nullptr)
+  {
+    // Disconnect before freeing the terminator the parser refers to.
+    parser->d_parser->configure_terminator(nullptr);
+    parser->d_terminator.reset();
+  }
+  else
+  {
+    auto terminator = std::make_unique<CTerminator>(fun, state);
+    parser->d_parser->configure_terminator(terminator.get());
+    parser->d_terminator = std::move(terminator);
+  }
   BITWUZLA_C_TRY_CATCH_END;
 }
 

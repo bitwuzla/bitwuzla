@@ -6377,6 +6377,98 @@ TEST_F(TestCApi, terminate)
 }
 
 #ifdef BZLA_USE_CADICAL
+TEST_F(TestCApi, terminate_disconnect)
+{
+  // Not solved by rewriting, terminated in the PP when configured.
+  BitwuzlaSort bv_sort4 = bitwuzla_mk_bv_sort(d_tm, 4);
+  BitwuzlaTerm x        = bitwuzla_mk_const(d_tm, bv_sort4, nullptr);
+  BitwuzlaTerm s        = bitwuzla_mk_const(d_tm, bv_sort4, nullptr);
+  BitwuzlaTerm t        = bitwuzla_mk_const(d_tm, bv_sort4, nullptr);
+  BitwuzlaTerm b        = bitwuzla_mk_term2(
+      d_tm,
+      BITWUZLA_KIND_DISTINCT,
+      bitwuzla_mk_term2(d_tm,
+                        BITWUZLA_KIND_BV_MUL,
+                        s,
+                        bitwuzla_mk_term2(d_tm, BITWUZLA_KIND_BV_MUL, x, t)),
+      bitwuzla_mk_term2(d_tm,
+                        BITWUZLA_KIND_BV_MUL,
+                        bitwuzla_mk_term2(d_tm, BITWUZLA_KIND_BV_MUL, s, x),
+                        t));
+  {
+    BitwuzlaOptions* opts = bitwuzla_options_new();
+    bitwuzla_set_option(opts, BITWUZLA_OPT_REWRITE_LEVEL, 0);
+    bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "bitblast");
+    Bitwuzla* bitwuzla = bitwuzla_new(d_tm, opts);
+    // Disconnecting without a configured terminator is a no-op.
+    bitwuzla_set_termination_callback(bitwuzla, nullptr, nullptr);
+    ASSERT_EQ(bitwuzla_get_termination_callback_state(bitwuzla), nullptr);
+    int32_t state = 0;
+    bitwuzla_set_termination_callback(bitwuzla, test_terminate1, &state);
+    ASSERT_EQ(bitwuzla_get_termination_callback_state(bitwuzla), &state);
+    bitwuzla_assert(bitwuzla, b);
+    ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNKNOWN);
+    // The state is ignored when disconnecting.
+    bitwuzla_set_termination_callback(bitwuzla, nullptr, &state);
+    ASSERT_EQ(bitwuzla_get_termination_callback_state(bitwuzla), nullptr);
+    ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNSAT);
+    // Reconnecting terminates again.
+    bitwuzla_set_termination_callback(bitwuzla, test_terminate1, &state);
+    ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNKNOWN);
+    bitwuzla_options_delete(opts);
+    bitwuzla_delete(bitwuzla);
+  }
+  {
+    // Disconnect via parser.
+    BitwuzlaOptions* opts = bitwuzla_options_new();
+    bitwuzla_set_option(opts, BITWUZLA_OPT_REWRITE_LEVEL, 0);
+    bitwuzla_set_option_mode(opts, BITWUZLA_OPT_BV_SOLVER, "bitblast");
+    BitwuzlaParser* parser =
+        bitwuzla_parser_new(d_tm, opts, "smt2", 2, "<stdout>");
+    bitwuzla_parser_set_termination_callback(parser, nullptr, nullptr);
+    ASSERT_EQ(bitwuzla_parser_get_termination_callback_state(parser), nullptr);
+    const char* error_msg;
+    bitwuzla_parser_parse(
+        parser,
+        "(declare-const x (_ BitVec 4))"
+        "(declare-const s (_ BitVec 4))"
+        "(declare-const t (_ BitVec 4))"
+        "(assert (distinct (bvmul s (bvmul x t)) (bvmul (bvmul s x) t)))",
+        false,
+        false,
+        &error_msg);
+    ASSERT_EQ(error_msg, nullptr);
+    int32_t state = 0;
+    bitwuzla_parser_set_termination_callback(parser, test_terminate1, &state);
+    ASSERT_EQ(bitwuzla_parser_get_termination_callback_state(parser), &state);
+    testing::internal::CaptureStdout();
+    bitwuzla_parser_parse(parser, "(check-sat)", false, false, &error_msg);
+    std::string output = testing::internal::GetCapturedStdout();
+    ASSERT_EQ(error_msg, nullptr);
+    ASSERT_EQ(output, "unknown\n");
+    // Disconnecting via the parser's solver, which has no terminator of its
+    // own, keeps the parser's terminator.
+    bitwuzla_set_termination_callback(
+        bitwuzla_parser_get_bitwuzla(parser), nullptr, nullptr);
+    testing::internal::CaptureStdout();
+    bitwuzla_parser_parse(parser, "(check-sat)", false, false, &error_msg);
+    output = testing::internal::GetCapturedStdout();
+    ASSERT_EQ(error_msg, nullptr);
+    ASSERT_EQ(output, "unknown\n");
+    bitwuzla_parser_set_termination_callback(parser, nullptr, &state);
+    ASSERT_EQ(bitwuzla_parser_get_termination_callback_state(parser), nullptr);
+    testing::internal::CaptureStdout();
+    bitwuzla_parser_parse(parser, "(check-sat)", false, false, &error_msg);
+    output = testing::internal::GetCapturedStdout();
+    ASSERT_EQ(error_msg, nullptr);
+    ASSERT_EQ(output, "unsat\n");
+    bitwuzla_parser_delete(parser);
+    bitwuzla_options_delete(opts);
+  }
+}
+#endif
+
+#ifdef BZLA_USE_CADICAL
 namespace {
 static int32_t
 test_terminate2(void* state)

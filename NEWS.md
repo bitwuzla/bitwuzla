@@ -22,6 +22,12 @@ This file collects a summary of important and/or user-visible changes.
   * `bitwuzla_term_get_id(BitwuzlaTerm)` (`bitwuzla::Term::id()`) and
     `bitwuzla_sort_get_id(BitwuzlaSort)` (`bitwuzla::Sort::id()`)
 
+  `bitwuzla_set_termination_callback()` and
+  `bitwuzla_parser_set_termination_callback()` now accept `NULL` as callback
+  function to disconnect the configured termination callback, like
+  `configure_terminator(nullptr)` in the C++ API. Previously, `NULL` was
+  rejected with an error.
+
 - **Options**: Setting a numeric option by name with a value out of the
   option's range, e.g., via `bitwuzla::Options::set(const std::string&,
   const std::string&)` or `(set-option :verbosity 5)`, is now rejected

@@ -63,12 +63,15 @@ void bitwuzla_parser_delete(BitwuzlaParser* parser);
  * Configure a termination callback function.
  *
  * The `state` of the callback can be retrieved via
- * `bitwuzla_parser_get_termination_callback_state()`.
+ * `bitwuzla_parser_get_termination_callback_state()`. Replaces a previously
+ * configured termination callback.
  *
  * @param parser The Bitwuzla parser instance.
  * @param fun    The callback function, returns a value != 0 if `bitwuzla`
- *               should be terminated.
- * @param state  The argument to the callback function.
+ *               should be terminated. NULL disconnects the currently
+ *               configured callback function.
+ * @param state  The argument to the callback function, ignored if `fun` is
+ *               NULL.
  *
  * @see
  *   * `bitwuzla_terminate`
@@ -83,11 +86,12 @@ void bitwuzla_parser_set_termination_callback(BitwuzlaParser* parser,
  *
  * The returned object representing the state of the callback corresponds to
  * the `state` configured as argument to the callback function via
- * `bitwuzla_set_termination_callback()`.
+ * `bitwuzla_parser_set_termination_callback()`.
  *
  * @param parser The Bitwuzla parser instance.
  *
- * @return The object passed as argument `state` to the callback function.
+ * @return The object passed as argument `state` to the callback function,
+ *         NULL if no callback function is configured.
  *
  * @see
  *   * `bitwuzla_terminate`
