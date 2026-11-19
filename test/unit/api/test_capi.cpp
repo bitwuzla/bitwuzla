@@ -3853,6 +3853,78 @@ TEST_F(TestCApi, parser_smt2_print_model_unsat)
   std::remove(filename);
 }
 
+namespace {
+int32_t
+test_parser_reset_terminate(void* state)
+{
+  (void) state;
+  return 0;
+}
+}  // namespace
+
+TEST_F(TestCApi, parser_smt2_reset_bitwuzla)
+{
+  // The parser replaces its Bitwuzla instance on reset and reset-assertions.
+  // A previously retrieved instance must remain valid and refer to the
+  // current instance of the parser.
+  for (bool reset_all : {false, true})
+  {
+    const char* error_msg;
+    BitwuzlaOptions* options = bitwuzla_options_new();
+    BitwuzlaParser* parser =
+        bitwuzla_parser_new(d_tm, options, "smt2", 2, "<stdout>");
+    bitwuzla_parser_parse(parser,
+                          "(set-logic QF_BV)\n"
+                          "(declare-const x (_ BitVec 8))\n"
+                          "(assert (= x #b00000001))\n"
+                          "(check-sat)\n",
+                          false,
+                          false,
+                          &error_msg);
+    ASSERT_EQ(error_msg, nullptr);
+    Bitwuzla* bitwuzla = bitwuzla_parser_get_bitwuzla(parser);
+    size_t size;
+    bitwuzla_get_assertions(bitwuzla, &size);
+    ASSERT_EQ(size, 1);
+    ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_SAT);
+    int32_t state = 0;
+    bitwuzla_set_termination_callback(
+        bitwuzla, test_parser_reset_terminate, &state);
+    ASSERT_EQ(bitwuzla_get_termination_callback_state(bitwuzla), &state);
+
+    std::string input =
+        reset_all ? "(reset)\n(set-logic QF_BV)\n" : "(reset-assertions)\n";
+    bitwuzla_parser_parse(parser, input.c_str(), false, false, &error_msg);
+    ASSERT_EQ(error_msg, nullptr);
+    // The previously retrieved instance refers to the new instance.
+    bitwuzla_get_assertions(bitwuzla, &size);
+    ASSERT_EQ(size, 0);
+    ASSERT_EQ(bitwuzla_get_termination_callback_state(bitwuzla), nullptr);
+
+    bitwuzla_parser_parse(parser,
+                          "(declare-const y (_ BitVec 8))\n"
+                          "(assert (= y #b00000010))\n"
+                          "(assert (= y #b00000011))\n",
+                          false,
+                          false,
+                          &error_msg);
+    ASSERT_EQ(error_msg, nullptr);
+    bitwuzla_get_assertions(bitwuzla, &size);
+    ASSERT_EQ(size, 2);
+    ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNSAT);
+    Bitwuzla* bitwuzla2 = bitwuzla_parser_get_bitwuzla(parser);
+    ASSERT_EQ(bitwuzla2, bitwuzla);
+    bitwuzla_get_assertions(bitwuzla2, &size);
+    ASSERT_EQ(size, 2);
+    ASSERT_EQ(bitwuzla_check_sat(bitwuzla2), BITWUZLA_UNSAT);
+    bitwuzla_push(bitwuzla, 1);
+    bitwuzla_pop(bitwuzla2, 1);
+
+    bitwuzla_parser_delete(parser);
+    bitwuzla_options_delete(options);
+  }
+}
+
 TEST_F(TestCApi, parser_btor2)
 {
   const char* input = "test_capi_parser_btor2.btor2";

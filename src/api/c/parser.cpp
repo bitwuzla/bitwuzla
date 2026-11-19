@@ -272,8 +272,10 @@ bitwuzla_parser_get_bitwuzla(BitwuzlaParser* parser)
   if (!parser->d_bitwuzla)
   {
     parser->d_bitwuzla.reset(
-        new Bitwuzla(parser->d_tm, parser->d_parser->bitwuzla().get()));
+        new Bitwuzla(parser->d_tm, parser->d_parser.get()));
   }
+  // Raises an error if the parser has not created an instance yet.
+  parser->d_bitwuzla->get();
   res = parser->d_bitwuzla.get();
   BITWUZLA_C_TRY_CATCH_END;
   return res;

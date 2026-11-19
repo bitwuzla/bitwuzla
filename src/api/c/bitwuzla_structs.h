@@ -21,6 +21,10 @@ extern "C" {
 
 #include "util/exceptions.h"
 
+namespace bitwuzla::parser {
+class Parser;
+}
+
 /* -------------------------------------------------------------------------- */
 
 class CTerminator : public bitwuzla::Terminator
@@ -163,6 +167,12 @@ struct BitwuzlaTermManager
 
 struct Bitwuzla
 {
+  /**
+   * Constructor, creates and owns a new Bitwuzla instance.
+   * @param tm      The associated term manager.
+   * @param options The configuration options, nullptr for the default
+   *                configuration.
+   */
   Bitwuzla(BitwuzlaTermManager* tm, const BitwuzlaOptions* options)
   {
     (void) tm;
@@ -170,47 +180,54 @@ struct Bitwuzla
 #if defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
     if (options)
     {
-      d_bitwuzla = new bitwuzla::Bitwuzla(tm->d_tm, options->d_options);
+      d_bitwuzla.reset(new bitwuzla::Bitwuzla(tm->d_tm, options->d_options));
     }
     else
     {
-      d_bitwuzla = new bitwuzla::Bitwuzla(tm->d_tm);
+      d_bitwuzla.reset(new bitwuzla::Bitwuzla(tm->d_tm));
     }
-    d_tm                    = tm;
-    d_bitwuzla_needs_delete = true;
+    d_tm = tm;
 #else
     throw bitwuzla::Unsupported(
         "C bindings for external SAT solver factory not supported");
 #endif
   }
 
-  Bitwuzla(BitwuzlaTermManager* tm, bitwuzla::Bitwuzla* bitwuzla)
+  /**
+   * Constructor, wraps the Bitwuzla instance of a parser.
+   * @note The parser replaces its Bitwuzla instance on (reset) and
+   *       (reset-assertions), this wrapper always refers to the current one.
+   * @param tm     The associated term manager.
+   * @param parser The parser, must outlive this wrapper.
+   */
+  Bitwuzla(BitwuzlaTermManager* tm, bitwuzla::parser::Parser* parser)
+      : d_tm(tm), d_parser(parser)
   {
-    d_bitwuzla = bitwuzla;
-    d_tm       = tm;
   }
 
-  ~Bitwuzla()
-  {
-    if (d_bitwuzla_needs_delete)
-    {
-      delete d_bitwuzla;
-    }
-  }
+  /**
+   * Get the wrapped Bitwuzla instance.
+   *
+   * For the instance of a parser, this is the current instance of the parser.
+   * If the parser replaced it since the last call, this wrapper switches to
+   * the new instance and drops the terminator configured via this wrapper,
+   * which was configured for the previous instance.
+   *
+   * @return The wrapped Bitwuzla instance.
+   */
+  bitwuzla::Bitwuzla& get();
 
-  void reset()
-  {
-    // TODO: reset solving context and options?
-  }
-
-  /** The associated bitwuzla instance. */
-  bitwuzla::Bitwuzla* d_bitwuzla = nullptr;
-  /** True if d_bitwuzla must be deleted on destruction. */
-  bool d_bitwuzla_needs_delete = false;
-  /** The currently configured terminator. */
+  /** The terminator configured via this wrapper. */
   std::unique_ptr<CTerminator> d_terminator;
+  /**
+   * The wrapped Bitwuzla instance. Declared after d_terminator so that it is
+   * destroyed before the terminator it may refer to.
+   */
+  std::shared_ptr<bitwuzla::Bitwuzla> d_bitwuzla;
   /** The associated term manager. */
   BitwuzlaTermManager* d_tm = nullptr;
+  /** The parser that owns the wrapped instance, nullptr if owned by this. */
+  bitwuzla::parser::Parser* d_parser = nullptr;
 };
 
 /* -------------------------------------------------------------------------- */

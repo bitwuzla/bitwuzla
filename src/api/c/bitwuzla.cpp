@@ -448,8 +448,10 @@ bitwuzla_set_termination_callback(Bitwuzla* bitwuzla,
   BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);
   BITWUZLA_CHECK_NOT_NULL(fun);
+  // Switch to the current instance first, which may drop the terminator.
+  bitwuzla::Bitwuzla& solver = bitwuzla->get();
   bitwuzla->d_terminator.reset(new CTerminator(fun, state));
-  bitwuzla->d_bitwuzla->configure_terminator(bitwuzla->d_terminator.get());
+  solver.configure_terminator(bitwuzla->d_terminator.get());
   BITWUZLA_C_TRY_CATCH_END;
 }
 
@@ -459,6 +461,8 @@ bitwuzla_get_termination_callback_state(Bitwuzla* bitwuzla)
   void* res = nullptr;
   BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);
+  // Switch to the current instance first, which may drop the terminator.
+  bitwuzla->get();
   res = bitwuzla->d_terminator ? bitwuzla->d_terminator->get_state() : nullptr;
   BITWUZLA_C_TRY_CATCH_END;
   return res;
@@ -477,7 +481,7 @@ bitwuzla_push(Bitwuzla* bitwuzla, uint64_t nlevels)
 {
   BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);
-  bitwuzla->d_bitwuzla->push(nlevels);
+  bitwuzla->get().push(nlevels);
   BITWUZLA_C_TRY_CATCH_END;
 }
 
@@ -486,7 +490,7 @@ bitwuzla_pop(Bitwuzla* bitwuzla, uint64_t nlevels)
 {
   BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);
-  bitwuzla->d_bitwuzla->pop(nlevels);
+  bitwuzla->get().pop(nlevels);
   BITWUZLA_C_TRY_CATCH_END;
 }
 
@@ -496,7 +500,7 @@ bitwuzla_assert(Bitwuzla* bitwuzla, BitwuzlaTerm term)
   BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);
   BITWUZLA_CHECK_TERM(term);
-  bitwuzla->d_bitwuzla->assert_formula(BitwuzlaTermManager::import_term(term));
+  bitwuzla->get().assert_formula(BitwuzlaTermManager::import_term(term));
   BITWUZLA_C_TRY_CATCH_END;
 }
 
@@ -508,7 +512,7 @@ bitwuzla_get_assertions(Bitwuzla* bitwuzla, size_t* size)
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);
   BITWUZLA_CHECK_NOT_NULL(size);
   res.clear();
-  auto assertions = bitwuzla->d_bitwuzla->get_assertions();
+  auto assertions = bitwuzla->get().get_assertions();
   auto tm         = bitwuzla->d_tm;
   for (auto& term : assertions)
   {
@@ -526,7 +530,7 @@ bitwuzla_is_unsat_assumption(Bitwuzla* bitwuzla, BitwuzlaTerm term)
   BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);
   BITWUZLA_CHECK_TERM(term);
-  res = bitwuzla->d_bitwuzla->is_unsat_assumption(
+  res = bitwuzla->get().is_unsat_assumption(
       BitwuzlaTermManager::import_term(term));
   BITWUZLA_C_TRY_CATCH_END;
   return res;
@@ -540,7 +544,7 @@ bitwuzla_get_unsat_assumptions(Bitwuzla* bitwuzla, size_t* size)
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);
   BITWUZLA_CHECK_NOT_NULL(size);
   res.clear();
-  auto unsat_assumptions = bitwuzla->d_bitwuzla->get_unsat_assumptions();
+  auto unsat_assumptions = bitwuzla->get().get_unsat_assumptions();
   auto tm                = bitwuzla->d_tm;
   for (auto& term : unsat_assumptions)
   {
@@ -559,7 +563,7 @@ bitwuzla_get_unsat_core(Bitwuzla* bitwuzla, size_t* size)
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);
   BITWUZLA_CHECK_NOT_NULL(size);
   res.clear();
-  auto unsat_core = bitwuzla->d_bitwuzla->get_unsat_core();
+  auto unsat_core = bitwuzla->get().get_unsat_core();
   auto tm         = bitwuzla->d_tm;
   for (auto& term : unsat_core)
   {
@@ -575,7 +579,7 @@ bitwuzla_simplify(Bitwuzla* bitwuzla)
 {
   BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);
-  bitwuzla->d_bitwuzla->simplify();
+  bitwuzla->get().simplify();
   BITWUZLA_C_TRY_CATCH_END;
 }
 
@@ -587,7 +591,7 @@ bitwuzla_simplify_term(Bitwuzla* bitwuzla, BitwuzlaTerm term)
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);
   BITWUZLA_CHECK_TERM(term);
   res = bitwuzla->d_tm->export_term(
-      bitwuzla->d_bitwuzla->simplify(BitwuzlaTermManager::import_term(term)));
+      bitwuzla->get().simplify(BitwuzlaTermManager::import_term(term)));
   BITWUZLA_C_TRY_CATCH_END;
   return res;
 }
@@ -598,7 +602,7 @@ bitwuzla_check_sat(Bitwuzla* bitwuzla)
   BitwuzlaResult res = BITWUZLA_UNKNOWN;
   BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);
-  res = static_cast<BitwuzlaResult>(bitwuzla->d_bitwuzla->check_sat());
+  res = static_cast<BitwuzlaResult>(bitwuzla->get().check_sat());
   BITWUZLA_C_TRY_CATCH_END;
   return res;
 }
@@ -617,8 +621,7 @@ bitwuzla_check_sat_assuming(Bitwuzla* bitwuzla,
   {
     assumptions.push_back(BitwuzlaTermManager::import_term(args[i]));
   }
-  res =
-      static_cast<BitwuzlaResult>(bitwuzla->d_bitwuzla->check_sat(assumptions));
+  res = static_cast<BitwuzlaResult>(bitwuzla->get().check_sat(assumptions));
   BITWUZLA_C_TRY_CATCH_END;
   return res;
 }
@@ -631,7 +634,7 @@ bitwuzla_get_value(Bitwuzla* bitwuzla, BitwuzlaTerm term)
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);
   BITWUZLA_CHECK_TERM(term);
   res = bitwuzla->d_tm->export_term(
-      bitwuzla->d_bitwuzla->get_value(BitwuzlaTermManager::import_term(term)));
+      bitwuzla->get().get_value(BitwuzlaTermManager::import_term(term)));
   BITWUZLA_C_TRY_CATCH_END;
   return res;
 }
@@ -649,7 +652,7 @@ bitwuzla_get_interpolant(Bitwuzla* bitwuzla, uint32_t argc, BitwuzlaTerm args[])
     BITWUZLA_CHECK_NOT_NULL_AT_IDX(args[i], i);
     A.push_back(BitwuzlaTermManager::import_term(args[i]));
   }
-  res = bitwuzla->d_tm->export_term(bitwuzla->d_bitwuzla->get_interpolant(A));
+  res = bitwuzla->d_tm->export_term(bitwuzla->get().get_interpolant(A));
   BITWUZLA_C_TRY_CATCH_END;
   return res;
 }
@@ -678,7 +681,7 @@ bitwuzla_get_interpolants(Bitwuzla* bitwuzla,
   }
   BITWUZLA_CHECK_NOT_NULL(size);
   res.clear();
-  auto interpolants = bitwuzla->d_bitwuzla->get_interpolants(A);
+  auto interpolants = bitwuzla->get().get_interpolants(A);
   auto tm           = bitwuzla->d_tm;
   for (auto& term : interpolants)
   {
@@ -701,7 +704,7 @@ bitwuzla_print_formula(Bitwuzla* bitwuzla,
   BITWUZLA_CHECK_NOT_NULL(file);
   std::stringstream ss;
   ss << bitwuzla::set_bv_format(base);
-  bitwuzla->d_bitwuzla->print_formula(ss, format);
+  bitwuzla->get().print_formula(ss, format);
   fprintf(file, "%s", ss.str().c_str());
   BITWUZLA_C_TRY_CATCH_END;
 }
@@ -718,7 +721,7 @@ bitwuzla_print_unsat_core(Bitwuzla* bitwuzla,
   BITWUZLA_CHECK_NOT_NULL(file);
   std::stringstream ss;
   ss << bitwuzla::set_bv_format(base);
-  bitwuzla->d_bitwuzla->print_unsat_core(ss, format);
+  bitwuzla->get().print_unsat_core(ss, format);
   fprintf(file, "%s", ss.str().c_str());
   BITWUZLA_C_TRY_CATCH_END;
 }
@@ -740,7 +743,7 @@ bitwuzla_get_statistics(Bitwuzla* bitwuzla,
   rkeys.clear();
   rvalues.clear();
   stats.clear();
-  stats = bitwuzla->d_bitwuzla->statistics();
+  stats = bitwuzla->get().statistics();
   for (auto& [key, value] : stats)
   {
     rkeys.push_back(key.c_str());

@@ -10,6 +10,8 @@
 
 #include "api/c/bitwuzla_structs.h"
 
+#include <bitwuzla/cpp/parser.h>
+
 #include <cassert>
 
 void
@@ -110,4 +112,21 @@ BitwuzlaTermManager::release()
 {
   d_alloc_sorts.clear();
   d_alloc_terms.clear();
+}
+
+bitwuzla::Bitwuzla&
+Bitwuzla::get()
+{
+  if (d_parser)
+  {
+    // Raises an error if the parser has not created an instance yet.
+    std::shared_ptr<bitwuzla::Bitwuzla> cur = d_parser->bitwuzla();
+    if (cur != d_bitwuzla)
+    {
+      d_bitwuzla = cur;
+      d_terminator.reset();
+    }
+  }
+  assert(d_bitwuzla);
+  return *d_bitwuzla;
 }

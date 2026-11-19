@@ -186,7 +186,20 @@ const char* bitwuzla_parser_get_error_msg(BitwuzlaParser* parser);
 
 /**
  * Get the associated Bitwuzla instance.
- * @return The Bitwuzla instance.
+ *
+ * The parser creates its Bitwuzla instance when parsing, and replaces it with
+ * a new instance on SMT-LIB commands `reset` and `reset-assertions`. The
+ * returned pointer remains valid until the parser is deleted and always
+ * refers to the current instance of the parser.
+ *
+ * @note When the parser replaces its instance, a termination callback
+ *       configured via `bitwuzla_set_termination_callback()` on the returned
+ *       pointer is dropped. Use `bitwuzla_parser_set_termination_callback()`
+ *       to configure a termination callback for all instances of the parser.
+ *
+ * @param parser The Bitwuzla parser instance.
+ * @return The Bitwuzla instance. Must not be deleted via
+ *         `bitwuzla_delete()`, it is owned by the parser.
  */
 Bitwuzla* bitwuzla_parser_get_bitwuzla(BitwuzlaParser* parser);
 
