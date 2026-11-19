@@ -130,10 +130,12 @@ jobs:
             config: --testing --unit-testing --python --cryptominisat --kissat
             env: CC="ccache clang" CXX="ccache clang++"
 
+          # Also tests the Rust bindings, against the shared library in build/.
           - name: debug-clang
             os: ubuntu-latest
             config: debug --shared --python
             env: CC="ccache clang" CXX="ccache clang++" CFLAGS="-O1 -g1" CXXFLAGS="-O1 -g1"
+            rust: true
 
           - name: debug-win64
             os: windows-latest
@@ -160,7 +162,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgmp-dev libmpfr-dev ninja-build meson cython3 python3-pytest libgtest-dev ccache
+          sudo apt-get install -y libgmp-dev libmpfr-dev ninja-build meson cython3 python3-pytest libgtest-dev ccache ${{ matrix.rust && 'libclang-dev' || '' }}
 
       - name: Install Packages (macOS)
         if: runner.os == 'macOS'
@@ -241,6 +243,35 @@ jobs:
           meson setup build --pkg-config-path=$pkgconfigdir -Dpython_path=$pythonlibdir
           cd build
           meson test -v
+
+      # The crates find Bitwuzla in build/, so the version and prebuilt
+      # bindings checks run against this source tree.
+      - name: Rust
+        if: matrix.rust
+        working-directory: src/api/rust
+        env:
+          CARGO_TERM_COLOR: always
+        run: |
+          cargo --version
+          cargo fmt --check
+          cargo clippy --workspace --all-targets -- -D warnings
+          cargo test --workspace
+          RUSTDOCFLAGS="-D warnings" cargo doc --workspace --no-deps
+          for example in examples/*.rs; do
+            cargo run --example "$(basename "$example" .rs)"
+          done
+
+      # Packages the crates and builds them as they would be published, outside
+      # the source tree, against the installed library. Fails on files in the
+      # crates that are not committed.
+      - name: Rust package
+        if: matrix.rust
+        working-directory: src/api/rust
+        env:
+          CARGO_TERM_COLOR: always
+        run: |
+          export PKG_CONFIG_PATH=$(find "$GITHUB_WORKSPACE/build/install/lib" -name pkgconfig)
+          cargo publish --dry-run --workspace
 
       - name: Create and add static package to latest and release
         id: create-static-package
