@@ -109,49 +109,6 @@ OptionBase::OptionBase(Options* options,
 
 OptionBase::~OptionBase() {}
 
-/* --- OptionModeT private -------------------------------------------------- */
-
-template <typename T>
-std::vector<std::string>
-OptionModeT<T>::modes() const
-{
-  std::vector<std::string> res;
-  for (const auto& p : d_mode2string)
-  {
-    res.push_back(p.second);
-  }
-  return res;
-}
-
-template <typename T>
-const std::string&
-OptionModeT<T>::get_str() const
-{
-  return d_mode2string.at(d_value);
-}
-
-template <typename T>
-void
-OptionModeT<T>::set_str(const std::string& value, bool is_user_set)
-{
-  d_value = d_string2mode.at(value);
-  d_is_user_set = is_user_set;
-}
-
-template <typename T>
-const std::string&
-OptionModeT<T>::dflt_str() const
-{
-  return d_mode2string.at(d_default);
-}
-
-template <typename T>
-bool
-OptionModeT<T>::is_valid(const std::string& value) const
-{
-  return d_string2mode.find(value) != d_string2mode.end();
-}
-
 /* --- Options public ------------------------------------------------------- */
 
 Options::Options()
