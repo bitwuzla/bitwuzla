@@ -591,6 +591,90 @@ TEST_F(TestCApi, set_option)
   }
 }
 
+TEST_F(TestCApi, set_option_by_name)
+{
+  {
+    BitwuzlaOptions* options = bitwuzla_options_new();
+    ASSERT_DEATH(bitwuzla_set_option_by_name(nullptr, "verbosity", "1"),
+                 d_error_not_null);
+    ASSERT_DEATH(bitwuzla_set_option_by_name(options, nullptr, "1"),
+                 d_error_not_null);
+    ASSERT_DEATH(bitwuzla_set_option_by_name(options, "verbosity", nullptr),
+                 d_error_not_null);
+    ASSERT_DEATH(bitwuzla_set_option_by_name(options, "incrremental", "true"),
+                 "invalid option 'incrremental'");
+    ASSERT_DEATH(bitwuzla_set_option_by_name(options, "VERBOSITY", "1"),
+                 "invalid option 'VERBOSITY'");
+    ASSERT_DEATH(bitwuzla_set_option_by_name(options, "--verbosity", "1"),
+                 "invalid option '--verbosity'");
+    ASSERT_DEATH(bitwuzla_set_option_by_name(options, "", "1"),
+                 d_error_exp_str);
+    ASSERT_DEATH(bitwuzla_set_option_by_name(options, "verbosity", ""),
+                 d_error_exp_str);
+    bitwuzla_options_delete(options);
+  }
+  {
+    BitwuzlaOptions* options = bitwuzla_options_new();
+    // Boolean options
+    ASSERT_EQ(bitwuzla_get_option(options, BITWUZLA_OPT_PRODUCE_MODELS), 0);
+    bitwuzla_set_option_by_name(options, "produce-models", "true");
+    ASSERT_EQ(bitwuzla_get_option(options, BITWUZLA_OPT_PRODUCE_MODELS), 1);
+    bitwuzla_set_option_by_name(options, "produce-models", "0");
+    ASSERT_EQ(bitwuzla_get_option(options, BITWUZLA_OPT_PRODUCE_MODELS), 0);
+    ASSERT_DEATH(bitwuzla_set_option_by_name(options, "produce-models", "yes"),
+                 "invalid option value for Boolean option");
+    // numeric options, by long and short name
+    ASSERT_EQ(bitwuzla_get_option(options, BITWUZLA_OPT_VERBOSITY), 0);
+    bitwuzla_set_option_by_name(options, "verbosity", "3");
+    ASSERT_EQ(bitwuzla_get_option(options, BITWUZLA_OPT_VERBOSITY), 3);
+    bitwuzla_set_option_by_name(options, "v", "2");
+    ASSERT_EQ(bitwuzla_get_option(options, BITWUZLA_OPT_VERBOSITY), 2);
+    ASSERT_DEATH(bitwuzla_set_option_by_name(options, "verbosity", "5"),
+                 "expected value <= 4");
+    ASSERT_DEATH(bitwuzla_set_option_by_name(options, "nthreads", "0"),
+                 "expected value >= 1");
+    bitwuzla_set_option_by_name(
+        options, "prop-nprops", "18446744073709551615");  // UINT64_MAX
+    ASSERT_EQ(bitwuzla_get_option(options, BITWUZLA_OPT_PROP_NPROPS),
+              UINT64_MAX);
+    ASSERT_DEATH(bitwuzla_set_option_by_name(
+                     options, "prop-nprops", "99999999999999999999999999"),
+                 "is out of range");
+    ASSERT_DEATH(bitwuzla_set_option_by_name(options, "prop-nprops", "foo"),
+                 "expected a numeric value");
+    ASSERT_DEATH(bitwuzla_set_option_by_name(options, "prop-nprops", "123abc"),
+                 "expected a numeric value");
+    // options with modes
+    ASSERT_EQ(
+        std::string(bitwuzla_get_option_mode(options, BITWUZLA_OPT_BV_SOLVER)),
+        "bitblast");
+    bitwuzla_set_option_by_name(options, "bv-solver", "prop");
+    ASSERT_EQ(
+        std::string(bitwuzla_get_option_mode(options, BITWUZLA_OPT_BV_SOLVER)),
+        "prop");
+#ifdef BZLA_USE_CADICAL
+    bitwuzla_set_option_by_name(options, "S", "cadical");
+    ASSERT_EQ(
+        std::string(bitwuzla_get_option_mode(options, BITWUZLA_OPT_SAT_SOLVER)),
+        "cadical");
+#endif
+#ifdef BZLA_USE_KISSAT
+    bitwuzla_set_option_by_name(options, "sat-solver", "kissat");
+    ASSERT_EQ(
+        std::string(bitwuzla_get_option_mode(options, BITWUZLA_OPT_SAT_SOLVER)),
+        "kissat");
+#endif
+    ASSERT_DEATH(bitwuzla_set_option_by_name(options, "bv-solver", "asdf"),
+                 "invalid mode for option");
+    // string options
+    bitwuzla_set_option_by_name(options, "write-cnf", "out.cnf");
+    ASSERT_EQ(std::string(
+                  bitwuzla_get_option_string(options, BITWUZLA_OPT_WRITE_CNF)),
+              "out.cnf");
+    bitwuzla_options_delete(options);
+  }
+}
+
 TEST_F(TestCApi, option_info)
 {
   BitwuzlaOptions* options = bitwuzla_options_new();

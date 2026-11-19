@@ -22,6 +22,10 @@ Boolean and numeric options are configured via
 :cpp:func:`bitwuzla_set_option()`, and
 options with option modes are configured via
 :cpp:func:`bitwuzla_set_option_mode()`.
+Any option can also be configured via
+:cpp:func:`bitwuzla_set_option_by_name()`,
+which takes the short or long name of the option (e.g.,
+:code:`"produce-models"`) and its value in string representation.
 
 The configured value of Boolean and numeric options can be queried via
 :cpp:func:`bitwuzla_get_option()`,

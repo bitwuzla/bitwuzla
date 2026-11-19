@@ -284,6 +284,26 @@ void bitwuzla_set_option_string(BitwuzlaOptions* options,
                                 const char* val);
 
 /**
+ * Set option, identified by its short or long name, to a value given in
+ * string representation.
+ *
+ * Values of Boolean options are given as "true", "false", "1" or "0", values
+ * of numeric options as decimal numbers, and values of options with modes and
+ * string options as the mode or string, respectively.
+ *
+ * @param options The Bitwuzla options instance.
+ * @param name The short or long option name (without leading dashes), e.g.,
+ *             "produce-models" or "v".
+ * @param val The string representation of the option value.
+ *
+ * @see
+ *   * `bitwuzla_option_is_valid`
+ */
+void bitwuzla_set_option_by_name(BitwuzlaOptions* options,
+                                 const char* name,
+                                 const char* val);
+
+/**
  * Get the current value of an option.
  *
  * @param options The Bitwuzla options instance.

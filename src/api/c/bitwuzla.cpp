@@ -300,6 +300,19 @@ bitwuzla_set_option_string(BitwuzlaOptions* options,
   BITWUZLA_C_TRY_CATCH_END;
 }
 
+void
+bitwuzla_set_option_by_name(BitwuzlaOptions* options,
+                            const char* name,
+                            const char* value)
+{
+  BITWUZLA_C_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(options);
+  BITWUZLA_CHECK_NOT_NULL(name);
+  BITWUZLA_CHECK_NOT_NULL(value);
+  options->d_options.set(std::string(name), std::string(value));
+  BITWUZLA_C_TRY_CATCH_END;
+}
+
 uint64_t
 bitwuzla_get_option(BitwuzlaOptions* options, BitwuzlaOption option)
 {
