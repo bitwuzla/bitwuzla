@@ -1,0 +1,27 @@
+[workspace]
+members = ["libbitwuzla-sys"]
+# `cargo test` also runs the libbitwuzla-sys tests (version and prebuilt
+# bindings checks).
+default-members = [".", "libbitwuzla-sys"]
+resolver = "3"
+
+[package]
+name = "bitwuzla"
+version = "0.10.0-dev"
+edition = "2024"
+readme = "README.md"
+license = "MIT"
+description = "High-level Rust bindings for the Bitwuzla SMT solver"
+authors = ["the Bitwuzla authors"]
+keywords = ["SMT", "solver", "bit-vectors", "floating-point"]
+categories = ["science"]
+homepage = "https://bitwuzla.github.io"
+repository = "https://github.com/bitwuzla/bitwuzla"
+rust-version = "1.85"
+
+[features]
+static = ["libbitwuzla-sys/static"]
+
+[dependencies]
+libbitwuzla-sys = { path = "libbitwuzla-sys", version = "=0.10.0-dev" }
+libc = "0.2"

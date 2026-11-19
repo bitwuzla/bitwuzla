@@ -1,0 +1,26 @@
+[package]
+name = "libbitwuzla-sys"
+version = "0.10.0-dev"
+edition = "2024"
+build = "build.rs"
+links = "bitwuzla"
+description = "Low-level FFI bindings for the Bitwuzla SMT solver"
+license = "MIT"
+authors = ["the Bitwuzla authors"]
+homepage = "https://bitwuzla.github.io"
+repository = "https://github.com/bitwuzla/bitwuzla"
+keywords = ["FFI", "SMT", "solver", "bitwuzla"]
+categories = ["external-ffi-bindings"]
+rust-version = "1.85"
+
+[features]
+# Link Bitwuzla statically (requires a static libbitwuzla and its pkg-config
+# file for the transitive dependencies).
+static = []
+
+[dependencies]
+libc = "0.2"
+
+[build-dependencies]
+bindgen = { version = "0.72", default-features = false, features = ["runtime", "prettyplease"] }
+pkg-config = "0.3"

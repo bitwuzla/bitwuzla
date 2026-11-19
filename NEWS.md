@@ -2,6 +2,11 @@
 
 This file collects a summary of important and/or user-visible changes.
 
+- **Rust API**: New Rust bindings in `src/api/rust`. The crate `bitwuzla`
+  provides a safe API modeled on the C++ API, built on top of the C API, and
+  `libbitwuzla-sys` the raw bindings of the C API. See
+  `src/api/rust/README.md` for building and usage.
+
 - **C API**: `bitwuzla_push()` and `bitwuzla_pop()` now take the number of
   levels as `uint32_t` instead of `uint64_t`, as in the C++ and Python APIs.
   Previously, numbers of levels that do not fit into 32 bits were silently

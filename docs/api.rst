@@ -5,6 +5,7 @@ Bitwuzla provides APIs for several programming languages.
 The :doc:`C++ interface <cpp/api>` is Bitwuzla's primary interface,
 the :doc:`C <c/api>` and :doc:`Python <python/api>` APIs are
 built as thin wrappers on top of the C++ API.
+The Rust API is built on top of the C API.
 
 .. toctree::
   :maxdepth: 2
@@ -12,4 +13,5 @@ built as thin wrappers on top of the C++ API.
   cpp/api
   c/api
   python/api
+  Rust API Documentation <https://github.com/bitwuzla/bitwuzla/tree/main/src/api/rust>
   OCaml API Documentation <https://ocaml.org/p/bitwuzla-cxx/latest/doc/index.html>
