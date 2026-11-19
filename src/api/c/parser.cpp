@@ -32,11 +32,15 @@ struct BitwuzlaParser
     (void) tm;
     (void) options;
     (void) language;
-    std::ofstream outfile;
     std::ostream* out = &std::cout;
     if (std::string(outfile_name) != "<stdout>")
     {
       d_outfile.open(outfile_name, std::ofstream::out);
+      if (!d_outfile.is_open())
+      {
+        throw bitwuzla::Exception("failed to open output file '"
+                                  + std::string(outfile_name) + "'");
+      }
       out = &d_outfile;
     }
     (*out) << bitwuzla::set_bv_format(base);

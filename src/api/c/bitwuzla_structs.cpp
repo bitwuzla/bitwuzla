@@ -28,7 +28,17 @@ BitwuzlaOptions::set_diagnostic_output_stream(const char* output_filename)
   }
   else
   {
-    d_diag_output.open(output_filename, std::ofstream::out);
+    // Open into a separate stream to keep the current configuration if
+    // opening fails. Swapping keeps d_diag_output at the same address, which
+    // instances created with these options may already write to. The
+    // previously opened file is closed when 'out' goes out of scope.
+    std::ofstream out(output_filename, std::ofstream::out);
+    if (!out.is_open())
+    {
+      throw bitwuzla::Exception("failed to open diagnostic output file '"
+                                + filename + "'");
+    }
+    d_diag_output.swap(out);
     d_options.set_diagnostic_output_stream(d_diag_output);
   }
 }

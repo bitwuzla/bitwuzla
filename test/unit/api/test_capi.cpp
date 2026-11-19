@@ -6243,5 +6243,82 @@ TEST_F(TestCApi, abort_callback_parser)
 }
 
 /* -------------------------------------------------------------------------- */
+/* Output files                                                               */
+/* -------------------------------------------------------------------------- */
+
+namespace {
+std::string
+read_file(const char* filename)
+{
+  std::ifstream in(filename);
+  std::stringstream ss;
+  ss << in.rdbuf();
+  return ss.str();
+}
+}  // namespace
+
+TEST_F(TestCApi, options_set_diagnostic_output_stream)
+{
+  const char* filename1    = "test_capi_options_diag1.txt";
+  const char* filename2    = "test_capi_options_diag2.txt";
+  const char* invalid      = "test_capi_nonexistent_dir/diag.txt";
+  BitwuzlaOptions* options = bitwuzla_options_new();
+  ASSERT_DEATH(
+      bitwuzla_options_set_diagnostic_output_stream(nullptr, filename1),
+      d_error_not_null);
+  ASSERT_DEATH(bitwuzla_options_set_diagnostic_output_stream(options, nullptr),
+               d_error_not_null);
+  ASSERT_DEATH(bitwuzla_options_set_diagnostic_output_stream(options, invalid),
+               "failed to open diagnostic output file");
+
+  bitwuzla_set_option(options, BITWUZLA_OPT_VERBOSITY, 1);
+  bitwuzla_options_set_diagnostic_output_stream(options, filename1);
+  // Redirecting again switches to the new file.
+  bitwuzla_options_set_diagnostic_output_stream(options, filename2);
+  // A failure keeps the current configuration.
+  {
+    struct Resetter
+    {
+      ~Resetter() { bitwuzla_set_abort_callback(nullptr); }
+    } resetter;
+    bitwuzla_set_abort_callback(test_abort);
+    ASSERT_THROW(
+        bitwuzla_options_set_diagnostic_output_stream(options, invalid),
+        TestException);
+  }
+  Bitwuzla* bitwuzla = bitwuzla_new(d_tm, options);
+  bitwuzla_assert(bitwuzla, d_bv_const1_true);
+  ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_SAT);
+  bitwuzla_delete(bitwuzla);
+  bitwuzla_options_delete(options);
+
+  ASSERT_TRUE(read_file(filename1).empty());
+  ASSERT_NE(read_file(filename2).find("[bzla]"), std::string::npos);
+  std::remove(filename1);
+  std::remove(filename2);
+}
+
+TEST_F(TestCApi, parser_output_file)
+{
+  const char* filename     = "test_capi_parser_output.txt";
+  BitwuzlaOptions* options = bitwuzla_options_new();
+  ASSERT_DEATH(bitwuzla_parser_new(
+                   d_tm, options, "smt2", 2, "test_capi_nonexistent_dir/out"),
+               "failed to open output file");
+  {
+    BitwuzlaParser* parser =
+        bitwuzla_parser_new(d_tm, options, "smt2", 2, filename);
+    const char* error_msg;
+    bitwuzla_parser_parse(
+        parser, "(set-logic QF_BV)\n(check-sat)\n", false, false, &error_msg);
+    ASSERT_EQ(error_msg, nullptr);
+    bitwuzla_parser_delete(parser);
+  }
+  ASSERT_EQ(read_file(filename), "sat\n");
+  bitwuzla_options_delete(options);
+  std::remove(filename);
+}
+
+/* -------------------------------------------------------------------------- */
 
 }  // namespace bzla::test

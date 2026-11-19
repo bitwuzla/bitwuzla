@@ -158,7 +158,9 @@ void bitwuzla_options_delete(BitwuzlaOptions* options);
  * @param options The Bitwuzla options instance.
  * @param filename The filename to redirect the diagnostic output to.
  *                 "<stderr>" and "<stdout>" are special filenames and redirect
- *                 to stderr and stdout respectively.
+ *                 to stderr and stdout respectively. If the file cannot be
+ *                 opened, an error is raised and the current configuration
+ *                 is kept.
  * @note The file stream is owned by `options`. Bitwuzla and parser instances
  *       created with these options write to it, hence `options` must not be
  *       deleted before these instances.

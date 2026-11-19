@@ -34,7 +34,8 @@ typedef struct BitwuzlaParser BitwuzlaParser;
  *                     hexadecimal. Always ignored for Boolean and RoundingMode
  *                     values.
  * @param outfile_name The output file name. If name is '\<stdout\>', the parser
- *                     writes to stdout.
+ *                     writes to stdout. An error is raised if the file cannot
+ *                     be opened.
  * @return A pointer to the created Bitwuzla parser instance.
  *
  * @see
