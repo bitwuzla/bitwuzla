@@ -27,6 +27,11 @@ Any option can also be configured via
 which takes the short or long name of the option (e.g.,
 :code:`"produce-models"`) and its value in string representation.
 
+Additionally, it is also possible to configure options in batch via
+:cpp:func:`bitwuzla_options_set_args()`,
+which takes an array of command line option configuration strings,
+e.g., :code:`{"-v", "--produce-models=true", "--bv-solver", "prop"}`.
+
 The configured value of Boolean and numeric options can be queried via
 :cpp:func:`bitwuzla_get_option()`,
 and the value of an option with modes can be queried via

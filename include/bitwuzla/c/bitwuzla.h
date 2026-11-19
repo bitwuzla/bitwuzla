@@ -169,6 +169,38 @@ void bitwuzla_options_set_diagnostic_output_stream(BitwuzlaOptions* options,
                                                    const char* filename);
 
 /**
+ * Set options via command line arguments.
+ *
+ * Supports the following command line option format:
+ *
+ *   Short option names:
+ *
+ *       -short      ... {"-short"}
+ *       -short=val  ... {"-short=val"}
+ *       -short val  ... {"-short", "val"}
+ *
+ *   Long option names:
+ *
+ *       --long      ... {"--long"}
+ *       --long=val  ... {"--long=val"}
+ *       --long val  ... {"--long", "val"}
+ *
+ * Boolean options are enabled if no value is given, and disabled via prefix
+ * `--no-` of their long name. Numeric options that allow increments, e.g.,
+ * `-v`, are incremented by one if no value is given.
+ *
+ * @param options The Bitwuzla options instance.
+ * @param argc The number of arguments.
+ * @param args The command line arguments, without the program name.
+ *
+ * @see
+ *   * `bitwuzla_set_option_by_name`
+ */
+void bitwuzla_options_set_args(BitwuzlaOptions* options,
+                               uint32_t argc,
+                               const char* args[]);
+
+/**
  * Determine if given string is a valid short or long option name.
  * @param options The Bitwuzla options instance.
  * @param name The name.
@@ -298,6 +330,7 @@ void bitwuzla_set_option_string(BitwuzlaOptions* options,
  *
  * @see
  *   * `bitwuzla_option_is_valid`
+ *   * `bitwuzla_options_set_args`
  */
 void bitwuzla_set_option_by_name(BitwuzlaOptions* options,
                                  const char* name,

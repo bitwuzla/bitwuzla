@@ -675,6 +675,106 @@ TEST_F(TestCApi, set_option_by_name)
   }
 }
 
+TEST_F(TestCApi, options_set_args)
+{
+  BitwuzlaOptions* options = bitwuzla_options_new();
+  {
+    const char* args[] = {"-v", "-v"};
+    bitwuzla_options_set_args(options, 2, args);
+    ASSERT_EQ(bitwuzla_get_option(options, BITWUZLA_OPT_VERBOSITY), 2);
+  }
+  {
+    const char* args[] = {"-v", "3"};
+    bitwuzla_options_set_args(options, 2, args);
+    ASSERT_EQ(bitwuzla_get_option(options, BITWUZLA_OPT_VERBOSITY), 3);
+  }
+  {
+    const char* args[] = {"-v=4"};
+    bitwuzla_options_set_args(options, 1, args);
+    ASSERT_EQ(bitwuzla_get_option(options, BITWUZLA_OPT_VERBOSITY), 4);
+  }
+  {
+    const char* args[] = {"--produce-models", "--bv-solver", "prop"};
+    bitwuzla_options_set_args(options, 3, args);
+    ASSERT_EQ(bitwuzla_get_option(options, BITWUZLA_OPT_PRODUCE_MODELS), 1);
+    ASSERT_EQ(
+        std::string(bitwuzla_get_option_mode(options, BITWUZLA_OPT_BV_SOLVER)),
+        "prop");
+  }
+  {
+    const char* args[] = {"--no-produce-models", "--bv-solver=bitblast"};
+    bitwuzla_options_set_args(options, 2, args);
+    ASSERT_EQ(bitwuzla_get_option(options, BITWUZLA_OPT_PRODUCE_MODELS), 0);
+    ASSERT_EQ(
+        std::string(bitwuzla_get_option_mode(options, BITWUZLA_OPT_BV_SOLVER)),
+        "bitblast");
+  }
+#ifdef BZLA_USE_CADICAL
+  {
+    const char* args[] = {"-S=cadical"};
+    bitwuzla_options_set_args(options, 1, args);
+    ASSERT_EQ(
+        std::string(bitwuzla_get_option_mode(options, BITWUZLA_OPT_SAT_SOLVER)),
+        "cadical");
+  }
+#endif
+  // no arguments
+  bitwuzla_options_set_args(options, 0, nullptr);
+  ASSERT_EQ(bitwuzla_get_option(options, BITWUZLA_OPT_VERBOSITY), 4);
+
+  {
+    const char* args[] = {"-v", nullptr};
+    ASSERT_DEATH(bitwuzla_options_set_args(nullptr, 1, args), d_error_not_null);
+    ASSERT_DEATH(bitwuzla_options_set_args(options, 1, nullptr),
+                 d_error_not_null);
+    ASSERT_DEATH(bitwuzla_options_set_args(options, 2, args),
+                 "expected non-null object at index 1");
+  }
+  {
+    const char* args[] = {"-v=100"};
+    ASSERT_DEATH(bitwuzla_options_set_args(options, 1, args), "maximum is 4");
+  }
+  {
+    const char* args[] = {"--verbositi"};
+    ASSERT_DEATH(bitwuzla_options_set_args(options, 1, args),
+                 "invalid option '--verbositi'");
+  }
+  {
+    const char* args[] = {"--no-verbosity"};
+    ASSERT_DEATH(bitwuzla_options_set_args(options, 1, args),
+                 "invalid --no- prefix for non-Boolean option");
+  }
+  {
+    // invalid mode value
+    const char* args[] = {"-S=foo"};
+    ASSERT_DEATH(bitwuzla_options_set_args(options, 1, args),
+                 "invalid mode 'foo' for option '-S'");
+  }
+  {
+    // invalid Boolean value
+    const char* args[] = {"--produce-models=yes"};
+    ASSERT_DEATH(bitwuzla_options_set_args(options, 1, args),
+                 "invalid option value for Boolean option");
+  }
+  {
+    // invalid numeric values
+    const char* args1[] = {"--prop-nprops=foo"};
+    ASSERT_DEATH(bitwuzla_options_set_args(options, 1, args1),
+                 "invalid value 'foo' for numeric option");
+    const char* args2[] = {"--prop-nprops=99999999999999999999999"};
+    ASSERT_DEATH(bitwuzla_options_set_args(options, 1, args2),
+                 "is out of range");
+  }
+  {
+    // missing value
+    const char* args[] = {"--write-cnf"};
+    ASSERT_DEATH(bitwuzla_options_set_args(options, 1, args),
+                 "expected value for option '--write-cnf'");
+  }
+  ASSERT_EQ(bitwuzla_get_option(options, BITWUZLA_OPT_VERBOSITY), 4);
+  bitwuzla_options_delete(options);
+}
+
 TEST_F(TestCApi, option_info)
 {
   BitwuzlaOptions* options = bitwuzla_options_new();

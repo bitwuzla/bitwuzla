@@ -187,6 +187,27 @@ bitwuzla_options_set_diagnostic_output_stream(BitwuzlaOptions* options,
   BITWUZLA_C_TRY_CATCH_END;
 }
 
+void
+bitwuzla_options_set_args(BitwuzlaOptions* options,
+                          uint32_t argc,
+                          const char* args[])
+{
+  BITWUZLA_C_TRY_CATCH_BEGIN;
+  BITWUZLA_CHECK_NOT_NULL(options);
+  std::vector<std::string> cpp_args;
+  if (argc > 0)
+  {
+    BITWUZLA_CHECK_NOT_NULL(args);
+    for (uint32_t i = 0; i < argc; ++i)
+    {
+      BITWUZLA_CHECK_NOT_NULL_AT_IDX(args[i], i);
+      cpp_args.emplace_back(args[i]);
+    }
+  }
+  options->d_options.set(cpp_args);
+  BITWUZLA_C_TRY_CATCH_END;
+}
+
 bool
 bitwuzla_option_is_valid(BitwuzlaOptions* options, const char* name)
 {
