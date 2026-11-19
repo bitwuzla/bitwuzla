@@ -425,6 +425,10 @@ TEST_F(TestApi, option_set_args)
                bitwuzla::option::Exception);
   // invalid numeric value
   ASSERT_THROW(options.set({"--prop-nprops=foo"}), bitwuzla::option::Exception);
+  ASSERT_THROW(options.set({"-v=3x"}), bitwuzla::option::Exception);
+  ASSERT_THROW(options.set({"--prop-nprops=99999999999999999999999"}),
+               bitwuzla::option::Exception);
+  ASSERT_EQ(options.get(bitwuzla::Option::VERBOSITY), 4);
 }
 
 TEST_F(TestApi, option_info)

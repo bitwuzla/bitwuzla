@@ -692,7 +692,11 @@ Options::set(const std::vector<std::string>& args)
       {
         try
         {
-          val          = std::stoull(value);
+          size_t pos;
+          val = std::stoull(value, &pos);
+          BITWUZLA_CHECK_OPT(pos == value.size())
+              << "invalid value '" << value << "' for numeric option '" << opt
+              << "'";
           uint64_t max = d_options->max<uint64_t>(option);
           BITWUZLA_CHECK_OPT(val <= max)
               << "invalid value '" << value << "' for numeric option '" << opt
@@ -706,6 +710,12 @@ Options::set(const std::vector<std::string>& args)
         {
           BITWUZLA_CHECK_OPT(false) << "invalid value '" << value
                                     << "' for numeric option '" << opt << "'";
+        }
+        catch (const std::out_of_range& e)
+        {
+          BITWUZLA_CHECK_OPT(false)
+              << "value '" << value << "' for numeric option '" << opt
+              << "' is out of range";
         }
       }
       set(s_options.at(option), val);
