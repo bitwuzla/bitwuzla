@@ -117,6 +117,14 @@ endif
 if not compiler.has_function('closefrom', prefix: '#include <fcntl.h>')
   cpp_args += ['-DNCLOSEFROM']
 endif
+if host_machine.system() == 'windows'
+  # MinGW lays out bitfields as MSVC does: a field whose declared type differs
+  # from the previous field's starts a new storage unit. The clause header,
+  # an unsigned bitfield followed by bool ones, then takes 32 bytes rather
+  # than 24, and every clause 8 bytes more. cadical.hpp declares no
+  # bitfields, so code using the library need not agree.
+  cpp_args += compiler.get_supported_arguments('-mno-ms-bitfields')
+endif
 
 cadical_lib = static_library('cadical',
                       sources: sources,
