@@ -71,6 +71,16 @@ fn main() -> bitwuzla::Result<()> {
 }
 ```
 
+`examples/` contains ports of the C++ API examples in `examples/cpp` of the
+Bitwuzla source tree, e.g.:
+
+```sh
+cargo run --example quickstart
+```
+
+`examples/c/manual_reference_counting.c` has no port: sorts and terms are
+released when dropped.
+
 ## API overview
 
 - `TermManager`: creates sorts and terms.
