@@ -666,8 +666,12 @@ TEST_F(TestCApi, option_info)
 TEST_F(TestCApi, option_is_valid)
 {
   BitwuzlaOptions* options = bitwuzla_options_new();
+  ASSERT_DEATH(bitwuzla_option_is_valid(nullptr, "produce-models"),
+               d_error_not_null);
+  ASSERT_DEATH(bitwuzla_option_is_valid(options, nullptr), d_error_not_null);
   ASSERT_FALSE(bitwuzla_option_is_valid(options, "incremental"));
   ASSERT_TRUE(bitwuzla_option_is_valid(options, "produce-models"));
+  ASSERT_TRUE(bitwuzla_option_is_valid(options, "v"));
   bitwuzla_options_delete(options);
 }
 

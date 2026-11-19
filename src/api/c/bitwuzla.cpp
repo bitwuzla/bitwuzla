@@ -193,6 +193,7 @@ bitwuzla_option_is_valid(BitwuzlaOptions* options, const char* name)
   bool res = false;
   BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(options);
+  BITWUZLA_CHECK_NOT_NULL(name);
   res = options->d_options.is_valid(name);
   BITWUZLA_C_TRY_CATCH_END;
   return res;
