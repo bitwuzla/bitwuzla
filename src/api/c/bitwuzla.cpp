@@ -477,7 +477,7 @@ bitwuzla_set_abort_callback(void (*fun)(const char* msg))
 }
 
 void
-bitwuzla_push(Bitwuzla* bitwuzla, uint64_t nlevels)
+bitwuzla_push(Bitwuzla* bitwuzla, uint32_t nlevels)
 {
   BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);
@@ -486,7 +486,7 @@ bitwuzla_push(Bitwuzla* bitwuzla, uint64_t nlevels)
 }
 
 void
-bitwuzla_pop(Bitwuzla* bitwuzla, uint64_t nlevels)
+bitwuzla_pop(Bitwuzla* bitwuzla, uint32_t nlevels)
 {
   BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);

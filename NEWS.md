@@ -2,6 +2,11 @@
 
 This file collects a summary of important and/or user-visible changes.
 
+- **C API**: `bitwuzla_push()` and `bitwuzla_pop()` now take the number of
+  levels as `uint32_t` instead of `uint64_t`, as in the C++ and Python APIs.
+  Previously, numbers of levels that do not fit into 32 bits were silently
+  truncated.
+
 ## News for version 0.10.0
 
 - The bit-vector, bit-blasting and local search support libraries

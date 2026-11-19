@@ -1318,7 +1318,7 @@ void bitwuzla_set_abort_callback(void (*fun)(const char* msg));
  * @see
  *   * `bitwuzla_set_option`
  */
-void bitwuzla_push(Bitwuzla* bitwuzla, uint64_t nlevels);
+void bitwuzla_push(Bitwuzla* bitwuzla, uint32_t nlevels);
 
 /**
  * Pop context levels.
@@ -1329,7 +1329,7 @@ void bitwuzla_push(Bitwuzla* bitwuzla, uint64_t nlevels);
  * @see
  *   * `bitwuzla_set_option`
  */
-void bitwuzla_pop(Bitwuzla* bitwuzla, uint64_t nlevels);
+void bitwuzla_pop(Bitwuzla* bitwuzla, uint32_t nlevels);
 
 /**
  * Assert formula.
