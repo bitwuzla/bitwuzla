@@ -3878,6 +3878,32 @@ TEST_F(TestCApi, parser_string2_smt2)
   bitwuzla_options_delete(options);
 }
 
+TEST_F(TestCApi, parser_stdout_bv_format)
+{
+  // Parsers writing to stdout do not share their bit-vector output format.
+  const char* input =
+      "(set-logic QF_BV)(set-option :produce-models true)"
+      "(declare-const x (_ BitVec 4))(assert (= x #b0001))"
+      "(check-sat)(get-value (x))";
+  const char* error_msg;
+  BitwuzlaOptions* options = bitwuzla_options_new();
+  BitwuzlaParser* parser2 =
+      bitwuzla_parser_new(d_tm, options, "smt2", 2, "<stdout>");
+  BitwuzlaParser* parser16 =
+      bitwuzla_parser_new(d_tm, options, "smt2", 16, "<stdout>");
+  testing::internal::CaptureStdout();
+  bitwuzla_parser_parse(parser2, input, false, false, &error_msg);
+  const char* error_msg16;
+  bitwuzla_parser_parse(parser16, input, false, false, &error_msg16);
+  std::string output = testing::internal::GetCapturedStdout();
+  ASSERT_EQ(error_msg, nullptr);
+  ASSERT_EQ(error_msg16, nullptr);
+  ASSERT_EQ(output, "sat\n((x #b0001))\nsat\n((x #x1))\n");
+  bitwuzla_parser_delete(parser16);
+  bitwuzla_parser_delete(parser2);
+  bitwuzla_options_delete(options);
+}
+
 TEST_F(TestCApi, parser_smt2_string_term)
 {
   BitwuzlaOptions* options = bitwuzla_options_new();

@@ -32,7 +32,6 @@ struct BitwuzlaParser
     (void) tm;
     (void) options;
     (void) language;
-    std::ostream* out = &std::cout;
     if (std::string(outfile_name) != "<stdout>")
     {
       d_outfile.open(outfile_name, std::ofstream::out);
@@ -41,12 +40,12 @@ struct BitwuzlaParser
         throw bitwuzla::Exception("failed to open output file '"
                                   + std::string(outfile_name) + "'");
       }
-      out = &d_outfile;
+      d_out.rdbuf(d_outfile.rdbuf());
     }
-    (*out) << bitwuzla::set_bv_format(base);
+    d_out << bitwuzla::set_bv_format(base);
 #if defined(BZLA_IS_SAT_SOLVER_CONFIGURED)
     d_parser.reset(new bitwuzla::parser::Parser(
-        tm->d_tm, options->d_options, language, out));
+        tm->d_tm, options->d_options, language, &d_out));
 #else
     throw bitwuzla::Unsupported(
         "C bindings for external SAT solver factory not supported");
@@ -79,6 +78,13 @@ struct BitwuzlaParser
   std::unique_ptr<CTerminator> d_terminator;
   /** Output file. */
   std::ofstream d_outfile;
+  /**
+   * The output stream of the parser, writes to stdout or to the output file.
+   * Configuring the bit-vector output format on a stream of its own rather
+   * than on std::cout keeps it from affecting other parsers and the
+   * application.
+   */
+  std::ostream d_out{std::cout.rdbuf()};
 };
 
 BitwuzlaParser*
