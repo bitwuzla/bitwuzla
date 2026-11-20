@@ -3940,6 +3940,28 @@ TEST_F(TestApi, parser_smt2_string1)
   }
 }
 
+TEST_F(TestApi, parser_smt2_parse_only_check_sat)
+{
+  // A check-sat in parse-only mode prints nothing, and the result of an
+  // earlier check-sat does not carry over to later commands.
+  bitwuzla::Options options;
+  options.set(bitwuzla::Option::PRODUCE_MODELS, true);
+  std::stringstream out;
+  bitwuzla::parser::Parser parser(d_tm, options, "smt2", &out);
+  parser.parse("(set-logic QF_BV)(declare-const a Bool)(assert a)(check-sat)",
+               false,
+               false);
+  ASSERT_EQ(out.str(), "sat\n");
+  parser.parse(
+      "(set-info :status unsat)(assert (not a))(check-sat)"
+      "(get-value (a))",
+      true,
+      false);
+  ASSERT_EQ(out.str(), "sat\n");
+  parser.parse("(check-sat)", false, false);
+  ASSERT_EQ(out.str(), "sat\nunsat\n");
+}
+
 TEST_F(TestApi, parser_smt2_string2)
 {
   std::string str_decl  = "(declare-const a Bool)";

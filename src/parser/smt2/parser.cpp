@@ -510,6 +510,13 @@ Parser::parse_command_check_sat(bool parse_only, bool with_assumptions)
     }
   }
   d_statistics.num_check_sat += 1;
+  if (parse_only)
+  {
+    // The solver is not called, and the result of an earlier check-sat does
+    // not apply to the current assertions.
+    d_result = bitwuzla::Result::UNKNOWN;
+    return true;
+  }
   if (d_result == bitwuzla::Result::SAT)
   {
     (*d_out) << "sat" << std::endl;
@@ -526,7 +533,7 @@ Parser::parse_command_check_sat(bool parse_only, bool with_assumptions)
       return error("'unsat' but status is 'sat'");
     }
   }
-  else if (!parse_only)
+  else
   {
     // TODO: do not print unknown when printing DIMACS
     (*d_out) << "unknown" << std::endl;
