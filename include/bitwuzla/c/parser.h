@@ -74,8 +74,7 @@ void bitwuzla_parser_delete(BitwuzlaParser* parser);
  *               NULL.
  *
  * @see
- *   * `bitwuzla_terminate`
- *   * `bitwuzla_get_termination_callback_state`
+ *   * `bitwuzla_parser_get_termination_callback_state`
  */
 void bitwuzla_parser_set_termination_callback(BitwuzlaParser* parser,
                                               int32_t (*fun)(void*),
@@ -94,8 +93,7 @@ void bitwuzla_parser_set_termination_callback(BitwuzlaParser* parser,
  *         NULL if no callback function is configured.
  *
  * @see
- *   * `bitwuzla_terminate`
- *   * `bitwuzla_set_termination_callback`
+ *   * `bitwuzla_parser_set_termination_callback`
  */
 void* bitwuzla_parser_get_termination_callback_state(BitwuzlaParser* parser);
 

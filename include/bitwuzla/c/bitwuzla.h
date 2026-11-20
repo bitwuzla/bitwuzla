@@ -1387,7 +1387,6 @@ void bitwuzla_delete(Bitwuzla* bitwuzla);
  *              NULL.
  *
  * @see
- *   * `bitwuzla_terminate`
  *   * `bitwuzla_get_termination_callback_state`
  */
 void bitwuzla_set_termination_callback(Bitwuzla* bitwuzla,
@@ -1407,7 +1406,6 @@ void bitwuzla_set_termination_callback(Bitwuzla* bitwuzla,
  *         NULL if no callback function is configured.
  *
  * @see
- *   * `bitwuzla_terminate`
  *   * `bitwuzla_set_termination_callback`
  */
 void* bitwuzla_get_termination_callback_state(Bitwuzla* bitwuzla);

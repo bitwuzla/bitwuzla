@@ -39,7 +39,6 @@ termination callback.
 - typedef struct :cpp:type:`Bitwuzla`
 - :cpp:func:`bitwuzla_new()`
 - :cpp:func:`bitwuzla_delete()`
-- :cpp:func:`bitwuzla_terminate()`
 - :cpp:func:`bitwuzla_set_termination_callback()`
 - :cpp:func:`bitwuzla_get_termination_callback_state()`
 - :cpp:func:`bitwuzla_set_abort_callback()`
