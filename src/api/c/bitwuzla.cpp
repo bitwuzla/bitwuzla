@@ -495,6 +495,9 @@ bitwuzla_delete(Bitwuzla* bitwuzla)
 {
   BITWUZLA_C_TRY_CATCH_BEGIN;
   BITWUZLA_CHECK_NOT_NULL(bitwuzla);
+  BITWUZLA_CHECK(bitwuzla->d_parser == nullptr)
+      << "expected instance created via bitwuzla_new(), the instance of a "
+         "parser is owned by the parser";
   delete bitwuzla;
   BITWUZLA_C_TRY_CATCH_END;
 }

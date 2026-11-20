@@ -3866,6 +3866,7 @@ TEST_F(TestCApi, parser_string2_smt2)
   Bitwuzla* bitwuzla = bitwuzla_parser_get_bitwuzla(parser);
   ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNSAT);
   ASSERT_EQ(bitwuzla_get_term_mgr(bitwuzla), d_tm);
+  ASSERT_DEATH(bitwuzla_delete(bitwuzla), "owned by the parser");
   size_t size;
   auto decl_sorts = bitwuzla_parser_get_declared_sorts(parser, &size);
   ASSERT_EQ(size, 0);
