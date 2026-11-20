@@ -3155,6 +3155,34 @@ TEST_F(TestCApi, get_rm_value)
 }
 
 #ifdef BZLA_USE_CADICAL
+namespace {
+struct nested_interpolants_state
+{
+  Bitwuzla* bitwuzla;
+  std::vector<BitwuzlaTerm*>* As;
+  uint32_t* Asc;
+  size_t size;
+  bool called;
+};
+
+/** Query the interpolants of another instance on the first call. */
+int32_t
+test_terminate_nested_interpolants(void* state)
+{
+  auto tstate = static_cast<nested_interpolants_state*>(state);
+  if (!tstate->called)
+  {
+    tstate->called = true;
+    bitwuzla_get_interpolants(tstate->bitwuzla,
+                              tstate->As->size(),
+                              tstate->Asc,
+                              tstate->As->data(),
+                              &tstate->size);
+  }
+  return 0;
+}
+}  // namespace
+
 TEST_F(TestCApi, get_interpolant)
 {
   BitwuzlaSort bv4  = bitwuzla_mk_bv_sort(d_tm, 4);
@@ -3318,6 +3346,44 @@ TEST_F(TestCApi, get_interpolant)
     size_t size;
     bitwuzla_get_interpolants(bitwuzla, As.size(), Asc, As.data(), &size);
     ASSERT_EQ(size, 6);
+  }
+  {
+    // Checking the interpolants calls the termination callback, which queries
+    // the interpolants of another instance.
+    BitwuzlaOptions* options = bitwuzla_options_new();
+    bitwuzla_set_option(options, BITWUZLA_OPT_PRODUCE_INTERPOLANTS, 1);
+    bitwuzla_set_option(options, BITWUZLA_OPT_DBG_CHECK_INTERPOLANT, 1);
+    Bitwuzla* outer = bitwuzla_new(d_tm, options);
+    Bitwuzla* inner = bitwuzla_new(d_tm, options);
+    for (Bitwuzla* bitwuzla : {outer, inner})
+    {
+      for (const auto& t : A)
+      {
+        bitwuzla_assert(bitwuzla, t);
+      }
+      bitwuzla_assert(bitwuzla, b0);
+      bitwuzla_assert(bitwuzla, b1);
+      ASSERT_EQ(bitwuzla_check_sat(bitwuzla), BITWUZLA_UNSAT);
+    }
+    BitwuzlaTerm A0[1] = {a0};
+    BitwuzlaTerm A1[1] = {a1};
+    BitwuzlaTerm A2[1] = {a2};
+    BitwuzlaTerm A3[1] = {a3};
+    BitwuzlaTerm A4[1] = {a4};
+    BitwuzlaTerm A5[1] = {a5};
+    std::vector<BitwuzlaTerm*> As{A0, A1, A2, A3, A4, A5};
+    uint32_t Asc[6] = {1, 1, 1, 1, 1, 1};
+    nested_interpolants_state state{inner, &As, Asc, 0, false};
+    bitwuzla_set_termination_callback(
+        outer, test_terminate_nested_interpolants, &state);
+    size_t size;
+    bitwuzla_get_interpolants(outer, As.size(), Asc, As.data(), &size);
+    ASSERT_TRUE(state.called);
+    ASSERT_EQ(state.size, 6);
+    ASSERT_EQ(size, 6);
+    bitwuzla_delete(outer);
+    bitwuzla_delete(inner);
+    bitwuzla_options_delete(options);
   }
 }
 #endif

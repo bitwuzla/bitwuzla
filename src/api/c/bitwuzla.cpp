@@ -758,9 +758,12 @@ bitwuzla_get_interpolants(Bitwuzla* bitwuzla,
     }
   }
   BITWUZLA_CHECK_NOT_NULL(size);
-  res.clear();
+  // Computing the interpolants may call the termination callback, which may
+  // query the interpolants of another instance, so fill the result buffer
+  // only afterwards.
   auto interpolants = bitwuzla->get().get_interpolants(A);
   auto tm           = bitwuzla->d_tm;
+  res.clear();
   for (auto& term : interpolants)
   {
     res.push_back(tm->export_term(term));
