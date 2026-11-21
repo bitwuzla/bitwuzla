@@ -2,6 +2,8 @@
 
 This file collects a summary of important and/or user-visible changes.
 
+## News for version 0.11.0
+
 - **Rust API**: New Rust bindings in `src/api/rust`. The crate `bitwuzla`
   provides a safe API modeled on the C++ API, built on top of the C API, and
   `libbitwuzla-sys` the raw bindings of the C API. See
