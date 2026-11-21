@@ -8,7 +8,7 @@ resolver = "3"
 # Must match meson.build, together with the libbitwuzla-sys requirement below.
 # contrib/make-release.py updates both.
 [workspace.package]
-version = "0.11.0"
+version = "0.11.0-dev"
 
 [package]
 name = "bitwuzla"
@@ -28,5 +28,5 @@ rust-version = "1.85"
 static = ["libbitwuzla-sys/static"]
 
 [dependencies]
-libbitwuzla-sys = { path = "libbitwuzla-sys", version = "=0.11.0" }
+libbitwuzla-sys = { path = "libbitwuzla-sys", version = "=0.11.0-dev" }
 libc = "0.2"
